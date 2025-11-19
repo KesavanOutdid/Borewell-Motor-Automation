@@ -1,17 +1,43 @@
-// BACKEND/models/User.js
 const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
-    user_id: { type: String, required: true, unique: true }, // maybe uuid or auto string
+    user_id: { type: Number, unique: true },
+
     user_name: { type: String, required: true },
-    role_id: { type: String, required: true }, // references Role.role_id
-    user_email: { type: String, required: true, unique: true },
-    user_phone: { type: String },
-    user_address: { type: String },
-    password: { type: String, required: true },
-    createdBy: { type: String },
-    updatedBy: { type: String },
+
+    role_id: { type: Number, required: true },
+
+    user_email: {
+        type: String,
+        required: true,
+        lowercase: true,
+        match: [/^\S+@\S+\.\S+$/, "Invalid email format"]
+    },
+
+    user_phone: {
+        type: Number,
+        required: true,
+        validate: {
+            validator: v => /^[0-9]{10}$/.test(v.toString()),
+            message: "Phone must be 10 digits"
+        }
+    },
+
+    password: {
+        type: Number,
+        required: true,
+        validate: {
+            validator: v => /^[0-9]{6}$/.test(v.toString()),
+            message: "Password must be 6 digits"
+        }
+    },
+
+    createdBy: String,
+    updatedBy: String,
     status: { type: Boolean, default: true }
-}, { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } });
+
+}, {
+    timestamps: true
+});
 
 module.exports = mongoose.model('User', UserSchema);

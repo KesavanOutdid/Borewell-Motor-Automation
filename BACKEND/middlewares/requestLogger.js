@@ -1,21 +1,10 @@
-const winston = require('winston');
-const path = require('path');
+// BACKEND/middlewares/requestLogger.js
+const logger = require('./logger');
 
-const logsDirectory = 'Log';
-const logFilename = path.join(logsDirectory, 'DataLog.log');
-
-// Configure the logger
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp({ format: 'DD/MM/YYYY HH:mm:ss' }),
-        winston.format.printf(({ level, message, timestamp }) => {
-            return `${timestamp} [${level.toUpperCase()}]: ${message}`;
-        })
-    ),
-    transports: [
-        new winston.transports.File({ filename: logFilename })
-    ]
-});
-
-module.exports = logger;
+module.exports = function requestLogger(req, res, next) {
+    const msg = `${req.method} ${req.originalUrl} - IP:${req.ip}`;
+    logger.info(msg);
+    // also attach a simple request-start time if needed
+    req.requestTime = Date.now();
+    next();
+};

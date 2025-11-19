@@ -1,39 +1,25 @@
-const { MongoClient } = require('mongodb');
+// BACKEND/config/db.js
+const mongoose = require('mongoose');
 
-const url = 'mongodb+srv://outdid:outdid@cluster0.t16a63a.mongodb.net/';
-const dbName = 'Borewell-Motor-Automation'; //For Testing
-
-let client;
-
-//database connection
-async function connectToDatabase() {
-    if (!client) {
-        client = new MongoClient(url);
-        try {
-            await client.connect();
-            console.log('Connected to the database');
-
-            // Handle process termination
-            process.on("SIGINT", async () => {
-                await client.close();
-                console.log("Database connection closed.");
-                process.exit(0);
-            });
-        } catch (error) {
-            console.error('Error connecting to the database:', error);
-            throw error;
-        }
+async function connectDB() {
+    const baseUrl = process.env.MONGODB_URL;
+    const dbName = process.env.DB_NAME || 'Borewell_Motor_Automation';
+    if (!baseUrl) {
+        console.error('MONGODB_URL missing in .env');
+        process.exit(1);
     }
+    const uri = `${baseUrl}/${dbName}?retryWrites=true&w=majority`;
 
-    return client.db(dbName);
+    try {
+        await mongoose.connect(uri, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        });
+        console.log('MongoDB connected using Mongoose');
+    } catch (err) {
+        console.error('DB Connection Error:', err.message || err);
+        process.exit(1);
+    }
 }
 
-// Function to get the database instance
-function getDB() {
-    if (!client) {
-        throw new Error('Database not connected. Call connectToDatabase first.');
-    }
-    return client.db(dbName);
-}
-
-module.exports = { connectToDatabase, getDB };
+module.exports = connectDB;
