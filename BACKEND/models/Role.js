@@ -13,16 +13,17 @@ const RoleSchema = new mongoose.Schema({
         required: true
     },
 
-    createdBy: { type: String },
-    updatedBy: { type: String },
+    createdBy: { type: String, default: null },
+    updatedBy: { type: String, default: null },
+
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: null },
 
     status: {
         type: Boolean,
         default: true
     },
 
-}, {
-    timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' }
 });
 
 module.exports = mongoose.model('Role', RoleSchema);

@@ -1,5 +1,6 @@
 // BACKEND/server.js
 const express = require('express');
+const path = require('path');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const connectDB = require('./config/db');
@@ -8,9 +9,14 @@ const errorHandler = require('./middlewares/errorHandler');
 const cors = require("cors");
 const os = require("os");
 require('dotenv').config();
+const WebSocket = require("ws");
 
 const adminRoutes = require('./routes/adminRoutes');
 const appRoutes = require('./routes/appRoutes');
+const logsRoutes = require('./mqtt/routes/logs');
+const { sendBootNotificationsOnStartup } = require('./mqtt/publisher');
+// Import MQTT client to start the subscriber
+const mqttClient = require('./mqtt/mqttClient');
 
 const app = express();
 
@@ -19,8 +25,20 @@ app.use(cors());
 app.use(express.json());
 app.use(requestLogger);
 
+// Static file serving
+app.use(express.static(path.join(__dirname, 'mqtt', 'public')));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'mqtt', 'public', 'index.html'));
+});
+
 // Connect DB
-connectDB();
+connectDB().then(() => {
+    // Send boot notifications for configured devices on startup
+    sendBootNotificationsOnStartup();
+}).catch(err => {
+    console.error('Database connection failed:', err);
+});
 
 // Swagger options
 const swaggerOptions = {
@@ -58,15 +76,13 @@ app.get('/swagger.json', (req, res) => res.json(swaggerSpec));
 // API Routes
 app.use('/admin', adminRoutes);
 app.use('/app', appRoutes);
-
-// Test API
-app.get('/', (req, res) => res.json({ ok: true, message: 'Borewell API running' }));
+app.use('/mqtt', logsRoutes);
 
 // Error handler
 app.use(errorHandler);
 
 // ----------------------------
-// ⭐ Auto Detect Local IP
+// Auto Detect Local IP
 // ----------------------------
 function getLocalIP() {
     const interfaces = os.networkInterfaces();
@@ -83,13 +99,33 @@ function getLocalIP() {
 const port = process.env.PORT || 3000;
 const localIP = getLocalIP();
 
+
+// ----------------------------
+// WEBSOCKET SERVER
+// ----------------------------
+const wss = new WebSocket.Server({ port: 8081 });
+console.log("WebSocket Server running on ws://localhost:8081");
+
+function broadcast(data) {
+    const payload = JSON.stringify(data);
+
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(payload);
+        }
+    });
+}
+
+// Make broadcast available globally
+global.broadcast = broadcast;
+
 // ----------------------------
 // Start Server
 // ----------------------------
 if (require.main === module) {
     app.listen(port, "0.0.0.0", () => {
         console.log("\n=====================================");
-        console.log(" 🚀 Server Started");
+        console.log(" Server Started");
         console.log("-------------------------------------");
         console.log(` Local URL:   http://localhost:${port}`);
         console.log(` Network URL: http://${localIP}:${port}`);

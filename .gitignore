@@ -11,5 +11,5 @@ BACKEND/logs/*.log
 
 # MacOS system files
 .DS_Store
-FRONTEND/WEBSITE/node_modules/
+FRONTEND/ADMIN/node_modules/
 BACKEND/logs/*.log
