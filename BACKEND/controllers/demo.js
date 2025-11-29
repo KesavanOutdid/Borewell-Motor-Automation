@@ -569,6 +569,176 @@ exports.getAssignDevices = async (req, res) => {
     }
 };
 
+// exports.getAnalasitic = async (req, res) => {
+//     try {
+//         const analytics = await Device.aggregate([
+//             {
+//                 $facet: {
+//                     // CREATED
+//                     createdWeekly: [
+//                         { $group: { _id: { week: { $isoWeek: "$createdAt" }, year: { $year: "$createdAt" } }, count: { $sum: 1 } } },
+//                         { $sort: { "_id.year": -1, "_id.week": -1 } },
+//                         { $project: { _id: 0, week: { $concat: [{ $toString: "$_id.year" }, "-W", { $toString: "$_id.week" }] }, count: 1 } }
+//                     ],
+//                     createdMonthly: [
+//                         { $group: { _id: { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } }, count: { $sum: 1 } } },
+//                         { $sort: { "_id.year": -1, "_id.month": -1 } },
+//                         { $project: { _id: 0, month: { $concat: [{ $toString: "$_id.year" }, "-", { $toString: "$_id.month" }] }, count: 1 } }
+//                     ],
+//                     createdYearly: [
+//                         { $group: { _id: { year: { $year: "$createdAt" } }, count: { $sum: 1 } } },
+//                         { $sort: { "_id.year": -1 } },
+//                         { $project: { _id: 0, year: "$_id.year", count: 1 } }
+//                     ],
+
+//                     // ACTIVE STATUS DEVICES
+//                     activeStatusWeekly: [
+//                         { $match: { status: true, createdAt: { $ne: null } } },
+//                         { $group: { _id: { week: { $isoWeek: "$createdAt" }, year: { $year: "$createdAt" } }, count: { $sum: 1 } } },
+//                         { $sort: { "_id.year": -1, "_id.week": -1 } },
+//                         { $project: { _id: 0, week: { $concat: [{ $toString: "$_id.year" }, "-W", { $toString: "$_id.week" }] }, count: 1 } }
+//                     ],
+//                     activeStatusMonthly: [
+//                         { $match: { status: true, createdAt: { $ne: null } } },
+//                         { $group: { _id: { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } }, count: { $sum: 1 } } },
+//                         { $sort: { "_id.year": -1, "_id.month": -1 } },
+//                         { $project: { _id: 0, month: { $concat: [{ $toString: "$_id.year" }, "-", { $toString: "$_id.month" }] }, count: 1 } }
+//                     ],
+//                     activeStatusYearly: [
+//                         { $match: { status: true, createdAt: { $ne: null } } },
+//                         { $group: { _id: { year: { $year: "$createdAt" } }, count: { $sum: 1 } } },
+//                         { $sort: { "_id.year": -1 } },
+//                         { $project: { _id: 0, year: "$_id.year", count: 1 } }
+//                     ],
+
+//                     // DEACTIVATED
+//                     statusDeactivatedWeekly: [
+//                         { $match: { status: false, updatedAt: { $ne: null } } },
+//                         { $group: { _id: { week: { $isoWeek: "$updatedAt" }, year: { $year: "$updatedAt" } }, count: { $sum: 1 } } },
+//                         { $sort: { "_id.year": -1, "_id.week": -1 } },
+//                         { $project: { _id: 0, week: { $concat: [{ $toString: "$_id.year" }, "-W", { $toString: "$_id.week" }] }, count: 1 } }
+//                     ],
+//                     statusDeactivatedMonthly: [
+//                         { $match: { status: false, updatedAt: { $ne: null } } },
+//                         { $group: { _id: { month: { $month: "$updatedAt" }, year: { $year: "$updatedAt" } }, count: { $sum: 1 } } },
+//                         { $sort: { "_id.year": -1, "_id.month": -1 } },
+//                         { $project: { _id: 0, month: { $concat: [{ $toString: "$_id.year" }, "-", { $toString: "$_id.month" }] }, count: 1 } }
+//                     ],
+//                     statusDeactivatedYearly: [
+//                         { $match: { status: false, updatedAt: { $ne: null } } },
+//                         { $group: { _id: { year: { $year: "$updatedAt" } }, count: { $sum: 1 } } },
+//                         { $sort: { "_id.year": -1 } },
+//                         { $project: { _id: 0, year: "$_id.year", count: 1 } }
+//                     ],
+
+//                     // ASSIGNED
+//                     assignedWeekly: [
+//                         { $match: { assign_status: true, assignedAt: { $ne: null } } },
+//                         { $group: { _id: { week: { $isoWeek: "$assignedAt" }, year: { $year: "$assignedAt" } }, count: { $sum: 1 } } },
+//                         { $sort: { "_id.year": -1, "_id.week": -1 } },
+//                         { $project: { _id: 0, week: { $concat: [{ $toString: "$_id.year" }, "-W", { $toString: "$_id.week" }] }, count: 1 } }
+//                     ],
+//                     assignedMonthly: [
+//                         { $match: { assign_status: true, assignedAt: { $ne: null } } },
+//                         { $group: { _id: { month: { $month: "$assignedAt" }, year: { $year: "$assignedAt" } }, count: { $sum: 1 } } },
+//                         { $sort: { "_id.year": -1, "_id.month": -1 } },
+//                         { $project: { _id: 0, month: { $concat: [{ $toString: "$_id.year" }, "-", { $toString: "$_id.month" }] }, count: 1 } }
+//                     ],
+//                     assignedYearly: [
+//                         { $match: { assign_status: true, assignedAt: { $ne: null } } },
+//                         { $group: { _id: { year: { $year: "$assignedAt" } }, count: { $sum: 1 } } },
+//                         { $sort: { "_id.year": -1 } },
+//                         { $project: { _id: 0, year: "$_id.year", count: 1 } }
+//                     ],
+
+//                     // STATUS DISTRIBUTION
+//                     statusType: [
+//                         { $group: { _id: "$status", count: { $sum: 1 } } },
+//                         { $project: { _id: 0, type: { $cond: [{ $eq: ["$_id", true] }, "active", "deactive"] }, count: 1 } }
+//                     ],
+
+//                     assignType: [
+//                         { $group: { _id: "$assign_status", count: { $sum: 1 } } },
+//                         { $project: { _id: 0, type: { $cond: [{ $eq: ["$_id", true] }, "assigned", "unassigned"] }, count: 1 } }
+//                     ]
+//                 }
+//             }
+//         ]);
+
+//         res.json({
+//             success: true,
+//             created: {
+//                 weekly: analytics[0].createdWeekly,
+//                 monthly: analytics[0].createdMonthly,
+//                 yearly: analytics[0].createdYearly
+//             },
+//             activeStatus: {
+//                 weekly: analytics[0].activeStatusWeekly,
+//                 monthly: analytics[0].activeStatusMonthly,
+//                 yearly: analytics[0].activeStatusYearly
+//             },
+//             assigned: {
+//                 weekly: analytics[0].assignedWeekly,
+//                 monthly: analytics[0].assignedMonthly,
+//                 yearly: analytics[0].assignedYearly
+//             },
+//             statusDeactivated: {
+//                 weekly: analytics[0].statusDeactivatedWeekly,
+//                 monthly: analytics[0].statusDeactivatedMonthly,
+//                 yearly: analytics[0].statusDeactivatedYearly
+//             },
+//             statusType: analytics[0].statusType,
+//             assignType: analytics[0].assignType
+//         });
+
+//     } catch (err) {
+//         res.status(500).json({ success: false, message: err.message });
+//     }
+// };
+
+
+// ---------- helpers for filling missing periods ----------
+
+// years: [2023, 2024, 2025]
+// years: [{ year: 2024, count: 0 }, ...]
+function generateYears(startYear, endYear) {
+    const result = [];
+    for (let y = startYear; y <= endYear; y++) {
+        result.push({ year: y, count: 0 });
+    }
+    return result;
+}
+
+// months: [{ month: "2024-1", count: 0 }, ..., { month: "2025-12", count: 0 }]
+function generateMonthsForYears(startYear, endYear) {
+    const result = [];
+    for (let y = startYear; y <= endYear; y++) {
+        for (let m = 1; m <= 12; m++) {
+            result.push({ month: `${y}-${m}`, count: 0 });
+        }
+    }
+    return result;
+}
+
+// weeks: [{ week: "2024-W1", count: 0 }, ..., { week: "2025-W52", count: 0 }]
+function generateWeeksForYears(startYear, endYear) {
+    const result = [];
+    for (let y = startYear; y <= endYear; y++) {
+        for (let w = 1; w <= 52; w++) { // enough for charts
+            result.push({ week: `${y}-W${w}`, count: 0 });
+        }
+    }
+    return result;
+}
+
+// merge DB result into the full range
+function mergeRange(fullRange, dbData = [], keyName) {
+    return fullRange.map(item => {
+        const found = dbData.find(d => d[keyName] === item[keyName]);
+        return found ? { ...item, count: found.count } : item;
+    });
+}
+
 exports.getAnalasitic = async (req, res) => {
     try {
         const analytics = await Device.aggregate([
@@ -578,12 +748,36 @@ exports.getAnalasitic = async (req, res) => {
                     createdWeekly: [
                         { $group: { _id: { week: { $isoWeek: "$createdAt" }, year: { $year: "$createdAt" } }, count: { $sum: 1 } } },
                         { $sort: { "_id.year": -1, "_id.week": -1 } },
-                        { $project: { _id: 0, week: { $concat: [{ $toString: "$_id.year" }, "-W", { $toString: "$_id.week" }] }, count: 1 } }
+                        {
+                            $project: {
+                                _id: 0,
+                                week: {
+                                    $concat: [
+                                        { $toString: "$_id.year" },
+                                        "-W",
+                                        { $toString: "$_id.week" }
+                                    ]
+                                },
+                                count: 1
+                            }
+                        }
                     ],
                     createdMonthly: [
                         { $group: { _id: { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } }, count: { $sum: 1 } } },
                         { $sort: { "_id.year": -1, "_id.month": -1 } },
-                        { $project: { _id: 0, month: { $concat: [{ $toString: "$_id.year" }, "-", { $toString: "$_id.month" }] }, count: 1 } }
+                        {
+                            $project: {
+                                _id: 0,
+                                month: {
+                                    $concat: [
+                                        { $toString: "$_id.year" },
+                                        "-",
+                                        { $toString: "$_id.month" }
+                                    ]
+                                },
+                                count: 1
+                            }
+                        }
                     ],
                     createdYearly: [
                         { $group: { _id: { year: { $year: "$createdAt" } }, count: { $sum: 1 } } },
@@ -596,13 +790,37 @@ exports.getAnalasitic = async (req, res) => {
                         { $match: { status: true, createdAt: { $ne: null } } },
                         { $group: { _id: { week: { $isoWeek: "$createdAt" }, year: { $year: "$createdAt" } }, count: { $sum: 1 } } },
                         { $sort: { "_id.year": -1, "_id.week": -1 } },
-                        { $project: { _id: 0, week: { $concat: [{ $toString: "$_id.year" }, "-W", { $toString: "$_id.week" }] }, count: 1 } }
+                        {
+                            $project: {
+                                _id: 0,
+                                week: {
+                                    $concat: [
+                                        { $toString: "$_id.year" },
+                                        "-W",
+                                        { $toString: "$_id.week" }
+                                    ]
+                                },
+                                count: 1
+                            }
+                        }
                     ],
                     activeStatusMonthly: [
                         { $match: { status: true, createdAt: { $ne: null } } },
                         { $group: { _id: { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } }, count: { $sum: 1 } } },
                         { $sort: { "_id.year": -1, "_id.month": -1 } },
-                        { $project: { _id: 0, month: { $concat: [{ $toString: "$_id.year" }, "-", { $toString: "$_id.month" }] }, count: 1 } }
+                        {
+                            $project: {
+                                _id: 0,
+                                month: {
+                                    $concat: [
+                                        { $toString: "$_id.year" },
+                                        "-",
+                                        { $toString: "$_id.month" }
+                                    ]
+                                },
+                                count: 1
+                            }
+                        }
                     ],
                     activeStatusYearly: [
                         { $match: { status: true, createdAt: { $ne: null } } },
@@ -616,13 +834,37 @@ exports.getAnalasitic = async (req, res) => {
                         { $match: { status: false, updatedAt: { $ne: null } } },
                         { $group: { _id: { week: { $isoWeek: "$updatedAt" }, year: { $year: "$updatedAt" } }, count: { $sum: 1 } } },
                         { $sort: { "_id.year": -1, "_id.week": -1 } },
-                        { $project: { _id: 0, week: { $concat: [{ $toString: "$_id.year" }, "-W", { $toString: "$_id.week" }] }, count: 1 } }
+                        {
+                            $project: {
+                                _id: 0,
+                                week: {
+                                    $concat: [
+                                        { $toString: "$_id.year" },
+                                        "-W",
+                                        { $toString: "$_id.week" }
+                                    ]
+                                },
+                                count: 1
+                            }
+                        }
                     ],
                     statusDeactivatedMonthly: [
                         { $match: { status: false, updatedAt: { $ne: null } } },
                         { $group: { _id: { month: { $month: "$updatedAt" }, year: { $year: "$updatedAt" } }, count: { $sum: 1 } } },
                         { $sort: { "_id.year": -1, "_id.month": -1 } },
-                        { $project: { _id: 0, month: { $concat: [{ $toString: "$_id.year" }, "-", { $toString: "$_id.month" }] }, count: 1 } }
+                        {
+                            $project: {
+                                _id: 0,
+                                month: {
+                                    $concat: [
+                                        { $toString: "$_id.year" },
+                                        "-",
+                                        { $toString: "$_id.month" }
+                                    ]
+                                },
+                                count: 1
+                            }
+                        }
                     ],
                     statusDeactivatedYearly: [
                         { $match: { status: false, updatedAt: { $ne: null } } },
@@ -636,13 +878,37 @@ exports.getAnalasitic = async (req, res) => {
                         { $match: { assign_status: true, assignedAt: { $ne: null } } },
                         { $group: { _id: { week: { $isoWeek: "$assignedAt" }, year: { $year: "$assignedAt" } }, count: { $sum: 1 } } },
                         { $sort: { "_id.year": -1, "_id.week": -1 } },
-                        { $project: { _id: 0, week: { $concat: [{ $toString: "$_id.year" }, "-W", { $toString: "$_id.week" }] }, count: 1 } }
+                        {
+                            $project: {
+                                _id: 0,
+                                week: {
+                                    $concat: [
+                                        { $toString: "$_id.year" },
+                                        "-W",
+                                        { $toString: "$_id.week" }
+                                    ]
+                                },
+                                count: 1
+                            }
+                        }
                     ],
                     assignedMonthly: [
                         { $match: { assign_status: true, assignedAt: { $ne: null } } },
                         { $group: { _id: { month: { $month: "$assignedAt" }, year: { $year: "$assignedAt" } }, count: { $sum: 1 } } },
                         { $sort: { "_id.year": -1, "_id.month": -1 } },
-                        { $project: { _id: 0, month: { $concat: [{ $toString: "$_id.year" }, "-", { $toString: "$_id.month" }] }, count: 1 } }
+                        {
+                            $project: {
+                                _id: 0,
+                                month: {
+                                    $concat: [
+                                        { $toString: "$_id.year" },
+                                        "-",
+                                        { $toString: "$_id.month" }
+                                    ]
+                                },
+                                count: 1
+                            }
+                        }
                     ],
                     assignedYearly: [
                         { $match: { assign_status: true, assignedAt: { $ne: null } } },
@@ -654,145 +920,80 @@ exports.getAnalasitic = async (req, res) => {
                     // STATUS DISTRIBUTION
                     statusType: [
                         { $group: { _id: "$status", count: { $sum: 1 } } },
-                        { $project: { _id: 0, type: { $cond: [{ $eq: ["$_id", true] }, "active", "deactive"] }, count: 1 } }
+                        {
+                            $project: {
+                                _id: 0,
+                                type: { $cond: [{ $eq: ["$_id", true] }, "active", "deactive"] },
+                                count: 1
+                            }
+                        }
                     ],
 
                     assignType: [
                         { $group: { _id: "$assign_status", count: { $sum: 1 } } },
-                        { $project: { _id: 0, type: { $cond: [{ $eq: ["$_id", true] }, "assigned", "unassigned"] }, count: 1 } }
+                        {
+                            $project: {
+                                _id: 0,
+                                type: { $cond: [{ $eq: ["$_id", true] }, "assigned", "unassigned"] },
+                                count: 1
+                            }
+                        }
                     ]
                 }
             }
         ]);
 
+        const row = analytics[0] || {};
+
+        // ---------- FIXED: last 7 years (including current) ----------
+        const currentYear = new Date().getFullYear();  // e.g. 2025
+        const minYear = currentYear - 6;               // 2019
+        const maxYear = currentYear;                   // 2025
+
+        // ---------- build full ranges ----------
+        const fullYears = generateYears(minYear, maxYear);             // 2019..2025
+        const fullMonths = generateMonthsForYears(minYear, maxYear);   // all 12 months each year
+        const fullWeeks = generateWeeksForYears(minYear, maxYear);     // 52 weeks per year
+
+        // ---------- merge DB data into full ranges ----------
+        const created = {
+            weekly: mergeRange(fullWeeks, row.createdWeekly, "week"),
+            monthly: mergeRange(fullMonths, row.createdMonthly, "month"),
+            yearly: mergeRange(fullYears, row.createdYearly, "year")
+        };
+
+        const activeStatus = {
+            weekly: mergeRange(fullWeeks, row.activeStatusWeekly, "week"),
+            monthly: mergeRange(fullMonths, row.activeStatusMonthly, "month"),
+            yearly: mergeRange(fullYears, row.activeStatusYearly, "year")
+        };
+
+        const assigned = {
+            weekly: mergeRange(fullWeeks, row.assignedWeekly, "week"),
+            monthly: mergeRange(fullMonths, row.assignedMonthly, "month"),
+            yearly: mergeRange(fullYears, row.assignedYearly, "year")
+        };
+
+        const statusDeactivated = {
+            weekly: mergeRange(fullWeeks, row.statusDeactivatedWeekly, "week"),
+            monthly: mergeRange(fullMonths, row.statusDeactivatedMonthly, "month"),
+            yearly: mergeRange(fullYears, row.statusDeactivatedYearly, "year")
+        };
+
+        // ---------- final response ----------
         res.json({
             success: true,
-            created: {
-                weekly: analytics[0].createdWeekly,
-                monthly: analytics[0].createdMonthly,
-                yearly: analytics[0].createdYearly
-            },
-            activeStatus: {
-                weekly: analytics[0].activeStatusWeekly,
-                monthly: analytics[0].activeStatusMonthly,
-                yearly: analytics[0].activeStatusYearly
-            },
-            assigned: {
-                weekly: analytics[0].assignedWeekly,
-                monthly: analytics[0].assignedMonthly,
-                yearly: analytics[0].assignedYearly
-            },
-            statusDeactivated: {
-                weekly: analytics[0].statusDeactivatedWeekly,
-                monthly: analytics[0].statusDeactivatedMonthly,
-                yearly: analytics[0].statusDeactivatedYearly
-            },
-            statusType: analytics[0].statusType,
-            assignType: analytics[0].assignType
+            created,
+            activeStatus,
+            assigned,
+            statusDeactivated,
+            statusType: row.statusType || [],
+            assignType: row.assignType || []
         });
 
     } catch (err) {
+        console.error("getAnalasitic error:", err);
         res.status(500).json({ success: false, message: err.message });
     }
 };
 
-
-// ---------- helpers for filling missing periods ----------
-
-// years: [2023, 2024, 2025]
-// years: [{ year: 2024, count: 0 }, ...]
-// RANDOM GENERATOR
-// function randomInt(min, max) {
-//     return Math.floor(Math.random() * (max - min + 1)) + min;
-// }
-
-// // Weekly data: 10 entries
-// function generateWeekly() {
-//     const result = [];
-//     const today = new Date();
-
-//     for (let i = 0; i < 10; i++) {
-//         const date = new Date(today);
-//         date.setDate(today.getDate() - i * 7);
-
-//         const year = date.getFullYear();
-//         const oneJan = new Date(year, 0, 1);
-//         const week = Math.ceil((((date - oneJan) / 86400000) + oneJan.getDay() + 1) / 7);
-
-//         result.push({
-//             week: `${year}-W${week}`,
-//             count: randomInt(10, 80)
-//         });
-//     }
-
-//     return result.reverse();
-// }
-
-// // Monthly data: 12 entries
-// function generateMonthly() {
-//     const result = [];
-//     const currentYear = new Date().getFullYear();
-
-//     for (let m = 1; m <= 12; m++) {
-//         result.push({
-//             month: `${currentYear}-${m}`,
-//             count: randomInt(50, 200)
-//         });
-//     }
-
-//     return result;
-// }
-
-// // Yearly data: 10 entries
-// function generateYearly() {
-//     const result = [];
-//     const currentYear = new Date().getFullYear();
-
-//     for (let y = 0; y < 10; y++) {
-//         result.push({
-//             year: currentYear - y,
-//             count: randomInt(200, 1500)
-//         });
-//     }
-
-//     return result.reverse();
-// }
-
-// exports.getAnalasitic = async (req, res) => {
-//     try {
-//         res.json({
-//             success: true,
-//             created: {
-//                 weekly: generateWeekly(),
-//                 monthly: generateMonthly(),
-//                 yearly: generateYearly()
-//             },
-//             activeStatus: {
-//                 weekly: generateWeekly(),
-//                 monthly: generateMonthly(),
-//                 yearly: generateYearly()
-//             },
-//             assigned: {
-//                 weekly: generateWeekly(),
-//                 monthly: generateMonthly(),
-//                 yearly: generateYearly()
-//             },
-//             statusDeactivated: {
-//                 weekly: generateWeekly(),
-//                 monthly: generateMonthly(),
-//                 yearly: generateYearly()
-//             },
-//             statusType: [
-//                 { type: "active", count: randomInt(50, 100) },
-//                 { type: "deactive", count: randomInt(10, 40) }
-//             ],
-//             assignType: [
-//                 { type: "assigned", count: randomInt(40, 90) },
-//                 { type: "unassigned", count: randomInt(10, 40) }
-//             ]
-//         });
-
-//     } catch (err) {
-//         res.status(500).json({ success: false, message: err.message });
-//     }
-// };

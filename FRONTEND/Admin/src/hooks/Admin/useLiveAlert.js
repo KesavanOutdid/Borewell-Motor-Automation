@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { WS_URL } from "../../config/websocket";
 
 const useLiveAlert = (serialNumber) => {
     const [alert, setAlert] = useState(null);
@@ -10,7 +11,7 @@ const useLiveAlert = (serialNumber) => {
         const store = JSON.parse(localStorage.getItem("live-alert")) || {};
         if (store[serialNumber]) setAlert(store[serialNumber]);
 
-        const socket = new WebSocket("ws://localhost:8081");
+        const socket = new WebSocket(WS_URL);
 
         socket.onmessage = (event) => {
             const data = JSON.parse(event.data);

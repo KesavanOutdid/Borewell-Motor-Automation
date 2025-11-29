@@ -9,6 +9,9 @@ const client = mqtt.connect(process.env.MQTT_BROKER, {
     password: process.env.MQTT_PASSWORD,
     clientId,
     clean: true,
+    keepalive: 30,
+    reconnectPeriod: 5000,
+    connectTimeout: 4000,
 });
 
 // Fetch configured & active devices that are assigned to users
@@ -21,22 +24,44 @@ async function getConfiguredDevices() {
     });
 }
 
+let intervals = [];
+
 client.on('connect', () => {
     console.log(`Publisher Connected as ${clientId}`);
 
+    intervals.forEach(id => clearInterval(id));
+    intervals = [];
+
     sendBoot();
 
-    setInterval(sendHeartbeat, 25 * 60 * 1000); // 10000
-    setInterval(sendStatusAck, 10000); // 25 * 60 * 1000
-    setInterval(sendTelemetry, 10000);
-    setInterval(sendAlert, 25 * 60 * 1000);
+    intervals.push(setInterval(sendHeartbeat, 10000));
+    intervals.push(setInterval(sendStatusAck, 10000));
+    intervals.push(setInterval(sendTelemetry, 5000));
+    intervals.push(setInterval(sendAlert, 10000));
+});
+
+client.on('error', (err) => {
+    console.error('MQTT Connection Error:', err);
+});
+
+client.on('offline', () => {
+    console.warn('MQTT Client went offline');
+});
+
+client.on('reconnect', () => {
+    console.log('MQTT Client attempting to reconnect...');
 });
 
 // MQTT Publish Wrapper
 function publish(topic, payload) {
-    client.publish(topic, JSON.stringify(payload), { qos: 0 }, err => {
-        if (err) console.error("Publish error:", err);
-        else console.log("Published:", topic);
+    if (!client.connected) {
+        console.warn(`Cannot publish to ${topic} - MQTT client not connected`);
+        return;
+    }
+
+    client.publish(topic, JSON.stringify(payload), { qos: 1 }, err => {
+        if (err) console.error(`Publish error on ${topic}:`, err);
+        else console.log(`Published: ${topic}`);
     });
 }
 
@@ -68,11 +93,46 @@ async function sendBoot() {
 /* --------------------------------------------------------------------- */
 /* HEARTBEAT – only when motor is OFF                                   */
 /* --------------------------------------------------------------------- */
+// async function sendHeartbeat() {
+//     const devices = await getConfiguredDevices();
+
+//     devices.forEach(d => {
+//         if (d.start_status) return;  // motor ON → do not send HEARTBEAT
+
+//         publish(`borewell/${d.serial_number}/heartbeat`, {
+//             v: 1,
+//             message_type: "HEARTBEAT",
+//             serial_number: d.serial_number,
+//             imei_number: d.imei_number,
+//             user_id: d.assigned_user_id,
+//             timestamp: new Date().toISOString(),
+//             device_status: "Online",
+//             signal_strength: 30 + Math.floor(Math.random() * 20)
+//         });
+//     });
+// }
+
 async function sendHeartbeat() {
     const devices = await getConfiguredDevices();
 
     devices.forEach(d => {
-        if (d.start_status) return;  // motor ON → do not send HEARTBEAT
+        // When motor running → force Online heartbeat ONLY for this device
+        if (d.start_status === true) {
+            publish(`borewell/${d.serial_number}/heartbeat`, {
+                v: 1,
+                message_type: "HEARTBEAT",
+                serial_number: d.serial_number,
+                imei_number: d.imei_number,
+                user_id: d.assigned_user_id,
+                timestamp: new Date().toISOString(),
+                device_status: "Online",
+                signal_strength: 30 + Math.floor(Math.random() * 20)
+            });
+            return;
+        }
+
+        // Random Online/Offline when motor is off
+        const randomStatus = Math.random() > 0.5 ? "Online" : "Offline";
 
         publish(`borewell/${d.serial_number}/heartbeat`, {
             v: 1,
@@ -81,8 +141,8 @@ async function sendHeartbeat() {
             imei_number: d.imei_number,
             user_id: d.assigned_user_id,
             timestamp: new Date().toISOString(),
-            device_status: "Online",
-            signal_strength: 30 + Math.floor(Math.random() * 20)
+            device_status: randomStatus,
+            signal_strength: 10 + Math.floor(Math.random() * 10)
         });
     });
 }

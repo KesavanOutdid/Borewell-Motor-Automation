@@ -1,9 +1,18 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import { Link } from 'react-router-dom';
 import SignInHandler from '../../../hooks/Admin/useSignIn'; 
 import { sanitizeEmail, sanitizePassword } from '../../../utils/validation';
+import { useNavigate } from "react-router-dom";
 
-const SignIn = ({handleSignIn}) => {
+const SignIn = ({ handleSignIn, userInfo }) => {
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (userInfo?.token) {
+            navigate("/admin/dashboard", { replace: true });
+        }
+    }, [userInfo?.token, navigate]);
+
     const { user_email, setEmail, passwords, setPassword, errorMessage, successMessage, handleSignInFormSubmit, loadingSubmit} = SignInHandler(handleSignIn);
     console.log(successMessage);
     

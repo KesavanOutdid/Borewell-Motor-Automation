@@ -103,8 +103,8 @@ const localIP = getLocalIP();
 // ----------------------------
 // WEBSOCKET SERVER
 // ----------------------------
-const wss = new WebSocket.Server({ port: 8081 });
-console.log("WebSocket Server running on ws://localhost:8081");
+const wss = new WebSocket.Server({ port: 8081, host: "0.0.0.0" });
+console.log(`WebSocket Server running on ws://${localIP}:8081`);
 
 function broadcast(data) {
     const payload = JSON.stringify(data);
@@ -130,6 +130,7 @@ if (require.main === module) {
         console.log(` Local URL:   http://localhost:${port}`);
         console.log(` Network URL: http://${localIP}:${port}`);
         console.log(` Swagger UI:  http://${localIP}:${port}/api-docs`);
+        console.log(` WebSocket:   ws://${localIP}:8081`);
         console.log("=====================================\n");
     });
 }

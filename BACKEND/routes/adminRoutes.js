@@ -306,4 +306,6 @@ router.post("/manageUserUpdated", adminCtrl.manageUserUpdated);
 
 router.get("/getAssignDevices", adminCtrl.getAssignDevices);
 
+router.get("/getAnalasitic", adminCtrl.getAnalasitic);
+
 module.exports = router;

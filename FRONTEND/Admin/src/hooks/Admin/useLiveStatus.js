@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { WS_URL } from "../../config/websocket";
 
 const useLiveStatus = (serialNumber) => {
     const [status, setStatus] = useState(null);
@@ -20,7 +21,7 @@ const useLiveStatus = (serialNumber) => {
         setLastStop(null);
         prevMotorRunning.current = null;
 
-        const socket = new WebSocket("ws://localhost:8081");
+        const socket = new WebSocket(WS_URL);
 
         socket.onmessage = (event) => {
             const data = JSON.parse(event.data);

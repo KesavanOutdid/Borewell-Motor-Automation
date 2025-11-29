@@ -4,7 +4,6 @@ import { useHeaderLogic } from '../../hooks/Admin/useHeader';
 const Header = ({ userInfo, handleLogout }) => {
     const location = useLocation(); // React Router's useLocation hook
 
-    // Determine the page title based on the pathname
     const pageTitle = () => {
         switch (location.pathname) {
         case '/admin/dashboard':
@@ -17,6 +16,8 @@ const Header = ({ userInfo, handleLogout }) => {
             return 'Manage User Roles';
         case '/admin/manage-users':
             return 'Manage Users';
+        case '/admin/manage-users-view':
+            return 'User Details & Devices';
         case '/admin/manage-device-type':
             return 'Manage Device Type';
         case '/admin/channel-history':

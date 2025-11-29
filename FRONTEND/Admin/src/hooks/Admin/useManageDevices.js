@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { sanitizeSerialNumber } from '../../utils/validation';
 import { showAlertSuccess } from '../../utils/alert';
 import Chart from 'chart.js/auto';
@@ -35,7 +35,6 @@ const useManageDevices = (userInfo) => {
     const [assignErrorMessage, setAssignErrorMessage] = useState('');
     const [loadingSubmit, setLoadingSubmit] = useState(false);
     const [loadingUpdate, setLoadingUpdate] = useState(false);
-    const chartInitialized = useRef(null);
 
     // Function to fetch users data
     useEffect(() => {
@@ -211,144 +210,6 @@ const useManageDevices = (userInfo) => {
         setLoadingSubmit(false);
     };
 
-    // Render charts when devices data is available
-    useEffect(() => {
-        if (!chartInitialized.current && devices.length > 0) {
-            renderCharts(devices);
-            chartInitialized.current = true;
-        }
-    }, [devices]);
-
-    // Chart rendering function
-    const renderCharts = (chartData) => {
-        if (!chartData || chartData.length === 0) return;
-
-        // Group data by month
-        const monthlyData = {};
-
-        chartData.forEach((item) => {
-            const date = new Date(item.created_date);
-            const monthLabel = date.toLocaleString("en-US", { month: "short" }); // "Jan", "Feb", etc.
-
-            if (!monthlyData[monthLabel]) {
-                monthlyData[monthLabel] = {
-                    createdCount: 0,
-                    activeCount: 0,
-                    deactivatedCount: 0
-                };
-            }
-
-            monthlyData[monthLabel].createdCount += 1;
-            if (item.status) {
-                monthlyData[monthLabel].activeCount += 1;
-            } else {
-                monthlyData[monthLabel].deactivatedCount += 1;
-            }
-        });
-
-        // Get the last 12 months
-        const labels = [];
-        const createdCounts = [];
-        const activeCounts = [];
-        const deactivatedCounts = [];
-
-        const currentDate = new Date();
-        for (let i = 11; i >= 0; i--) {
-            const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-            const monthLabel = date.toLocaleString("en-US", { month: "short" });
-
-            labels.push(monthLabel);
-            createdCounts.push(monthlyData[monthLabel]?.createdCount || 0);
-            activeCounts.push(monthlyData[monthLabel]?.activeCount || 0);
-            deactivatedCounts.push(monthlyData[monthLabel]?.deactivatedCount || 0);
-        }
-
-        // Ensure the canvas elements exist
-        const barCanvas = document.getElementById("chart-bars");
-        const lineCanvas = document.getElementById("chart-line");
-
-        if (!barCanvas || !lineCanvas) return;
-
-        const ctx1 = barCanvas.getContext("2d");
-        new Chart(ctx1, {
-            type: "bar",
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: "Devices Created",
-                        backgroundColor: "#4CAF50",
-                        data: createdCounts,
-                        maxBarThickness: 6,
-                    },
-                ],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            color: "#fff",
-                            stepSize: 5, // Ensures tick values are 1, 5, 10, 15
-                            callback: (value) => (value % 5 === 0 ? value : null)
-                        },
-                    },
-                    x: {
-                        ticks: { color: "#fff" },
-                    },
-                },
-            },
-        });
-
-        const ctx2 = lineCanvas.getContext("2d");
-        new Chart(ctx2, {
-            type: "line",
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: "Active Devices",
-                        borderColor: "#4CAF50",
-                        backgroundColor: "rgba(76, 175, 80, 0.2)",
-                        fill: true,
-                        data: activeCounts,
-                        tension: 0.4,
-                    },
-                    {
-                        label: "Deactivated Devices",
-                        borderColor: "#F44336",
-                        backgroundColor: "rgba(244, 67, 54, 0.2)",
-                        fill: true,
-                        data: deactivatedCounts,
-                        tension: 0.4,
-                    },
-                ],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: true },
-                },
-                scales: {
-                    y: {
-                        ticks: {
-                            color: "#b2b9bf",
-                            stepSize: 5,
-                            callback: (value) => (value % 5 === 0 ? value : null)
-                        },
-                    },
-                    x: { ticks: { color: "#b2b9bf" } },
-                },
-            },
-        });
-    };
-
     // Pagination functions
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
@@ -360,11 +221,169 @@ const useManageDevices = (userInfo) => {
         fetchDeviceData(1, newLimit); // Reset to page 1 when limit changes
     };
 
+    // fetch analytics Data
+    const [analytics, setAnalytics] = useState(null);
+    const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+    const [errorAnalytics, setErrorAnalytics] = useState(null);
+
+    const analyticsFetched = useRef(false);
+
+    const fetchAnalyticsData = useCallback(async () => {
+        try {
+            setLoadingAnalytics(true);
+            const response = await fetch(`${API_BASE}/admin/getAnalasitic`, {
+                method: "GET",
+                headers: { "Content-Type": "application/json" }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setAnalytics(data);
+            } else {
+                const errorData = await response.json();
+                setErrorAnalytics(errorData.message);
+            }
+            setLoadingAnalytics(false);
+        } catch (error) {
+            setErrorAnalytics("An error occurred while fetching analytics.");
+            setLoadingAnalytics(false);
+        }
+    }, [API_BASE]);
+
+    useEffect(() => {
+        if (!analyticsFetched.current) {
+            fetchAnalyticsData();
+            analyticsFetched.current = true;
+        }
+    }, [fetchAnalyticsData]);
+
+    // which view: 'weekly' | 'monthly' | 'yearly'
+    const [chartType, setChartType] = useState("weekly");
+
+    // Chart.js instance ref so we can destroy/recreate
+    const chartInstanceRef = useRef(null);
+
+    const prepareAnalyticsData = () => {
+        let labels = [];
+        let created = [];
+        let active = [];
+        let assigned = [];
+        let deactivated = [];
+
+        if (chartType === "weekly") {
+            labels = analytics.created.weekly.map(x => x.week);
+            created = analytics.created.weekly.map(x => x.count);
+            active = analytics.activeStatus.weekly.map(x => x.count);
+            assigned = analytics.assigned.weekly.map(x => x.count);
+            deactivated = analytics.statusDeactivated.weekly.map(x => x.count);
+        } else if (chartType === "monthly") {
+            labels = analytics.created.monthly.map(x => x.month);
+            created = analytics.created.monthly.map(x => x.count);
+            active = analytics.activeStatus.monthly.map(x => x.count);
+            assigned = analytics.assigned.monthly.map(x => x.count);
+            deactivated = analytics.statusDeactivated.monthly.map(x => x.count);
+        } else if (chartType === "yearly") {
+            labels = analytics.created.yearly.map(x => x.year);
+            created = analytics.created.yearly.map(x => x.count);
+            active = analytics.activeStatus.yearly.map(x => x.count);
+            assigned = analytics.assigned.yearly.map(x => x.count);
+            deactivated = analytics.statusDeactivated.yearly.map(x => x.count);
+        }
+
+        return { labels, created, active, assigned, deactivated };
+    };
+
+
+    useEffect(() => {
+        if (!analytics) return;
+
+        const canvas = document.getElementById("chart-line");
+        if (!canvas) return;
+
+        const { labels, created, active, assigned, deactivated } = prepareAnalyticsData();
+
+        if (chartInstanceRef.current) {
+            chartInstanceRef.current.destroy();
+        }
+
+        const ctx = canvas.getContext("2d");
+
+        chartInstanceRef.current = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: "Created",
+                        data: created,
+                        borderColor: "#1E88E5",
+                        backgroundColor: "rgba(30, 136, 229, .2)",
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                    },
+                    {
+                        label: "Active",
+                        data: active,
+                        borderColor: "#4CAF50",
+                        backgroundColor: "rgba(76, 175, 80, .2)",
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                    },
+                    {
+                        label: "Assigned",
+                        data: assigned,
+                        borderColor: "#FF9800",
+                        backgroundColor: "rgba(255, 152, 0, .2)",
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                    },
+                    {
+                        label: "Deactivated",
+                        data: deactivated,
+                        borderColor: "#F44336",
+                        backgroundColor: "rgba(244, 67, 54, .2)",
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            padding: 20,
+                            font: { size: 13, weight: "bold" }
+                        },
+                    },
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 },
+                    },
+                    x: {
+                        ticks: { maxTicksLimit: 10 },
+                    },
+                },
+            },
+        });
+    }, [analytics, chartType]);
+
+
     return {
         setIsModalCreate, isModalCreate, setIsModalAssign, isModalAssign, serialNumber, setSerialNumber, imeiNumber, setImeiNumber, deviceType, setDeviceType, errorMessage, handleDeviceCreate, closeModal,
         isModalEdit, setIsModalEdit, setIsModalView, isModalView, fetchDeviceData, devices, loading, errorDevice, errorMessageEdit, setErrorMessageEdit, users, errorusers, loadingusers,
         selecteduser, setSelecteduser, handleuserSelection, selectedDevices, setSelectedDevices, handleDeviceSelection, handleAssign, assignErrorMessage, loadingSubmit, loadingUpdate, setLoadingUpdate,
-        pagination, handlePageChange, handleLimitChange
+        pagination, handlePageChange, handleLimitChange,
+        analytics, loadingAnalytics, errorAnalytics,
+        chartType, setChartType
     };
 };
 

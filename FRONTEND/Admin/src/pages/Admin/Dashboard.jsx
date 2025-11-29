@@ -3,10 +3,10 @@ import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
-import MotorRmsCurrent from "../../charts/Admin/MotorRmsCurrent";
-import PvDcVoltage from "../../charts/Admin/PvDcVoltage";
-import MotorVoltageRms from "../../charts/Admin/MotorVoltageRms";
-import PvCurrent from "../../charts/Admin/PvCurrent";
+import MotorFrequency from "../../charts/Admin/MotorFrequency";
+import MotorEnergy from "../../charts/Admin/MotorEnergy";
+import MotorPower from "../../charts/Admin/MotorPower";
+import MotorSpeed from "../../charts/Admin/MotorSpeed";
 import axios from 'axios';
 import useDashboard from '../../hooks/Admin/useDashboard';
 import useLiveTelemetry from "../../hooks/Admin/useLiveTelemetry";
@@ -146,7 +146,9 @@ const Dashboard = ({ userInfo, handleLogout }) => {
 
     const lastStart = liveLastStart ?? selectedAssignedDevice?.startAt;
 
-    const lastStop = selectedAssignedDevice?.start_status ? "-" : (liveLastStop ?? selectedAssignedDevice?.stopAt);
+    const lastStop = status?.motor_running === true 
+        ? "-" 
+        : (liveLastStop ?? selectedAssignedDevice?.stopAt ?? "-");
 
     const deviceStatusText = computeDeviceStatus();
     const deviceStatusColor = computeStatusColor(deviceStatusText);
@@ -156,6 +158,8 @@ const Dashboard = ({ userInfo, handleLogout }) => {
         if (!dateString) return "-";
 
         const date = new Date(dateString);
+        
+        if (isNaN(date.getTime())) return "-";
 
         return date.toLocaleString("en-IN", {
             day: "2-digit",
@@ -166,6 +170,14 @@ const Dashboard = ({ userInfo, handleLogout }) => {
             hour12: true,
         });
     };
+
+    const getDeviceOnlineStatus = () => {
+        if (heartbeat) return "Online";
+        if (boot?.device_status === "READY") return "Online";
+        return "Offline";
+    };
+
+    const deviceOnlineStatus = getDeviceOnlineStatus();
 
     return (
         <div className='' style={{ paddingTop: '15px' }}>
@@ -295,14 +307,22 @@ const Dashboard = ({ userInfo, handleLogout }) => {
 
                     {/* Data and Map start */}
                     <div className="row my-4">
-                        <div className="col-lg-4 col-md-6" style={{ marginBottom: '20px' }}>
+                        <div className="col-lg-4 col-md-6">
                             <div className="card h-100">
                                 <div className="card-header pb-0">
-                                    <h6>Serial Number</h6>
-                                    <p>{selectedAssignedDevice?.serial_number || "-"}</p>
-                                    <h6>IMEI Number</h6>
-                                    <p>{selectedAssignedDevice?.imei_number || "-"}</p>
+                                    <div className="d-flex align-items-center">
+                                        <i className="fas fa-barcode opacity-10 text-success text-gradient me-2"></i>
+                                        <h6 className="mb-0">Serial Number</h6>
+                                    </div>
+                                    <p className="text-dark text-sm ms-4">{selectedAssignedDevice?.serial_number || "-"}</p>
+
+                                    <div className="d-flex align-items-center mt-2">
+                                        <i className="fas fa-sim-card opacity-10 text-success text-gradient me-2"></i>
+                                        <h6 className="mb-0">IMEI Number</h6>
+                                    </div>
+                                    <p className="text-dark text-sm ms-4">{selectedAssignedDevice?.imei_number || "-"}</p>
                                 </div>
+
                                 <div className="card-body p-3">
                                     <div className="timeline timeline-one-side">
                                         <div className="timeline-block mb-2">
@@ -323,66 +343,52 @@ const Dashboard = ({ userInfo, handleLogout }) => {
                                                 <p className="text-secondary font-weight-bold text-xs mt-1 mb-0">{latLonName}</p>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className="container border-radius-lg">
-                                        <div className="row">
+                                        <div className="timeline-block">
+                                            <span className="timeline-step">
+                                                <i className="fas fa-signal text-info text-gradient"></i>
+                                            </span>
+                                            <div className="timeline-content">
+                                                <h4 className="text-dark text-xs mb-0 font-weight-bold">Device Status</h4>
+                                                <h6 className={`font-weight ${deviceOnlineStatus === "Online" ? "text-success" : deviceOnlineStatus === "Offline" ? "text-danger" : "text-warning"}`}>
+                                                    {deviceOnlineStatus}
+                                                </h6>
+                                            </div>
+                                        </div>
 
-                                            {/* Last Updated */}
-                                            <div className="col-12 ps-0">
-                                                <div className="d-flex">
-                                                    <h4 className="text-dark text-xs mt-1 mb-0 font-weight-bold">Last updated on</h4>
-                                                </div>
-                                                <p className="font-weight text-dark ">
-                                                    {formatDateTime(selectedAssignedDevice?.updatedAt)}
+                                        <div className="timeline-block">
+                                            <span className="timeline-step">
+                                                <i className="fas fa-power-off text-primary"></i>
+                                            </span>
+                                            <div className="timeline-content">
+                                                <h4 className="text-dark text-xs mb-0 font-weight-bold">Device Start/Stop</h4>
+                                                <h6 className={`font-weight ${deviceStatusColor}`}>
+                                                    {status?.motor_running === true ? "Started" :
+                                                        status?.motor_running === false ? "Stopped" : "-"}
+                                                </h6>
+                                            </div>
+                                        </div>
+
+                                        <div className="timeline-block">
+                                            <span className="timeline-step">
+                                                <i className="fas fa-play text-success"></i>
+                                            </span>
+                                            <div className="timeline-content">
+                                                <h4 className="text-dark text-xs mt-1 mb-0 font-weight-bold">Device Last Start</h4>
+                                                <p className="font-weight text-dark">
+                                                    {formatDateTime(lastStart)}
                                                 </p>
                                             </div>
+                                        </div>
 
-                                            {/* Device Status */}
-                                            <div className="col-12 ps-0">
-                                                <div className="d-flex justify-content-between align-items-center">
-
-                                                    {status?.motor_running === false  && (
-                                                        <div>
-                                                            <h4 className="text-dark text-xs mb-0 font-weight-bold">Device Status</h4>
-                                                            <h6 className={`font-weight ${deviceStatusColor}`}>
-                                                                {boot?.device_status || heartbeat?.device_status || '-'}
-                                                            </h6>
-                                                        </div>
-                                                    )}
-
-                                                    <div>
-                                                        <h4 className="text-dark text-xs mb-0 font-weight-bold">Device Start/Stop</h4>
-                                                        <h6 className={`font-weight ${deviceStatusColor}`}>
-                                                            {status?.motor_running === true ? "Started" :
-                                                                status?.motor_running === false ? "Stopped" : "-"}
-                                                        </h6>
-                                                    </div>
-
-                                                </div>
-                                            </div>
-
-
-                                            {/* Last Start/Stop Time */}
-                                            <div className="col-12 ps-0">
-                                                <div className="d-flex justify-content-between align-items-center">
-
-                                                    <div>
-                                                        <h4 className="text-dark text-xs mt-1 mb-0 font-weight-bold">Device Last Start</h4>
-                                                        <p className="font-weight text-dark">
-                                                            {formatDateTime(lastStart)}
-                                                        </p>
-                                                    </div>
-
-                                                    <div>
-                                                        <h4 className="text-dark text-xs mt-1 mb-0 font-weight-bold">Device Last Stop</h4>
-                                                        <p className="font-weight text-dark">
-                                                            {status?.motor_running === true 
-                                                                ? "-"
-                                                                : formatDateTime(lastStop)}
-                                                        </p>
-                                                    </div>
-
-                                                </div>
+                                        <div className="timeline-block">
+                                            <span className="timeline-step">
+                                                <i className="fas fa-stop text-danger"></i>
+                                            </span>
+                                            <div className="timeline-content">
+                                                <h4 className="text-dark text-xs mt-1 mb-0 font-weight-bold">Device Last Stop</h4>
+                                                <p className="font-weight text-dark">
+                                                    {status?.motor_running === true ? "-" : formatDateTime(lastStop)}
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
@@ -395,10 +401,17 @@ const Dashboard = ({ userInfo, handleLogout }) => {
                                 <div className="card-header pb-0">
                                     <div className="row">
                                         <div className="col-lg-6 col-7">
-                                            <h6>Device live location</h6>
-                                            <p className="text-sm mb-0">
-                                                <span className="font-weight-bold ms-1" id="Latitude">Latitude: </span>({selectedAssignedDevice?.latitude || '-'})
-                                                <span className="font-weight-bold ms-1" id="Longitude">Longitude: </span>({selectedAssignedDevice?.longitude || '-'})
+                                            <div className="d-flex align-items-center">
+                                                <i className="fas fa-map-marker-alt opacity-10 text-primary text-gradient me-2"></i>
+                                                <h6 className="mb-0">Device Live Location</h6>
+                                            </div>
+
+                                            <p className="text-sm mb-0 mt-1">
+                                                <i className="fas fa-location-arrow text-success me-1"></i>
+                                                <span className="font-weight-bold">Latitude:</span> ({selectedAssignedDevice?.latitude || '-'})
+                                                &nbsp;&nbsp;
+                                                <i className="fas fa-location-arrow text-danger me-1"></i>
+                                                <span className="font-weight-bold">Longitude:</span> ({selectedAssignedDevice?.longitude || '-'})
                                             </p>
                                         </div>
                                     </div>
@@ -406,7 +419,7 @@ const Dashboard = ({ userInfo, handleLogout }) => {
 
                                 <div className="card-body px-0 pb-2" style={{ paddingTop: '0' }}>
                                     <div className="table-responsive">
-                                        <div style={{ width: '100%', height: '470px', position: 'relative', padding: '20px' }}>
+                                        <div style={{ width: '100%', height: '450px', position: 'relative', padding: '20px' }}>
                                             <LoadScript googleMapsApiKey={API_KEY}>
                                                 <GoogleMap
                                                     mapContainerStyle={containerStyle}
@@ -616,32 +629,32 @@ const Dashboard = ({ userInfo, handleLogout }) => {
                         <div className="col-lg-3 mb-lg-0 mb-4">
                             <div className="card">
                                 <div className="card-body p-3">
-                                    <p className="mb-1 pt-2 text-bold text-center">Motor RMS Current</p>
-                                    <MotorRmsCurrent />
+                                    <p className="mb-1 pt-2 text-bold text-center">Motor Frequency</p>
+                                    <MotorFrequency telemetry={telemetry} />
                                 </div>
                             </div>
                         </div>
                         <div className="col-lg-3 mb-lg-0 mb-4">
                             <div className="card">
                                 <div className="card-body p-3">
-                                    <p className="mb-1 pt-2 text-bold text-center">PV / DC Voltage</p>
-                                    <PvDcVoltage />
+                                    <p className="mb-1 pt-2 text-bold text-center">Motor Energy</p>
+                                    <MotorEnergy telemetry={telemetry} />
                                 </div>
                             </div>
                         </div>
                         <div className="col-lg-3 mb-lg-0 mb-4">
                             <div className="card">
                                 <div className="card-body p-3">
-                                    <p className="mb-1 pt-2 text-bold text-center">Motor Voltage RMS</p>
-                                    <MotorVoltageRms />
+                                    <p className="mb-1 pt-2 text-bold text-center">Motor Power</p>
+                                    <MotorPower telemetry={telemetry} />
                                 </div>
                             </div>
                         </div>
                         <div className="col-lg-3 mb-lg-0 mb-4">
                             <div className="card">
                                 <div className="card-body p-3">
-                                    <p className="mb-1 pt-2 text-bold text-center">PV Current</p>
-                                    <PvCurrent />
+                                    <p className="mb-1 pt-2 text-bold text-center">Motor Speed RPM</p>
+                                    <MotorSpeed telemetry={telemetry} />
                                 </div>
                             </div>
                         </div>

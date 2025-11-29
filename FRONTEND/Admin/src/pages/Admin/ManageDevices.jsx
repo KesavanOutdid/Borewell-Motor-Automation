@@ -13,7 +13,12 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
     const { setIsModalCreate, isModalCreate, setIsModalAssign, isModalAssign, serialNumber, setSerialNumber, errorMessage, successMessage, handleDeviceCreate, closeModal,
         isModalEdit, setIsModalEdit, setIsModalView, isModalView, fetchDeviceData, devices, loading, errorDevice, serialNumberUpdate, deviceStatusUpdate, errorMessageEdit, setErrorMessageEdit,
         users, selecteduser, handleuserSelection, selectedDevices, handleDeviceSelection, handleAssign, assignErrorMessage, loadingSubmit, loadingUpdate, setLoadingUpdate,
-        pagination, handlePageChange, handleLimitChange
+        pagination, handlePageChange, handleLimitChange,
+        analytics,
+        loadingAnalytics,
+        errorAnalytics,
+        chartType,
+        setChartType,
     } = useManageDevices(userInfo);
 
     console.log(successMessage);
@@ -125,14 +130,56 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                         <div className="col-12">
                             <div className="card mb-4">
                                 <div className="card-header pb-2">
-                                    <div className="w-40 text-end d-flex gap-2">
-                                        <button className="btn btn-primary mb-0 text-end" style={{ padding: '10px' }} onClick={() => setIsModalCreate(true)}>
-                                            <i className="fas fa-file" aria-hidden="true" style={{ color: 'white' }}></i> Create
-                                        </button>
-                                        <button className="btn bg-gradient-secondary mb-0 text-end" style={{ padding: '10px' }} onClick={() => setIsModalAssign(true)}>
-                                            <i className="fas fa-file" aria-hidden="true" style={{ color: 'white' }}></i> Assign Device
-                                        </button>
+                                    <div className="row g-2 align-items-center">
+                                        <div className="col-md-2 col-6 d-flex align-items-center">
+                                            <button
+                                                className="btn btn-primary mb-0"
+                                                style={{ padding: '10px' }}
+                                                onClick={() => setIsModalCreate(true)}
+                                            >
+                                                <i className="fas fa-file" aria-hidden="true" style={{ color: 'white' }}></i> Create
+                                            </button>
+
+                                            <button
+                                                className="btn bg-gradient-secondary mb-0 ms-2"
+                                                style={{ padding: '10px' }}
+                                                onClick={() => setIsModalAssign(true)}
+                                            >
+                                                <i className="fas fa-file" aria-hidden="true" style={{ color: 'white' }}></i> Assign Device
+                                            </button>
+                                        </div>
+                                        <div className="col-md-2 col-6">
+                                            <div style={{ backgroundColor: '#f0f9ff', padding: '10px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Total Devices</p>
+                                                <p style={{ fontSize: '20px', color: '#1e40af', fontWeight: '700', margin: 0 }}>{pagination?.totalDevices || 0}</p>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-2 col-6">
+                                            <div style={{ backgroundColor: '#f0fdf4', padding: '10px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Active</p>
+                                                <p style={{ fontSize: '20px', color: '#15803d', fontWeight: '700', margin: 0 }}>{pagination?.totalActiveDevices || 0}</p>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-2 col-6">
+                                            <div style={{ backgroundColor: '#fef2f2', padding: '10px', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Inactive</p>
+                                                <p style={{ fontSize: '20px', color: '#991b1b', fontWeight: '700', margin: 0 }}>{pagination?.totalDeactiveDevices || 0}</p>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-2 col-6">
+                                            <div style={{ backgroundColor: '#fefce8', padding: '10px', borderRadius: '8px', border: '1px solid #fcd34d', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Assigned</p>
+                                                <p style={{ fontSize: '20px', color: '#a16207', fontWeight: '700', margin: 0 }}>{pagination?.totalAssignedDevices || 0}</p>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-2 col-6">
+                                            <div style={{ backgroundColor: '#f3e8ff', padding: '10px', borderRadius: '8px', border: '1px solid #e9d5ff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Un-Assigned</p>
+                                                <p style={{ fontSize: '20px', color: '#7e22ce', fontWeight: '700', margin: 0 }}>{pagination?.totalUnassignedDevices || 0}</p>
+                                            </div>
+                                        </div>
                                     </div>
+                                    
                                 </div>
                                 {/* Create Modal */}
                                 {isModalCreate && (
@@ -211,71 +258,100 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                     )}
                                 </>
                                 {/* View Modal */}
-                                {isModalView && (
+                                {isModalView && deviceDetails && (
                                     <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1020 }}>
-                                        <div style={{ backgroundColor: "#fff", padding: "20px", borderRadius: "10px", width: "1000px", boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)" }}>
-                                            <div style={{ display: "flex", justifyContent: "space-between" }}>
-                                                <h5 style={{ margin: 0 }}>Device Details</h5>
-                                                <button onClick={closeModal} style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer", }}> &times; </button>
-                                            </div><hr />
-                                            <div className="row col-12 col-xl-12 viewDataCss">
-                                                {/* Row 1: user Information */}
-                                                <div className="col-md-4">
-                                                    <div className="form-group row">
-                                                        <div className="col-sm-12" style={{ fontWeight: "bold" }}>
-                                                            Serial Number: <span style={{ fontWeight: "normal" }}>{deviceDetails.serial_number || '-'}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-4">
-                                                    <div className="form-group row">
-                                                        <div className="col-sm-12" style={{ fontWeight: "bold" }}>
-                                                            Created By: <span style={{ fontWeight: "normal" }}>{deviceDetails.createdBy || '-'}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-4">
-                                                    <div className="form-group row">
-                                                        <div className="col-sm-12" style={{ fontWeight: "bold" }}>
-                                                            Created At: <span style={{ fontWeight: "normal" }}>{formatDateToIST(deviceDetails.createdAt) || '-'}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                        <div style={{ backgroundColor: "#fff", borderRadius: "12px", width: "95%", maxWidth: "600px", maxHeight: "80vh", overflowY: "auto", boxShadow: "0 10px 30px rgba(0, 0, 0, 0.2)" }}>
+                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px", borderBottom: "1px solid #e0e0e0" }}>
+                                                <h5 style={{ margin: 0, fontSize: "18px", fontWeight: "600", color: "#344767" }}>Device Details</h5>
+                                                <button onClick={closeModal} style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: "#666" }}>&times;</button>
                                             </div>
-                                            <div className="row col-12 col-xl-12 viewDataCss">
-                                                {/* Row 2:  Created Info */}
-                                                <div className="col-md-4">
-                                                    <div className="form-group row">
-                                                        <div className="col-sm-12" style={{ fontWeight: "bold" }}>
-                                                            Updated By: <span style={{ fontWeight: "normal" }}>{deviceDetails.updatedBy || '-'}</span>
+
+                                            <div style={{ padding: "10px" }}>
+                                                <div style={{ marginBottom: "20px" }}>
+                                                    <h6 style={{ fontSize: "13px", fontWeight: "600", color: "#8f9297", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>Device Information</h6>
+                                                    <div style={{ backgroundColor: "#f8f9fa", padding: "15px", borderRadius: "8px" }}>
+                                                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
+                                                            <div>
+                                                                <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>Serial Number</p>
+                                                                <p style={{ margin: "0", fontSize: "14px", fontWeight: "500", color: "#344767" }}>{deviceDetails.serial_number || '-'}</p>
+                                                            </div>
+                                                            <div>
+                                                                <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>Status</p>
+                                                                <span style={{ display: "inline-block", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", backgroundColor: deviceDetails.status ? "#d1fae5" : "#fee2e2", color: deviceDetails.status ? "#065f46" : "#991b1b" }}>
+                                                                    {deviceDetails.status ? 'Active' : 'Inactive'}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="col-md-4">
-                                                    <div className="form-group row">
-                                                        <div className="col-sm-12" style={{ fontWeight: "bold" }}>
-                                                            Updated At: <span style={{ fontWeight: "normal" }}>{formatDateToIST(deviceDetails.updatedAt) || '-'}</span>
+
+                                                <div style={{ marginBottom: "20px" }}>
+                                                    <h6 style={{ fontSize: "13px", fontWeight: "600", color: "#8f9297", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>System Information</h6>
+                                                    <div style={{ backgroundColor: "#f8f9fa", padding: "15px", borderRadius: "8px" }}>
+                                                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
+                                                            <div>
+                                                                <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>Created By</p>
+                                                                <p style={{ margin: "0", fontSize: "14px", fontWeight: "500", color: "#344767" }}>{deviceDetails.createdBy || '-'}</p>
+                                                            </div>
+                                                            <div>
+                                                                <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>Created At</p>
+                                                                <p style={{ margin: "0", fontSize: "14px", fontWeight: "500", color: "#344767" }}>{formatDateToIST(deviceDetails.createdAt) || '-'}</p>
+                                                            </div>
+                                                            <div>
+                                                                <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>Updated By</p>
+                                                                <p style={{ margin: "0", fontSize: "14px", fontWeight: "500", color: "#344767" }}>{deviceDetails.updatedBy || '-'}</p>
+                                                            </div>
+                                                            <div>
+                                                                <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>Updated At</p>
+                                                                <p style={{ margin: "0", fontSize: "14px", fontWeight: "500", color: "#344767" }}>{formatDateToIST(deviceDetails.updatedAt) || '-'}</p>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="col-md-4">
-                                                    <div className="form-group row">
-                                                        <div className="col-sm-12" style={{ fontWeight: "bold" }}>
-                                                            Status: <span
-                                                                style={{
-                                                                    fontWeight: "normal",
-                                                                    color: deviceDetails.status ? 'green' : 'red'
-                                                                }}
-                                                            >
-                                                                {deviceDetails.status ? 'Active' : 'De-Active'}
-                                                            </span>
+
+                                                {deviceDetails.assign_status && (
+                                                    <>
+                                                        <div style={{ marginBottom: "20px" }}>
+                                                            <h6 style={{ fontSize: "13px", fontWeight: "600", color: "#8f9297", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>Assignment Information</h6>
+                                                            <div style={{ backgroundColor: "#f8f9fa", padding: "15px", borderRadius: "8px" }}>
+                                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
+                                                                    <div>
+                                                                        <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>Assigned By</p>
+                                                                        <p style={{ margin: "0", fontSize: "14px", fontWeight: "500", color: "#344767" }}>{deviceDetails.assignedBy || '-'}</p>
+                                                                    </div>
+                                                                    <div>
+                                                                        <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>Assigned At</p>
+                                                                        <p style={{ margin: "0", fontSize: "14px", fontWeight: "500", color: "#344767" }}>{formatDateToIST(deviceDetails.assignedAt || '-')}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </div>
+
+                                                        <div style={{ marginBottom: "20px" }}>
+                                                            <h6 style={{ fontSize: "13px", fontWeight: "600", color: "#8f9297", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>User Information</h6>
+                                                            <div style={{ backgroundColor: "#f8f9fa", padding: "15px", borderRadius: "8px" }}>
+                                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
+                                                                    <div>
+                                                                        <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>User Name</p>
+                                                                        <p style={{ margin: "0", fontSize: "14px", fontWeight: "500", color: "#344767" }}>{deviceDetails.user_details?.user_name || '-'}</p>
+                                                                    </div>
+                                                                    <div>
+                                                                        <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>Phone</p>
+                                                                        <p style={{ margin: "0", fontSize: "14px", fontWeight: "500", color: "#344767" }}>{deviceDetails.user_details?.user_phone || '-'}</p>
+                                                                    </div>
+                                                                    <div>
+                                                                        <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>Email</p>
+                                                                        <p style={{ margin: "0", fontSize: "14px", fontWeight: "500", color: "#344767" }}>{deviceDetails.user_details?.user_email || '-'}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                )}
                                             </div>
-                                            <hr />
-                                            <div style={{ display: "flex", justifyContent: "center", marginTop: "10px" }}>
-                                                <button className="btn btn-secondary mb-0" style={{ padding: '10px' }} onClick={closeModal}>Close</button>
+
+                                            <div style={{ padding: "15px 20px", borderTop: "1px solid #e0e0e0", display: "flex", justifyContent: "center", gap: "10px" }}>
+                                                <button className="btn btn-secondary mb-0" style={{ padding: "10px 20px" }} onClick={closeModal}>Close</button>
                                             </div>
                                         </div>
                                     </div>
@@ -629,47 +705,80 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                             </div>
                         </div>
                     </div>
-
+                    
+                    {/* graph */}
                     <div className="row mt-4">
-                        <div className="col-lg-5 mb-lg-0 mb-4">
-                            <div className="card z-index-2">
-                                <div className="card-body p-3">
-                                    <div className="bg-gradient-dark border-radius-lg py-3 pe-1 mb-3">
-                                        <div className="chart">
-                                            <canvas id="chart-bars" className="chart-canvas" height="200"></canvas>
-                                        </div>
-                                    </div>
-                                    <h6 className="ms-2 mt-4 mb-0">Active Device: <span className="font-weight-bolder">{devices.filter(device => device.device_status === true).length}</span></h6>
-                                    <h6 className="ms-2 mt-3 mb-0">De-Active Device: <span className="font-weight-bolder">{devices.filter(device => device.device_status === false).length}</span></h6>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="col-lg-7">
+                        <div className="col-lg-12">
                             <div className="card z-index-2">
                                 <div className="card-header pb-0">
-                                    <div className="d-flex flex-wrap">
-                                        <p className="text-sm me-3">
-                                            <i className="fa fa-arrow-up text-success"></i>
-                                            <span className="font-weight-bold"> Total Device: {pagination.totalDevices}</span>
-                                        </p>
-                                        <p className="text-sm me-3">
-                                            <i className="fa fa-check text-success"></i>
-                                            <span className="font-weight-bold"> Active Device: {devices.filter(device => device.device_status === true).length} </span>
-                                        </p>
-                                        <p className="text-sm">
-                                            <i className="fa fa-times text-danger"></i>
-                                            <span className="font-weight-bold"> De-Active Device: {devices.filter(device => device.device_status === false).length}</span>
-                                        </p>
+                                    <div className="d-flex flex-wrap justify-content-between align-items-center">
+                                        <div className="d-flex flex-wrap">
+                                            <p className="text-sm me-3 mb-1">
+                                                <i className="fa fa-arrow-up text-success"></i>
+                                                <span className="font-weight-bold">
+                                                    {" "}Total Device: {pagination.totalDevices || "-"}
+                                                </span>
+                                            </p>
+                                            <p className="text-sm me-3 mb-1">
+                                                <i className="fa fa-check text-success"></i>
+                                                <span className="font-weight-bold">
+                                                    {" "}Active Device: {pagination.totalActiveDevices || "-"}
+                                                </span>
+                                            </p>
+                                            <p className="text-sm me-3 mb-1">
+                                                <i className="fa fa-times text-danger"></i>
+                                                <span className="font-weight-bold">
+                                                    {" "}De-Active Device: {pagination.totalDeactiveDevices || "-"}
+                                                </span>
+                                            </p>
+                                            <p className="text-sm me-3 mb-1">
+                                                <i className="fa fa-check text-success"></i>
+                                                <span className="font-weight-bold">
+                                                    {" "}Assigned Device: {pagination.totalAssignedDevices || "-"}
+                                                </span>
+                                            </p>
+                                            <p className="text-sm me-3 mb-1">
+                                                <i className="fa fa-check text-warning"></i>
+                                                <span className="font-weight-bold">
+                                                    {" "}Un-Assigned Device: {pagination.totalUnassignedDevices || "-"}
+                                                </span>
+                                            </p>
+                                        </div>
+
+                                        {/* Filter buttons */}
+                                        <div className="btn-group btn-group-sm mt-2 mt-md-0" role="group">
+                                            <button className={`btn ${chartType === "weekly" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setChartType("weekly")}>
+                                                Weekly
+                                            </button>
+                                            <button className={`btn ${chartType === "monthly" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setChartType("monthly")}>
+                                                Monthly
+                                            </button>
+                                            <button className={`btn ${chartType === "yearly" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setChartType("yearly")}>
+                                                Yearly
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
+
                                 <div className="card-body p-3">
-                                    <div className="chart">
-                                        <canvas id="chart-line" className="chart-canvas" height="260"></canvas>
-                                    </div>
+                                    {loadingAnalytics && (
+                                        <p className="text-center text-sm">Loading analytics...</p>
+                                    )}
+
+                                    {errorAnalytics && (
+                                        <p className="text-center text-sm text-danger">{errorAnalytics}</p>
+                                    )}
+
+                                    {!loadingAnalytics && !errorAnalytics && (
+                                        <div className="chart" style={{ height: "260px" }}>
+                                            <canvas id="chart-line" className="chart-canvas" height="260"></canvas>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
                     </div>
+
                     {/* Footer */}
                     <Footer />
                 </div>

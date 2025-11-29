@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Device = require('../models/Device');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
+const Telemetry = require("../models/Telemetry");
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change_this_secret';
 // const JWT_EXPIRES = '2h';
@@ -398,3 +399,174 @@ exports.userDeviceHistory = async (req, res) => {
         });
     }
 };
+
+exports.getTelemetryAnalytics = async (req, res) => {
+    try {
+        const { serial_number, imei_number, type } = req.query;
+
+        if (!type) {
+            return res.status(400).json({
+                success: false,
+                message: "Please provide type parameter"
+            });
+        }
+
+        const allowedTypes = [
+            "motor_rpm",
+            "motor_frequency_hz",
+            "power_kw",
+            "current_rms",
+            "voltage_rms",
+            "energy_kwh",
+            "device_temp_c",
+            "signal_strength"
+        ];
+
+        if (!allowedTypes.includes(type)) {
+            return res.status(400).json({
+                success: false,
+                message: `Invalid type, allowed: ${allowedTypes.join(", ")}`
+            });
+        }
+
+        // build query filter
+        const filter = { timestamp: { $exists: true } };
+        if (serial_number) filter.serial_number = serial_number;
+        if (imei_number) filter.imei_number = imei_number;
+
+        // ------------------------------------------
+        // 📍 HERE Use the aggregation pipeline
+        // ------------------------------------------
+        const analytics = await Telemetry.aggregate([
+            { $match: filter },
+            {
+                $addFields: {
+                    ts: { $toDate: "$timestamp" } // convert string → date
+                }
+            },
+            {
+                $facet: {
+                    daily: [
+                        {
+                            $group: {
+                                _id: {
+                                    year: { $year: "$ts" },
+                                    month: { $month: "$ts" },
+                                    day: { $dayOfMonth: "$ts" },
+                                    hour: { $hour: "$ts" }
+                                },
+                                value: { $avg: `$${type}` },
+                                count: { $sum: 1 }
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 0,
+                                time: {
+                                    $concat: [
+                                        { $toString: "$_id.year" }, "-",
+                                        { $toString: "$_id.month" }, "-",
+                                        { $toString: "$_id.day" }, " ",
+                                        { $toString: "$_id.hour" }, ":00"
+                                    ]
+                                },
+                                value: 1,
+                                count: 1
+                            }
+                        },
+                        { $sort: { time: 1 } }
+                    ],
+
+                    weekly: [
+                        {
+                            $group: {
+                                _id: {
+                                    week: { $isoWeek: "$ts" },
+                                    year: { $year: "$ts" }
+                                },
+                                value: { $avg: `$${type}` },
+                                count: { $sum: 1 }
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 0,
+                                time: {
+                                    $concat: [
+                                        { $toString: "$_id.year" }, "-W",
+                                        { $toString: "$_id.week" }
+                                    ]
+                                },
+                                value: 1,
+                                count: 1
+                            }
+                        },
+                        { $sort: { time: 1 } }
+                    ],
+
+                    monthly: [
+                        {
+                            $group: {
+                                _id: {
+                                    year: { $year: "$ts" },
+                                    month: { $month: "$ts" }
+                                },
+                                value: { $avg: `$${type}` },
+                                count: { $sum: 1 }
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 0,
+                                time: {
+                                    $concat: [
+                                        { $toString: "$_id.year" }, "-",
+                                        { $toString: "$_id.month" }
+                                    ]
+                                },
+                                value: 1,
+                                count: 1
+                            }
+                        },
+                        { $sort: { time: 1 } }
+                    ],
+
+                    yearly: [
+                        {
+                            $group: {
+                                _id: {
+                                    year: { $year: "$ts" }
+                                },
+                                value: { $avg: `$${type}` },
+                                count: { $sum: 1 }
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 0,
+                                time: { $toString: "$_id.year" },
+                                value: 1,
+                                count: 1
+                            }
+                        },
+                        { $sort: { time: 1 } }
+                    ]
+                }
+            }
+        ]);
+
+        res.json({
+            success: true,
+            type,
+            serial_number,
+            imei_number,
+            data: analytics[0]
+        });
+
+    } catch (err) {
+        console.error("Telemetry analytics error:", err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+

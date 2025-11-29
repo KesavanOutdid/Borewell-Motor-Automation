@@ -1,29 +1,28 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
 import { sanitizeName, sanitizeMobile, sanitizeEmail, sanitizePassword } from '../../utils/validation';
 import useManageUsers from '../../hooks/Admin/useManageUsers';
-import { formatDateToIST } from '../../utils/formatDateToIST';
 import { showAlertSuccess } from '../../utils/alert';
 
 const ManageUsers = ({ userInfo, handleLogout }) => {
     const API_BASE = process.env.REACT_APP_SERVER_URL;
+    const navigate = useNavigate();
 
     const { setIsModalCreate, isModalCreate, userName,
         setUserName, userMobile, setUserMobile, userEmail, setUserEmail, userPassword, setUserPassword, errorMessage,
-        handleUserCreate, closeModal, fetchUserData, users, errorUsers, loadingUsers, isModalEdit, setIsModalEdit, setIsModalView,
-        isModalView, fetchClientData, errorClients, errorMessageEdit, setErrorMessageEdit, fetchUserRoleData,
+        handleUserCreate, closeModal, fetchUserData, users, errorUsers, loadingUsers, isModalEdit, setIsModalEdit,
+        fetchClientData, errorClients, errorMessageEdit, setErrorMessageEdit, fetchUserRoleData,
         errorUserRole, userRolesData, loadingUserRole, selectedUserRoleId, setSelectedUserRoleId, selectedUserRoleName, setSelectedUserRoleName,
         loadingSubmit, loadingUpdate, setLoadingUpdate, pagination, handlePageChange, handleLimitChange,
     } = useManageUsers(userInfo);
 
     const fetchClientDataCalled = useRef(false);
     const fetchUserDataCalled = useRef(false);
-    const [userDetails, setUserDetails] = useState([]);
     const [currentUserDetails, setUserEditDetails] = useState(null);
     const fetchUserRoleDataCalled = useRef(false); // Ref to track if fetch user role has been called
-    const [showPassword, setShowPassword] = useState(false);
     const [isFormDirty, setIsFormDirty] = useState(false);
     const [originalDetails, setOriginalDetails] = useState(null);
 
@@ -73,15 +72,14 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
 
     useEffect(() => {
         if (isModalEdit && currentUserDetails) {
-            setOriginalDetails(currentUserDetails);
+            setOriginalDetails(JSON.parse(JSON.stringify(currentUserDetails)));
             setIsFormDirty(false);
         }
     }, [isModalEdit, currentUserDetails]); 
 
-    // Check if form is dirty
     useEffect(() => {
         if (originalDetails && currentUserDetails) {
-            const isDirty = Object.keys(originalDetails).some(key => originalDetails[key] !== currentUserDetails[key]);
+            const isDirty = JSON.stringify(originalDetails) !== JSON.stringify(currentUserDetails);
             setIsFormDirty(isDirty);
         }
     }, [currentUserDetails, originalDetails]);
@@ -158,10 +156,42 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                         <div className="col-12">
                             <div className="card mb-4">
                                 <div className="card-header pb-2">
-                                    <div className="w-40 text-end d-flex gap-2">
-                                        <button className="btn btn-primary mb-0 text-end" style={{ padding: '10px' }} onClick={() => setIsModalCreate(true)}>
-                                            <i className="fas fa-file" aria-hidden="true" style={{ color: 'white' }}></i> Create
-                                        </button>
+                                    <div className="row g-2 align-items-center">
+                                        <div className="col-md-2 col-6 d-flex align-items-center">
+                                            <button className="btn btn-primary mb-0" style={{ padding: '10px', width: '50%' }} onClick={() => setIsModalCreate(true)}>
+                                                <i className="fas fa-file" aria-hidden="true" style={{ color: 'white' }}></i> Create
+                                            </button>
+                                        </div>
+                                        <div className="col-md-2 col-6">
+                                            <div style={{ backgroundColor: '#f0f9ff', padding: '10px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Total Users</p>
+                                                <p style={{ fontSize: '20px', color: '#1e40af', fontWeight: '700', margin: 0 }}>{pagination?.totalUsers || 0}</p>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-2 col-6">
+                                            <div style={{ backgroundColor: '#f0fdf4', padding: '10px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Active Users</p>
+                                                <p style={{ fontSize: '20px', color: '#15803d', fontWeight: '700', margin: 0 }}>{pagination?.totalActiveUsers || 0}</p>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-2 col-6">
+                                            <div style={{ backgroundColor: '#fef2f2', padding: '10px', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Inactive Users</p>
+                                                <p style={{ fontSize: '20px', color: '#991b1b', fontWeight: '700', margin: 0 }}>{pagination?.totalDeactiveUsers || 0}</p>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-2 col-6">
+                                            <div style={{ backgroundColor: '#fefce8', padding: '10px', borderRadius: '8px', border: '1px solid #fcd34d', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Admin Count</p>
+                                                <p style={{ fontSize: '20px', color: '#a16207', fontWeight: '700', margin: 0 }}>{pagination?.totalAdminUsers || 0}</p>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-2 col-6">
+                                            <div style={{ backgroundColor: '#f3e8ff', padding: '10px', borderRadius: '8px', border: '1px solid #e9d5ff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Customer Count</p>
+                                                <p style={{ fontSize: '20px', color: '#7e22ce', fontWeight: '700', margin: 0 }}>{pagination?.totalCustomerUsers || 0}</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 {/* Create Modal */}
@@ -356,125 +386,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                         </div>
                                     )}
                                 </>
-                                {/* View Modal */}
-                                {isModalView && (
-                                    <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1020 }}>
-                                        <div style={{ backgroundColor: "#fff", padding: "20px", borderRadius: "10px", width: "1000px", boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)" }}>
-                                            <div style={{ display: "flex", justifyContent: "space-between" }}>
-                                                <h5 style={{ margin: 0 }}>User Details</h5>
-                                                <button onClick={closeModal} style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer" }}> &times; </button>
-                                            </div><hr />
-                                            <div className="row col-12 col-xl-12 viewDataCss">
-                                                {/* Row 1: User Information */}
-                                                <div className="col-md-4">
-                                                    <div className="form-group row">
-                                                        <div className="col-sm-12" style={{ fontWeight: "bold" }}>
-                                                            Role Name: <span style={{ fontWeight: "normal" }}>{userDetails.role_name || 'N/A'}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-4">
-                                                    <div className="form-group row">
-                                                        <div className="col-sm-12" style={{ fontWeight: "bold" }}>
-                                                            User Name: <span style={{ fontWeight: "normal" }}>{userDetails.user_name || 'N/A'}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-4">
-                                                    <div className="form-group row">
-                                                        <div className="col-sm-12" style={{ fontWeight: "bold" }}>
-                                                            Phone: <span style={{ fontWeight: "normal" }}>{userDetails.user_phone || 'N/A'}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="row col-12 col-xl-12 viewDataCss">
-                                                <div className="col-md-4">
-                                                    <div className="form-group row">
-                                                        <div className="col-sm-12" style={{ fontWeight: "bold" }}>
-                                                            Email ID: <span style={{ fontWeight: "normal" }}>{userDetails.user_email || 'N/A'}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-4">
-                                                    <div className="form-group row">
-                                                        <div className="col-sm-12" style={{ fontWeight: "bold", display: "flex", alignItems: "center" }}>
-                                                            Password:
-                                                            <span style={{ fontWeight: "normal", marginLeft: "5px" }}>
-                                                                {showPassword ? (userDetails.password || "N/A") : "• • • • •"}
-                                                            </span>
-
-                                                            {/* Eye Icon */}
-                                                            <span
-                                                                onClick={() => setShowPassword(!showPassword)}
-                                                                style={{
-                                                                    marginLeft: "10px",
-                                                                    cursor: "pointer",
-                                                                    fontSize: "18px"
-                                                                }}
-                                                            >
-                                                                {showPassword ? (
-                                                                    <i className="fas fa-eye-slash"></i>   // eye closed
-                                                                ) : (
-                                                                    <i className="fas fa-eye"></i>         // eye open
-                                                                )}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-4">
-                                                    <div className="form-group row">
-                                                        <div className="col-sm-12" style={{ fontWeight: "bold" }}>
-                                                            Created By: <span style={{ fontWeight: "normal" }}>{userDetails.createdBy || 'N/A'}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="row col-12 col-xl-12 viewDataCss">
-                                                <div className="col-md-4">
-                                                    <div className="form-group row">
-                                                        <div className="col-sm-12" style={{ fontWeight: "bold" }}>
-                                                            Created At: <span style={{ fontWeight: "normal" }}>{formatDateToIST(userDetails.createdAt) || 'N/A'}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-4">
-                                                    <div className="form-group row">
-                                                        <div className="col-sm-12" style={{ fontWeight: "bold" }}>
-                                                            Updated By: <span style={{ fontWeight: "normal" }}>{userDetails.updatedBy || 'N/A'}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-4">
-                                                    <div className="form-group row">
-                                                        <div className="col-sm-12" style={{ fontWeight: "bold" }}>
-                                                            Updated At: <span style={{ fontWeight: "normal" }}>{formatDateToIST(userDetails.updatedAt) || 'N/A'}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="row col-12 col-xl-12 viewDataCss">
-                                                <div className="col-md-4">
-                                                    <div className="form-group row">
-                                                        <div className="col-sm-12" style={{ fontWeight: "bold" }}>
-                                                            Status: <span
-                                                                style={{
-                                                                    fontWeight: "normal",
-                                                                    color: userDetails.status ? 'green' : 'red'
-                                                                }}
-                                                            >
-                                                                {userDetails.status ? 'Active' : 'De-Active'}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div><hr />
-                                            <div style={{ display: "flex", justifyContent: "center", marginTop: "10px" }}>
-                                                <button className="btn btn-secondary mb-0" style={{ padding: '10px' }} onClick={closeModal}>Close</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
+                               
                                 <div className="card-body px-0 pt-0 pb-2">
                                     <div className="table-responsive p-0" style={{ maxHeight: '680px', overflowY: 'scroll' }}>
                                         <table className="table align-items-center mb-0" >
@@ -540,8 +452,8 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                                 </span>
                                                             </td>
                                                             <td className="align-middle text-center">
-                                                                <div className="d-flex justify-content-center align-items-center gap-2">
-                                                                    <button className="btn btn-primary mb-0" style={{ padding: '10px' }}
+                                                                <div className="d-flex justify-content-center align-items-center gap-2" style={{ flexWrap: 'wrap' }}>
+                                                                    <button className="btn btn-primary mb-0" style={{ padding: '10px', fontSize: '12px' }}
                                                                         onClick={() => {
                                                                             setIsModalEdit(true); // Show the modal
                                                                             setUserEditDetails(user); // Set the selected user's details
@@ -549,10 +461,9 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                                     >
                                                                         <i className="fas fa-pen" aria-hidden="true" style={{ color: 'white' }}></i> Edit
                                                                     </button>
-                                                                    <button className="btn btn-success mb-0" style={{ padding: '10px' }}
+                                                                    <button className="btn btn-success mb-0" style={{ padding: '10px', fontSize: '12px' }}
                                                                         onClick={() => {
-                                                                            setIsModalView(true); // Show the modal
-                                                                            setUserDetails(user); // Set the selected user's details
+                                                                            navigate('/admin/manage-users-view', { state: { user } });
                                                                         }}
                                                                     >
                                                                         <i className="fas fa-eye" aria-hidden="true" style={{ color: 'white' }}></i> View

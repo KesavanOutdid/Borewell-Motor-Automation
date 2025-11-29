@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { WS_URL } from "../../config/websocket";
 
 const useLiveTelemetry = (serialNumber) => {
     const [telemetry, setTelemetry] = useState(null);
@@ -12,7 +13,7 @@ const useLiveTelemetry = (serialNumber) => {
         // Set value if exists
         if (store[serialNumber]) setTelemetry(store[serialNumber]);
 
-        const socket = new WebSocket("ws://localhost:8081");
+        const socket = new WebSocket(WS_URL);
 
         socket.onmessage = (event) => {
             const data = JSON.parse(event.data);

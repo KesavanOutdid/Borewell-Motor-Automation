@@ -450,4 +450,42 @@ router.post(
     appCtrl.userDeviceHistory
 );
 
+/**
+ * @swagger
+ * /app/analytics:
+ *   post:
+ *     tags:
+ *       - Telemetry Analytics
+ *     summary: Get analytics for selected telemetry metric
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [motor_rpm, motor_frequency_hz, power_kw, current_rms, voltage_rms, energy_kwh, device_temp_c, signal_strength]
+ *         required: true
+ *         description: Select telemetry measurement field
+ *         example: motor_rpm
+ *       - in: query
+ *         name: serial_number
+ *         schema:
+ *           type: string
+ *         description: Filter for specific device serial number
+ *         example: "SN098765432123456789"
+ *       - in: query
+ *         name: imei_number
+ *         schema:
+ *           type: string
+ *         description: Filter for specific device imei
+ *         example: "IMEI0987654321234564444"
+ *     responses:
+ *       200:
+ *         description: Telemetry analytics chart data with daily, weekly, monthly, yearly arrays
+ *       400:
+ *         description: Invalid or missing parameters
+ *       500:
+ *         description: Server error
+ */
+router.post("/analytics", appCtrl.getTelemetryAnalytics);
+
 module.exports = router;

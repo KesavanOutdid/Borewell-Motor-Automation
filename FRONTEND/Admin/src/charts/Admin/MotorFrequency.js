@@ -1,11 +1,10 @@
 import React, { useEffect } from "react";
 import zingchart from "zingchart/es6";
 
-const MotorVoltageRms = () => {
+const MotorFrequency = ({ telemetry }) => {
   useEffect(() => {
-    const chartId = "MotorVoltageRms";
+    const chartId = "MotorFrequency";
 
-    // Initial chart rendering
     zingchart.render({
       id: chartId,
       data: {
@@ -20,8 +19,9 @@ const MotorVoltageRms = () => {
           size: "100%",
           valueBox: {
             placement: "center",
-            text: "%v", // Display the current value
+            text: "%v HZ",
             fontSize: 30,
+            decimals: 2,
             rules: [
               { rule: "%v <= 20", text: "%v<br>Very Low" },
               { rule: "%v > 20 && %v <= 40", text: "%v<br>Low" },
@@ -53,23 +53,23 @@ const MotorVoltageRms = () => {
           },
           item: {
             fontSize: 15,
-            offsetY: 5, // Moves labels upwards
+            offsetY: 5,
             fontColor: "#000",
           },
           ring: {
             size: 15,
             rules: [
-              { rule: "%v <= 20", backgroundColor: "#4CAF50" }, // Green
-              { rule: "%v > 20 && %v <= 40", backgroundColor: "#8BC34A" }, // Light Green
-              { rule: "%v > 40 && %v <= 60", backgroundColor: "#FFEB3B" }, // Yellow
-              { rule: "%v > 60 && %v <= 80", backgroundColor: "#FF9800" }, // Orange
-              { rule: "%v > 80", backgroundColor: "#F44336" }, // Red
+              { rule: "%v <= 20", backgroundColor: "#4CAF50" },
+              { rule: "%v > 20 && %v <= 40", backgroundColor: "#8BC34A" },
+              { rule: "%v > 40 && %v <= 60", backgroundColor: "#FFEB3B" },
+              { rule: "%v > 60 && %v <= 80", backgroundColor: "#FF9800" },
+              { rule: "%v > 80", backgroundColor: "#F44336" },
             ],
           },
         },
         series: [
           {
-            values: [58.9], // Initial value
+            values: [telemetry?.motor_frequency_hz || 0],
             backgroundColor: "black",
             indicator: [8, 1, 10, 10, 0.35],
           },
@@ -78,28 +78,24 @@ const MotorVoltageRms = () => {
       height: 300,
       width: "100%",
     });
+  }, [telemetry?.motor_frequency_hz]);
 
-    // Function to update chart value with random number every 2 seconds
-    const intervalId = setInterval(() => {
-      const newValue = Math.ceil(Math.random() * 100); // Generates a random value between 0 and 100
+  useEffect(() => {
+    const chartId = "MotorFrequency";
+    if (telemetry?.motor_frequency_hz !== undefined) {
       zingchart.exec(chartId, "setseriesvalues", {
-        values: [newValue], // Update the series values
-        plotindex: 0, // Update the first plot
+        values: [telemetry.motor_frequency_hz],
+        plotindex: 0,
       });
-    }, 2000); // Update every 2 seconds
-
-    // Cleanup interval when the component unmounts
-    return () => {
-      clearInterval(intervalId); // Clear the interval when component is unmounted
-    };
-  }, []);
+    }
+  }, [telemetry?.motor_frequency_hz]);
 
   const style = {
     overflow: "hidden",
     height: "200px"
   };
 
-  return <div id="MotorVoltageRms" style={style}></div>; // Corrected ID for the chart
+  return <div id="MotorFrequency" style={style}></div>;
 };
 
-export default MotorVoltageRms;
+export default MotorFrequency;
