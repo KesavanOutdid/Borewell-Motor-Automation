@@ -64,14 +64,22 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                   children: [
                     Text(
                       'Live Readings',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange.shade700,
+                      ),
                     ),
                     TextButton.icon(
                       onPressed: () => _openHistory(controller),
-                      icon: const Icon(Icons.history, size: 18),
-                      label: const Text('History'),
+                      icon: Icon(Icons.history, size: 20, color: Colors.orange.shade700),
+                      label: Text(
+                        'History',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.orange.shade700,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -112,10 +120,22 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
   Widget _buildDeviceInfoCard(DeviceDetailsController controller) {
     return Card(
       elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            Text(
+              'Device Information',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue.shade700,
+              ),
+            ),
+            const Divider(height: 24),
             _buildInfoRow('Serial Number', controller.liveData['serialNumber'] ?? '-'),
             const Divider(height: 20),
             _buildInfoRow('IMEI Number', controller.liveData['imei'] ?? '-'),
@@ -133,6 +153,9 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
     final isRunning = controller.liveData['motorStatus'] == 'Running';
     return Card(
       elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -149,32 +172,28 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
             ),
             const Divider(height: 20),
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Device Status',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: (isRunning ? Colors.green : Colors.grey).withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          controller.liveData['deviceStatus'] ?? 'Ready',
-                          style: TextStyle(
-                            color: isRunning ? Colors.green : Colors.grey,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
+                Text(
+                  'Device Status',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Get.isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: (isRunning ? Colors.green : Colors.grey).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    controller.liveData['deviceStatus'] ?? 'Ready',
+                    style: TextStyle(
+                      color: isRunning ? Colors.green : Colors.grey,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ],
@@ -184,45 +203,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
             const Divider(height: 20),
             _buildInfoRow('Device Last Stop', controller.liveData['lastStop'] ?? '-'),
             const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: controller.isConnected.value && !isRunning
-                        ? () => controller.startMotor()
-                        : null,
-                    icon: const Icon(Icons.play_arrow),
-                    label: const Text('START'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: controller.isConnected.value && isRunning
-                        ? () => controller.stopMotor()
-                        : null,
-                    icon: const Icon(Icons.stop),
-                    label: const Text('STOP'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            _buildSwipeControl(controller, isRunning),
           ],
         ),
       ),
@@ -235,6 +216,9 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
     
     return Card(
       elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -243,14 +227,22 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Device live location',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                Row(
+                  children: [
+                    Icon(Icons.location_on, color: Colors.green.shade700, size: 20),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Device Location',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 8),
                 Text(
-                  'Latitude: $latitude, Longitude: $longitude',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  controller.liveData['location']?.toString() ?? 'Location not available',
+                  style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -291,12 +283,19 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
       children: [
         Text(
           label,
-          style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+          style: TextStyle(
+            fontSize: 13,
+            color: Get.isDarkMode ? Colors.grey[400] : Colors.grey[600],
+          ),
         ),
         Flexible(
           child: Text(
             displayValue,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Get.isDarkMode ? Colors.white : Colors.black87,
+            ),
             textAlign: TextAlign.right,
           ),
         ),
@@ -306,111 +305,330 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
 
   Widget _buildLiveDataGrid(
       BuildContext context, DeviceDetailsController controller) {
+    final isRunning = controller.liveData['motorStatus'] == 'Running';
     final metrics = [
       {
         'label': 'Motor Frequency',
-        'value': controller.liveData['motorFrequency'],
+        'value': isRunning ? (controller.liveData['motorFrequency'] ?? '-') : '-',
         'icon': Icons.multiline_chart,
-        'color': Colors.pink,
+        'color': Colors.deepPurple,
       },
       {
         'label': 'Motor Energy',
-        'value': controller.liveData['motorEnergy'],
+        'value': isRunning ? (controller.liveData['motorEnergy'] ?? '-') : '-',
         'icon': Icons.electric_bolt,
-        'color': Colors.amber,
-      },
-      {
-        'label': 'Alert',
-        'value': controller.liveData['alert'],
-        'icon': Icons.warning_amber,
         'color': Colors.orange,
       },
       {
+        'label': 'Alert',
+        'value': isRunning ? (controller.liveData['alert'] ?? '-') : '-',
+        'icon': Icons.warning_amber,
+        'color': Colors.redAccent,
+      },
+      {
         'label': 'Device Temperature',
-        'value': controller.liveData['deviceTemperature'],
+        'value': isRunning ? (controller.liveData['deviceTemperature'] ?? '-') : '-',
         'icon': Icons.thermostat,
-        'color': Colors.red,
+        'color': Colors.pinkAccent,
       },
       {
         'label': 'Motor Power',
-        'value': controller.liveData['motorPower'],
+        'value': isRunning ? (controller.liveData['motorPower'] ?? '-') : '-',
         'icon': Icons.power,
-        'color': Colors.yellow[700],
+        'color': Colors.teal,
       },
       {
         'label': 'Flow Rate',
-        'value': controller.liveData['flowRate'],
+        'value': isRunning ? (controller.liveData['flowRate'] ?? '-') : '-',
         'icon': Icons.water_drop,
-        'color': Colors.blue,
+        'color': Colors.lightBlue,
       },
       {
         'label': 'Motor Speed',
-        'value': controller.liveData['motorSpeed'],
+        'value': isRunning ? (controller.liveData['motorSpeed'] ?? '-') : '-',
         'icon': Icons.speed,
-        'color': Colors.purple,
+        'color': Colors.indigo,
       },
       {
         'label': 'Signal Strength',
-        'value': controller.liveData['signalStrength'],
+        'value': controller.liveData['signalStrength'] ?? '-',
         'icon': Icons.signal_cellular_alt,
         'color': Colors.green,
       },
     ];
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.3,
-      ),
-      itemCount: metrics.length,
-      itemBuilder: (context, index) {
-        final metric = metrics[index];
-        return Card(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  metric['icon'] as IconData,
-                  color: metric['color'] as Color?,
-                  size: 28,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  metric['label'] as String,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${metric['value']}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: metric['color'] as Color?,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: _buildMetricCard(metrics[0])),
+            const SizedBox(width: 8),
+            Expanded(child: _buildMetricCard(metrics[1])),
+            const SizedBox(width: 8),
+            Expanded(child: _buildMetricCard(metrics[6])),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(child: _buildMetricCard(metrics[3])),
+            const SizedBox(width: 8),
+            Expanded(child: _buildMetricCard(metrics[4])),
+            const SizedBox(width: 8),
+            Expanded(child: _buildMetricCard(metrics[5])),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(child: _buildMetricCard(metrics[2])),
+            const SizedBox(width: 8),
+            Expanded(child: _buildMetricCard(metrics[7])),
+          ],
+        ),
+      ],
     );
   }
 
+  Widget _buildMetricCard(Map<String, dynamic> metric) {
+    final color = metric['color'] as Color;
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Container(
+        height: 125,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              color.withOpacity(0.15),
+              color.withOpacity(0.05),
+            ],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                metric['icon'] as IconData,
+                color: color,
+                size: 28,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                metric['label'] as String,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${metric['value']}',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSwipeControl(DeviceDetailsController controller, bool isRunning) {
+    return _SwipeControlWidget(
+      controller: controller,
+      isRunning: isRunning,
+    );
+  }
+
+}
+
+class _SwipeControlWidget extends StatefulWidget {
+  final DeviceDetailsController controller;
+  final bool isRunning;
+
+  const _SwipeControlWidget({
+    required this.controller,
+    required this.isRunning,
+  });
+
+  @override
+  State<_SwipeControlWidget> createState() => _SwipeControlWidgetState();
+}
+
+class _SwipeControlWidgetState extends State<_SwipeControlWidget> {
+  double _dragPosition = 0.0;
+  bool _isProcessing = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width - 100;
+    final maxDrag = screenWidth - 70;
+    final progressRatio = (_dragPosition.abs() / maxDrag).clamp(0.0, 1.0);
+    final isConnected = widget.controller.isConnected.value;
+    
+    return Opacity(
+      opacity: isConnected ? 1.0 : 0.5,
+      child: Container(
+        height: 65,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(35),
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: widget.isRunning 
+                ? [Colors.red.shade400, Colors.red.shade300]
+                : [Colors.green.shade300, Colors.green.shade400],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: (widget.isRunning ? Colors.red : Colors.green).withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Stack(
+        children: [
+          Center(
+            child: AnimatedOpacity(
+              opacity: (1.0 - progressRatio * 2.0).clamp(0.0, 1.0),
+              duration: const Duration(milliseconds: 100),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (widget.isRunning) ...[
+                    Icon(
+                      Icons.chevron_left,
+                      color: Colors.white.withOpacity(0.9),
+                      size: 28,
+                    ),
+                    const SizedBox(width: 8),
+                  ] else ...[
+                    Icon(
+                      Icons.chevron_right,
+                      color: Colors.white.withOpacity(0.9),
+                      size: 28,
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Text(
+                    widget.isRunning ? 'Swipe Left to Stop' : 'Swipe Right to Start',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 17,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  if (widget.isRunning) ...[
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.chevron_left,
+                      color: Colors.white.withOpacity(0.9),
+                      size: 28,
+                    ),
+                  ] else ...[
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.chevron_right,
+                      color: Colors.white.withOpacity(0.9),
+                      size: 28,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 30),
+            curve: Curves.easeOut,
+            left: widget.isRunning ? null : 3 + _dragPosition,
+            right: widget.isRunning ? 3 + _dragPosition.abs() : null,
+            top: 3,
+            child: GestureDetector(
+              onHorizontalDragUpdate: (details) {
+                if (_isProcessing || !isConnected) return;
+                setState(() {
+                  if (!widget.isRunning && details.delta.dx > 0) {
+                    _dragPosition = (_dragPosition + details.delta.dx).clamp(0.0, maxDrag);
+                  } else if (widget.isRunning && details.delta.dx < 0) {
+                    _dragPosition = (_dragPosition + details.delta.dx).clamp(-maxDrag, 0.0);
+                  }
+                });
+              },
+              onHorizontalDragEnd: (details) async {
+                if (_isProcessing || !isConnected) return;
+                
+                if (_dragPosition.abs() > maxDrag * 0.7) {
+                  setState(() => _isProcessing = true);
+                  
+                  if (_dragPosition > 0) {
+                    await widget.controller.startMotor();
+                  } else {
+                    await widget.controller.stopMotor();
+                  }
+                  
+                  setState(() => _isProcessing = false);
+                }
+                
+                setState(() => _dragPosition = 0.0);
+              },
+              child: Container(
+                width: 59,
+                height: 59,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.25),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: _isProcessing
+                    ? Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            widget.isRunning ? Colors.red.shade600 : Colors.green.shade600,
+                          ),
+                        ),
+                      )
+                    : Icon(
+                        widget.isRunning 
+                            ? Icons.arrow_back_rounded 
+                            : Icons.play_arrow_rounded,
+                        color: widget.isRunning ? Colors.red.shade600 : Colors.green.shade600,
+                        size: 34,
+                      ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      ),
+    );
+  }
 }

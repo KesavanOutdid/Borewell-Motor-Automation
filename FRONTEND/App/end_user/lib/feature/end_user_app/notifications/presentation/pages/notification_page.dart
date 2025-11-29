@@ -38,7 +38,6 @@ class NotificationPage extends StatelessWidget {
                   onConfirm: () {
                     controller.clearAll();
                     Get.back();
-                    Get.back();
                     Get.snackbar(
                       'Success',
                       'All notifications cleared',

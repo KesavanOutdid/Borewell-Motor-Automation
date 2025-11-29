@@ -99,40 +99,79 @@ class HomeView extends GetView<HomeController> {
               final device = controller.devices[index];
               final isConfigured = _isDeviceConfigured(device);
               final isRunning = _isDeviceRunning(device);
-              final statusLabel = isRunning ? 'Running' : 'Off';
-              final statusIcon = isRunning ? Icons.power : Icons.power_off;
+              final deviceStatus = !isConfigured 
+                  ? 'Not Configured' 
+                  : (isRunning ? 'Running' : 'Not Running');
+              
               return InkWell(
                 onTap: () => _navigateDevice(device),
                 child: Card(
-                  margin: const EdgeInsets.only(bottom: 16),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  elevation: 1,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        Text(
-                          device['serial_number'] ?? 'Unknown Device',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: !isConfigured 
+                                ? Colors.orange 
+                                : (isRunning ? Colors.green : Colors.blue),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            !isConfigured ? Icons.settings : Icons.bolt,
+                            color: Colors.white,
+                            size: 28,
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            ElevatedButton.icon(
-                              onPressed: () => _navigateDevice(device),
-                              icon: Icon(statusIcon),
-                              label: Text(statusLabel),
-                            ),
-                            const Spacer(),
-                            IconButton(
-                              icon: Icon(
-                                isConfigured ? Icons.settings : Icons.build,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                device['serial_number'] ?? 'Main Motor Unit',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                              onPressed: () => _navigateDevice(device),
-                            ),
-                          ],
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: !isConfigured
+                                          ? Colors.orange
+                                          : (isRunning ? Colors.green : Colors.grey),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    deviceStatus,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_right,
+                          color: Colors.grey[400],
+                          size: 28,
                         ),
                       ],
                     ),
@@ -164,10 +203,11 @@ class HomeView extends GetView<HomeController> {
     return false;
   }
 
-  void _navigateDevice(Map<String, dynamic> device) {
+  void _navigateDevice(Map<String, dynamic> device) async {
     final route = _isDeviceConfigured(device)
         ? '/device/details'
         : '/device/configure';
-    Get.toNamed(route, arguments: device);
+    await Get.toNamed(route, arguments: device);
+    controller.fetchDevices();
   }
 }

@@ -4,7 +4,7 @@ import '../controllers/auth_controller.dart';
 class LoginBinding extends Bindings {
   @override
   void dependencies() {
-    Get.delete<LoginController>(force: true);
-    Get.put<LoginController>(LoginController());
+    // LoginController is already permanent and initialized in main.dart
+    // No need to delete or recreate it
   }
 }

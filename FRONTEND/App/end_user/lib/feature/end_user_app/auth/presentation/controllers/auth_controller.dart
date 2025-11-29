@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../../../../../core/config/env.dart';
 import '../../../../../core/services/token_service.dart';
+import '../../../../../core/services/notification_storage_service.dart';
 import '../../../home/presentation/controllers/home_controller.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -49,7 +50,11 @@ class LoginController extends GetxController {
     userName.value = "";
     userPhone.value = "";
     roleId.value = 0;
+    
     await tokenService.clearToken();
+    
+    final notificationService = NotificationStorageService();
+    await notificationService.clearAllNotifications();
   }
 
   bool isValidEmail(String email) {
@@ -105,8 +110,12 @@ class LoginController extends GetxController {
           
           Get.offAllNamed('/home');
           
-          final homeController = Get.find<HomeController>();
-          homeController.fetchDevices();
+          try {
+            final homeController = Get.find<HomeController>();
+            homeController.fetchDevices();
+          } catch (e) {
+            print('HomeController not found: $e');
+          }
         } else {
           isLoading.value = false;
           return responseData['message'] ?? "Login failed";

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:web_socket_channel/io.dart';
+import 'package:geocoding/geocoding.dart';
 
 import '../../../../../core/config/env.dart';
 import '../../../../../core/services/token_service.dart';
@@ -46,7 +47,7 @@ class DeviceDetailsController extends GetxController {
     super.onClose();
   }
 
-  void initialize(Map<String, dynamic> args) {
+  void initialize(Map<String, dynamic> args) async {
     final previousSerial = serialNumber;
     final previousImei = imeiNumber;
 
@@ -61,12 +62,18 @@ class DeviceDetailsController extends GetxController {
 
     final latitude = _parseDouble(args['latitude']);
     final longitude = _parseDouble(args['longitude']);
+    
+    String? locationText = args['location'];
+    if ((locationText == null || locationText.isEmpty || locationText == '-') && 
+        latitude != null && longitude != null) {
+      locationText = await _getAddressFromCoordinates(latitude, longitude);
+    }
 
     liveData.assignAll({
       'serialNumber': serialNumber ?? '-',
       'imei': imeiNumber ?? '-',
       'motorHp': args['motor_hp']?.toString() ?? args['motorHp']?.toString() ?? '-',
-      'location': args['location'] ?? _formatCoordinate(latitude, longitude),
+      'location': locationText ?? _formatCoordinate(latitude, longitude),
       'latitude': latitude ?? 28.6139,
       'longitude': longitude ?? 77.2090,
       'motorStatus': deviceChanged ? '-' : (liveData['motorStatus'] ?? '-'),
@@ -88,8 +95,34 @@ class DeviceDetailsController extends GetxController {
 
     if (!_initialized || deviceChanged) {
       _initialized = true;
-      fetchDeviceDetails();
     }
+    
+    fetchDeviceDetails();
+  }
+  
+  Future<String?> _getAddressFromCoordinates(double latitude, double longitude) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        List<String> addressParts = [];
+        
+        if (place.subLocality != null && place.subLocality!.isNotEmpty) {
+          addressParts.add(place.subLocality!);
+        }
+        if (place.locality != null && place.locality!.isNotEmpty) {
+          addressParts.add(place.locality!);
+        }
+        if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
+          addressParts.add(place.administrativeArea!);
+        }
+        
+        return addressParts.isNotEmpty ? addressParts.join(', ') : null;
+      }
+    } catch (e) {
+      return null;
+    }
+    return null;
   }
 
   Future<void> fetchDeviceDetails() async {
@@ -189,6 +222,10 @@ class DeviceDetailsController extends GetxController {
         final body = jsonDecode(response.body);
         final message = body['message']?.toString() ?? 'Device updated';
         _showMessage(message);
+        
+        liveData['motorStatus'] = start ? 'Running' : 'Stopped';
+        liveData['deviceStatus'] = start ? 'Running' : 'Ready';
+        liveData.refresh();
       } else if (response.statusCode == 401) {
         _handleUnauthorized();
       } else if (response.statusCode == 404) {
@@ -354,27 +391,41 @@ class DeviceDetailsController extends GetxController {
   }
 
   void _applyTelemetryPayload(Map<String, dynamic> telemetry) {
-    liveData['motorFrequency'] = _formatMetric(telemetry['motor_frequency_hz'], suffix: ' Hz');
-    liveData['motorEnergy'] = _formatMetric(telemetry['energy_kwh'], suffix: ' kWh');
-    liveData['deviceTemperature'] = _formatMetric(telemetry['device_temp_c'], suffix: '°C');
-    liveData['motorPower'] = _formatMetric(telemetry['power_kw'], suffix: ' kW');
-    liveData['flowRate'] = _formatMetric(telemetry['flow_lpm'], suffix: ' LPM');
-    liveData['motorSpeed'] = _formatMetric(telemetry['motor_rpm'], suffix: ' RPM');
+    if (telemetry['motor_frequency_hz'] != null) {
+      liveData['motorFrequency'] = _formatMetric(telemetry['motor_frequency_hz'], suffix: ' Hz');
+    }
+    if (telemetry['energy_kwh'] != null) {
+      liveData['motorEnergy'] = _formatMetric(telemetry['energy_kwh'], suffix: ' kWh');
+    }
+    if (telemetry['device_temp_c'] != null) {
+      liveData['deviceTemperature'] = _formatMetric(telemetry['device_temp_c'], suffix: '°C');
+    }
+    if (telemetry['power_kw'] != null) {
+      liveData['motorPower'] = _formatMetric(telemetry['power_kw'], suffix: ' kW');
+    }
+    if (telemetry['flow_lpm'] != null) {
+      liveData['flowRate'] = _formatMetric(telemetry['flow_lpm'], suffix: ' LPM');
+    }
+    if (telemetry['motor_rpm'] != null) {
+      liveData['motorSpeed'] = _formatMetric(telemetry['motor_rpm'], suffix: ' RPM');
+    }
     if (telemetry['signal_strength'] != null) {
       liveData['signalStrength'] = _formatMetric(telemetry['signal_strength']);
     }
     if (telemetry['fault_code'] != null) {
       final faultCode = _formatMetric(telemetry['fault_code']);
-      liveData['alert'] = faultCode;
-      
-      if (serialNumber != null && faultCode != '-' && faultCode.isNotEmpty && faultCode != '0') {
-        final timestamp = _formatDate(telemetry['timestamp']);
-        _notificationService.showAlertNotification(
-          serialNumber: serialNumber!,
-          alertMessage: 'Fault Code: $faultCode',
-          timestamp: timestamp,
-          deviceStatus: 'Warning',
-        );
+      if (faultCode != '-' && faultCode.isNotEmpty) {
+        liveData['alert'] = faultCode;
+        
+        if (serialNumber != null && faultCode != '0') {
+          final timestamp = _formatDate(telemetry['timestamp']);
+          _notificationService.showAlertNotification(
+            serialNumber: serialNumber!,
+            alertMessage: 'Fault Code: $faultCode',
+            timestamp: timestamp,
+            deviceStatus: 'Warning',
+          );
+        }
       }
     }
     final updated = _formatDate(telemetry['timestamp']);
@@ -386,7 +437,9 @@ class DeviceDetailsController extends GetxController {
 
   void _applyAlertPayload(Map<String, dynamic> payload) {
     final alertMessage = _extractAlertMessage(payload);
-    liveData['alert'] = alertMessage;
+    if (alertMessage != '-' && alertMessage.isNotEmpty) {
+      liveData['alert'] = alertMessage;
+    }
     final timestamp = _formatDate(payload['timestamp']);
     if (timestamp != null) {
       liveData['lastUpdate'] = timestamp;
@@ -478,7 +531,7 @@ class DeviceDetailsController extends GetxController {
     }
   }
 
-  void _applyDeviceData(Map<String, dynamic> data) {
+  void _applyDeviceData(Map<String, dynamic> data) async {
     final telemetry = data['telemetry'] is Map
         ? Map<String, dynamic>.from(data['telemetry'])
         : <String, dynamic>{};
@@ -486,14 +539,26 @@ class DeviceDetailsController extends GetxController {
     final latitude = _parseDouble(data['latitude']) ?? liveData['latitude'] as double?;
     final longitude = _parseDouble(data['longitude']) ?? liveData['longitude'] as double?;
 
+    String? locationText = data['location']?.toString();
+    if ((locationText == null || locationText.isEmpty || locationText == '-') && 
+        latitude != null && longitude != null) {
+      final address = await _getAddressFromCoordinates(latitude, longitude);
+      if (address != null) locationText = address;
+    }
+
     final isRunning = data['start_status'] == true;
     final wasRunning = _previousMotorRunning == true;
+
+    final alertValue = _formatMetric(data['alert'] ?? telemetry['alert']);
+    final persistAlert = (alertValue == '-' || alertValue.isEmpty) 
+        ? (liveData['alert'] ?? '-') 
+        : alertValue;
 
     liveData.assignAll({
       'serialNumber': data['serial_number'] ?? serialNumber ?? '-',
       'imei': data['imei_number'] ?? imeiNumber ?? '-',
       'motorHp': data['motor_hp']?.toString() ?? liveData['motorHp'] ?? '-',
-      'location': data['location'] ?? liveData['location'] ?? '-',
+      'location': locationText ?? liveData['location'] ?? '-',
       'latitude': latitude ?? 28.6139,
       'longitude': longitude ?? 77.2090,
       'motorStatus': isRunning ? 'Running' : 'Stopped',
@@ -503,7 +568,7 @@ class DeviceDetailsController extends GetxController {
       'lastUpdate': _formatDate(data['updatedAt'] ?? data['timestamp']) ?? liveData['lastUpdate'] ?? '-',
       'motorFrequency': _formatMetric(telemetry['motor_frequency_hz'], suffix: ' Hz'),
       'motorEnergy': _formatMetric(telemetry['energy_kwh'], suffix: ' kWh'),
-      'alert': _formatMetric(data['alert'] ?? telemetry['alert']),
+      'alert': persistAlert,
       'deviceTemperature': _formatMetric(telemetry['device_temp_c'], suffix: '°C'),
       'motorPower': _formatMetric(telemetry['power_kw'], suffix: ' kW'),
       'flowRate': _formatMetric(telemetry['flow_lpm'], suffix: ' LPM'),

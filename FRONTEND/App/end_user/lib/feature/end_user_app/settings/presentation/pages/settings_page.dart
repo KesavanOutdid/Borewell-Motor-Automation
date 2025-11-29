@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../home/presentation/controllers/home_controller.dart';
 import '../../../../../utils/theme/theme_controller.dart';
 
 class SettingsView extends StatelessWidget {
@@ -68,17 +69,25 @@ class SettingsView extends StatelessWidget {
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('Cancel'),
+              child: const Text('No'),
             ),
             TextButton(
               onPressed: () async {
-                final loginController = Get.find<LoginController>();
                 Navigator.pop(context);
-                await loginController.logout();
+                try {
+                  final loginController = Get.find<LoginController>();
+                  await loginController.logout();
+                  
+                  Get.delete<HomeController>();
+                } catch (e) {
+                  print('Logout error: $e');
+                }
+                
+                await Future.delayed(const Duration(milliseconds: 200));
                 Get.offAllNamed('/login');
               },
               child: const Text(
-                'OK',
+                'Yes',
                 style: TextStyle(color: Colors.red),
               ),
             ),

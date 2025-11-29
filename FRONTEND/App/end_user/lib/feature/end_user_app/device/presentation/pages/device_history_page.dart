@@ -3,8 +3,15 @@ import 'package:get/get.dart';
 
 import '../controllers/device_history_controller.dart';
 
-class DeviceHistoryView extends StatelessWidget {
+class DeviceHistoryView extends StatefulWidget {
   const DeviceHistoryView({super.key});
+
+  @override
+  State<DeviceHistoryView> createState() => _DeviceHistoryViewState();
+}
+
+class _DeviceHistoryViewState extends State<DeviceHistoryView> {
+  int? _expandedIndex;
 
   static const Duration _istOffset = Duration(hours: 5, minutes: 30);
 
@@ -24,40 +31,71 @@ class DeviceHistoryView extends StatelessWidget {
         }
 
         if (controller.records.isEmpty) {
-          return RefreshIndicator(
-            onRefresh: controller.refreshHistory,
-            child: ListView(
-              padding: const EdgeInsets.all(32),
-              children: const [
-                Icon(Icons.history, size: 72, color: Colors.grey),
-                SizedBox(height: 16),
-                Text(
-                  'No telemetry records found',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: controller.refreshHistory,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
+          return Column(
             children: [
-              _buildHeader(controller),
-              const SizedBox(height: 16),
-              _buildSummaryGrid(controller),
-              const SizedBox(height: 16),
-              ...controller.records.asMap().entries.map(
-                (entry) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _buildRecordCard(entry.value, entry.key + 1),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    _buildHeader(controller),
+                    const SizedBox(height: 8),
+                    _buildSummaryGrid(controller),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: controller.refreshHistory,
+                  child: ListView(
+                    padding: const EdgeInsets.all(32),
+                    children: const [
+                      Icon(Icons.history, size: 72, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'No telemetry records found',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
-          ),
+          );
+        }
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                children: [
+                  _buildHeader(controller),
+                  const SizedBox(height: 8),
+                  _buildSummaryGrid(controller),
+                ],
+              ),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: controller.refreshHistory,
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: controller.records.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildRecordCard(
+                        controller.records[index],
+                        index + 1,
+                        index,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
         );
       }),
     );
@@ -65,45 +103,25 @@ class DeviceHistoryView extends StatelessWidget {
 
   Widget _buildHeader(DeviceHistoryController controller) {
     return Card(
-      elevation: 2,
+      elevation: 1,
       child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(12),
+        child: Row(
           children: [
-            Row(
-              children: [
-                const Icon(Icons.memory, size: 20, color: Colors.green),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Obx(
-                    () => Text(
-                      'Serial: ${controller.serialNumber.value}',
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                    ),
-                  ),
+            const Icon(Icons.memory, size: 18, color: Colors.green),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Obx(
+                () => Text(
+                  controller.serialNumber.value,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Obx(
-              () => Text(
-                'IMEI: ${controller.imeiNumber.value}',
-                style: const TextStyle(fontSize: 14, color: Colors.black54),
               ),
             ),
-            const SizedBox(height: 8),
             Obx(
               () => Text(
-                'Last updated: ${controller.lastUpdated.value}',
-                style: const TextStyle(fontSize: 13, color: Colors.black54),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Obx(
-              () => Text(
-                'Records: ${controller.recordCount.value}',
-                style: const TextStyle(fontSize: 13, color: Colors.black54),
+                '${controller.recordCount.value} records',
+                style: const TextStyle(fontSize: 12, color: Colors.black54),
               ),
             ),
           ],
@@ -123,9 +141,9 @@ class DeviceHistoryView extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 1.6,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
+          childAspectRatio: 2.2,
         ),
         itemCount: controller.summaryMetrics.length,
         itemBuilder: (context, index) {
@@ -133,18 +151,19 @@ class DeviceHistoryView extends StatelessWidget {
           return Card(
             elevation: 1,
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     metric['label'] ?? '-',
-                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                    style: const TextStyle(fontSize: 11, color: Colors.black54),
                   ),
-                  const Spacer(),
+                  const SizedBox(height: 2),
                   Text(
                     metric['value'] ?? '-',
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -155,7 +174,8 @@ class DeviceHistoryView extends StatelessWidget {
     });
   }
 
-  Widget _buildRecordCard(Map<String, dynamic> record, int index) {
+  Widget _buildRecordCard(Map<String, dynamic> record, int displayIndex, int actualIndex) {
+    final isExpanded = _expandedIndex == actualIndex;
     final chips = [
       _chipData('Energy', _formatNumber(record['energy_kwh'], 'kWh')),
       _chipData('Duration', _formatDuration(record['duration_minutes'])),
@@ -167,54 +187,77 @@ class DeviceHistoryView extends StatelessWidget {
 
     return Card(
       elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _expandedIndex = isExpanded ? null : actualIndex;
+          });
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'Record $displayIndex',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
                   ),
-                  child: Text(
-                    'Record $index',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _formatDateOnly(record['date'] ?? record['startAt']),
+                      style: const TextStyle(fontSize: 12, color: Colors.black54),
+                    ),
                   ),
-                ),
-                const Spacer(),
+                  Icon(
+                    isExpanded ? Icons.expand_less : Icons.expand_more,
+                    color: Colors.grey,
+                  ),
+                ],
+              ),
+              if (!isExpanded) ...[
+                const SizedBox(height: 8),
                 Text(
-                  _formatDate(record['date'] ?? record['startAt']),
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  'Duration: ${_formatDuration(record['duration_minutes'])}',
+                  style: const TextStyle(fontSize: 13, color: Colors.black87),
                 ),
               ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _infoTile('Start', _formatDate(record['startAt'])),
+              if (isExpanded) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _infoTile('Start', _formatDate(record['startAt'])),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _infoTile('Stop', _formatDate(record['stopAt'])),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _infoTile('Stop', _formatDate(record['stopAt'])),
+                const SizedBox(height: 12),
+                _infoTile('Duration', _formatDuration(record['duration_minutes'])),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: chips
+                      .map((chip) => _metricChip(chip['label']!, chip['value']!))
+                      .toList(),
                 ),
               ],
-            ),
-            const SizedBox(height: 12),
-            _infoTile('Duration', _formatDuration(record['duration_minutes'])),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: chips
-                  .map((chip) => _metricChip(chip['label']!, chip['value']!))
-                  .toList(),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -325,7 +368,18 @@ class DeviceHistoryView extends StatelessWidget {
     if (parsed == null) return '-';
     return '${parsed.toStringAsFixed(2)} $unit';
   }
+  String _formatDateOnly(dynamic value) {
+  if (value == null) return '-';
+  try {
+    final dateTime = value is DateTime ? value : DateTime.parse(value.toString());
+    final istTime = _convertToIst(dateTime);
+    final twoDigits = (int v) => v.toString().padLeft(2, '0');
 
+    return '${twoDigits(istTime.day)}/${twoDigits(istTime.month)}/${istTime.year}';
+  } catch (_) {
+    return value.toString();
+  }
+}
   double? _parseDouble(dynamic value) {
     if (value == null) return null;
     if (value is double) return value;

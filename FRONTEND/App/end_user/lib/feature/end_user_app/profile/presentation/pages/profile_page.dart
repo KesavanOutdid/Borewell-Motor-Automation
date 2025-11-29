@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../controllers/profile_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../home/presentation/controllers/home_controller.dart';
 import '../../../../../utils/theme/theme_controller.dart';
 
 class ProfileView extends GetView<ProfileController> {
@@ -84,21 +85,25 @@ class ProfileView extends GetView<ProfileController> {
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('Cancel'),
+              child: const Text('No'),
             ),
             TextButton(
               onPressed: () async {
+                Navigator.pop(context);
                 try {
                   final loginController = Get.find<LoginController>();
                   await loginController.logout();
-                  Navigator.pop(context);
-                  Get.offAllNamed('/login');
+                  
+                  Get.delete<HomeController>();
                 } catch (e) {
-                  Navigator.pop(context);
+                  print('Logout error: $e');
                 }
+                
+                await Future.delayed(const Duration(milliseconds: 200));
+                Get.offAllNamed('/login');
               },
               child: const Text(
-                'OK',
+                'Yes',
                 style: TextStyle(color: Colors.red),
               ),
             ),
@@ -205,7 +210,7 @@ class ProfileView extends GetView<ProfileController> {
                           controller.userEmail.value,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                 color: Colors.blue,
-                                decoration: TextDecoration.underline,
+                        
                               ),
                         ),
                       ),
