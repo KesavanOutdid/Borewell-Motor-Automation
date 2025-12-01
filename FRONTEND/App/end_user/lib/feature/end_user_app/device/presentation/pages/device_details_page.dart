@@ -18,6 +18,11 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
         title: const Text('Device Details'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.analytics),
+            tooltip: 'Analytics',
+            onPressed: () => _openAnalytics(controller),
+          ),
+          IconButton(
             icon: const Icon(Icons.history),
             tooltip: 'History',
             onPressed: () => _openHistory(controller),
@@ -112,6 +117,26 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
     }
 
     Get.toNamed('/device/history', arguments: {
+      'serial_number': serial,
+      'imei_number': imei,
+    });
+  }
+
+  void _openAnalytics(DeviceDetailsController controller) {
+    final serial = controller.liveData['serialNumber']?.toString();
+    final imei = controller.liveData['imei']?.toString();
+
+    if (serial == null || serial.trim().isEmpty || imei == null || imei.trim().isEmpty) {
+      Get.snackbar(
+        'Analytics',
+        'Device information unavailable',
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 2),
+      );
+      return;
+    }
+
+    Get.toNamed('/device/analytics', arguments: {
       'serial_number': serial,
       'imei_number': imei,
     });

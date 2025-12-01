@@ -10,6 +10,7 @@ import '../../feature/end_user_app/device/presentation/pages/device_page.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_binding.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_details_page.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_history_page.dart';
+import '../../feature/end_user_app/device/presentation/pages/device_analytics_page.dart';
 import '../../feature/end_user_app/device/presentation/pages/add_device_page.dart' as config_device;
 import '../../feature/end_user_app/profile/presentation/pages/profile_page.dart';
 import '../../feature/end_user_app/profile/presentation/pages/profile_binding.dart';
@@ -30,6 +31,7 @@ class AppRoutes {
   static const device = '/device';
   static const deviceDetails = '/device/details';
   static const deviceHistory = '/device/history';
+  static const deviceAnalytics = '/device/analytics';
   static const configureDevice = '/device/configure';
   static const profile = '/profile';
   static const editProfile = '/editProfile';
@@ -71,6 +73,10 @@ class AppRoutes {
     GetPage(
       name: deviceHistory,
       page: () => const DeviceHistoryView(),
+    ),
+    GetPage(
+      name: deviceAnalytics,
+      page: () => const DeviceAnalyticsView(),
     ),
     GetPage(
       name: configureDevice,
