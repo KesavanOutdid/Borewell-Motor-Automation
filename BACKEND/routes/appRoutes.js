@@ -456,7 +456,8 @@ router.post(
  *   post:
  *     tags:
  *       - Telemetry Analytics
- *     summary: Get analytics for selected telemetry metric
+ *     summary: Get analytics for selected telemetry metric with time-based filtering
+ *     description: Returns telemetry analytics aggregated by different time periods - Hourly (last 60 hours), Today (last 24 hours), Weekly (last 7 days), Monthly (last 30 days), and Yearly (all years)
  *     parameters:
  *       - in: query
  *         name: type
@@ -480,7 +481,117 @@ router.post(
  *         example: "IMEI0987654321234564444"
  *     responses:
  *       200:
- *         description: Telemetry analytics chart data with daily, weekly, monthly, yearly arrays
+ *         description: Analytics data with hourly, today, weekly, monthly, yearly arrays
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 type:
+ *                   type: string
+ *                   example: motor_rpm
+ *                 serial_number:
+ *                   type: string
+ *                   example: "SN098765432123456789"
+ *                 imei_number:
+ *                   type: string
+ *                   example: "IMEI0987654321234564444"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     hourly:
+ *                       type: array
+ *                       description: Last 60 hours with sequential numeric labels (0-59)
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           label:
+ *                             type: string
+ *                             example: "15"
+ *                           value:
+ *                             type: number
+ *                             example: 1450.5
+ *                           timestamp:
+ *                             type: string
+ *                             format: date-time
+ *                           count:
+ *                             type: integer
+ *                             example: 120
+ *                     today:
+ *                       type: array
+ *                       description: Last 24 hours with sequential numeric labels (1-24)
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           label:
+ *                             type: string
+ *                             example: "15"
+ *                           value:
+ *                             type: number
+ *                             example: 1450.5
+ *                           timestamp:
+ *                             type: string
+ *                             format: date-time
+ *                           count:
+ *                             type: integer
+ *                             example: 60
+ *                     weekly:
+ *                       type: array
+ *                       description: Last 7 days with sequential numeric labels (1-7)
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           label:
+ *                             type: string
+ *                             example: "3"
+ *                           value:
+ *                             type: number
+ *                             example: 1450.5
+ *                           timestamp:
+ *                             type: string
+ *                             format: date-time
+ *                           count:
+ *                             type: integer
+ *                             example: 288
+ *                     monthly:
+ *                       type: array
+ *                       description: Last 30 days with sequential numeric labels (1-30)
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           label:
+ *                             type: string
+ *                             example: "15"
+ *                           value:
+ *                             type: number
+ *                             example: 1450.5
+ *                           timestamp:
+ *                             type: string
+ *                             format: date-time
+ *                           count:
+ *                             type: integer
+ *                             example: 288
+ *                     yearly:
+ *                       type: array
+ *                       description: Historical data by month with sequential labels (1-12 per year)
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           label:
+ *                             type: string
+ *                             example: "6"
+ *                           value:
+ *                             type: number
+ *                             example: 1450.5
+ *                           timestamp:
+ *                             type: string
+ *                             format: date-time
+ *                           count:
+ *                             type: integer
+ *                             example: 105120
  *       400:
  *         description: Invalid or missing parameters
  *       500:

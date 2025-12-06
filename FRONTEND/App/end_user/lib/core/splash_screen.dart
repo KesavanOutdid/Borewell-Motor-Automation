@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'services/token_service.dart';
+import 'services/permission_service.dart';
 
 class SplashView extends StatefulWidget {
   const SplashView({super.key});
@@ -10,15 +11,31 @@ class SplashView extends StatefulWidget {
 }
 
 class _SplashViewState extends State<SplashView> {
+  final PermissionService _permissionService = PermissionService();
+
   @override
   void initState() {
     super.initState();
-    _checkLoginStatus();
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    await Future.delayed(const Duration(seconds: 2));
+    
+    await _requestPermissions();
+    
+    await _checkLoginStatus();
+  }
+
+  Future<void> _requestPermissions() async {
+    try {
+      await _permissionService.requestAllPermissions();
+    } catch (e) {
+      print('Error requesting permissions: $e');
+    }
   }
 
   Future<void> _checkLoginStatus() async {
-    await Future.delayed(const Duration(seconds: 2));
-    
     final tokenService = Get.find<TokenService>();
     final token = tokenService.getToken();
     

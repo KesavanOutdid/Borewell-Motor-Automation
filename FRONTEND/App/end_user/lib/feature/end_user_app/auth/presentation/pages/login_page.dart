@@ -85,15 +85,42 @@ class _Logo extends StatelessWidget {
   }
 }
 
-class _FormContent extends GetView<LoginController> {
+class _FormContent extends StatefulWidget {
   const _FormContent();
 
   @override
-  Widget build(BuildContext context) {
-    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-    final TextEditingController emailController = TextEditingController(text: controller.email.value);
-    final TextEditingController passwordController = TextEditingController();
+  State<_FormContent> createState() => _FormContentState();
+}
 
+class _FormContentState extends State<_FormContent> {
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  late TextEditingController emailController;
+  late TextEditingController passwordController;
+  late LoginController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.find<LoginController>();
+    emailController = TextEditingController(text: controller.email.value);
+    passwordController = TextEditingController();
+    
+    ever(controller.email, (email) {
+      if (emailController.text != email) {
+        emailController.text = email;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       constraints: const BoxConstraints(maxWidth: 300),
       child: Form(

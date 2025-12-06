@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class MapPickerView extends StatefulWidget {
   const MapPickerView({Key? key}) : super(key: key);
@@ -29,6 +30,7 @@ class _MapPickerViewState extends State<MapPickerView> {
         setState(() {
           isLoading = false;
         });
+        _showLocationServiceDialog();
         return;
       }
 
@@ -37,8 +39,15 @@ class _MapPickerViewState extends State<MapPickerView> {
         permission = await Geolocator.requestPermission();
       }
 
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          isLoading = false;
+        });
+        _showLocationPermissionDialog();
+        return;
+      }
+
+      if (permission == LocationPermission.denied) {
         setState(() {
           isLoading = false;
         });
@@ -89,6 +98,84 @@ class _MapPickerViewState extends State<MapPickerView> {
         ),
       );
     }
+  }
+
+  void _showLocationServiceDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.location_off, color: Colors.orange[700]),
+            const SizedBox(width: 12),
+            const Text('Location Disabled'),
+          ],
+        ),
+        content: const Text(
+          'Please enable location services in your device settings to use this feature',
+          style: TextStyle(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Geolocator.openLocationSettings();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green[600],
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Open Settings'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLocationPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.location_off, color: Colors.red[700]),
+            const SizedBox(width: 12),
+            const Text('Permission Required'),
+          ],
+        ),
+        content: const Text(
+          'Please enable location permission in app settings to use this feature',
+          style: TextStyle(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              openAppSettings();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green[600],
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Open Settings'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

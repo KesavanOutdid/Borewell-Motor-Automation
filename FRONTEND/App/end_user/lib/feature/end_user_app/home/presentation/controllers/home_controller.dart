@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../../../../core/config/env.dart';
@@ -52,17 +53,23 @@ class HomeController extends GetxController {
           await _storage.write('assigned_devices', []);
         }
       } else if (response.statusCode == 401) {
-        Get.snackbar("Error", "Session expired. Please login again");
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Get.snackbar("Error", "Session expired. Please login again");
+        });
         Future.delayed(const Duration(milliseconds: 500), () {
           Get.offAllNamed('/login');
         });
       } else if (response.statusCode == 404) {
         devices.value = [];
       } else {
-        Get.snackbar("Error", "Failed to fetch devices");
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Get.snackbar("Error", "Failed to fetch devices");
+        });
       }
     } catch (e) {
-      Get.snackbar("Error", "Connection failed: $e");
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.snackbar("Error", "Connection failed: $e");
+      });
     } finally {
       isLoading.value = false;
     }

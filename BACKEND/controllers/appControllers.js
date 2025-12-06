@@ -434,19 +434,27 @@ exports.getTelemetryAnalytics = async (req, res) => {
         if (serial_number) filter.serial_number = serial_number;
         if (imei_number) filter.imei_number = imei_number;
 
+        const now = new Date();
+
         // ------------------------------------------
-        // 📍 HERE Use the aggregation pipeline
+        // 📍 Updated aggregation with time-based filtering
         // ------------------------------------------
         const analytics = await Telemetry.aggregate([
             { $match: filter },
             {
                 $addFields: {
-                    ts: { $toDate: "$timestamp" } // convert string → date
+                    ts: { $toDate: "$timestamp" }
                 }
             },
             {
                 $facet: {
-                    daily: [
+                    // Hourly: Last 60 hours with sequential labels (0, 1, 2, ..., 59)
+                    hourly: [
+                        {
+                            $match: {
+                                ts: { $gte: new Date(now.getTime() - 60 * 60 * 60 * 1000) }
+                            }
+                        },
                         {
                             $group: {
                                 _id: {
@@ -456,55 +464,164 @@ exports.getTelemetryAnalytics = async (req, res) => {
                                     hour: { $hour: "$ts" }
                                 },
                                 value: { $avg: `$${type}` },
+                                timestamp: { $first: "$ts" },
                                 count: { $sum: 1 }
+                            }
+                        },
+                        { $sort: { timestamp: 1 } },
+                        { $limit: 60 },
+                        {
+                            $group: {
+                                _id: null,
+                                items: { $push: "$$ROOT" }
+                            }
+                        },
+                        {
+                            $unwind: {
+                                path: "$items",
+                                includeArrayIndex: "index"
                             }
                         },
                         {
                             $project: {
                                 _id: 0,
-                                time: {
-                                    $concat: [
-                                        { $toString: "$_id.year" }, "-",
-                                        { $toString: "$_id.month" }, "-",
-                                        { $toString: "$_id.day" }, " ",
-                                        { $toString: "$_id.hour" }, ":00"
-                                    ]
-                                },
-                                value: 1,
-                                count: 1
+                                label: { $toString: "$index" },
+                                value: "$items.value",
+                                timestamp: "$items.timestamp",
+                                count: "$items.count"
                             }
-                        },
-                        { $sort: { time: 1 } }
+                        }
                     ],
 
-                    weekly: [
+                    // Today: Last 24 hours with sequential labels (1-24)
+                    today: [
+                        {
+                            $match: {
+                                ts: { $gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) }
+                            }
+                        },
                         {
                             $group: {
                                 _id: {
-                                    week: { $isoWeek: "$ts" },
-                                    year: { $year: "$ts" }
+                                    hour: { $hour: "$ts" }
                                 },
                                 value: { $avg: `$${type}` },
+                                timestamp: { $first: "$ts" },
                                 count: { $sum: 1 }
+                            }
+                        },
+                        { $sort: { timestamp: 1 } },
+                        {
+                            $group: {
+                                _id: null,
+                                items: { $push: "$$ROOT" }
+                            }
+                        },
+                        {
+                            $unwind: {
+                                path: "$items",
+                                includeArrayIndex: "index"
                             }
                         },
                         {
                             $project: {
                                 _id: 0,
-                                time: {
-                                    $concat: [
-                                        { $toString: "$_id.year" }, "-W",
-                                        { $toString: "$_id.week" }
-                                    ]
-                                },
-                                value: 1,
-                                count: 1
+                                label: { $toString: { $add: ["$index", 1] } },
+                                value: "$items.value",
+                                timestamp: "$items.timestamp",
+                                count: "$items.count"
                             }
-                        },
-                        { $sort: { time: 1 } }
+                        }
                     ],
 
+                    // Weekly: Last 7 days with sequential labels (1-7)
+                    weekly: [
+                        {
+                            $match: {
+                                ts: { $gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: {
+                                    year: { $year: "$ts" },
+                                    month: { $month: "$ts" },
+                                    day: { $dayOfMonth: "$ts" }
+                                },
+                                value: { $avg: `$${type}` },
+                                timestamp: { $first: "$ts" },
+                                count: { $sum: 1 }
+                            }
+                        },
+                        { $sort: { timestamp: 1 } },
+                        {
+                            $group: {
+                                _id: null,
+                                items: { $push: "$$ROOT" }
+                            }
+                        },
+                        {
+                            $unwind: {
+                                path: "$items",
+                                includeArrayIndex: "index"
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 0,
+                                label: { $toString: { $add: ["$index", 1] } },
+                                value: "$items.value",
+                                timestamp: "$items.timestamp",
+                                count: "$items.count"
+                            }
+                        }
+                    ],
+
+                    // Monthly: Last 30 days with sequential labels (1-30)
                     monthly: [
+                        {
+                            $match: {
+                                ts: { $gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: {
+                                    year: { $year: "$ts" },
+                                    month: { $month: "$ts" },
+                                    day: { $dayOfMonth: "$ts" }
+                                },
+                                value: { $avg: `$${type}` },
+                                timestamp: { $first: "$ts" },
+                                count: { $sum: 1 }
+                            }
+                        },
+                        { $sort: { timestamp: 1 } },
+                        {
+                            $group: {
+                                _id: null,
+                                items: { $push: "$$ROOT" }
+                            }
+                        },
+                        {
+                            $unwind: {
+                                path: "$items",
+                                includeArrayIndex: "index"
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 0,
+                                label: { $toString: { $add: ["$index", 1] } },
+                                value: "$items.value",
+                                timestamp: "$items.timestamp",
+                                count: "$items.count"
+                            }
+                        }
+                    ],
+
+                    // Yearly: By year and month with sequential labels (1-12 per year)
+                    yearly: [
                         {
                             $group: {
                                 _id: {
@@ -512,55 +629,251 @@ exports.getTelemetryAnalytics = async (req, res) => {
                                     month: { $month: "$ts" }
                                 },
                                 value: { $avg: `$${type}` },
+                                timestamp: { $first: "$ts" },
                                 count: { $sum: 1 }
                             }
                         },
-                        {
-                            $project: {
-                                _id: 0,
-                                time: {
-                                    $concat: [
-                                        { $toString: "$_id.year" }, "-",
-                                        { $toString: "$_id.month" }
-                                    ]
-                                },
-                                value: 1,
-                                count: 1
-                            }
-                        },
-                        { $sort: { time: 1 } }
-                    ],
-
-                    yearly: [
+                        { $sort: { timestamp: 1 } },
                         {
                             $group: {
-                                _id: {
-                                    year: { $year: "$ts" }
-                                },
-                                value: { $avg: `$${type}` },
-                                count: { $sum: 1 }
+                                _id: null,
+                                items: { $push: "$$ROOT" }
+                            }
+                        },
+                        {
+                            $unwind: {
+                                path: "$items",
+                                includeArrayIndex: "index"
                             }
                         },
                         {
                             $project: {
                                 _id: 0,
-                                time: { $toString: "$_id.year" },
-                                value: 1,
-                                count: 1
+                                label: { $toString: { $add: ["$index", 1] } },
+                                value: "$items.value",
+                                timestamp: "$items.timestamp",
+                                count: "$items.count"
                             }
-                        },
-                        { $sort: { time: 1 } }
+                        }
                     ]
                 }
             }
         ]);
+
+        const result = analytics[0];
+        
+        // Helper function to calculate statistics and trends
+        const calculateStats = (data, periodType) => {
+            if (!data || data.length === 0) {
+                return {
+                    dataPoints: 0,
+                    totalRecords: 0,
+                    totalSum: 0,
+                    average: 0,
+                    min: 0,
+                    max: 0,
+                    trend: 'no_data',
+                    variance: 0,
+                    isConstant: false,
+                    percentChange: 0,
+                    standardDeviation: 0,
+                    peakHour: null,
+                    lowestHour: null,
+                    performanceScore: 0,
+                    anomalyCount: 0,
+                    anomalies: [],
+                    consistency: 'no_data',
+                    reliability: 0
+                };
+            }
+
+            const values = data.map(item => item.value);
+            const total = values.reduce((sum, val) => sum + val, 0);
+            const avg = total / values.length;
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            const variance = values.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / values.length;
+            const stdDev = Math.sqrt(variance);
+            
+            // Find peak and lowest points
+            const maxIndex = values.indexOf(max);
+            const minIndex = values.indexOf(min);
+            const peakHour = data[maxIndex] ? {
+                label: data[maxIndex].label,
+                value: max,
+                timestamp: data[maxIndex].timestamp
+            } : null;
+            const lowestHour = data[minIndex] ? {
+                label: data[minIndex].label,
+                value: min,
+                timestamp: data[minIndex].timestamp
+            } : null;
+            
+            // Determine if values are constant (within 0.1% tolerance)
+            const isConstant = (max - min) / avg < 0.001 || stdDev < 0.001;
+            
+            // Calculate trend
+            let trend = 'stable';
+            if (!isConstant && values.length > 1) {
+                const firstHalf = values.slice(0, Math.floor(values.length / 2));
+                const secondHalf = values.slice(Math.floor(values.length / 2));
+                const firstAvg = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;
+                const secondAvg = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;
+                const percentChange = ((secondAvg - firstAvg) / firstAvg) * 100;
+                
+                if (percentChange > 5) trend = 'increasing';
+                else if (percentChange < -5) trend = 'decreasing';
+                else trend = 'stable';
+            } else if (isConstant) {
+                trend = 'constant';
+            }
+
+            // Detect anomalies (values beyond 2 standard deviations)
+            const anomalies = [];
+            values.forEach((val, idx) => {
+                if (Math.abs(val - avg) > 2 * stdDev) {
+                    anomalies.push({
+                        index: idx,
+                        label: data[idx].label,
+                        value: val,
+                        deviation: ((val - avg) / stdDev).toFixed(2),
+                        timestamp: data[idx].timestamp
+                    });
+                }
+            });
+
+            // Calculate performance score (0-100)
+            // Based on consistency, uptime reliability
+            const coefficientOfVariation = avg !== 0 ? (stdDev / avg) * 100 : 0;
+            let performanceScore = 100;
+            if (coefficientOfVariation > 50) performanceScore -= 40;
+            else if (coefficientOfVariation > 30) performanceScore -= 25;
+            else if (coefficientOfVariation > 15) performanceScore -= 10;
+            
+            if (anomalies.length > data.length * 0.2) performanceScore -= 30;
+            else if (anomalies.length > data.length * 0.1) performanceScore -= 15;
+            
+            // Consistency rating
+            let consistency = 'excellent';
+            if (coefficientOfVariation > 40) consistency = 'poor';
+            else if (coefficientOfVariation > 25) consistency = 'fair';
+            else if (coefficientOfVariation > 15) consistency = 'good';
+
+            // Reliability percentage
+            const reliablePoints = values.filter(v => Math.abs(v - avg) <= stdDev).length;
+            const reliability = ((reliablePoints / values.length) * 100).toFixed(1);
+
+            return {
+                dataPoints: data.length,
+                totalRecords: data.reduce((sum, item) => sum + (item.count || 0), 0),
+                totalSum: total,
+                average: parseFloat(avg.toFixed(2)),
+                min: parseFloat(min.toFixed(2)),
+                max: parseFloat(max.toFixed(2)),
+                trend,
+                variance: parseFloat(variance.toFixed(2)),
+                standardDeviation: parseFloat(stdDev.toFixed(2)),
+                isConstant,
+                percentChange: values.length > 1 ? parseFloat(((values[values.length - 1] - values[0]) / values[0] * 100).toFixed(2)) : 0,
+                peakHour,
+                lowestHour,
+                performanceScore: Math.max(0, Math.round(performanceScore)),
+                anomalyCount: anomalies.length,
+                anomalies: anomalies.slice(0, 5),
+                consistency,
+                reliability: parseFloat(reliability),
+                coefficientOfVariation: parseFloat(coefficientOfVariation.toFixed(2))
+            };
+        };
+        
+        const summary = {
+            hourly: calculateStats(result.hourly, 'hourly'),
+            today: calculateStats(result.today, 'today'),
+            weekly: calculateStats(result.weekly, 'weekly'),
+            monthly: calculateStats(result.monthly, 'monthly'),
+            yearly: calculateStats(result.yearly, 'yearly')
+        };
+
+        // Calculate overall metrics
+        const allValues = [
+            ...result.hourly,
+            ...result.today,
+            ...result.weekly,
+            ...result.monthly,
+            ...result.yearly
+        ];
+        
+        const overallStats = allValues.length > 0 ? {
+            totalDataPoints: allValues.length,
+            averagePerformance: Math.round(
+                (summary.hourly.performanceScore + 
+                 summary.today.performanceScore + 
+                 summary.weekly.performanceScore + 
+                 summary.monthly.performanceScore + 
+                 summary.yearly.performanceScore) / 5
+            ),
+            overallTrend: summary.today.trend,
+            totalAnomalies: summary.hourly.anomalyCount + 
+                           summary.today.anomalyCount + 
+                           summary.weekly.anomalyCount + 
+                           summary.monthly.anomalyCount + 
+                           summary.yearly.anomalyCount,
+            criticalAnomalies: [
+                ...summary.hourly.anomalies,
+                ...summary.today.anomalies,
+                ...summary.weekly.anomalies,
+                ...summary.monthly.anomalies,
+                ...summary.yearly.anomalies
+            ].slice(0, 10)
+        } : null;
+
+        // Calculate comparisons (current vs previous period)
+        const calculateComparison = (currentData, label) => {
+            if (!currentData || currentData.length < 2) {
+                return { comparison: 'insufficient_data' };
+            }
+            
+            const mid = Math.floor(currentData.length / 2);
+            const previousPeriod = currentData.slice(0, mid);
+            const currentPeriod = currentData.slice(mid);
+            
+            const prevAvg = previousPeriod.reduce((sum, item) => sum + item.value, 0) / previousPeriod.length;
+            const currAvg = currentPeriod.reduce((sum, item) => sum + item.value, 0) / currentPeriod.length;
+            
+            const change = currAvg - prevAvg;
+            const percentChange = prevAvg !== 0 ? ((change / prevAvg) * 100) : 0;
+            
+            return {
+                label,
+                previousAverage: parseFloat(prevAvg.toFixed(2)),
+                currentAverage: parseFloat(currAvg.toFixed(2)),
+                absoluteChange: parseFloat(change.toFixed(2)),
+                percentChange: parseFloat(percentChange.toFixed(2)),
+                trend: percentChange > 5 ? 'improving' : percentChange < -5 ? 'declining' : 'stable'
+            };
+        };
+
+        const comparisons = {
+            hourly: calculateComparison(result.hourly, 'Last 30h vs Previous 30h'),
+            today: calculateComparison(result.today, 'Last 12h vs Previous 12h'),
+            weekly: calculateComparison(result.weekly, 'Last 3-4 days vs Previous 3 days'),
+            monthly: calculateComparison(result.monthly, 'Last 15 days vs Previous 15 days')
+        };
 
         res.json({
             success: true,
             type,
             serial_number,
             imei_number,
-            data: analytics[0]
+            data: result,
+            summary,
+            comparisons,
+            overallStats,
+            metadata: {
+                generatedAt: new Date().toISOString(),
+                metricType: type,
+                availablePeriods: ['hourly', 'today', 'weekly', 'monthly', 'yearly']
+            }
         });
 
     } catch (err) {

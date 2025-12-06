@@ -32,6 +32,23 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'mqtt', 'public', 'index.html'));
 });
 
+// ----------------------------
+// Auto Detect Local IP
+// ----------------------------
+function getLocalIP() {
+    const interfaces = os.networkInterfaces();
+    for (const name in interfaces) {
+        for (const iface of interfaces[name]) {
+            if (iface.family === "IPv4" && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return "localhost";
+}
+
+const localIP = getLocalIP();
+
 // Connect DB
 connectDB().then(() => {
     // Send boot notifications for configured devices on startup
@@ -60,7 +77,7 @@ const swaggerOptions = {
         },
         security: [{ BearerAuth: [] }],
         servers: [
-            { url: `http://${require('os').networkInterfaces().en0[1].address}:3000` },  // Local IP
+            { url: `http://${localIP}:3000` },
             { url: `http://localhost:3000` }
         ]
     },
@@ -81,23 +98,7 @@ app.use('/mqtt', logsRoutes);
 // Error handler
 app.use(errorHandler);
 
-// ----------------------------
-// Auto Detect Local IP
-// ----------------------------
-function getLocalIP() {
-    const interfaces = os.networkInterfaces();
-    for (const name in interfaces) {
-        for (const iface of interfaces[name]) {
-            if (iface.family === "IPv4" && !iface.internal) {
-                return iface.address;
-            }
-        }
-    }
-    return "localhost";
-}
-
 const port = process.env.PORT || 3000;
-const localIP = getLocalIP();
 
 
 // ----------------------------

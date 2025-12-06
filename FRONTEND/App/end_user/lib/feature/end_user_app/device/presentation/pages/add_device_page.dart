@@ -104,10 +104,15 @@ class ConfigureDeviceView extends StatelessWidget {
                 labelText: 'IMEI Number *',
                 hintText: '15-digit IMEI',
                 prefixIcon: const Icon(Icons.phonelink),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.qr_code_scanner),
+                  onPressed: () => controller.scanQRCode(),
+                  tooltip: 'Scan QR Code',
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                helperText: 'Enter the 15-digit IMEI number',
+                helperText: 'Enter or scan the 15-digit IMEI number',
               ),
             ),
             const SizedBox(height: 16),

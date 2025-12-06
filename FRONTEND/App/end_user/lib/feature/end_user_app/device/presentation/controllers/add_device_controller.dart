@@ -5,9 +5,11 @@ import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:permission_handler/permission_handler.dart';
 import '../../../../../core/config/env.dart';
 import '../../../../../core/services/token_service.dart';
 import '../pages/map_picker_page.dart';
+import '../pages/qr_scanner_page.dart';
 
 class ConfigureDeviceController extends GetxController {
   final imeiController = TextEditingController();
@@ -68,12 +70,68 @@ class ConfigureDeviceController extends GetxController {
         isGettingLocation.value = false;
         
         Future.delayed(Duration.zero, () {
-          Get.snackbar(
-            'Location Services Disabled',
-            'Please enable GPS/Location in your device settings',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.orange[100],
-            duration: const Duration(seconds: 5),
+          Get.dialog(
+            Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.location_off,
+                      size: 60,
+                      color: Colors.orange[400],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Location Services Disabled',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Please enable GPS/Location in your device settings to use this feature',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black54,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Get.back(),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Get.back();
+                              Geolocator.openLocationSettings();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green[600],
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text('Settings'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
           );
         });
         return;
@@ -110,12 +168,68 @@ class ConfigureDeviceController extends GetxController {
         isGettingLocation.value = false;
         
         Future.delayed(Duration.zero, () {
-          Get.snackbar(
-            'Permission Denied Forever',
-            'Please enable location permission from app settings',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.red[100],
-            duration: const Duration(seconds: 5),
+          Get.dialog(
+            Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.location_off,
+                      size: 60,
+                      color: Colors.red[400],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Location Permission Required',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Please enable location permission in app settings to use this feature',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black54,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Get.back(),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Get.back();
+                              openAppSettings();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green[600],
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text('Settings'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
           );
         });
         return;
@@ -287,6 +401,118 @@ class ConfigureDeviceController extends GetxController {
       });
     } else {
       print('❌ Map picker cancelled');
+    }
+  }
+
+  Future<void> scanQRCode() async {
+    print('📷 Opening QR scanner...');
+    
+    final cameraStatus = await Permission.camera.status;
+    
+    if (cameraStatus.isDenied) {
+      final result = await Permission.camera.request();
+      if (result.isDenied) {
+        Get.snackbar(
+          'Permission Denied',
+          'Camera permission is required to scan QR codes',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red[100],
+          duration: const Duration(seconds: 3),
+        );
+        return;
+      }
+    } else if (cameraStatus.isPermanentlyDenied) {
+      Get.dialog(
+        Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.camera_alt_outlined,
+                  size: 60,
+                  color: Colors.orange[400],
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Camera Permission Required',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Please enable camera permission in app settings to scan QR codes',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Get.back(),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Get.back();
+                          openAppSettings();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green[600],
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Settings'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+    
+    final String? result = await Get.to(() => const QRScannerView());
+    
+    if (result != null && result.isNotEmpty) {
+      print('✅ QR Code scanned: $result');
+      
+      if (RegExp(r'^[0-9]{15}$').hasMatch(result)) {
+        imeiController.text = result;
+        Get.snackbar(
+          'QR Code Scanned',
+          'IMEI: $result',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green[100],
+          duration: const Duration(seconds: 2),
+        );
+      } else {
+        Get.snackbar(
+          'Invalid QR Code',
+          'The scanned code is not a valid 15-digit IMEI number',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange[100],
+          duration: const Duration(seconds: 3),
+        );
+      }
+    } else {
+      print('❌ QR scanner cancelled');
     }
   }
 
