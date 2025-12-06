@@ -14,7 +14,7 @@ const WebSocket = require("ws");
 const adminRoutes = require('./routes/adminRoutes');
 const appRoutes = require('./routes/appRoutes');
 const logsRoutes = require('./mqtt/routes/logs');
-const { sendBootNotificationsOnStartup } = require('./mqtt/publisher');
+const { sendBoot } = require('./mqtt/publisher');
 // Import MQTT client to start the subscriber
 const mqttClient = require('./mqtt/mqttClient');
 
@@ -52,7 +52,7 @@ const localIP = getLocalIP();
 // Connect DB
 connectDB().then(() => {
     // Send boot notifications for configured devices on startup
-    sendBootNotificationsOnStartup();
+    sendBoot();
 }).catch(err => {
     console.error('Database connection failed:', err);
 });

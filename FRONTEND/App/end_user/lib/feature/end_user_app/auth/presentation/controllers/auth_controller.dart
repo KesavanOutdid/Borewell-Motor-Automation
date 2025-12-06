@@ -75,8 +75,11 @@ class LoginController extends GetxController {
     isLoading.value = true;
 
     final url = Uri.parse(AppConfig.baseUrl + AppConfig.loginEndpoint);
+    print('🔐 Login URL: $url');
+    print('📧 Email: ${email.value}');
 
     try {
+      print('📡 Sending login request...');
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
@@ -85,7 +88,10 @@ class LoginController extends GetxController {
           "password": password.value,
           "role_id": 2
         }),
-      );
+      ).timeout(const Duration(seconds: 10));
+
+      print('📥 Response status: ${response.statusCode}');
+      print('📥 Response body: ${response.body}');
 
       isLoading.value = false;
 

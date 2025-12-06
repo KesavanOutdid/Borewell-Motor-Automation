@@ -1,5 +1,5 @@
 class AppConfig {
-  static const String baseUrl = "http://192.168.0.3:3000";
+  static const String baseUrl = "http://192.168.0.9:3000";
   static const String loginEndpoint = "/app/login";
   static const String signupEndpoint = "/admin/createUser";
   static const String deviceEndpoint = "/api/devices";
@@ -13,7 +13,7 @@ class AppConfig {
   static const String userDeviceHistoryDetailsEndpoint = "/app/userDeviceHistoryDetails";
   static const String startStopDeviceEndpoint = "/app/startStopDevice";
   static const String analyticsEndpoint = "/app/analytics";
-  static const String websocketHost = "192.168.0.35";
+  static const String websocketHost = "192.168.0.9";
   static const int websocketPort = 8081;
   static const String websocketUrl = "ws://$websocketHost:$websocketPort";
 }

@@ -225,4 +225,4 @@ async function sendAlert() {
     });
 }
 
-module.exports = client;
+module.exports = { client, sendBoot };
