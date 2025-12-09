@@ -12,6 +12,7 @@ class HomeView extends GetView<HomeController> {
     final notificationStorage = NotificationStorageService();
     
     return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         title: const Text('My Devices'),
         actions: [
@@ -124,19 +125,9 @@ class HomeView extends GetView<HomeController> {
               return Container(
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.white, Colors.grey.shade50],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryGreen.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  boxShadow: [AppColors.cardShadow],
                 ),
                 child: Material(
                   color: Colors.transparent,
@@ -151,26 +142,10 @@ class HomeView extends GetView<HomeController> {
                             width: 64,
                             height: 64,
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: !isConfigured
-                                    ? [Colors.orange.shade400, Colors.orange.shade600]
-                                    : (isRunning 
-                                        ? [AppColors.lightGreen, AppColors.primaryGreen]
-                                        : [Colors.blue.shade400, Colors.blue.shade600]),
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
+                              color: !isConfigured
+                                  ? Colors.orange.shade400
+                                  : (isRunning ? AppColors.primaryGreen : Colors.grey.shade400),
                               shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: (!isConfigured
-                                      ? Colors.orange
-                                      : (isRunning ? AppColors.primaryGreen : Colors.blue))
-                                      .withOpacity(0.4),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
                             ),
                             child: Icon(
                               !isConfigured ? Icons.settings : Icons.bolt,
@@ -187,7 +162,8 @@ class HomeView extends GetView<HomeController> {
                                 device['serial_number'] ?? 'Main Motor Unit',
                                 style: const TextStyle(
                                   fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -199,13 +175,11 @@ class HomeView extends GetView<HomeController> {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: !isConfigured
-                                        ? [Colors.orange.shade100, Colors.orange.shade200]
-                                        : (isRunning
-                                            ? [AppColors.mint.withOpacity(0.3), AppColors.lightGreen.withOpacity(0.3)]
-                                            : [Colors.grey.shade200, Colors.grey.shade300]),
-                                  ),
+                                  color: !isConfigured
+                                      ? Colors.orange.shade100
+                                      : (isRunning
+                                          ? AppColors.primaryGreen.withOpacity(0.15)
+                                          : Colors.grey.shade200),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Row(
@@ -249,9 +223,9 @@ class HomeView extends GetView<HomeController> {
                                       Expanded(
                                         child: Text(
                                           device['location'],
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             fontSize: 11,
-                                            color: Colors.grey[600],
+                                            color: AppColors.textSecondary,
                                             fontWeight: FontWeight.w500,
                                           ),
                                           maxLines: 1,

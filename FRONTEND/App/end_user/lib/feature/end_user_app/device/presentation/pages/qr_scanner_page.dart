@@ -49,7 +49,7 @@ class _QRScannerViewState extends State<QRScannerView> {
     if (code != null && code.isNotEmpty) {
       _hasScanned = true;
       cameraController.stop();
-      Get.back(result: code);
+      Navigator.of(context).pop(code);
     }
   }
 

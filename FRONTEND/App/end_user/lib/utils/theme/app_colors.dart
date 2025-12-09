@@ -10,7 +10,7 @@ class AppColors {
   static const Color accentTeal = Color(0xFF14B8A6);
   static const Color accentLime = Color(0xFF84CC16);
   
-  static const Color backgroundLight = Color(0xFFF0FDF4);
+  static const Color backgroundLight = Color(0xFFF5F5F5);
   static const Color backgroundDark = Color(0xFF0F172A);
   static const Color cardLight = Color(0xFFFFFFFF);
   static const Color cardDark = Color(0xFF1E293B);
@@ -20,8 +20,9 @@ class AppColors {
   static const Color error = Color(0xFFEF4444);
   static const Color info = Color(0xFF3B82F6);
   
-  static const Color textPrimary = Color(0xFF0F172A);
-  static const Color textSecondary = Color(0xFF64748B);
+  static const Color textPrimary = Color(0xFF000000);
+  static const Color textSecondary = Color(0xFF4B5563);
+  static const Color textMuted = Color(0xFF9CA3AF);
   static const Color textLight = Color(0xFFFFFFFF);
   
   static const LinearGradient primaryGradient = LinearGradient(
@@ -37,7 +38,7 @@ class AppColors {
   );
   
   static const LinearGradient cardGradient = LinearGradient(
-    colors: [Color(0xFFDCFCE7), Color(0xFFF0FDF4)],
+    colors: [Color(0xFFFFFFFF), Color(0xFFFFFFFF)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -49,14 +50,20 @@ class AppColors {
   );
   
   static BoxShadow primaryShadow = BoxShadow(
-    color: primaryGreen.withOpacity(0.3),
-    blurRadius: 12,
-    offset: const Offset(0, 4),
+    color: primaryGreen.withOpacity(0.15),
+    blurRadius: 8,
+    offset: const Offset(0, 2),
   );
   
   static BoxShadow cardShadow = BoxShadow(
-    color: Colors.black.withOpacity(0.08),
-    blurRadius: 16,
-    offset: const Offset(0, 4),
+    color: Colors.black.withOpacity(0.06),
+    blurRadius: 8,
+    offset: const Offset(0, 2),
+  );
+  
+  static BoxShadow softShadow = BoxShadow(
+    color: Colors.black.withOpacity(0.04),
+    blurRadius: 6,
+    offset: const Offset(0, 1),
   );
 }

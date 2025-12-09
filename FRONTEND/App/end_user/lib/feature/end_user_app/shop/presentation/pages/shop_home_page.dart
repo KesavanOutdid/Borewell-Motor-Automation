@@ -43,6 +43,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
     print('🏪 ShopHomeView build - Products count: ${controller.products.length}');
     
     return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -440,7 +441,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
             productName,
             style: const TextStyle(
               fontSize: 13,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
               height: 1.2,
             ),
@@ -450,9 +451,9 @@ class _ShopHomeViewState extends State<ShopHomeView> {
           const SizedBox(height: 4),
           Text(
             productDescription,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 10,
-              color: Colors.grey.shade600,
+              color: AppColors.textSecondary,
               height: 1.2,
             ),
             maxLines: 1,

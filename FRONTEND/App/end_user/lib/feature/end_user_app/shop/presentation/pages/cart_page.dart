@@ -12,6 +12,7 @@ class CartPage extends StatelessWidget {
     final controller = Get.put(CartController());
 
     return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         title: const Text('Shopping Cart'),
         flexibleSpace: Container(
@@ -160,7 +161,7 @@ class CartPage extends StatelessWidget {
                     item.productName,
                     style: const TextStyle(
                       fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                     ),
                     maxLines: 2,
@@ -169,9 +170,9 @@ class CartPage extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     '₹${item.price.toStringAsFixed(2)}',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 13,
-                      color: Colors.grey.shade600,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -333,7 +334,7 @@ class CartPage extends StatelessWidget {
           style: TextStyle(
             fontSize: isTotal ? 16 : 14,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            color: isTotal ? AppColors.textPrimary : Colors.grey.shade700,
+            color: isTotal ? AppColors.textPrimary : AppColors.textSecondary,
           ),
         ),
         Text(

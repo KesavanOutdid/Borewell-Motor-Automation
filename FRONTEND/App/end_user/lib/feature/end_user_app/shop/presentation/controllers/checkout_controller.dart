@@ -11,7 +11,7 @@ import '../../data/models/cart_model.dart';
 class CheckoutController extends GetxController {
   var isProcessing = false.obs;
   
-  final String baseUrl = 'http://10.112.47.218:3030';
+  final String baseUrl = 'http://192.168.0.23:3030';
   final String razorpayKeyId = 'rzp_test_oHoZ3Q1fF6pYEI';
   
   late TokenService tokenService;

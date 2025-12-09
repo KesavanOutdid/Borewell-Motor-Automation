@@ -13,7 +13,7 @@ class ShopController extends GetxController {
   var hasNextPage = false.obs;
   var searchQuery = ''.obs;
   
-  final String baseUrl = 'http://10.112.47.218:3030';
+  final String baseUrl = 'http://192.168.0.23:3030';
   final int limit = 10;
   
   late TokenService tokenService;
