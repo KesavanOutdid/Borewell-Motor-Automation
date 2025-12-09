@@ -456,8 +456,7 @@ router.post(
  *   post:
  *     tags:
  *       - Telemetry Analytics
- *     summary: Get analytics for selected telemetry metric with time-based filtering
- *     description: Returns telemetry analytics aggregated by different time periods - Hourly (last 60 hours), Today (last 24 hours), Weekly (last 7 days), Monthly (last 30 days), and Yearly (all years)
+ *     summary: Get analytics for selected telemetry metric
  *     parameters:
  *       - in: query
  *         name: type
@@ -481,122 +480,331 @@ router.post(
  *         example: "IMEI0987654321234564444"
  *     responses:
  *       200:
- *         description: Analytics data with hourly, today, weekly, monthly, yearly arrays
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 type:
- *                   type: string
- *                   example: motor_rpm
- *                 serial_number:
- *                   type: string
- *                   example: "SN098765432123456789"
- *                 imei_number:
- *                   type: string
- *                   example: "IMEI0987654321234564444"
- *                 data:
- *                   type: object
- *                   properties:
- *                     hourly:
- *                       type: array
- *                       description: Last 60 hours with sequential numeric labels (0-59)
- *                       items:
- *                         type: object
- *                         properties:
- *                           label:
- *                             type: string
- *                             example: "15"
- *                           value:
- *                             type: number
- *                             example: 1450.5
- *                           timestamp:
- *                             type: string
- *                             format: date-time
- *                           count:
- *                             type: integer
- *                             example: 120
- *                     today:
- *                       type: array
- *                       description: Last 24 hours with sequential numeric labels (1-24)
- *                       items:
- *                         type: object
- *                         properties:
- *                           label:
- *                             type: string
- *                             example: "15"
- *                           value:
- *                             type: number
- *                             example: 1450.5
- *                           timestamp:
- *                             type: string
- *                             format: date-time
- *                           count:
- *                             type: integer
- *                             example: 60
- *                     weekly:
- *                       type: array
- *                       description: Last 7 days with sequential numeric labels (1-7)
- *                       items:
- *                         type: object
- *                         properties:
- *                           label:
- *                             type: string
- *                             example: "3"
- *                           value:
- *                             type: number
- *                             example: 1450.5
- *                           timestamp:
- *                             type: string
- *                             format: date-time
- *                           count:
- *                             type: integer
- *                             example: 288
- *                     monthly:
- *                       type: array
- *                       description: Last 30 days with sequential numeric labels (1-30)
- *                       items:
- *                         type: object
- *                         properties:
- *                           label:
- *                             type: string
- *                             example: "15"
- *                           value:
- *                             type: number
- *                             example: 1450.5
- *                           timestamp:
- *                             type: string
- *                             format: date-time
- *                           count:
- *                             type: integer
- *                             example: 288
- *                     yearly:
- *                       type: array
- *                       description: Historical data by month with sequential labels (1-12 per year)
- *                       items:
- *                         type: object
- *                         properties:
- *                           label:
- *                             type: string
- *                             example: "6"
- *                           value:
- *                             type: number
- *                             example: 1450.5
- *                           timestamp:
- *                             type: string
- *                             format: date-time
- *                           count:
- *                             type: integer
- *                             example: 105120
+ *         description: Telemetry analytics chart data with daily, weekly, monthly, yearly arrays
  *       400:
  *         description: Invalid or missing parameters
  *       500:
  *         description: Server error
  */
 router.post("/analytics", appCtrl.getTelemetryAnalytics);
+
+/**
+* @swagger
+* /app/addCart:
+*   post:
+*     summary: Add product to cart
+*     tags: [Cart]
+*     requestBody:
+*       required: true
+*       content:
+*         application/json:
+*           schema:
+*             type: object
+*             required:
+*               - user_id
+*               - product_id
+*               - quantity
+*             properties:
+*               user_id:
+*                 type: integer
+*                 example: 11
+*                 description: User ID
+*               product_id:
+*                 type: integer
+*                 example: 1
+*                 description: Product ID to add to cart
+*               quantity:
+*                 type: integer
+*                 example: 2
+*                 description: Quantity to add
+*     responses:
+*       201:
+*         description: Product added to cart successfully
+*         content:
+*           application/json:
+*             schema:
+*               type: object
+*               properties:
+*                 success:
+*                   type: boolean
+*                 message:
+*                   type: string
+*                 cart:
+*                   type: object
+*       400:
+*         description: Validation error or insufficient product quantity
+*       404:
+*         description: User or product not found
+*       500:
+*         description: Server error
+*/
+router.post(
+    '/addCart',
+    [
+        body('user_id').isInt().withMessage("user_id must be an integer"),
+        body('product_id').isInt().withMessage("product_id must be an integer"),
+        body('quantity').isInt({ min: 1 }).withMessage("quantity must be at least 1")
+    ],
+    appCtrl.addCart
+);
+
+/**
+* @swagger
+* /app/fetchCart:
+*   post:
+*     summary: Fetch user cart with product details including images
+*     tags: [Cart]
+*     requestBody:
+*       required: true
+*       content:
+*         application/json:
+*           schema:
+*             type: object
+*             required:
+*               - user_id
+*             properties:
+*               user_id:
+*                 type: integer
+*                 example: 11
+*                 description: User ID
+*     responses:
+*       200:
+*         description: Cart fetched successfully
+*         content:
+*           application/json:
+*             schema:
+*               type: object
+*               properties:
+*                 success:
+*                   type: boolean
+*                 message:
+*                   type: string
+*                 cart:
+*                   type: object
+*                   properties:
+*                     cart_id:
+*                       type: integer
+*                     user_id:
+*                       type: integer
+*                     items:
+*                       type: array
+*                       items:
+*                         type: object
+*                         properties:
+*                           product_id:
+*                             type: integer
+*                           product_name:
+*                             type: string
+*                           product_price:
+*                             type: number
+*                           product_gst:
+*                             type: number
+*                           product_shipping_cost:
+*                             type: number
+*                           quantity:
+*                             type: integer
+*                           product_main_image:
+*                             type: string
+*                             description: Product image URL path
+*                           added_at:
+*                             type: string
+*                             format: date-time
+*                     total_price:
+*                       type: number
+*                     total_gst:
+*                       type: number
+*                     total_shipping_cost:
+*                       type: number
+*                     grand_total:
+*                       type: number
+*       400:
+*         description: Validation error
+*       404:
+*         description: User not found
+*       500:
+*         description: Server error
+*/
+router.post(
+    '/fetchCart',
+    [
+        body('user_id').isInt().withMessage("user_id must be an integer")
+    ],
+    appCtrl.fetchCart
+);
+
+/**
+* @swagger
+* /app/updatedCart:
+*   post:
+*     summary: Update cart item quantity
+*     tags: [Cart]
+*     requestBody:
+*       required: true
+*       content:
+*         application/json:
+*           schema:
+*             type: object
+*             required:
+*               - user_id
+*               - product_id
+*               - quantity
+*             properties:
+*               user_id:
+*                 type: integer
+*                 example: 11
+*                 description: User ID
+*               product_id:
+*                 type: integer
+*                 example: 1
+*                 description: Product ID
+*               quantity:
+*                 type: integer
+*                 example: 5
+*                 description: New quantity
+*     responses:
+*       200:
+*         description: Cart updated successfully
+*         content:
+*           application/json:
+*             schema:
+*               type: object
+*               properties:
+*                 success:
+*                   type: boolean
+*                 message:
+*                   type: string
+*                 cart:
+*                   type: object
+*       400:
+*         description: Validation error or insufficient product quantity
+*       404:
+*         description: User, product, or cart not found
+*       500:
+*         description: Server error
+*/
+router.post(
+    '/updatedCart',
+    [
+        body('user_id').isInt().withMessage("user_id must be an integer"),
+        body('product_id').isInt().withMessage("product_id must be an integer"),
+        body('quantity').isInt({ min: 1 }).withMessage("quantity must be at least 1")
+    ],
+    appCtrl.updatedCart
+);
+
+/**
+* @swagger
+* /app/productDelete:
+*   post:
+*     summary: Delete single product from cart
+*     tags: [Cart]
+*     requestBody:
+*       required: true
+*       content:
+*         application/json:
+*           schema:
+*             type: object
+*             required:
+*               - user_id
+*               - product_id
+*             properties:
+*               user_id:
+*                 type: integer
+*                 example: 11
+*                 description: User ID
+*               product_id:
+*                 type: integer
+*                 example: 1
+*                 description: Product ID to remove
+*     responses:
+*       200:
+*         description: Product removed from cart successfully
+*         content:
+*           application/json:
+*             schema:
+*               type: object
+*               properties:
+*                 success:
+*                   type: boolean
+*                 message:
+*                   type: string
+*                 cart:
+*                   type: object
+*       400:
+*         description: Validation error
+*       404:
+*         description: User, product, or cart not found
+*       500:
+*         description: Server error
+*/
+router.post(
+    '/productDelete',
+    [
+        body('user_id').isInt().withMessage("user_id must be an integer"),
+        body('product_id').isInt().withMessage("product_id must be an integer")
+    ],
+    appCtrl.productDelete
+);
+
+/**
+* @swagger
+* /app/allProductDelete:
+*   post:
+*     summary: Clear all products from cart
+*     tags: [Cart]
+*     requestBody:
+*       required: true
+*       content:
+*         application/json:
+*           schema:
+*             type: object
+*             required:
+*               - user_id
+*             properties:
+*               user_id:
+*                 type: integer
+*                 example: 11
+*                 description: User ID
+*     responses:
+*       200:
+*         description: Cart cleared successfully
+*         content:
+*           application/json:
+*             schema:
+*               type: object
+*               properties:
+*                 success:
+*                   type: boolean
+*                 message:
+*                   type: string
+*                 cart:
+*                   type: object
+*                   properties:
+*                     user_id:
+*                       type: integer
+*                     items:
+*                       type: array
+*                     total_price:
+*                       type: number
+*                     total_gst:
+*                       type: number
+*                     total_shipping_cost:
+*                       type: number
+*                     grand_total:
+*                       type: number
+*       400:
+*         description: Validation error
+*       404:
+*         description: User or cart not found
+*       500:
+*         description: Server error
+*/
+router.post(
+    '/allProductDelete',
+    [
+        body('user_id').isInt().withMessage("user_id must be an integer")
+    ],
+    appCtrl.allProductDelete
+);
 
 module.exports = router;

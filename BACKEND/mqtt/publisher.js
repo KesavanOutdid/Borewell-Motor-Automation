@@ -34,10 +34,10 @@ client.on('connect', () => {
 
     sendBoot();
 
-    intervals.push(setInterval(sendHeartbeat, 10000));
-    intervals.push(setInterval(sendStatusAck, 10000));
-    intervals.push(setInterval(sendTelemetry, 5000));
-    intervals.push(setInterval(sendAlert, 10000));
+    intervals.push(setInterval(sendHeartbeat, 25 * 60 * 1000)); // 25 minutes
+    intervals.push(setInterval(sendStatusAck, 2 * 60 * 1000)); // 25 minutes
+    intervals.push(setInterval(sendTelemetry, 10000));
+    intervals.push(setInterval(sendAlert, 2 * 60 * 1000)); // 25 minutes
 });
 
 client.on('error', (err) => {
@@ -225,4 +225,4 @@ async function sendAlert() {
     });
 }
 
-module.exports = { client, sendBoot };
+module.exports = client;

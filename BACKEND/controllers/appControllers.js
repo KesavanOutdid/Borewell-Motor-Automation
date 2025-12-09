@@ -1,6 +1,8 @@
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
 const Device = require('../models/Device');
+const Product = require('../models/Product');
+const Cart = require('../models/Cart');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const Telemetry = require("../models/Telemetry");
@@ -86,7 +88,7 @@ exports.updateProfile = async (req, res, next) => {
     try {
         const userId = Number(req.params.user_id);
 
-        const { user_name, user_phone, status, password} = req.body;
+        const { user_name, user_phone, status, password } = req.body;
 
         const updateData = {};
         if (user_name) updateData.user_name = user_name;
@@ -661,7 +663,7 @@ exports.getTelemetryAnalytics = async (req, res) => {
         ]);
 
         const result = analytics[0];
-        
+
         // Helper function to calculate statistics and trends
         const calculateStats = (data, periodType) => {
             if (!data || data.length === 0) {
@@ -694,7 +696,7 @@ exports.getTelemetryAnalytics = async (req, res) => {
             const max = Math.max(...values);
             const variance = values.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / values.length;
             const stdDev = Math.sqrt(variance);
-            
+
             // Find peak and lowest points
             const maxIndex = values.indexOf(max);
             const minIndex = values.indexOf(min);
@@ -708,10 +710,10 @@ exports.getTelemetryAnalytics = async (req, res) => {
                 value: min,
                 timestamp: data[minIndex].timestamp
             } : null;
-            
+
             // Determine if values are constant (within 0.1% tolerance)
             const isConstant = (max - min) / avg < 0.001 || stdDev < 0.001;
-            
+
             // Calculate trend
             let trend = 'stable';
             if (!isConstant && values.length > 1) {
@@ -720,7 +722,7 @@ exports.getTelemetryAnalytics = async (req, res) => {
                 const firstAvg = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;
                 const secondAvg = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;
                 const percentChange = ((secondAvg - firstAvg) / firstAvg) * 100;
-                
+
                 if (percentChange > 5) trend = 'increasing';
                 else if (percentChange < -5) trend = 'decreasing';
                 else trend = 'stable';
@@ -749,10 +751,10 @@ exports.getTelemetryAnalytics = async (req, res) => {
             if (coefficientOfVariation > 50) performanceScore -= 40;
             else if (coefficientOfVariation > 30) performanceScore -= 25;
             else if (coefficientOfVariation > 15) performanceScore -= 10;
-            
+
             if (anomalies.length > data.length * 0.2) performanceScore -= 30;
             else if (anomalies.length > data.length * 0.1) performanceScore -= 15;
-            
+
             // Consistency rating
             let consistency = 'excellent';
             if (coefficientOfVariation > 40) consistency = 'poor';
@@ -785,7 +787,7 @@ exports.getTelemetryAnalytics = async (req, res) => {
                 coefficientOfVariation: parseFloat(coefficientOfVariation.toFixed(2))
             };
         };
-        
+
         const summary = {
             hourly: calculateStats(result.hourly, 'hourly'),
             today: calculateStats(result.today, 'today'),
@@ -802,22 +804,22 @@ exports.getTelemetryAnalytics = async (req, res) => {
             ...result.monthly,
             ...result.yearly
         ];
-        
+
         const overallStats = allValues.length > 0 ? {
             totalDataPoints: allValues.length,
             averagePerformance: Math.round(
-                (summary.hourly.performanceScore + 
-                 summary.today.performanceScore + 
-                 summary.weekly.performanceScore + 
-                 summary.monthly.performanceScore + 
-                 summary.yearly.performanceScore) / 5
+                (summary.hourly.performanceScore +
+                    summary.today.performanceScore +
+                    summary.weekly.performanceScore +
+                    summary.monthly.performanceScore +
+                    summary.yearly.performanceScore) / 5
             ),
             overallTrend: summary.today.trend,
-            totalAnomalies: summary.hourly.anomalyCount + 
-                           summary.today.anomalyCount + 
-                           summary.weekly.anomalyCount + 
-                           summary.monthly.anomalyCount + 
-                           summary.yearly.anomalyCount,
+            totalAnomalies: summary.hourly.anomalyCount +
+                summary.today.anomalyCount +
+                summary.weekly.anomalyCount +
+                summary.monthly.anomalyCount +
+                summary.yearly.anomalyCount,
             criticalAnomalies: [
                 ...summary.hourly.anomalies,
                 ...summary.today.anomalies,
@@ -832,17 +834,17 @@ exports.getTelemetryAnalytics = async (req, res) => {
             if (!currentData || currentData.length < 2) {
                 return { comparison: 'insufficient_data' };
             }
-            
+
             const mid = Math.floor(currentData.length / 2);
             const previousPeriod = currentData.slice(0, mid);
             const currentPeriod = currentData.slice(mid);
-            
+
             const prevAvg = previousPeriod.reduce((sum, item) => sum + item.value, 0) / previousPeriod.length;
             const currAvg = currentPeriod.reduce((sum, item) => sum + item.value, 0) / currentPeriod.length;
-            
+
             const change = currAvg - prevAvg;
             const percentChange = prevAvg !== 0 ? ((change / prevAvg) * 100) : 0;
-            
+
             return {
                 label,
                 previousAverage: parseFloat(prevAvg.toFixed(2)),
@@ -879,6 +881,357 @@ exports.getTelemetryAnalytics = async (req, res) => {
     } catch (err) {
         console.error("Telemetry analytics error:", err);
         res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+
+exports.addCart = async (req, res, next) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty())
+            return res.status(400).json({ success: false, errors: errors.array() });
+
+        const { user_id, product_id, quantity } = req.body;
+
+        // Verify user exists
+        const user = await User.findOne({ user_id });
+        if (!user)
+            return res.status(404).json({ success: false, message: "User not found" });
+
+        // Verify product exists and is active
+        const product = await Product.findOne({ product_id, status: true });
+        if (!product)
+            return res.status(404).json({ success: false, message: "Product not found" });
+
+        // Check available quantity
+        if (product.product_quantity < quantity)
+            return res.status(400).json({ success: false, message: "Insufficient product quantity" });
+
+        // Find or create cart for user
+        let cart = await Cart.findOne({ user_id });
+
+        if (!cart) {
+            // Create new cart
+            const cartCount = await Cart.countDocuments();
+            cart = new Cart({
+                cart_id: cartCount + 1,
+                user_id,
+                items: [],
+                createdBy: user.user_email
+            });
+        }
+
+        // Check if product already in cart
+        const existingItem = cart.items.find(item => item.product_id === product_id);
+
+        if (existingItem) {
+            // Update quantity
+            existingItem.quantity += quantity;
+        } else {
+            // Add new item
+            cart.items.push({
+                product_id: product.product_id,
+                product_name: product.product_name,
+                product_price: product.product_price,
+                product_gst: product.product_gst,
+                product_shipping_cost: product.product_shipping_cost,
+                quantity
+            });
+        }
+
+        // Calculate totals
+        cart.total_price = 0;
+        cart.total_gst = 0;
+        cart.total_shipping_cost = 0;
+
+        cart.items.forEach(item => {
+            const itemPrice = item.product_price * item.quantity;
+            const itemGST = (itemPrice * item.product_gst) / 100;
+            const itemShipping = item.product_shipping_cost * item.quantity;
+
+            cart.total_price += itemPrice;
+            cart.total_gst += itemGST;
+            cart.total_shipping_cost += itemShipping;
+        });
+
+        cart.grand_total = cart.total_price + cart.total_gst + cart.total_shipping_cost;
+        cart.updatedAt = new Date();
+        cart.updatedBy = user.user_email;
+
+        await cart.save();
+
+        res.status(201).json({
+            success: true,
+            message: "Product added to cart successfully",
+            cart
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.fetchCart = async (req, res, next) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty())
+            return res.status(400).json({ success: false, errors: errors.array() });
+
+        const { user_id } = req.body;
+
+        // Verify user exists
+        const user = await User.findOne({ user_id });
+        if (!user)
+            return res.status(404).json({ success: false, message: "User not found" });
+
+        // Find cart with product details lookup
+        const cartData = await Cart.aggregate([
+            { $match: { user_id } },
+            {
+                $lookup: {
+                    from: "products",
+                    localField: "items.product_id",
+                    foreignField: "product_id",
+                    as: "productDetails"
+                }
+            },
+            {
+                $project: {
+                    cart_id: 1,
+                    user_id: 1,
+                    items: {
+                        $map: {
+                            input: "$items",
+                            as: "item",
+                            in: {
+                                product_id: "$$item.product_id",
+                                product_name: "$$item.product_name",
+                                product_price: "$$item.product_price",
+                                product_gst: "$$item.product_gst",
+                                product_shipping_cost: "$$item.product_shipping_cost",
+                                quantity: "$$item.quantity",
+                                added_at: "$$item.added_at",
+                                product_main_image: {
+                                    $arrayElemAt: [
+                                        {
+                                            $map: {
+                                                input: {
+                                                    $filter: {
+                                                        input: "$productDetails",
+                                                        as: "prod",
+                                                        cond: { $eq: ["$$prod.product_id", "$$item.product_id"] }
+                                                    }
+                                                },
+                                                as: "prod",
+                                                in: "$$prod.product_main_image"
+                                            }
+                                        },
+                                        0
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    total_price: 1,
+                    total_gst: 1,
+                    total_shipping_cost: 1,
+                    grand_total: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                    status: 1
+                }
+            }
+        ]);
+
+        if (!cartData || cartData.length === 0) {
+            return res.status(200).json({
+                success: true,
+                message: "Cart is empty",
+                cart: {
+                    user_id,
+                    items: [],
+                    total_price: 0,
+                    total_gst: 0,
+                    total_shipping_cost: 0,
+                    grand_total: 0
+                }
+            });
+        }
+
+        const cart = cartData[0];
+
+        res.status(200).json({
+            success: true,
+            message: "Cart fetched successfully",
+            cart
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.updatedCart = async (req, res, next) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty())
+            return res.status(400).json({ success: false, errors: errors.array() });
+
+        const { user_id, product_id, quantity } = req.body;
+
+        // Verify user exists
+        const user = await User.findOne({ user_id });
+        if (!user)
+            return res.status(404).json({ success: false, message: "User not found" });
+
+        // Verify product exists
+        const product = await Product.findOne({ product_id, status: true });
+        if (!product)
+            return res.status(404).json({ success: false, message: "Product not found" });
+
+        // Check available quantity
+        if (product.product_quantity < quantity)
+            return res.status(400).json({ success: false, message: "Insufficient product quantity" });
+
+        // Find cart
+        const cart = await Cart.findOne({ user_id });
+        if (!cart)
+            return res.status(404).json({ success: false, message: "Cart not found" });
+
+        // Find item in cart
+        const cartItem = cart.items.find(item => item.product_id === product_id);
+        if (!cartItem)
+            return res.status(404).json({ success: false, message: "Product not found in cart" });
+
+        // Update quantity
+        cartItem.quantity = quantity;
+
+        // Recalculate totals
+        cart.total_price = 0;
+        cart.total_gst = 0;
+        cart.total_shipping_cost = 0;
+
+        cart.items.forEach(item => {
+            const itemPrice = item.product_price * item.quantity;
+            const itemGST = (itemPrice * item.product_gst) / 100;
+            const itemShipping = item.product_shipping_cost * item.quantity;
+
+            cart.total_price += itemPrice;
+            cart.total_gst += itemGST;
+            cart.total_shipping_cost += itemShipping;
+        });
+
+        cart.grand_total = cart.total_price + cart.total_gst + cart.total_shipping_cost;
+        cart.updatedAt = new Date();
+        cart.updatedBy = user.user_email;
+
+        await cart.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Cart updated successfully",
+            cart
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.productDelete = async (req, res, next) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty())
+            return res.status(400).json({ success: false, errors: errors.array() });
+
+        const { user_id, product_id } = req.body;
+
+        // Verify user exists
+        const user = await User.findOne({ user_id });
+        if (!user)
+            return res.status(404).json({ success: false, message: "User not found" });
+
+        // Find cart
+        const cart = await Cart.findOne({ user_id });
+        if (!cart)
+            return res.status(404).json({ success: false, message: "Cart not found" });
+
+        // Remove product from cart
+        const initialLength = cart.items.length;
+        cart.items = cart.items.filter(item => item.product_id !== product_id);
+
+        if (cart.items.length === initialLength)
+            return res.status(404).json({ success: false, message: "Product not found in cart" });
+
+        // Recalculate totals
+        cart.total_price = 0;
+        cart.total_gst = 0;
+        cart.total_shipping_cost = 0;
+
+        cart.items.forEach(item => {
+            const itemPrice = item.product_price * item.quantity;
+            const itemGST = (itemPrice * item.product_gst) / 100;
+            const itemShipping = item.product_shipping_cost * item.quantity;
+
+            cart.total_price += itemPrice;
+            cart.total_gst += itemGST;
+            cart.total_shipping_cost += itemShipping;
+        });
+
+        cart.grand_total = cart.total_price + cart.total_gst + cart.total_shipping_cost;
+        cart.updatedAt = new Date();
+        cart.updatedBy = user.user_email;
+
+        await cart.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Product removed from cart successfully",
+            cart
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.allProductDelete = async (req, res, next) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty())
+            return res.status(400).json({ success: false, errors: errors.array() });
+
+        const { user_id } = req.body;
+
+        // Verify user exists
+        const user = await User.findOne({ user_id });
+        if (!user)
+            return res.status(404).json({ success: false, message: "User not found" });
+
+        // Find cart
+        const cart = await Cart.findOne({ user_id });
+        if (!cart)
+            return res.status(404).json({ success: false, message: "Cart not found" });
+
+        // Clear all items
+        cart.items = [];
+        cart.total_price = 0;
+        cart.total_gst = 0;
+        cart.total_shipping_cost = 0;
+        cart.grand_total = 0;
+        cart.updatedAt = new Date();
+        cart.updatedBy = user.user_email;
+
+        await cart.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Cart cleared successfully",
+            cart
+        });
+
+    } catch (err) {
+        next(err);
     }
 };
 

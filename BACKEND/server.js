@@ -9,12 +9,15 @@ const errorHandler = require('./middlewares/errorHandler');
 const cors = require("cors");
 const os = require("os");
 require('dotenv').config();
-const WebSocket = require("ws");
+const http = require("http");
+const { Server } = require("socket.io");
 
 const adminRoutes = require('./routes/adminRoutes');
 const appRoutes = require('./routes/appRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const addressRoutes = require('./routes/addressRoutes');
 const logsRoutes = require('./mqtt/routes/logs');
-const { sendBoot } = require('./mqtt/publisher');
+const { sendBootNotificationsOnStartup } = require('./mqtt/publisher');
 // Import MQTT client to start the subscriber
 const mqttClient = require('./mqtt/mqttClient');
 
@@ -27,14 +30,20 @@ app.use(requestLogger);
 
 // Static file serving
 app.use(express.static(path.join(__dirname, 'mqtt', 'public')));
+app.use('/upload', express.static(path.join(__dirname, 'upload')));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'mqtt', 'public', 'index.html'));
 });
 
-// ----------------------------
-// Auto Detect Local IP
-// ----------------------------
+// Connect DB
+connectDB().then(() => {
+    // Send boot notifications for configured devices on startup
+    sendBootNotificationsOnStartup();
+}).catch(err => {
+    console.error('Database connection failed:', err);
+});
+
 function getLocalIP() {
     const interfaces = os.networkInterfaces();
     for (const name in interfaces) {
@@ -48,14 +57,7 @@ function getLocalIP() {
 }
 
 const localIP = getLocalIP();
-
-// Connect DB
-connectDB().then(() => {
-    // Send boot notifications for configured devices on startup
-    sendBoot();
-}).catch(err => {
-    console.error('Database connection failed:', err);
-});
+const port = process.env.PORT || 3030;
 
 // Swagger options
 const swaggerOptions = {
@@ -77,8 +79,8 @@ const swaggerOptions = {
         },
         security: [{ BearerAuth: [] }],
         servers: [
-            { url: `http://${localIP}:3000` },
-            { url: `http://localhost:3000` }
+            { url: `http://localhost:${port}`, description: 'Local URL' },
+            { url: `http://${localIP}:${port}`, description: 'Network URL' }
         ]
     },
     apis: ['./routes/*.js', './routes/**/*.js', './controllers/*.js', './controllers/**/*.js'],
@@ -93,45 +95,56 @@ app.get('/swagger.json', (req, res) => res.json(swaggerSpec));
 // API Routes
 app.use('/admin', adminRoutes);
 app.use('/app', appRoutes);
+app.use('/app/order', orderRoutes);
+app.use('/app/address', addressRoutes);
 app.use('/mqtt', logsRoutes);
 
 // Error handler
 app.use(errorHandler);
 
-const port = process.env.PORT || 3000;
 
 
 // ----------------------------
-// WEBSOCKET SERVER
+// HTTP + SOCKET.IO SERVER
 // ----------------------------
-const wss = new WebSocket.Server({ port: 8081, host: "0.0.0.0" });
-console.log(`WebSocket Server running on ws://${localIP}:8081`);
+const server = http.createServer(app);  // attach express to HTTP
 
-function broadcast(data) {
-    const payload = JSON.stringify(data);
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+    },
+});
 
-    wss.clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(payload);
-        }
+io.on("connection", (socket) => {
+    console.log("Socket.IO client connected:", socket.id);
+
+    // Example: subscription per serial number (optional)
+    // socket.on("subscribe", (serialNumber) => {
+    //     socket.join(serialNumber);
+    //     console.log(`Client ${socket.id} joined room ${serialNumber}`);
+    // });
+
+    socket.on("disconnect", () => {
+        console.log("Socket.IO client disconnected:", socket.id);
     });
-}
+});
 
-// Make broadcast available globally
-global.broadcast = broadcast;
+// Make Socket.IO globally available (for MQTT broadcaster)
+global.io = io;
 
 // ----------------------------
 // Start Server
 // ----------------------------
 if (require.main === module) {
-    app.listen(port, "0.0.0.0", () => {
+    server.listen(port, "0.0.0.0", () => {
         console.log("\n=====================================");
         console.log(" Server Started");
         console.log("-------------------------------------");
-        console.log(` Local URL:   http://localhost:${port}`);
-        console.log(` Network URL: http://${localIP}:${port}`);
-        console.log(` Swagger UI:  http://${localIP}:${port}/api-docs`);
-        console.log(` WebSocket:   ws://${localIP}:8081`);
+        console.log(` Local URL:     http://localhost:${port}`);
+        console.log(` Network URL:   http://${localIP}:${port}`);
+        console.log(` Swagger UI:    http://${localIP}:${port}/api-docs`);
+        console.log(` Socket.IO URL: http://${localIP}:${port}/socket.io`);
         console.log("=====================================\n");
     });
 }
