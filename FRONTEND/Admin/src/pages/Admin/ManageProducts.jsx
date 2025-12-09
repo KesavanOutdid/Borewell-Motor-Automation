@@ -4,7 +4,6 @@ import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
 import useManageProducts from '../../hooks/Admin/useManageProducts';
-import { showAlertSuccess } from '../../utils/alert';
 
 const ManageProducts = ({ userInfo, handleLogout }) => {
     const API_BASE = process.env.REACT_APP_SERVER_URL;
@@ -28,7 +27,7 @@ const ManageProducts = ({ userInfo, handleLogout }) => {
             fetchProductData();
             fetchProductDataCalled.current = true;
         }
-    }, []);
+    }, [fetchProductData]);
 
     const filteredProducts = searchQuery.trim() === ''
         ? products
@@ -47,22 +46,6 @@ const ManageProducts = ({ userInfo, handleLogout }) => {
             await handleProductDelete(id);
             fetchProductData();
         }
-    };
-
-    const generatePageNumbers = () => {
-        const pages = [];
-        const maxVisible = 5;
-        let startPage = Math.max(1, pagination.currentPage - Math.floor(maxVisible / 2));
-        let endPage = Math.min(pagination.totalPages, startPage + maxVisible - 1);
-
-        if (endPage - startPage < maxVisible - 1) {
-            startPage = Math.max(1, endPage - maxVisible + 1);
-        }
-
-        for (let i = startPage; i <= endPage; i++) {
-            pages.push(i);
-        }
-        return pages;
     };
 
     return (

@@ -11,7 +11,6 @@ const CreateProduct = ({ userInfo, handleLogout }) => {
 
     const [productName, setProductName] = useState('');
     const [productDescription, setProductDescription] = useState('');
-    const [productDescriptionPdf, setProductDescriptionPdf] = useState('');
     const [pdfFile, setPdfFile] = useState(null);
     const [mainImageFile, setMainImageFile] = useState(null);
     const [subImageFiles, setSubImageFiles] = useState([]);

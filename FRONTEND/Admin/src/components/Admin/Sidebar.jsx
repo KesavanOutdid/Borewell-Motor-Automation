@@ -82,6 +82,14 @@ const Sidebar = () => {
                             <span className="nav-link-text ms-1">Manage Orders</span>
                         </Link>
                     </li>
+                    <li className="nav-item">
+                        <Link className={location.pathname === '/admin/manage-vouchers' || location.pathname === '/admin/add-voucher' || location.pathname === '/admin/edit-voucher' ? 'nav-link  active' : 'nav-link'} to="/admin/manage-vouchers" onClick={(e) => handleNavClick(e, '/admin/manage-vouchers')}>
+                            <div className="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                                <i className="fas fa-ticket-alt" style={{ fontSize: '12px', color: '#344767', lineHeight: '12px' }}></i>
+                            </div>
+                            <span className="nav-link-text ms-1">Manage Vouchers</span>
+                        </Link>
+                    </li>
                     <li className="nav-item mt-3">
                         <h6 className="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Account pages</h6>
                     </li>

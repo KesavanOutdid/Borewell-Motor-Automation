@@ -23,7 +23,7 @@ export const renderCharts = () => {
           label: "Mobile apps",
           tension: 0.4,
           pointRadius: 0,
-          borderColor: "#cb0c9f",
+          borderColor: "#82d616",
           backgroundColor: gradientStroke1,
           fill: true,
           data: [50, 40, 300, 220, 500, 250, 400, 230, 500],

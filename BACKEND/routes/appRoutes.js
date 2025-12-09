@@ -807,4 +807,335 @@ router.post(
     appCtrl.allProductDelete
 );
 
+/**
+ * @swagger
+ * tags:
+ *   name: Vouchers
+ *   description: Voucher management endpoints
+ */
+
+/**
+ * @swagger
+ * /app/validateVoucher:
+ *   post:
+ *     summary: Validate voucher code with user ID
+ *     tags: [Vouchers]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - user_id
+ *               - voucher_code
+ *             properties:
+ *               user_id:
+ *                 type: integer
+ *                 example: 11
+ *               voucher_code:
+ *                 type: string
+ *                 example: "SAVE20"
+ *     responses:
+ *       200:
+ *         description: Voucher is valid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     voucher_code:
+ *                       type: string
+ *                     discount_percentage:
+ *                       type: number
+ *                     valid_until:
+ *                       type: string
+ *                       format: date-time
+ *                     description:
+ *                       type: string
+ *       400:
+ *         description: Voucher is invalid/expired/inactive
+ *       404:
+ *         description: User or voucher not found
+ *       500:
+ *         description: Server error
+ */
+router.post(
+    '/validateVoucher',
+    [
+        body('user_id').isInt().withMessage("user_id must be an integer"),
+        body('voucher_code').notEmpty().withMessage("voucher_code is required")
+    ],
+    appCtrl.validateVoucher
+);
+
+/**
+ * @swagger
+ * /app/createVoucher:
+ *   post:
+ *     summary: Create a new voucher (Admin only)
+ *     tags: [Vouchers]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - voucher_code
+ *               - discount_percentage
+ *               - start_date
+ *               - end_date
+ *               - createdBy
+ *             properties:
+ *               voucher_code:
+ *                 type: string
+ *                 example: "SAVE20"
+ *               discount_percentage:
+ *                 type: number
+ *                 example: 20
+ *               start_date:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2024-12-09T00:00:00Z"
+ *               end_date:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2024-12-31T23:59:59Z"
+ *               max_usage:
+ *                 type: integer
+ *                 example: 100
+ *                 description: Maximum number of times this voucher can be used (optional)
+ *               description:
+ *                 type: string
+ *                 example: "20% discount on all products"
+ *               createdBy:
+ *                 type: string
+ *                 example: "admin@example.com"
+ *     responses:
+ *       201:
+ *         description: Voucher created successfully
+ *       400:
+ *         description: Validation error or voucher code already exists
+ *       500:
+ *         description: Server error
+ */
+router.post(
+    '/createVoucher',
+    authMiddleware(),
+    [
+        body('voucher_code').notEmpty().withMessage("voucher_code is required"),
+        body('discount_percentage').isInt({ min: 0, max: 100 }).withMessage("discount_percentage must be between 0-100"),
+        body('start_date').notEmpty().withMessage("start_date is required"),
+        body('end_date').notEmpty().withMessage("end_date is required"),
+        body('createdBy').notEmpty().withMessage("createdBy is required")
+    ],
+    appCtrl.createVoucher
+);
+
+/**
+ * @swagger
+ * /app/getAllVouchers:
+ *   get:
+ *     summary: Get all vouchers with pagination
+ *     tags: [Vouchers]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Items per page
+ *     responses:
+ *       200:
+ *         description: Vouchers retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       voucher_code:
+ *                         type: string
+ *                       discount_percentage:
+ *                         type: number
+ *                       start_date:
+ *                         type: string
+ *                         format: date-time
+ *                       end_date:
+ *                         type: string
+ *                         format: date-time
+ *                       status:
+ *                         type: boolean
+ *                       used_count:
+ *                         type: integer
+ *                       max_usage:
+ *                         type: integer
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     currentPage:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *                     totalVouchers:
+ *                       type: integer
+ *                     totalActiveVouchers:
+ *                       type: integer
+ *                     totalInactiveVouchers:
+ *                       type: integer
+ *       500:
+ *         description: Server error
+ */
+router.get(
+    '/getAllVouchers',
+    authMiddleware(),
+    appCtrl.getAllVouchers
+);
+
+/**
+ * @swagger
+ * /app/getVoucherById:
+ *   get:
+ *     summary: Get voucher details by ID
+ *     tags: [Vouchers]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Voucher ID
+ *     responses:
+ *       200:
+ *         description: Voucher retrieved successfully
+ *       400:
+ *         description: Voucher ID is required
+ *       404:
+ *         description: Voucher not found
+ *       500:
+ *         description: Server error
+ */
+router.get(
+    '/getVoucherById',
+    authMiddleware(),
+    appCtrl.getVoucherById
+);
+
+/**
+ * @swagger
+ * /app/updateVoucher:
+ *   put:
+ *     summary: Update voucher details
+ *     tags: [Vouchers]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - id
+ *               - updatedBy
+ *             properties:
+ *               id:
+ *                 type: string
+ *               voucher_code:
+ *                 type: string
+ *               discount_percentage:
+ *                 type: number
+ *               start_date:
+ *                 type: string
+ *                 format: date-time
+ *               end_date:
+ *                 type: string
+ *                 format: date-time
+ *               max_usage:
+ *                 type: integer
+ *               description:
+ *                 type: string
+ *               status:
+ *                 type: boolean
+ *               updatedBy:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Voucher updated successfully
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: Voucher not found
+ *       500:
+ *         description: Server error
+ */
+router.put(
+    '/updateVoucher',
+    authMiddleware(),
+    appCtrl.updateVoucher
+);
+
+/**
+ * @swagger
+ * /app/deleteVoucher:
+ *   post:
+ *     summary: Delete a voucher
+ *     tags: [Vouchers]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - id
+ *             properties:
+ *               id:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Voucher deleted successfully
+ *       400:
+ *         description: Voucher ID is required
+ *       404:
+ *         description: Voucher not found
+ *       500:
+ *         description: Server error
+ */
+router.post(
+    '/deleteVoucher',
+    authMiddleware(),
+    appCtrl.deleteVoucher
+);
+
 module.exports = router;

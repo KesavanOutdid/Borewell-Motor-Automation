@@ -4,7 +4,6 @@ import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
 import useManageOrders from '../../hooks/Admin/useManageOrders';
-import { showAlertSuccess } from '../../utils/alert';
 
 const ManageOrders = ({ userInfo, handleLogout }) => {
     const navigate = useNavigate();
@@ -29,7 +28,7 @@ const ManageOrders = ({ userInfo, handleLogout }) => {
             fetchOrders(1, 10, '', '');
             fetchOrdersCalled.current = true;
         }
-    }, []);
+    }, [fetchOrders]);
 
     // Debounced search handler
     const handleSearch = useCallback((query) => {
@@ -247,8 +246,6 @@ const ManageOrders = ({ userInfo, handleLogout }) => {
                                                             Showing {((pagination.currentPage - 1) * pagination.limit) + 1} to {Math.min(pagination.currentPage * pagination.limit, pagination.totalFilteredOrders)} of {pagination.totalFilteredOrders} Orders
                                                         </span>
                                                     </div>
-
-
 
                                                     {/* Pagination controls */}
                                                     <div className="d-flex flex-column flex-sm-row align-items-center gap-2">

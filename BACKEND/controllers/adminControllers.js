@@ -423,6 +423,16 @@ exports.deviceAssignToUser = async (req, res) => {
             return res.status(404).json({ message: "Device not found" });
         }
 
+        // Check if device is already assigned to the same user
+        if (device.assign_status && device.assigned_user_id === user_id) {
+            return res.status(409).json({ message: "This device is already assigned to this user" });
+        }
+
+        // Check if device is already assigned to a different user
+        if (device.assign_status && device.assigned_user_id !== user_id) {
+            return res.status(409).json({ message: "This device is already assigned to another user. Unassign it first." });
+        }
+
         const now = new Date();
 
         // --------------------------------------

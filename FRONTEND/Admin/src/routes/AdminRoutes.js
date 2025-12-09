@@ -15,6 +15,9 @@ import ChannelHistory from '../pages/Admin/ChannelHistory';
 import Profile from '../pages/Admin/Profile';
 import ManageOrders from '../pages/Admin/ManageOrders';
 import ViewOrder from '../pages/Admin/ViewOrder';
+import ManageVouchers from '../pages/Admin/ManageVouchers';
+import AddVoucher from '../pages/Admin/AddVoucher';
+import EditVoucher from '../pages/Admin/EditVoucher';
 
 const AdminRoutes = () => {
     const storedUser = JSON.parse(sessionStorage.getItem('adminUser'));
@@ -171,6 +174,30 @@ const AdminRoutes = () => {
                 path="view-order"
                 element={loggedIn ? (
                     <ViewOrder userInfo={userInfo} handleLogout={handleLogout} />
+                ) : (
+                    <Navigate to="/admin/signin" />
+                )}
+            />
+            <Route
+                path="manage-vouchers"
+                element={loggedIn ? (
+                    <ManageVouchers userInfo={userInfo} handleLogout={handleLogout} />
+                ) : (
+                    <Navigate to="/admin/signin" />
+                )}
+            />
+            <Route
+                path="add-voucher"
+                element={loggedIn ? (
+                    <AddVoucher userInfo={userInfo} handleLogout={handleLogout} />
+                ) : (
+                    <Navigate to="/admin/signin" />
+                )}
+            />
+            <Route
+                path="edit-voucher"
+                element={loggedIn ? (
+                    <EditVoucher userInfo={userInfo} handleLogout={handleLogout} />
                 ) : (
                     <Navigate to="/admin/signin" />
                 )}

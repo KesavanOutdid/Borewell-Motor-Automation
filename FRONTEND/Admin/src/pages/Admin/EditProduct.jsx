@@ -17,7 +17,7 @@ const EditProduct = ({ userInfo, handleLogout }) => {
     const [mainImageFile, setMainImageFile] = useState(null);
     const [subImageFiles, setSubImageFiles] = useState([null, null, null]);
     const [mainImagePreview, setMainImagePreview] = useState('');
-    const [subImagePreviews, setSubImagePreviews] = useState([, , ]);
+    const [subImagePreviews, setSubImagePreviews] = useState([null, null, null]);
     const [boxSize, setBoxSize] = useState('');
     const [extraDetails, setExtraDetails] = useState('');
     const [productPrice, setProductPrice] = useState('');
@@ -46,7 +46,7 @@ const EditProduct = ({ userInfo, handleLogout }) => {
             setProductShippingCost(product.product_shipping_cost || '');
             setProductQuantity(product.product_quantity || '');
             setStatus(product.status !== false);
-            setSubImagePreviews(product.product_sub_images || [, , ]);
+            setSubImagePreviews(product.product_sub_images || [null, null, null]);
 
             setOriginalData({
                 product_name: product.product_name,

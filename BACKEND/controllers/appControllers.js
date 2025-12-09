@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Device = require('../models/Device');
 const Product = require('../models/Product');
 const Cart = require('../models/Cart');
+const Voucher = require('../models/Voucher');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const Telemetry = require("../models/Telemetry");
@@ -1228,6 +1229,211 @@ exports.allProductDelete = async (req, res, next) => {
             success: true,
             message: "Cart cleared successfully",
             cart
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.validateVoucher = async (req, res, next) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty())
+            return res.status(400).json({ success: false, errors: errors.array() });
+
+        const { user_id, voucher_code } = req.body;
+
+        const user = await User.findOne({ user_id });
+        if (!user)
+            return res.status(404).json({ success: false, message: "User not found" });
+
+        const voucher = await Voucher.findOne({ voucher_code: voucher_code.toUpperCase() });
+        if (!voucher)
+            return res.status(404).json({ success: false, message: "Voucher not found" });
+
+        const now = new Date();
+
+        if (!voucher.status)
+            return res.status(400).json({ success: false, message: "Voucher is inactive" });
+
+        if (now < new Date(voucher.start_date))
+            return res.status(400).json({ success: false, message: "Voucher is not yet valid" });
+
+        if (now > new Date(voucher.end_date))
+            return res.status(400).json({ success: false, message: "Voucher has expired" });
+
+        if (voucher.max_usage && voucher.used_count >= voucher.max_usage)
+            return res.status(400).json({ success: false, message: "Voucher usage limit exceeded" });
+
+        res.status(200).json({
+            success: true,
+            message: "Voucher is valid",
+            data: {
+                voucher_code: voucher.voucher_code,
+                discount_percentage: voucher.discount_percentage,
+                valid_until: voucher.end_date,
+                description: voucher.description
+            }
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.createVoucher = async (req, res, next) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty())
+            return res.status(400).json({ success: false, errors: errors.array() });
+
+        const { voucher_code, discount_percentage, start_date, end_date, max_usage, description, createdBy } = req.body;
+
+        const existingVoucher = await Voucher.findOne({ voucher_code: voucher_code.toUpperCase() });
+        if (existingVoucher)
+            return res.status(400).json({ success: false, message: "Voucher code already exists" });
+
+        const newVoucher = new Voucher({
+            voucher_code: voucher_code.toUpperCase(),
+            discount_percentage,
+            start_date: new Date(start_date),
+            end_date: new Date(end_date),
+            max_usage: max_usage || null,
+            description: description || null,
+            status: true,
+            createdBy,
+            createdAt: new Date()
+        });
+
+        await newVoucher.save();
+
+        res.status(201).json({
+            success: true,
+            message: "Voucher created successfully",
+            data: newVoucher
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.getAllVouchers = async (req, res, next) => {
+    try {
+        const { page = 1, limit = 10 } = req.query;
+        const skip = (page - 1) * limit;
+
+        const vouchers = await Voucher.find()
+            .skip(skip)
+            .limit(parseInt(limit))
+            .sort({ createdAt: -1 });
+
+        const total = await Voucher.countDocuments();
+        const totalActive = await Voucher.countDocuments({ status: true });
+        const totalInactive = await Voucher.countDocuments({ status: false });
+
+        res.status(200).json({
+            success: true,
+            data: vouchers,
+            pagination: {
+                currentPage: parseInt(page),
+                totalPages: Math.ceil(total / limit),
+                totalVouchers: total,
+                totalActiveVouchers: totalActive,
+                totalInactiveVouchers: totalInactive,
+                limit: parseInt(limit),
+                hasNextPage: page * limit < total,
+                hasPrevPage: page > 1
+            }
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.getVoucherById = async (req, res, next) => {
+    try {
+        const { id } = req.query;
+
+        if (!id)
+            return res.status(400).json({ success: false, message: "Voucher ID is required" });
+
+        const voucher = await Voucher.findById(id);
+        if (!voucher)
+            return res.status(404).json({ success: false, message: "Voucher not found" });
+
+        res.status(200).json({
+            success: true,
+            data: voucher
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.updateVoucher = async (req, res, next) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty())
+            return res.status(400).json({ success: false, errors: errors.array() });
+
+        const { id, voucher_code, discount_percentage, start_date, end_date, max_usage, description, status, updatedBy } = req.body;
+
+        if (!id)
+            return res.status(400).json({ success: false, message: "Voucher ID is required" });
+
+        const voucher = await Voucher.findById(id);
+        if (!voucher)
+            return res.status(404).json({ success: false, message: "Voucher not found" });
+
+        if (voucher_code && voucher_code.toUpperCase() !== voucher.voucher_code) {
+            const existingVoucher = await Voucher.findOne({ voucher_code: voucher_code.toUpperCase() });
+            if (existingVoucher)
+                return res.status(400).json({ success: false, message: "Voucher code already exists" });
+        }
+
+        const updateData = {};
+        if (voucher_code) updateData.voucher_code = voucher_code.toUpperCase();
+        if (discount_percentage !== undefined) updateData.discount_percentage = discount_percentage;
+        if (start_date) updateData.start_date = new Date(start_date);
+        if (end_date) updateData.end_date = new Date(end_date);
+        if (max_usage !== undefined) updateData.max_usage = max_usage || null;
+        if (description !== undefined) updateData.description = description || null;
+        if (typeof status === 'boolean') updateData.status = status;
+
+        updateData.updatedBy = updatedBy;
+        updateData.updatedAt = new Date();
+
+        const updatedVoucher = await Voucher.findByIdAndUpdate(id, updateData, { new: true });
+
+        res.status(200).json({
+            success: true,
+            message: "Voucher updated successfully",
+            data: updatedVoucher
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.deleteVoucher = async (req, res, next) => {
+    try {
+        const { id } = req.body;
+
+        if (!id)
+            return res.status(400).json({ success: false, message: "Voucher ID is required" });
+
+        const voucher = await Voucher.findByIdAndDelete(id);
+        if (!voucher)
+            return res.status(404).json({ success: false, message: "Voucher not found" });
+
+        res.status(200).json({
+            success: true,
+            message: "Voucher deleted successfully"
         });
 
     } catch (err) {

@@ -87,6 +87,9 @@ const Dashboard = ({ userInfo, handleLogout }) => {
                             lat: selectedLat,
                             lon: selectedLng,
                             format: "jsonv2"
+                        },
+                        headers: {
+                            'Accept-Language': 'en'
                         }
                     }
                 );
@@ -123,6 +126,9 @@ const Dashboard = ({ userInfo, handleLogout }) => {
                                     lat,
                                     lon: lng,
                                     format: "jsonv2"
+                                },
+                                headers: {
+                                    'Accept-Language': 'en'
                                 }
                             }
                         );
