@@ -5,6 +5,7 @@ import '../controllers/profile_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../home/presentation/controllers/home_controller.dart';
 import '../../../../../utils/theme/theme_controller.dart';
+import '../../../../../utils/theme/app_colors.dart';
 
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({super.key});
@@ -156,17 +157,24 @@ class ProfileView extends GetView<ProfileController> {
                 Center(
                   child: Stack(
                     children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundColor: Colors.green[600],
-                        child: Text(
-                          controller.userName.value.isNotEmpty
-                              ? controller.userName.value[0].toUpperCase()
-                              : 'U',
-                          style: const TextStyle(
-                            fontSize: 40,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: AppColors.primaryGradient,
+                          boxShadow: [AppColors.primaryShadow],
+                        ),
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundColor: Colors.transparent,
+                          child: Text(
+                            controller.userName.value.isNotEmpty
+                                ? controller.userName.value[0].toUpperCase()
+                                : 'U',
+                            style: const TextStyle(
+                              fontSize: 40,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
@@ -178,11 +186,18 @@ class ProfileView extends GetView<ProfileController> {
                           child: Container(
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.green[600],
+                              gradient: AppColors.accentGradient,
                               border: Border.all(color: Colors.white, width: 3),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primaryGreen.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
                             ),
                             padding: const EdgeInsets.all(8),
-                            child: Icon(
+                            child: const Icon(
                               Icons.edit,
                               color: Colors.white,
                               size: 20,
@@ -235,7 +250,7 @@ class ProfileView extends GetView<ProfileController> {
                       padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
                       child: Row(
                         children: [
-                          Icon(Icons.dark_mode, color: Colors.green[700]),
+                          Icon(Icons.dark_mode, color: AppColors.primaryGreen),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Text(
@@ -267,7 +282,7 @@ class ProfileView extends GetView<ProfileController> {
                       padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
                       child: Row(
                         children: [
-                          Icon(Icons.support_agent, color: Colors.green[700]),
+                          Icon(Icons.support_agent, color: AppColors.primaryGreen),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Text(
@@ -290,7 +305,7 @@ class ProfileView extends GetView<ProfileController> {
                       padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
                       child: Row(
                         children: [
-                          Icon(Icons.privacy_tip, color: Colors.green[700]),
+                          Icon(Icons.privacy_tip, color: AppColors.primaryGreen),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Text(
@@ -313,6 +328,52 @@ class ProfileView extends GetView<ProfileController> {
                       ),
                 ),
                 const SizedBox(height: 12),
+                Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  child: InkWell(
+                    onTap: () => Get.toNamed('/orders'),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                      child: Row(
+                        children: [
+                          Icon(Icons.shopping_bag, color: AppColors.primaryGreen),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              'My Orders',
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                          ),
+                          Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  child: InkWell(
+                    onTap: () => Get.toNamed('/addresses'),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                      child: Row(
+                        children: [
+                          Icon(Icons.location_on, color: AppColors.primaryGreen),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              'My Addresses',
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                          ),
+                          Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
                 Card(
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

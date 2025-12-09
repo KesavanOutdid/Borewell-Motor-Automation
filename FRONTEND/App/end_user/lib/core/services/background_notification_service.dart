@@ -6,7 +6,7 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:web_socket_channel/io.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../config/env.dart';
 
 class BackgroundNotificationService {
@@ -100,8 +100,7 @@ class BackgroundNotificationService {
     const initSettings = InitializationSettings(android: androidSettings);
     await flutterLocalNotificationsPlugin.initialize(initSettings);
 
-    Map<String, IOWebSocketChannel> channels = {};
-    Map<String, StreamSubscription> subscriptions = {};
+    Map<String, IO.Socket> sockets = {};
     Map<String, bool> previousMotorStates = {};
 
     Timer.periodic(const Duration(seconds: 5), (timer) async {
@@ -122,98 +121,113 @@ class BackgroundNotificationService {
         final serialNumber = device['serial_number'] ?? device['serialNumber'];
         if (serialNumber == null) continue;
 
-        if (!channels.containsKey(serialNumber)) {
+        if (!sockets.containsKey(serialNumber) || sockets[serialNumber]?.connected != true) {
           try {
-            final wsUrl = Uri.parse('${AppConfig.websocketUrl}?token=$token&serial_number=$serialNumber');
-            final channel = IOWebSocketChannel.connect(wsUrl);
-            channels[serialNumber] = channel;
+            final socket = IO.io(AppConfig.socketIOUrl, <String, dynamic>{
+              'transports': ['websocket'],
+              'autoConnect': false,
+              'query': {
+                'token': token,
+                'serial_number': serialNumber,
+              }
+            });
 
-            final subscription = channel.stream.listen(
-              (message) async {
-                try {
-                  final data = jsonDecode(message);
-                  final event = data['event'];
-                  
-                  if (event == 'LIVE_STATUS') {
-                    final payload = data['payload'];
-                    if (payload is Map) {
-                      final running = payload['motor_running'] == true;
-                      final previousState = previousMotorStates[serialNumber];
-                      
-                      if (running && (previousState == false || previousState == null)) {
-                        await _showMotorRunningNotification(
-                          flutterLocalNotificationsPlugin,
-                          serialNumber,
-                          storage,
-                        );
-                      } else if (!running && previousState == true) {
-                        await _showMotorStoppedNotification(
-                          flutterLocalNotificationsPlugin,
-                          serialNumber,
-                          storage,
-                        );
-                      }
-                      
-                      previousMotorStates[serialNumber] = running;
-                    }
-                  } else if (event == 'LIVE_ALERT') {
-                    final payload = data['payload'];
-                    if (payload is Map) {
-                      final alertType = payload['alert_type']?.toString() ?? '';
-                      final deviceStatus = payload['device_status']?.toString() ?? '';
-                      final description = payload['description']?.toString() ?? '';
-                      
-                      String alertMessage = 'Device Alert';
-                      if (alertType.isNotEmpty) {
-                        alertMessage = 'Type: $alertType';
-                      }
-                      if (deviceStatus.isNotEmpty) {
-                        alertMessage += '\nStatus: $deviceStatus';
-                      }
-                      if (description.isNotEmpty) {
-                        alertMessage += '\n$description';
-                      }
-                      
-                      await _showAlertNotification(
+            socket.on('connect', (_) {
+              // Connected
+            });
+
+            socket.on('disconnect', (_) {
+              sockets.remove(serialNumber);
+            });
+
+            socket.on('LIVE_STATUS', (data) async {
+              try {
+                if (data is Map) {
+                  final payload = data['payload'];
+                  if (payload is Map) {
+                    final running = payload['motor_running'] == true;
+                    final previousState = previousMotorStates[serialNumber];
+                    
+                    if (running && (previousState == false || previousState == null)) {
+                      await _showMotorRunningNotification(
                         flutterLocalNotificationsPlugin,
                         serialNumber,
-                        alertMessage,
-                        deviceStatus,
+                        storage,
+                      );
+                    } else if (!running && previousState == true) {
+                      await _showMotorStoppedNotification(
+                        flutterLocalNotificationsPlugin,
+                        serialNumber,
                         storage,
                       );
                     }
-                  } else if (event == 'LIVE_TELEMETRY') {
-                    final payload = data['payload'];
-                    if (payload is Map && payload['fault_code'] != null) {
-                      final faultCode = payload['fault_code'].toString();
-                      if (faultCode != '-' && faultCode.isNotEmpty && faultCode != '0') {
-                        await _showAlertNotification(
-                          flutterLocalNotificationsPlugin,
-                          serialNumber,
-                          'Fault Code: $faultCode',
-                          'Warning',
-                          storage,
-                        );
-                      }
+                    
+                    previousMotorStates[serialNumber] = running;
+                  }
+                }
+              } catch (e) {
+                // Ignore
+              }
+            });
+
+            socket.on('LIVE_ALERT', (data) async {
+              try {
+                if (data is Map) {
+                  final payload = data['payload'];
+                  if (payload is Map) {
+                    final alertType = payload['alert_type']?.toString() ?? '';
+                    final deviceStatus = payload['device_status']?.toString() ?? '';
+                    final description = payload['description']?.toString() ?? '';
+                    
+                    String alertMessage = 'Device Alert';
+                    if (alertType.isNotEmpty) {
+                      alertMessage = 'Type: $alertType';
+                    }
+                    if (deviceStatus.isNotEmpty) {
+                      alertMessage += '\nStatus: $deviceStatus';
+                    }
+                    if (description.isNotEmpty) {
+                      alertMessage += '\n$description';
+                    }
+                    
+                    await _showAlertNotification(
+                      flutterLocalNotificationsPlugin,
+                      serialNumber,
+                      alertMessage,
+                      deviceStatus,
+                      storage,
+                    );
+                  }
+                }
+              } catch (e) {
+                // Ignore
+              }
+            });
+
+            socket.on('LIVE_TELEMETRY', (data) async {
+              try {
+                if (data is Map) {
+                  final telemetry = data['telemetry'];
+                  if (telemetry is Map && telemetry['fault_code'] != null) {
+                    final faultCode = telemetry['fault_code'].toString();
+                    if (faultCode != '-' && faultCode.isNotEmpty && faultCode != '0') {
+                      await _showAlertNotification(
+                        flutterLocalNotificationsPlugin,
+                        serialNumber,
+                        'Fault Code: $faultCode',
+                        'Warning',
+                        storage,
+                      );
                     }
                   }
-                } catch (e) {
-                  // Ignore parsing errors
                 }
-              },
-              onDone: () {
-                channels.remove(serialNumber);
-                subscriptions.remove(serialNumber);
-                previousMotorStates.remove(serialNumber);
-              },
-              onError: (error) {
-                channels.remove(serialNumber);
-                subscriptions.remove(serialNumber);
-                previousMotorStates.remove(serialNumber);
-              },
-            );
-            
-            subscriptions[serialNumber] = subscription;
+              } catch (e) {
+                // Ignore
+              }
+            });
+
+            socket.connect();
+            sockets[serialNumber] = socket;
           } catch (e) {
             // Failed to connect
           }

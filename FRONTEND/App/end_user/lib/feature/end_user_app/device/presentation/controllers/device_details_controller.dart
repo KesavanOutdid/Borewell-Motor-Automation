@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:web_socket_channel/io.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:geocoding/geocoding.dart';
 
 import '../../../../../core/config/env.dart';
@@ -22,8 +22,7 @@ class DeviceDetailsController extends GetxController {
   String? imeiNumber;
   bool _initialized = false;
 
-  IOWebSocketChannel? _channel;
-  StreamSubscription? _socketSubscription;
+  IO.Socket? _socket;
   Timer? _reconnectTimer;
   Timer? _heartbeatTimer;
   String? _socketSerial;
@@ -40,7 +39,7 @@ class DeviceDetailsController extends GetxController {
 
   @override
   void onClose() {
-    _closeWebSocket();
+    _closeSocket();
     if (serialNumber != null) {
       _notificationService.cancelNotification(serialNumber!);
     }
@@ -91,7 +90,7 @@ class DeviceDetailsController extends GetxController {
       'signalStrength': deviceChanged ? '-' : (liveData['signalStrength'] ?? '-'),
     });
 
-    _ensureWebSocketConnection();
+    _ensureSocketConnection();
 
     if (!_initialized || deviceChanged) {
       _initialized = true;
@@ -238,20 +237,20 @@ class DeviceDetailsController extends GetxController {
     }
   }
 
-  void _ensureWebSocketConnection() {
+  void _ensureSocketConnection() {
     final serial = serialNumber;
     if (serial == null || serial.trim().isEmpty) {
-      _closeWebSocket();
+      _closeSocket();
       return;
     }
 
-    if (_socketSerial != serial || _channel == null) {
+    if (_socketSerial != serial || _socket == null || !_socket!.connected) {
       _socketSerial = serial;
-      _connectWebSocket();
+      _connectSocket();
     }
   }
 
-  void _connectWebSocket() {
+  void _connectSocket() {
     final serial = serialNumber;
     if (serial == null || serial.trim().isEmpty) {
       return;
@@ -261,26 +260,44 @@ class DeviceDetailsController extends GetxController {
     _disconnectSocket();
 
     try {
-      _channel = IOWebSocketChannel.connect(Uri.parse(AppConfig.websocketUrl));
-      _socketSubscription = _channel!.stream.listen(
-        _handleSocketMessage,
-        onError: (_) => _scheduleReconnect(),
-        onDone: _scheduleReconnect,
-        cancelOnError: true,
-      );
+      final token = tokenService.getToken();
+      
+      _socket = IO.io(AppConfig.socketIOUrl, <String, dynamic>{
+        'transports': ['websocket'],
+        'autoConnect': false,
+        'query': {
+          'token': token,
+          'serial_number': serial,
+        }
+      });
+
+      _socket!.on('connect', (_) {
+        isConnected.value = true;
+      });
+
+      _socket!.on('disconnect', (_) {
+        isConnected.value = false;
+        _scheduleReconnect();
+      });
+
+      _socket!.on('LIVE_STATUS', (data) => _handleLiveStatus(data));
+      _socket!.on('LIVE_TELEMETRY', (data) => _handleLiveTelemetry(data));
+      _socket!.on('LIVE_ALERT', (data) => _handleLiveAlert(data));
+      _socket!.on('LIVE_HEARTBEAT', (data) => _handleLiveHeartbeat(data));
+      _socket!.on('LIVE_BOOT', (data) => _handleLiveBoot(data));
+
+      _socket!.connect();
     } catch (_) {
       _scheduleReconnect();
     }
   }
 
   void _disconnectSocket() {
-    _socketSubscription?.cancel();
-    _socketSubscription = null;
-    _channel?.sink.close();
-    _channel = null;
+    _socket?.dispose();
+    _socket = null;
   }
 
-  void _closeWebSocket() {
+  void _closeSocket() {
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
     _disconnectSocket();
@@ -295,59 +312,57 @@ class DeviceDetailsController extends GetxController {
     if (serialNumber == null || serialNumber!.trim().isEmpty) {
       return;
     }
-    _reconnectTimer = Timer(const Duration(seconds: 5), _connectWebSocket);
+    _reconnectTimer = Timer(const Duration(seconds: 5), _connectSocket);
   }
 
-  void _handleSocketMessage(dynamic message) {
-    if (serialNumber == null || serialNumber!.trim().isEmpty) {
-      return;
-    }
-
-    Map<String, dynamic>? data;
-    try {
-      final decoded = jsonDecode(message is String ? message : message.toString());
-      if (decoded is Map) {
-        data = Map<String, dynamic>.from(decoded as Map);
-      }
-    } catch (_) {
-      return;
-    }
-
-    if (data == null) {
-      return;
-    }
-
-    final event = data['event']?.toString();
-    if (event == null) {
-      return;
-    }
-
-    final sn = data['serial_number']?.toString();
-    if (sn != null && serialNumber != null && sn != serialNumber) {
-      return;
-    }
-
-    if (event == 'LIVE_STATUS') {
+  void _handleLiveStatus(dynamic data) {
+    if (serialNumber == null || serialNumber!.trim().isEmpty) return;
+    
+    if (data is Map) {
       final payload = data['payload'];
       if (payload is Map) {
         _applyStatusPayload(Map<String, dynamic>.from(payload));
       }
-    } else if (event == 'LIVE_TELEMETRY') {
+    }
+  }
+
+  void _handleLiveTelemetry(dynamic data) {
+    if (serialNumber == null || serialNumber!.trim().isEmpty) return;
+    
+    if (data is Map) {
       final telemetry = data['telemetry'];
       if (telemetry is Map) {
         _applyTelemetryPayload(Map<String, dynamic>.from(telemetry));
       }
-    } else if (event == 'LIVE_ALERT') {
+    }
+  }
+
+  void _handleLiveAlert(dynamic data) {
+    if (serialNumber == null || serialNumber!.trim().isEmpty) return;
+    
+    if (data is Map) {
       final payload = data['payload'];
       if (payload is Map) {
         _applyAlertPayload(Map<String, dynamic>.from(payload));
       }
-    } else if (event == 'LIVE_HEARTBEAT') {
+    }
+  }
+
+  void _handleLiveHeartbeat(dynamic data) {
+    if (serialNumber == null || serialNumber!.trim().isEmpty) return;
+    
+    if (data is Map) {
       final payload = data['payload'];
       if (payload is Map) {
         _applyHeartbeatPayload(Map<String, dynamic>.from(payload));
       }
-    } else if (event == 'LIVE_BOOT') {
+    }
+  }
+
+  void _handleLiveBoot(dynamic data) {
+    if (serialNumber == null || serialNumber!.trim().isEmpty) return;
+    
+    if (data is Map) {
       final payload = data['payload'];
       if (payload is Map) {
         _applyBootPayload(Map<String, dynamic>.from(payload));

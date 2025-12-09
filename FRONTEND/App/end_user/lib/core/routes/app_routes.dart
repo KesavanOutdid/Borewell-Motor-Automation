@@ -22,6 +22,11 @@ import '../../feature/end_user_app/settings/presentation/pages/settings_binding.
 import '../../feature/end_user_app/contact/presentation/pages/contact_page.dart';
 import '../../feature/end_user_app/profile/presentation/pages/privacy_policy_page.dart';
 import '../../feature/end_user_app/notifications/presentation/pages/notification_page.dart';
+import '../../feature/end_user_app/shop/presentation/pages/checkout_page.dart';
+import '../../feature/end_user_app/shop/presentation/pages/orders_page.dart';
+import '../../feature/end_user_app/shop/presentation/pages/order_details_page.dart';
+import '../../feature/end_user_app/shop/presentation/pages/addresses_page.dart';
+import '../../feature/end_user_app/shop/presentation/pages/add_edit_address_page.dart';
 
 class AppRoutes {
   static const splash = '/';
@@ -39,6 +44,11 @@ class AppRoutes {
   static const contact = '/contact';
   static const privacyPolicy = '/privacyPolicy';
   static const notifications = '/notifications';
+  static const checkout = '/checkout';
+  static const orders = '/orders';
+  static const orderDetails = '/order-details';
+  static const addresses = '/addresses';
+  static const addAddress = '/add-address';
 
   static final routes = [
     GetPage(
@@ -108,6 +118,26 @@ class AppRoutes {
     GetPage(
       name: notifications,
       page: () => const NotificationPage(),
+    ),
+    GetPage(
+      name: checkout,
+      page: () => const CheckoutPage(),
+    ),
+    GetPage(
+      name: orders,
+      page: () => const OrdersPage(),
+    ),
+    GetPage(
+      name: orderDetails,
+      page: () => const OrderDetailsPage(),
+    ),
+    GetPage(
+      name: addresses,
+      page: () => const AddressesPage(),
+    ),
+    GetPage(
+      name: addAddress,
+      page: () => const AddEditAddressPage(),
     ),
   ];
 }

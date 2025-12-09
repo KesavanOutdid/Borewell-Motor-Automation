@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/signup_controller.dart';
 import '../../../../../core/routes/app_routes.dart';
+import '../../../../../utils/theme/app_colors.dart';
+import '../../../../../utils/widgets/gradient_widgets.dart';
 
 class SignupView extends StatelessWidget {
   final controller = Get.put(SignupController());
@@ -81,22 +83,14 @@ class SignupView extends StatelessWidget {
                   ),
                   obscureText: true,
                 ),
-                const SizedBox(height: 24),
-                Obx(() => controller.isLoading.value
-                    ? const CircularProgressIndicator()
-                    : SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () => controller.signup(),
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          child: const Text(
-                            "Create Account",
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        ),
-                      )),
+                const SizedBox(height: 32),
+                Obx(() => GradientButton(
+                      text: 'Create Account',
+                      icon: Icons.person_add,
+                      isLoading: controller.isLoading.value,
+                      height: 56,
+                      onPressed: () => controller.signup(),
+                    )),
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () => Get.toNamed(AppRoutes.login),

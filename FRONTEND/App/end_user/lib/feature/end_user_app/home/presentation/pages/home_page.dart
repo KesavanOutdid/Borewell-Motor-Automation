@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/home_controller.dart';
 import '../../../../../core/services/notification_storage_service.dart';
+import '../../../../../utils/theme/app_colors.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
@@ -67,14 +68,30 @@ class HomeView extends GetView<HomeController> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.devices_other, size: 80, color: Colors.grey[400]),
-                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primaryGreen.withOpacity(0.1),
+                        AppColors.emerald.withOpacity(0.05),
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.devices_other,
+                    size: 64,
+                    color: AppColors.primaryGreen.withOpacity(0.5),
+                  ),
+                ),
+                const SizedBox(height: 24),
                 Text(
                   'No devices assigned',
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[700],
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -82,8 +99,9 @@ class HomeView extends GetView<HomeController> {
                   'Contact admin to assign devices',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey[500],
+                    color: Colors.grey[600],
                   ),
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),
@@ -103,34 +121,64 @@ class HomeView extends GetView<HomeController> {
                   ? 'Not Configured' 
                   : (isRunning ? 'Running' : 'Not Running');
               
-              return InkWell(
-                onTap: () => _navigateDevice(device),
-                child: Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  elevation: 1,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              return Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.white, Colors.grey.shade50],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: !isConfigured 
-                                ? Colors.orange 
-                                : (isRunning ? Colors.green : Colors.blue),
-                            shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryGreen.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => _navigateDevice(device),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: !isConfigured
+                                    ? [Colors.orange.shade400, Colors.orange.shade600]
+                                    : (isRunning 
+                                        ? [AppColors.lightGreen, AppColors.primaryGreen]
+                                        : [Colors.blue.shade400, Colors.blue.shade600]),
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: (!isConfigured
+                                      ? Colors.orange
+                                      : (isRunning ? AppColors.primaryGreen : Colors.blue))
+                                      .withOpacity(0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              !isConfigured ? Icons.settings : Icons.bolt,
+                              color: Colors.white,
+                              size: 32,
+                            ),
                           ),
-                          child: Icon(
-                            !isConfigured ? Icons.settings : Icons.bolt,
-                            color: Colors.white,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
+                          const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,50 +192,67 @@ class HomeView extends GetView<HomeController> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color: !isConfigured
-                                          ? Colors.orange
-                                          : (isRunning ? Colors.green : Colors.grey),
-                                      shape: BoxShape.circle,
-                                    ),
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: !isConfigured
+                                        ? [Colors.orange.shade100, Colors.orange.shade200]
+                                        : (isRunning
+                                            ? [AppColors.mint.withOpacity(0.3), AppColors.lightGreen.withOpacity(0.3)]
+                                            : [Colors.grey.shade200, Colors.grey.shade300]),
                                   ),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        color: !isConfigured
+                                            ? Colors.orange
+                                            : (isRunning ? AppColors.primaryGreen : Colors.grey),
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
                                       deviceStatus,
                                       style: TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.grey[600],
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: !isConfigured
+                                            ? Colors.orange.shade800
+                                            : (isRunning ? AppColors.darkGreen : Colors.grey.shade700),
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                               if (device['location'] != null && device['location'].toString().trim().isNotEmpty)
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 4),
+                                  padding: const EdgeInsets.only(top: 6),
                                   child: Row(
                                     children: [
                                       Icon(
                                         Icons.location_on,
-                                        size: 12,
-                                        color: Colors.grey[500],
+                                        size: 14,
+                                        color: AppColors.primaryGreen,
                                       ),
                                       const SizedBox(width: 4),
                                       Expanded(
                                         child: Text(
                                           device['location'],
                                           style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey[500],
+                                            fontSize: 11,
+                                            color: Colors.grey[600],
+                                            fontWeight: FontWeight.w500,
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
@@ -199,13 +264,21 @@ class HomeView extends GetView<HomeController> {
                             ],
                           ),
                         ),
-                        Icon(
-                          Icons.chevron_right,
-                          color: Colors.grey[400],
-                          size: 28,
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryGreen.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.arrow_forward_ios,
+                            color: AppColors.primaryGreen,
+                            size: 16,
+                          ),
                         ),
                       ],
                     ),
+                  ),
                   ),
                 ),
               );
@@ -213,6 +286,12 @@ class HomeView extends GetView<HomeController> {
           ),
         );
       }),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => controller.showAddDeviceDialog(),
+        backgroundColor: AppColors.primaryGreen,
+        icon: const Icon(Icons.qr_code_scanner),
+        label: const Text('Scan QR'),
+      ),
     );
   }
 

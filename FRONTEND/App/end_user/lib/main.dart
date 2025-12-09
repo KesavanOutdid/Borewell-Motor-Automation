@@ -9,6 +9,7 @@ import 'core/services/notification_service.dart';
 import 'core/services/notification_storage_service.dart';
 import 'core/services/background_notification_service.dart';
 import 'utils/theme/theme_controller.dart';
+import 'utils/theme/app_theme.dart';
 import 'feature/end_user_app/home/presentation/controllers/home_controller.dart';
 import 'feature/end_user_app/auth/presentation/controllers/auth_controller.dart';
 
@@ -42,24 +43,8 @@ void main() async {
       initialRoute: AppRoutes.splash,
       getPages: AppRoutes.routes,
       themeMode: Get.find<ThemeController>().themeMode,
-      theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.light,
-        primaryColor: Colors.green[600],
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.green[600],
-          foregroundColor: Colors.white,
-        ),
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        primaryColor: Colors.green[600],
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.grey[900],
-          foregroundColor: Colors.white,
-        ),
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
     ),
   );
 }

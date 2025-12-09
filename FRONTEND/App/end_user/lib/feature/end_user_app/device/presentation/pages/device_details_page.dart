@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../controllers/device_details_controller.dart';
+import '../../../../../utils/theme/app_colors.dart';
+import '../../../../../utils/widgets/gradient_widgets.dart';
 
 class DeviceDetailsView extends GetView<DeviceDetailsController> {
   const DeviceDetailsView({Key? key}) : super(key: key);
@@ -72,17 +74,18 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.orange.shade700,
+                        color: AppColors.primaryGreen,
                       ),
                     ),
                     TextButton.icon(
                       onPressed: () => _openHistory(controller),
-                      icon: Icon(Icons.history, size: 20, color: Colors.orange.shade700),
+                      icon: Icon(Icons.history, size: 20, color: AppColors.primaryGreen),
                       label: Text(
                         'History',
                         style: TextStyle(
                           fontSize: 16,
-                          color: Colors.orange.shade700,
+                          color: AppColors.primaryGreen,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -157,7 +160,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.blue.shade700,
+                color: AppColors.primaryGreen,
               ),
             ),
             const Divider(height: 24),
@@ -416,63 +419,11 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
   }
 
   Widget _buildMetricCard(Map<String, dynamic> metric) {
-    final color = metric['color'] as Color;
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Container(
-        height: 125,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              color.withOpacity(0.15),
-              color.withOpacity(0.05),
-            ],
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                metric['icon'] as IconData,
-                color: color,
-                size: 28,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                metric['label'] as String,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${metric['value']}',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ),
+    return MetricCard(
+      label: metric['label'] as String,
+      value: '${metric['value']}',
+      icon: metric['icon'] as IconData,
+      color: metric['color'] as Color,
     );
   }
 
@@ -519,13 +470,13 @@ class _SwipeControlWidgetState extends State<_SwipeControlWidget> {
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
             colors: widget.isRunning 
-                ? [Colors.red.shade400, Colors.red.shade300]
-                : [Colors.green.shade300, Colors.green.shade400],
+                ? [AppColors.error, AppColors.error.withOpacity(0.8)]
+                : [AppColors.lightGreen, AppColors.primaryGreen],
           ),
           boxShadow: [
             BoxShadow(
-              color: (widget.isRunning ? Colors.red : Colors.green).withOpacity(0.3),
-              blurRadius: 12,
+              color: (widget.isRunning ? AppColors.error : AppColors.primaryGreen).withOpacity(0.4),
+              blurRadius: 15,
               offset: const Offset(0, 4),
             ),
           ],
@@ -637,7 +588,7 @@ class _SwipeControlWidgetState extends State<_SwipeControlWidget> {
                         child: CircularProgressIndicator(
                           strokeWidth: 3,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            widget.isRunning ? Colors.red.shade600 : Colors.green.shade600,
+                            widget.isRunning ? AppColors.error : AppColors.primaryGreen,
                           ),
                         ),
                       )
@@ -645,7 +596,7 @@ class _SwipeControlWidgetState extends State<_SwipeControlWidget> {
                         widget.isRunning 
                             ? Icons.arrow_back_rounded 
                             : Icons.play_arrow_rounded,
-                        color: widget.isRunning ? Colors.red.shade600 : Colors.green.shade600,
+                        color: widget.isRunning ? AppColors.error : AppColors.primaryGreen,
                         size: 34,
                       ),
               ),

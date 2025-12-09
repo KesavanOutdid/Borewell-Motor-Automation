@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 import '../../../../../core/routes/app_routes.dart';
+import '../../../../../utils/theme/app_colors.dart';
+import '../../../../../utils/widgets/gradient_widgets.dart';
 
 class LoginView extends GetView<LoginController> {
   LoginView({super.key});
@@ -11,38 +13,47 @@ class LoginView extends GetView<LoginController> {
     final bool isSmallScreen = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height - 
-                  MediaQuery.of(context).padding.top - 
-                  MediaQuery.of(context).padding.bottom -
-                  kToolbarHeight,
-            ),
-            child: Center(
-              child: isSmallScreen
-                  ? const Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [_Logo(), _FormContent()],
-                    )
-                  : Container(
-                      padding: const EdgeInsets.all(32.0),
-                      constraints: const BoxConstraints(maxWidth: 800),
-                      child: const Row(
-                        children: [
-                          Expanded(child: _Logo()),
-                          Expanded(child: Center(child: _FormContent())),
-                        ],
-                      ),
-                    ),
+      body: Container(
+        width: double.infinity,
+        height: MediaQuery.of(context).size.height,
+        decoration: const BoxDecoration(
+          gradient: AppColors.primaryGradient,
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height - 
+                    MediaQuery.of(context).padding.top - 
+                    MediaQuery.of(context).padding.bottom,
+              ),
+              child: IntrinsicHeight(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: isSmallScreen
+                        ? const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [_Logo(), SizedBox(height: 40), _FormContent()],
+                          )
+                        : Container(
+                            padding: const EdgeInsets.all(32.0),
+                            constraints: const BoxConstraints(maxWidth: 800),
+                            child: const Row(
+                              children: [
+                                Expanded(child: _Logo()),
+                                Expanded(child: Center(child: _FormContent())),
+                              ],
+                            ),
+                          ),
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -62,22 +73,51 @@ class _Logo extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Image.asset(
-          'assets/images/image.png',
+        Container(
           width: logoSize,
           height: logoSize,
-          errorBuilder: (context, error, stackTrace) {
-            return FlutterLogo(size: logoSize);
-          },
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Image.asset(
+              'assets/images/image.png',
+              errorBuilder: (context, error, stackTrace) {
+                return Icon(
+                  Icons.water_drop,
+                  size: logoSize * 0.6,
+                  color: AppColors.primaryGreen,
+                );
+              },
+            ),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: Text(
             "Borewell Motor Automation",
             textAlign: TextAlign.center,
-            style: isSmallScreen
-                ? Theme.of(context).textTheme.titleMedium
-                : Theme.of(context).textTheme.titleSmall,
+            style: TextStyle(
+              fontSize: isSmallScreen ? 18 : 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withOpacity(0.3),
+                  offset: const Offset(0, 2),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -121,19 +161,32 @@ class _FormContentState extends State<_FormContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 300),
-      child: Form(
-        key: formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Login',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 24),
+    return GlassmorphicCard(
+      padding: const EdgeInsets.all(32),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 300),
+        child: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Welcome Back',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryGreen,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Login to continue',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 32),
             TextFormField(
               controller: emailController,
               validator: (value) {
@@ -186,55 +239,58 @@ class _FormContentState extends State<_FormContent> {
                 },
               ),
             ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: Obx(() => controller.isLoading.value
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        shape: const StadiumBorder(),
-                        minimumSize: const Size(double.infinity, 48),
-                      ),
-                      onPressed: () async {
-                        if (formKey.currentState?.validate() ?? false) {
-                          if (passwordController.text.length == 6) {
-                            final errorMessage = await controller.login();
-                            if (errorMessage != null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(errorMessage),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Please enter 6-digit password"),
-                                backgroundColor: Colors.red,
+            const SizedBox(height: 32),
+            Obx(() => GradientButton(
+                  text: 'Login',
+                  icon: Icons.login,
+                  isLoading: controller.isLoading.value,
+                  height: 56,
+                  onPressed: () async {
+                    if (formKey.currentState?.validate() ?? false) {
+                      if (passwordController.text.length == 6) {
+                        final errorMessage = await controller.login();
+                        if (errorMessage != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(errorMessage),
+                              backgroundColor: AppColors.error,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                            );
-                          }
+                            ),
+                          );
                         }
-                      },
-                      child: const Text(
-                        'Login',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    )),
-            ),
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text("Please enter 6-digit password"),
+                            backgroundColor: AppColors.warning,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                )),
             const SizedBox(height: 12),
             TextButton(
               onPressed: () => Get.toNamed(AppRoutes.signup),
-              child: const Text("Don't have account? Signup", style: TextStyle(fontSize: 12)),
+              child: Text(
+                "Don't have account? Signup",
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppColors.primaryGreen,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ],
         ),
+      ),
       ),
     );
   }
