@@ -17,7 +17,7 @@ const appRoutes = require('./routes/appRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const addressRoutes = require('./routes/addressRoutes');
 const logsRoutes = require('./mqtt/routes/logs');
-const { sendBootNotificationsOnStartup } = require('./mqtt/publisher');
+const { sendBootNotificationsOnStartup, client: publisherClient } = require('./mqtt/publisher');
 // Import MQTT client to start the subscriber
 const mqttClient = require('./mqtt/mqttClient');
 
@@ -38,8 +38,17 @@ app.get('/', (req, res) => {
 
 // Connect DB
 connectDB().then(() => {
-    // Send boot notifications for configured devices on startup
-    sendBootNotificationsOnStartup();
+    console.log('Database connected successfully.');
+    // Wait for both DB and MQTT to be fully ready before sending boot notifications
+    setTimeout(async () => {
+        try {
+            console.log('Attempting to send boot notifications...');
+            await sendBootNotificationsOnStartup();
+            console.log('Boot notifications sent successfully');
+        } catch (error) {
+            console.error('Failed to send boot notifications:', error.message);
+        }
+    }, 5000);
 }).catch(err => {
     console.error('Database connection failed:', err);
 });

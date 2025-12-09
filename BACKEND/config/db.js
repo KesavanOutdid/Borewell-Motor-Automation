@@ -13,7 +13,12 @@ async function connectDB() {
     const uri = `${baseUrl}/${dbName}?retryWrites=true&w=majority`;
 
     try {
-        await mongoose.connect(uri);
+        await mongoose.connect(uri, {
+            serverSelectionTimeoutMS: 30000,
+            socketTimeoutMS: 45000,
+            bufferCommands: false,
+            bufferTimeoutMS: 30000,
+        });
 
         console.log('MongoDB connected using Mongoose');
 
