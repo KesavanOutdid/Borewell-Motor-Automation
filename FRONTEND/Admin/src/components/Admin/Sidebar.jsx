@@ -28,7 +28,7 @@ const Sidebar = () => {
                 <i className="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
                 <Link className="navbar-brand m-0" href="#">
                     <img src="../assets/img/logo-ct.png" className="navbar-brand-img h-100" alt="main_logo"/>
-                    <span className="ms-2 font-weight-bold">Super Admin</span>
+                    <span className="ms-2 font-weight-bold">AgriPulse</span>
                 </Link>
             </div>
             <hr className="horizontal dark mt-0"/>
@@ -64,6 +64,22 @@ const Sidebar = () => {
                                 <i className="fas fa-user" style={{ fontSize: '12px', color: '#344767', lineHeight: '12px' }}></i>
                             </div>
                             <span className="nav-link-text ms-1">Manage User</span>
+                        </Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link className={location.pathname === '/admin/manage-products' || location.pathname === '/admin/create-product' || location.pathname === '/admin/view-product' || location.pathname === '/admin/edit-product' ? 'nav-link  active' : 'nav-link'} to="/admin/manage-products" onClick={(e) => handleNavClick(e, '/admin/manage-products')}>
+                            <div className="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                                <i className="fas fa-box" style={{ fontSize: '12px', color: '#344767', lineHeight: '12px' }}></i>
+                            </div>
+                            <span className="nav-link-text ms-1">Manage Products</span>
+                        </Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link className={location.pathname === '/admin/manage-orders' || location.pathname === '/admin/view-order' ? 'nav-link  active' : 'nav-link'} to="/admin/manage-orders" onClick={(e) => handleNavClick(e, '/admin/manage-orders')}>
+                            <div className="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                                <i className="fas fa-shopping-cart" style={{ fontSize: '12px', color: '#344767', lineHeight: '12px' }}></i>
+                            </div>
+                            <span className="nav-link-text ms-1">Manage Orders</span>
                         </Link>
                     </li>
                     <li className="nav-item mt-3">

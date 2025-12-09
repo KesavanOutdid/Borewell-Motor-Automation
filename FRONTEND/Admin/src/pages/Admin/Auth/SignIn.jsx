@@ -40,12 +40,12 @@ const SignIn = ({ handleSignIn, userInfo }) => {
                                             <form className="form" onSubmit={handleSignInFormSubmit}>
                                                 <label>Email</label>
                                                 <div className="mb-3">
-                                                    <input type="email" className="form-control" placeholder="Email" aria-label="Email" aria-describedby="email-addon" autocomplete="off" value={user_email}
+                                                    <input type="email" className="form-control" placeholder="Email" aria-label="Email" aria-describedby="email-addon" autoComplete="off" value={user_email}
                                                          onChange={(e) => setEmail(sanitizeEmail(e.target.value))} required/>
                                                 </div>
                                                 <label>Password</label>
                                                 <div className="mb-3">
-                                                    <input type="password" className="form-control" placeholder="Password" aria-label="Password" aria-describedby="password-addon" autocomplete="off" minLength={6} maxLength={6} value={passwords}
+                                                    <input type="password" className="form-control" placeholder="Password" aria-label="Password" aria-describedby="password-addon" autoComplete="off" minLength={6} maxLength={6} value={passwords}
                                                          onChange={(e) => setPassword(sanitizePassword(e.target.value))} required/>
                                                 </div>
                                                 <div className="text-center">

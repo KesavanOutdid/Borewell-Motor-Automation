@@ -236,34 +236,32 @@ client.on("message", async (topic, message) => {
         /* ------------------------------------------------------ */
         /* SEND LIVE UPDATES TO WEBSOCKET CLIENTS                  */
         /* ------------------------------------------------------ */
-        if (global.broadcast) {
+        /* ------------------------------------------------------ */
+        /* SEND LIVE UPDATES TO SOCKET.IO CLIENTS                 */
+        /* ------------------------------------------------------ */
+        if (global.io) {
             if (type === "BOOT") {
-                global.broadcast({
-                    event: "LIVE_BOOT",
+                global.io.emit("LIVE_BOOT", {
                     serial_number: item.serial_number,
                     payload: item
                 });
             } else if (type === "STATUS") {
-                global.broadcast({
-                    event: "LIVE_STATUS",
+                global.io.emit("LIVE_STATUS", {
                     serial_number: item.serial_number,
                     payload: item
                 });
             } else if (type === "ALERT") {
-                global.broadcast({
-                    event: "LIVE_ALERT",
+                global.io.emit("LIVE_ALERT", {
                     serial_number: item.serial_number,
                     payload: item
                 });
             } else if (type === "HEARTBEAT") {
-                global.broadcast({
-                    event: "LIVE_HEARTBEAT",
+                global.io.emit("LIVE_HEARTBEAT", {
                     serial_number: item.serial_number,
                     payload: item
                 });
             } else if (type === "TELEMETRY") {
-                global.broadcast({
-                    event: "LIVE_TELEMETRY",
+                global.io.emit("LIVE_TELEMETRY", {
                     serial_number: item.serial_number,
                     imei_number: item.imei_number,
                     user_id: item.user_id,

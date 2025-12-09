@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { WS_URL } from "../../config/websocket";
+import { socket } from "../../config/socket";
 
 const useLiveStatus = (serialNumber) => {
     const [status, setStatus] = useState(null);
@@ -16,31 +16,32 @@ const useLiveStatus = (serialNumber) => {
             return;
         }
 
-        setStatus(null);  // reset on device change
+        setStatus(null);
         setLastStart(null);
         setLastStop(null);
         prevMotorRunning.current = null;
 
-        const socket = new WebSocket(WS_URL);
+        const handler = (data) => {
+            if (data.serial_number !== serialNumber) return;
 
-        socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
+            const newStatus = data.payload;
 
-            if (data.event === "LIVE_STATUS" && data.serial_number === serialNumber) {
-                const newStatus = data.payload;
-                // Track start/stop times on state change
-                if (newStatus.motor_running === true && prevMotorRunning.current === false) {
-                    setLastStart(newStatus.timestamp);
-                }
-                if (newStatus.motor_running === false && prevMotorRunning.current === true) {
-                    setLastStop(newStatus.timestamp);
-                }
-                prevMotorRunning.current = newStatus.motor_running;
-                setStatus(newStatus);
+            if (newStatus.motor_running === true && prevMotorRunning.current === false) {
+                setLastStart(newStatus.timestamp);
             }
+            if (newStatus.motor_running === false && prevMotorRunning.current === true) {
+                setLastStop(newStatus.timestamp);
+            }
+
+            prevMotorRunning.current = newStatus.motor_running;
+            setStatus(newStatus);
         };
 
-        return () => socket.close();
+        socket.on("LIVE_STATUS", handler);
+
+        return () => {
+            socket.off("LIVE_STATUS", handler);
+        };
     }, [serialNumber]);
 
     return { status, lastStart, lastStop };

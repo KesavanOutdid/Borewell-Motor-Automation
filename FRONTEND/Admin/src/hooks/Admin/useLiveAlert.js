@@ -1,5 +1,6 @@
+// FRONTEND/src/hooks/live/useLiveAlert.js
 import { useEffect, useState } from "react";
-import { WS_URL } from "../../config/websocket";
+import { socket } from "../../config/socket";
 
 const useLiveAlert = (serialNumber) => {
     const [alert, setAlert] = useState(null);
@@ -7,32 +8,28 @@ const useLiveAlert = (serialNumber) => {
     useEffect(() => {
         if (!serialNumber) return;
 
-        // Load previous alert from localStorage store
+        // Load previous alert from localStorage
         const store = JSON.parse(localStorage.getItem("live-alert")) || {};
         if (store[serialNumber]) setAlert(store[serialNumber]);
 
-        const socket = new WebSocket(WS_URL);
+        const handler = (data) => {
+            const sn = data.serial_number;
 
-        socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
+            // update LocalStorage
+            const map = JSON.parse(localStorage.getItem("live-alert")) || {};
+            map[sn] = data.payload;
+            localStorage.setItem("live-alert", JSON.stringify(map));
 
-            if (data.event === "LIVE_ALERT") {
-                const sn = data.serial_number;
-
-                // update global LocalStorage map
-                const map = JSON.parse(localStorage.getItem("live-alert")) || {};
-                map[sn] = data.payload;
-                localStorage.setItem("live-alert", JSON.stringify(map));
-
-                // update component only if matching selected device
-                if (sn === serialNumber) {
-                    setAlert(data.payload);
-                }
+            if (sn === serialNumber) {
+                setAlert(data.payload);
             }
         };
 
-        return () => socket.close();
+        socket.on("LIVE_ALERT", handler);
 
+        return () => {
+            socket.off("LIVE_ALERT", handler);
+        };
     }, [serialNumber]);
 
     return alert;

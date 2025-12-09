@@ -19,6 +19,9 @@
         "jsonwebtoken": "^9.0.2",
         "mongoose": "^8.20.0",
         "mqtt": "^5.14.1",
+        "multer": "^2.0.2",
+        "razorpay": "^2.9.6",
+        "socket.io": "^4.8.1",
         "swagger-jsdoc": "^6.2.8",
         "swagger-ui-express": "^5.0.1",
         "winston": "^3.18.3"

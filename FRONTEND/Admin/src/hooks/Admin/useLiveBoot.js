@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { WS_URL } from "../../config/websocket";
+import { socket } from "../../config/socket";
 
 const useLiveBoot = (serialNumber) => {
     const [boot, setBoot] = useState(null);
@@ -10,22 +10,19 @@ const useLiveBoot = (serialNumber) => {
             return;
         }
 
-        setBoot(null);  // reset on device change
+        setBoot(null); // reset on device change
 
-        const socket = new WebSocket(WS_URL);
-
-        socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-
-            if (
-                data.event === "LIVE_BOOT" &&
-                data.serial_number === serialNumber
-            ) {
+        const handler = (data) => {
+            if (data.serial_number === serialNumber) {
                 setBoot(data.payload);
             }
         };
 
-        return () => socket.close();
+        socket.on("LIVE_BOOT", handler);
+
+        return () => {
+            socket.off("LIVE_BOOT", handler);
+        };
     }, [serialNumber]);
 
     return boot;

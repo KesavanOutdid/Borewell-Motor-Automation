@@ -7,8 +7,14 @@ import ManageDevices from '../pages/Admin/ManageDevices';
 import ManageUserRoles from '../pages/Admin/ManageUserRoles';
 import ManageUsers from '../pages/Admin/ManageUsers';
 import ManageUsersView from '../pages/Admin/ManageUsersView';
+import ManageProducts from '../pages/Admin/ManageProducts';
+import CreateProduct from '../pages/Admin/CreateProduct';
+import EditProduct from '../pages/Admin/EditProduct';
+import ViewProduct from '../pages/Admin/ViewProduct';
 import ChannelHistory from '../pages/Admin/ChannelHistory';
 import Profile from '../pages/Admin/Profile';
+import ManageOrders from '../pages/Admin/ManageOrders';
+import ViewOrder from '../pages/Admin/ViewOrder';
 
 const AdminRoutes = () => {
     const storedUser = JSON.parse(sessionStorage.getItem('adminUser'));
@@ -16,38 +22,19 @@ const AdminRoutes = () => {
     const [userInfo, setUserInfo] = useState(storedUser || {});
     const navigate = useNavigate();
 
-    // Handle SignIn
-    // const handleSignIn = (data) => {
-    //     if (data?.token && data?.user) {
-    //         const storeData = {
-    //             token: data.token,
-    //             user: data.user
-    //         };
-
-    //         setUserInfo(storeData);
-    //         setLoggedIn(true);
-
-    //         sessionStorage.setItem('adminUser', JSON.stringify(storeData)); // Save token + user
-
-    //         navigate('/admin/dashboard');
-    //     } else {
-    //         console.error("SignIn response missing token or user");
-    //     }
-    // };
-
     const handleSignIn = (data) => {
-        if (data?.data) {
-            // setUserInfo(data.data);
-            // setLoggedIn(true);
+        console.log("handleSignIn received:", data);
+
+        if (data?.data?.token && data?.data?.user) {
             const storeData = {
-                token: data.token,
-                user: data.user
+                token: data.data.token,
+                user: data.data.user,
             };
 
             setUserInfo(storeData);
             setLoggedIn(true);
-            sessionStorage.setItem('adminUser', JSON.stringify(data.data));
-            navigate('/admin/dashboard');
+            sessionStorage.setItem("adminUser", JSON.stringify(storeData));
+            navigate("/admin/dashboard");
         } else {
             console.error("SignIn response does not contain valid data");
         }
@@ -133,9 +120,57 @@ const AdminRoutes = () => {
                 )}
             />
             <Route
+                path="manage-products"
+                element={loggedIn ? (
+                    <ManageProducts userInfo={userInfo} handleLogout={handleLogout} />
+                ) : (
+                    <Navigate to="/admin/signin" />
+                )}
+            />
+            <Route
+                path="create-product"
+                element={loggedIn ? (
+                    <CreateProduct userInfo={userInfo} handleLogout={handleLogout} />
+                ) : (
+                    <Navigate to="/admin/signin" />
+                )}
+            />
+            <Route
+                path="edit-product"
+                element={loggedIn ? (
+                    <EditProduct userInfo={userInfo} handleLogout={handleLogout} />
+                ) : (
+                    <Navigate to="/admin/signin" />
+                )}
+            />
+            <Route
+                path="view-product"
+                element={loggedIn ? (
+                    <ViewProduct userInfo={userInfo} handleLogout={handleLogout} />
+                ) : (
+                    <Navigate to="/admin/signin" />
+                )}
+            />
+            <Route
                 path="SignUp"
                 element={loggedIn ? (
                     <SignUp userInfo={userInfo} handleLogout={handleLogout} />
+                ) : (
+                    <Navigate to="/admin/signin" />
+                )}
+            />
+            <Route
+                path="manage-orders"
+                element={loggedIn ? (
+                    <ManageOrders userInfo={userInfo} handleLogout={handleLogout} />
+                ) : (
+                    <Navigate to="/admin/signin" />
+                )}
+            />
+            <Route
+                path="view-order"
+                element={loggedIn ? (
+                    <ViewOrder userInfo={userInfo} handleLogout={handleLogout} />
                 ) : (
                     <Navigate to="/admin/signin" />
                 )}

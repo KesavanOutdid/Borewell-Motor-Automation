@@ -2,8 +2,10 @@
 const { validationResult } = require('express-validator');
 const Role = require('../models/Role');
 const User = require('../models/User');
-const Device = require("../models/Device"); 
+const Device = require("../models/Device");
+const Product = require("../models/Product");
 const bcrypt = require('bcrypt');
+const path = require('path');
 
 // Create role
 exports.createRole = async (req, res, next) => {
@@ -58,7 +60,6 @@ exports.editRole = async (req, res, next) => {
         next(err);
     }
 };
-
 
 // Create user
 exports.createUser = async (req, res, next) => {
@@ -698,6 +699,291 @@ exports.getAnalasitic = async (req, res) => {
 
 
 // ---------- helpers for filling missing periods ----------
+
+// ---------------------
+// Product Management
+// ---------------------
+exports.createProduct = async (req, res, next) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty())
+            return res.status(400).json({ success: false, errors: errors.array() });
+
+        const {
+            product_name,
+            product_description,
+            product_description_pdf,
+            product_main_image,
+            product_sub_images,
+            product_quality,
+            product_price,
+            product_gst,
+            product_shipping_cost,
+            product_quantity,
+            createdBy
+        } = req.body;
+
+        if (!product_name || !product_description || !product_main_image)
+            return res.status(400).json({
+                success: false,
+                message: "product_name, product_description, and product_main_image are required"
+            });
+
+        const lastProduct = await Product.findOne().sort({ product_id: -1 }).lean();
+        const newProductId = lastProduct ? lastProduct.product_id + 1 : 1;
+
+        const product = new Product({
+            product_id: newProductId,
+            product_name,
+            product_description,
+            product_description_pdf: product_description_pdf || null,
+            product_main_image,
+            product_sub_images: product_sub_images || [],
+            product_quality: product_quality || { box_size: null, extra_details: null },
+            product_price: product_price || 0,
+            product_gst: product_gst || 0,
+            product_shipping_cost: product_shipping_cost || 0,
+            product_quantity: product_quantity || 0,
+            createdBy,
+            createdAt: new Date()
+        });
+
+        await product.save();
+
+        res.status(201).json({
+            success: true,
+            message: "Product created successfully",
+            product
+        });
+
+    } catch (err) {
+        console.error("Create Product Error:", err);
+        res.status(500).json({ success: false, message: "Server error creating product" });
+        next(err);
+    }
+};
+
+exports.getProducts = async (req, res, next) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const totalProducts = await Product.countDocuments();
+        const totalActiveProducts = await Product.countDocuments({ status: true });
+        const totalInactiveProducts = await Product.countDocuments({ status: false });
+
+        const products = await Product.find()
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean();
+
+        const totalPages = Math.ceil(totalProducts / limit);
+
+        res.status(200).json({
+            success: true,
+            data: products,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalProducts,
+                totalActiveProducts,
+                totalInactiveProducts,
+                limit,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1
+            }
+        });
+
+    } catch (error) {
+        console.error("Get Products Error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Server error fetching products"
+        });
+    }
+};
+
+exports.getProductById = async (req, res, next) => {
+    try {
+        const { id } = req.query;
+
+        if (!id)
+            return res.status(400).json({ success: false, message: "Product ID is required" });
+
+        const product = await Product.findById(id).lean();
+
+        if (!product)
+            return res.status(404).json({ success: false, message: "Product not found" });
+
+        res.status(200).json({
+            success: true,
+            data: product
+        });
+
+    } catch (error) {
+        console.error("Get Product By ID Error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Server error fetching product"
+        });
+    }
+};
+
+exports.updateProduct = async (req, res, next) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty())
+            return res.status(400).json({ success: false, errors: errors.array() });
+
+        const {
+            id,
+            product_name,
+            product_description,
+            product_description_pdf,
+            product_main_image,
+            product_sub_images,
+            product_quality,
+            product_price,
+            product_gst,
+            product_shipping_cost,
+            product_quantity,
+            status,
+            updatedBy
+        } = req.body;
+
+        if (!id)
+            return res.status(400).json({ success: false, message: "Product ID is required" });
+
+        const product = await Product.findById(id);
+
+        if (!product)
+            return res.status(404).json({ success: false, message: "Product not found" });
+
+        if (product_name) product.product_name = product_name;
+        if (product_description) product.product_description = product_description;
+        if (product_description_pdf !== undefined) product.product_description_pdf = product_description_pdf;
+        if (product_main_image) product.product_main_image = product_main_image;
+        if (product_sub_images) product.product_sub_images = product_sub_images;
+        if (product_quality) product.product_quality = product_quality;
+        if (product_price !== undefined) product.product_price = product_price;
+        if (product_gst !== undefined) product.product_gst = product_gst;
+        if (product_shipping_cost !== undefined) product.product_shipping_cost = product_shipping_cost;
+        if (product_quantity !== undefined) product.product_quantity = product_quantity;
+        if (status !== undefined) product.status = status;
+
+        product.updatedBy = updatedBy;
+        product.updatedAt = new Date();
+
+        await product.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Product updated successfully",
+            product
+        });
+
+    } catch (error) {
+        console.error("Update Product Error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Server error updating product"
+        });
+    }
+};
+
+exports.deleteProduct = async (req, res, next) => {
+    try {
+        const { id } = req.body;
+
+        if (!id)
+            return res.status(400).json({ success: false, message: "Product ID is required" });
+
+        const product = await Product.findByIdAndDelete(id);
+
+        if (!product)
+            return res.status(404).json({ success: false, message: "Product not found" });
+
+        res.status(200).json({
+            success: true,
+            message: "Product deleted successfully"
+        });
+
+    } catch (error) {
+        console.error("Delete Product Error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Server error deleting product"
+        });
+    }
+};
+
+// ---------------------
+// File Upload Handlers
+// ---------------------
+exports.uploadPDF = async (req, res, next) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No file uploaded' });
+        }
+
+        const fileUrl = `/upload/pdf/${req.file.filename}`;
+
+        res.status(200).json({
+            success: true,
+            message: 'PDF uploaded successfully',
+            filePath: fileUrl,
+            fileName: req.file.filename
+        });
+
+    } catch (error) {
+        console.error('Upload PDF Error:', error);
+        res.status(500).json({ success: false, message: 'Server error uploading PDF' });
+    }
+};
+
+exports.uploadImage = async (req, res, next) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No file uploaded' });
+        }
+
+        const fileUrl = `/upload/img/${req.file.filename}`;
+
+        res.status(200).json({
+            success: true,
+            message: 'Image uploaded successfully',
+            filePath: fileUrl,
+            fileName: req.file.filename
+        });
+
+    } catch (error) {
+        console.error('Upload Image Error:', error);
+        res.status(500).json({ success: false, message: 'Server error uploading image' });
+    }
+};
+
+exports.uploadMultipleImages = async (req, res, next) => {
+    try {
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ success: false, message: 'No files uploaded' });
+        }
+
+        const filePaths = req.files.map(file => `/upload/img/${file.filename}`);
+
+        res.status(200).json({
+            success: true,
+            message: 'Images uploaded successfully',
+            filePaths: filePaths,
+            fileNames: req.files.map(f => f.filename)
+        });
+
+    } catch (error) {
+        console.error('Upload Multiple Images Error:', error);
+        res.status(500).json({ success: false, message: 'Server error uploading images' });
+    }
+};
 
 // years: [2023, 2024, 2025]
 // years: [{ year: 2024, count: 0 }, ...]

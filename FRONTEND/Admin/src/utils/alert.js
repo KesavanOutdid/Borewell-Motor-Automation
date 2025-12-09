@@ -32,3 +32,13 @@ export const showAlertSuccess = (title) => {
         showConfirmButton: false, // Optional: Hide the confirmation button
     });
 };
+
+// Function to show error alert
+export const showAlertError = (title) => {
+    Swal.fire({
+        title, // Dynamically set the alert title
+        icon: 'error',
+        timer: 2000, // Automatically close after 2 seconds
+        showConfirmButton: false, // Optional: Hide the confirmation button
+    });
+};

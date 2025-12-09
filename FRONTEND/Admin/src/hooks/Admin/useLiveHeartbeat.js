@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { WS_URL } from "../../config/websocket";
+import { socket } from "../../config/socket";
 
 const useLiveHeartbeat = (serialNumber) => {
     const [heartbeat, setHeartbeat] = useState(null);
@@ -10,22 +10,19 @@ const useLiveHeartbeat = (serialNumber) => {
             return;
         }
 
-        setHeartbeat(null);  // reset on device change
+        setHeartbeat(null); // reset
 
-        const socket = new WebSocket(WS_URL);
-
-        socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-
-            if (
-                data.event === "LIVE_HEARTBEAT" &&
-                data.serial_number === serialNumber
-            ) {
+        const handler = (data) => {
+            if (data.serial_number === serialNumber) {
                 setHeartbeat(data.payload);
             }
         };
 
-        return () => socket.close();
+        socket.on("LIVE_HEARTBEAT", handler);
+
+        return () => {
+            socket.off("LIVE_HEARTBEAT", handler);
+        };
     }, [serialNumber]);
 
     return heartbeat;

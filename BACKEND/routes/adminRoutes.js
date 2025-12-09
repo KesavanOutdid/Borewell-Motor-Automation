@@ -2,6 +2,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const adminCtrl = require('../controllers/adminControllers');
 const authMiddleware = require('../middlewares/authMiddleware');
+const { uploadPDF, uploadImage } = require('../config/multerConfig');
 
 const router = express.Router();
 
@@ -45,6 +46,31 @@ router.post(
     adminCtrl.createRole
 );
 
+/**
+ * @swagger
+ * /admin/editRole:
+ *   post:
+ *     summary: Edit an existing role
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               role_id:
+ *                 type: integer
+ *               status:
+ *                 type: boolean
+ *               updatedBy:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Role updated successfully
+ *       400:
+ *         description: Validation error
+ */
 router.post(
     '/editRole',
     [
@@ -298,14 +324,321 @@ router.post("/createdDevice", adminCtrl.createDevice);
 
 router.get("/getDevices", adminCtrl.getDevices);
 
+/**
+ * @swagger
+ * /admin/updatedDevice:
+ *   post:
+ *     summary: Update device details
+ *     tags: [Admin]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               serial_number:
+ *                 type: string
+ *               updatedBy:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Device updated successfully
+ *       400:
+ *         description: Bad request
+ */
 router.post("/updatedDevice", adminCtrl.updateDevice);
 
+/**
+ * @swagger
+ * /admin/deviceAssignTouser:
+ *   post:
+ *     summary: Assign device to user
+ *     tags: [Admin]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               serial_number:
+ *                 type: string
+ *               user_id:
+ *                 type: integer
+ *               assignedBy:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Device assigned successfully
+ *       400:
+ *         description: Bad request
+ */
 router.post("/deviceAssignTouser", adminCtrl.deviceAssignToUser);
 
+/**
+ * @swagger
+ * /admin/manageUserUpdated:
+ *   post:
+ *     summary: Manage and update user information
+ *     tags: [Admin]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               user_id:
+ *                 type: integer
+ *               status:
+ *                 type: boolean
+ *               updatedBy:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: User updated successfully
+ *       400:
+ *         description: Bad request
+ */
 router.post("/manageUserUpdated", adminCtrl.manageUserUpdated);
 
+/**
+ * @swagger
+ * /admin/getAssignDevices:
+ *   get:
+ *     summary: Get all assigned devices with pagination
+ *     tags: [Admin]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: List of assigned devices
+ */
 router.get("/getAssignDevices", adminCtrl.getAssignDevices);
 
+/**
+ * @swagger
+ * /admin/getAnalasitic:
+ *   get:
+ *     summary: Get analytics and statistics
+ *     tags: [Admin]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Analytics data
+ */
 router.get("/getAnalasitic", adminCtrl.getAnalasitic);
+
+// ---------------------
+// Product Management
+// ---------------------
+/**
+ * @swagger
+ * /admin/createProduct:
+ *   post:
+ *     summary: Create a new product
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               product_name:
+ *                 type: string
+ *               product_description:
+ *                 type: string
+ *               product_description_pdf:
+ *                 type: string
+ *               product_main_image:
+ *                 type: string
+ *               product_sub_images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               product_quality:
+ *                 type: object
+ *                 properties:
+ *                   box_size:
+ *                     type: string
+ *                   extra_details:
+ *                     type: string
+ *               createdBy:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Product created successfully
+ */
+router.post('/createProduct', adminCtrl.createProduct);
+
+/**
+ * @swagger
+ * /admin/getProducts:
+ *   get:
+ *     summary: Get all products with pagination
+ *     tags: [Admin]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Paginated list of products
+ */
+router.get('/getProducts', adminCtrl.getProducts);
+
+/**
+ * @swagger
+ * /admin/getProductById:
+ *   get:
+ *     summary: Get product by ID
+ *     tags: [Admin]
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product details
+ */
+router.get('/getProductById', adminCtrl.getProductById);
+
+/**
+ * @swagger
+ * /admin/updateProduct:
+ *   post:
+ *     summary: Update product
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Product updated successfully
+ */
+router.post('/updateProduct', adminCtrl.updateProduct);
+
+/**
+ * @swagger
+ * /admin/deleteProduct:
+ *   post:
+ *     summary: Delete product
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Product deleted successfully
+ */
+router.post('/deleteProduct', adminCtrl.deleteProduct);
+
+// ---------------------
+// File Upload Routes
+// ---------------------
+/**
+ * @swagger
+ * /admin/uploadPDF:
+ *   post:
+ *     summary: Upload PDF file
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: PDF uploaded successfully
+ */
+router.post('/uploadPDF', uploadPDF.single('file'), adminCtrl.uploadPDF);
+
+/**
+ * @swagger
+ * /admin/uploadImage:
+ *   post:
+ *     summary: Upload image file
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Image uploaded successfully
+ */
+router.post('/uploadImage', uploadImage.single('file'), adminCtrl.uploadImage);
+
+/**
+ * @swagger
+ * /admin/uploadMultipleImages:
+ *   post:
+ *     summary: Upload multiple image files
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               files:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *     responses:
+ *       200:
+ *         description: Images uploaded successfully
+ */
+router.post('/uploadMultipleImages', uploadImage.array('files', 3), adminCtrl.uploadMultipleImages);
 
 module.exports = router;

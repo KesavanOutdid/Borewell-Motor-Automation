@@ -263,7 +263,7 @@ const useManageDevices = (userInfo) => {
     // Chart.js instance ref so we can destroy/recreate
     const chartInstanceRef = useRef(null);
 
-    const prepareAnalyticsData = () => {
+    const prepareAnalyticsData = useCallback(() => {
         let labels = [];
         let created = [];
         let active = [];
@@ -291,7 +291,7 @@ const useManageDevices = (userInfo) => {
         }
 
         return { labels, created, active, assigned, deactivated };
-    };
+    }, [analytics, chartType]);
 
 
     useEffect(() => {
@@ -374,7 +374,7 @@ const useManageDevices = (userInfo) => {
                 },
             },
         });
-    }, [analytics, chartType]);
+    }, [prepareAnalyticsData, analytics]);
 
 
     return {

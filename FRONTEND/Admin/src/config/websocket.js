@@ -1,6 +1,3 @@
-const getWebSocketURL = () => {
-    const weUrl = process.env.REACT_APP_WE_URL;
-    return weUrl.replace(/^http/, "ws");
-};
-
-export const WS_URL = getWebSocketURL();
+// FRONTEND/src/config/websocket.js
+export const WS_URL =
+    process.env.REACT_APP_SERVER_URL || "http://localhost:3000";

@@ -31,22 +31,22 @@ const SignUp = ({handleSignUp}) => {
                                             <form className="form" onSubmit={handleSignUpFormSubmit}>
                                                 <label>Name</label>
                                                 <div className="mb-3">
-                                                    <input type="text" className="form-control" placeholder="Name" aria-label="Name" aria-describedby="name-addon" autocomplete="off" value={name}
+                                                    <input type="text" className="form-control" placeholder="Name" aria-label="Name" aria-describedby="name-addon" autoComplete="off" value={name}
                                                         onChange={(e) => setName(sanitizeName(e.target.value))} required/>
                                                 </div>
                                                 <label>Mobile</label>
                                                 <div className="mb-3">
-                                                    <input type="text" className="form-control" placeholder="Mobile" aria-label="Mobile" aria-describedby="mobile-addon" autocomplete="off" value={mobile}
+                                                    <input type="text" className="form-control" placeholder="Mobile" aria-label="Mobile" aria-describedby="mobile-addon" autoComplete="off" value={mobile}
                                                         onChange={(e) => setMobile(sanitizeMobile(e.target.value))} required/>
                                                 </div>
                                                 <label>Email</label>
                                                 <div className="mb-3">
-                                                    <input type="email" className="form-control" placeholder="Email" aria-label="Email" aria-describedby="email-addon" autocomplete="off" value={email}
+                                                    <input type="email" className="form-control" placeholder="Email" aria-label="Email" aria-describedby="email-addon" autoComplete="off" value={email}
                                                         onChange={(e) => setEmail(sanitizeEmail(e.target.value))} required/>
                                                 </div>
                                                 <label>Password</label>
                                                 <div className="mb-3">
-                                                    <input type="password" className="form-control" placeholder="Password" aria-label="Password" aria-describedby="password-addon" autocomplete="off" value={passwords}
+                                                    <input type="password" className="form-control" placeholder="Password" aria-label="Password" aria-describedby="password-addon" autoComplete="off" value={passwords}
                                                         onChange={(e) => setPassword(sanitizePassword(e.target.value))} required/>
                                                 </div>
                                                 <div className="text-center">

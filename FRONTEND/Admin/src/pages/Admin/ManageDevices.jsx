@@ -10,14 +10,13 @@ import { showAlertSuccess } from '../../utils/alert';
 const ManageDevices = ({ userInfo, handleLogout }) => {
     const API_BASE = process.env.REACT_APP_SERVER_URL;
 
+    console.log(userInfo, 'profile data');
+    
     const { setIsModalCreate, isModalCreate, setIsModalAssign, isModalAssign, serialNumber, setSerialNumber, errorMessage, successMessage, handleDeviceCreate, closeModal,
         isModalEdit, setIsModalEdit, setIsModalView, isModalView, fetchDeviceData, devices, loading, errorDevice, serialNumberUpdate, deviceStatusUpdate, errorMessageEdit, setErrorMessageEdit,
         users, selecteduser, handleuserSelection, selectedDevices, handleDeviceSelection, handleAssign, assignErrorMessage, loadingSubmit, loadingUpdate, setLoadingUpdate,
-        pagination, handlePageChange, handleLimitChange,
-        analytics,
-        loadingAnalytics,
-        errorAnalytics,
-        chartType,
+        pagination, handlePageChange, handleLimitChange, loadingAnalytics, errorAnalytics, chartType,
+        // analytics,
         setChartType,
     } = useManageDevices(userInfo);
 
