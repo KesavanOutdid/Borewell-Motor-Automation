@@ -3,9 +3,26 @@ import 'package:get/get.dart';
 import '../../../../../utils/theme/app_colors.dart';
 import '../../../../../utils/widgets/gradient_widgets.dart';
 import '../controllers/cart_controller.dart';
+import '../controllers/voucher_controller.dart';
 
-class CartPage extends StatelessWidget {
+class CartPage extends StatefulWidget {
   const CartPage({super.key});
+
+  @override
+  State<CartPage> createState() => _CartPageState();
+}
+
+class _CartPageState extends State<CartPage> {
+  final voucherCodeController = TextEditingController();
+  final voucherController = Get.find<VoucherController>();
+  int? appliedDiscountPercentage;
+  String? appliedVoucherCode;
+
+  @override
+  void dispose() {
+    voucherCodeController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -284,15 +301,111 @@ class CartPage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.backgroundLight,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.primaryGreen.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: voucherCodeController,
+                      decoration: const InputDecoration(
+                        hintText: 'Enter voucher code',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                        isDense: true,
+                      ),
+                      textCapitalization: TextCapitalization.characters,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final code = voucherCodeController.text.trim();
+                      if (code.isEmpty) return;
+                      
+                      final validatedVoucher = await voucherController.validateVoucher(code);
+                      if (validatedVoucher != null) {
+                        setState(() {
+                          appliedDiscountPercentage = validatedVoucher.discountPercentage;
+                          appliedVoucherCode = validatedVoucher.voucherCode;
+                        });
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text('Apply'),
+                  ),
+                ],
+              ),
+            ),
+            if (appliedVoucherCode != null) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.success),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: AppColors.success, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Voucher "$appliedVoucherCode" applied! $appliedDiscountPercentage% off',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.success,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 16),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () {
+                        setState(() {
+                          appliedDiscountPercentage = null;
+                          appliedVoucherCode = null;
+                          voucherCodeController.clear();
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
             _buildSummaryRow('Subtotal', '₹${cart.totalPrice.toStringAsFixed(2)}'),
             const SizedBox(height: 8),
             _buildSummaryRow('GST', '₹${cart.totalGst.toStringAsFixed(2)}'),
             const SizedBox(height: 8),
             _buildSummaryRow('Shipping', '₹${cart.totalShippingCost.toStringAsFixed(2)}'),
+            if (appliedDiscountPercentage != null) ...[
+              const SizedBox(height: 8),
+              _buildSummaryRow(
+                'Discount ($appliedDiscountPercentage%)',
+                '-₹${(cart.grandTotal * appliedDiscountPercentage! / 100).toStringAsFixed(2)}',
+                isDiscount: true,
+              ),
+            ],
             const Divider(height: 24),
             _buildSummaryRow(
               'Grand Total',
-              '₹${cart.grandTotal.toStringAsFixed(2)}',
+              '₹${_calculateFinalTotal(cart.grandTotal).toStringAsFixed(2)}',
               isTotal: true,
             ),
             const SizedBox(height: 16),
@@ -325,7 +438,14 @@ class CartPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryRow(String label, String value, {bool isTotal = false}) {
+  double _calculateFinalTotal(double grandTotal) {
+    if (appliedDiscountPercentage != null) {
+      return grandTotal - (grandTotal * appliedDiscountPercentage! / 100);
+    }
+    return grandTotal;
+  }
+
+  Widget _buildSummaryRow(String label, String value, {bool isTotal = false, bool isDiscount = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -334,7 +454,7 @@ class CartPage extends StatelessWidget {
           style: TextStyle(
             fontSize: isTotal ? 16 : 14,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            color: isTotal ? AppColors.textPrimary : AppColors.textSecondary,
+            color: isTotal ? AppColors.textPrimary : (isDiscount ? AppColors.success : AppColors.textSecondary),
           ),
         ),
         Text(
@@ -342,7 +462,7 @@ class CartPage extends StatelessWidget {
           style: TextStyle(
             fontSize: isTotal ? 18 : 14,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
-            color: isTotal ? AppColors.primaryGreen : AppColors.textPrimary,
+            color: isTotal ? AppColors.primaryGreen : (isDiscount ? AppColors.success : AppColors.textPrimary),
           ),
         ),
       ],

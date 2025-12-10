@@ -7,11 +7,13 @@ import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../../../../../core/services/token_service.dart';
 import '../../data/models/order_model.dart';
 import '../../data/models/cart_model.dart';
+import '../controllers/cart_controller.dart';
+import '../../../../../utils/theme/app_colors.dart';
 
 class CheckoutController extends GetxController {
   var isProcessing = false.obs;
   
-  final String baseUrl = 'http://192.168.0.23:3030';
+  final String baseUrl = 'http://192.168.0.29:3030';
   final String razorpayKeyId = 'rzp_test_oHoZ3Q1fF6pYEI';
   
   late TokenService tokenService;
@@ -314,17 +316,17 @@ class CheckoutController extends GetxController {
         if (responseData['success'] == true) {
           logger.i('✅ Payment verified successfully');
           
-          Get.back();
-          Get.snackbar(
-            'Payment Successful',
-            'Your order has been confirmed',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            duration: const Duration(seconds: 3),
-          );
+          try {
+            final cartController = Get.find<CartController>();
+            await cartController.clearCart();
+            logger.i('🗑️ Cart cleared successfully');
+          } catch (e) {
+            logger.e('❌ Error clearing cart: $e');
+          }
           
-          Get.offNamedUntil('/orders', (route) => route.settings.name == '/home');
+          Get.back();
+          
+          _showOrderSuccessDialog();
         } else {
           Get.snackbar(
             'Verification Failed',
@@ -355,5 +357,113 @@ class CheckoutController extends GetxController {
     } finally {
       isProcessing.value = false;
     }
+  }
+
+  void _showOrderSuccessDialog() {
+    Get.dialog(
+      WillPopScope(
+        onWillPop: () async => false,
+        child: Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Builder(
+            builder: (context) {
+              final isDark = Theme.of(context).brightness == Brightness.dark;
+              return Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.check_circle,
+                        color: AppColors.primaryGreen,
+                        size: 64,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Order Placed Successfully!',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).textTheme.titleLarge?.color ?? AppColors.textPrimary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Your order has been confirmed and will be processed soon.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).textTheme.bodyMedium?.color ?? AppColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Get.back();
+                          Get.offNamedUntil('/orders', (route) => route.settings.name == '/home');
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryGreen,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'View Orders',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Get.back();
+                          Get.offNamedUntil('/home', (route) => false);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primaryGreen,
+                          side: const BorderSide(color: AppColors.primaryGreen),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Continue Shopping',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
   }
 }

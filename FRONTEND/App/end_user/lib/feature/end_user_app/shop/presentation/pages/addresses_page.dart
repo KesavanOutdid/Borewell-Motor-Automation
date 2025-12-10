@@ -203,25 +203,27 @@ class _AddressesPageState extends State<AddressesPage> {
 
   void _showDeleteDialog(AddressModel address, AddressController controller) {
     Get.dialog(
-      AlertDialog(
-        title: const Text('Delete Address'),
-        content: const Text('Are you sure you want to delete this address?'),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Get.back();
-              controller.deleteAddress(address.id!);
-            },
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: Colors.red),
+      Builder(
+        builder: (context) => AlertDialog(
+          title: const Text('Delete Address'),
+          content: const Text('Are you sure you want to delete this address?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
             ),
-          ),
-        ],
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                controller.deleteAddress(address.id!);
+              },
+              child: const Text(
+                'Delete',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

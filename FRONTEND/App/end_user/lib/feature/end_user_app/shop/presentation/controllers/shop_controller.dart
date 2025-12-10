@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:math';
 import 'package:logger/logger.dart';
 import '../../../../../core/services/token_service.dart';
 
@@ -13,7 +14,7 @@ class ShopController extends GetxController {
   var hasNextPage = false.obs;
   var searchQuery = ''.obs;
   
-  final String baseUrl = 'http://192.168.0.23:3030';
+  final String baseUrl = 'http://192.168.0.29:3030';
   final int limit = 10;
   
   late TokenService tokenService;
@@ -90,10 +91,13 @@ class ShopController extends GetxController {
           logger.d('📦 Products: $newProducts');
           logger.d('📄 Pagination: $pagination');
           
+          final shuffledProducts = List<Map<String, dynamic>>.from(newProducts.cast<Map<String, dynamic>>());
+          shuffledProducts.shuffle(Random());
+          
           if (isRefresh) {
-            products.value = newProducts.cast<Map<String, dynamic>>();
+            products.value = shuffledProducts;
           } else {
-            products.addAll(newProducts.cast<Map<String, dynamic>>());
+            products.addAll(shuffledProducts);
           }
           
           totalPages.value = pagination['totalPages'] ?? 1;

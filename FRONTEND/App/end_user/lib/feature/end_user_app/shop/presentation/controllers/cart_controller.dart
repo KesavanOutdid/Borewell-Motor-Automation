@@ -10,7 +10,7 @@ class CartController extends GetxController {
   var cart = Rxn<CartModel>();
   var isLoading = false.obs;
   
-  final String baseUrl = 'http://192.168.0.23:3030';
+  final String baseUrl = 'http://192.168.0.29:3030';
   
   late TokenService tokenService;
   final logger = Logger();
@@ -178,6 +178,10 @@ class CartController extends GetxController {
           responseData['message'] ?? 'Insufficient product quantity',
           snackPosition: SnackPosition.BOTTOM,
         );
+      } else if (response.statusCode == 404) {
+        logger.i('⚠️ Product or cart not found - refreshing cart');
+        await fetchCart();
+        return true;
       }
     } catch (e) {
       logger.e('❌ Exception: $e');
@@ -230,6 +234,10 @@ class CartController extends GetxController {
           await fetchCart();
           return true;
         }
+      } else if (response.statusCode == 404) {
+        logger.i('⚠️ Product or cart not found - refreshing cart');
+        await fetchCart();
+        return true;
       }
     } catch (e) {
       logger.e('❌ Exception: $e');
@@ -276,9 +284,14 @@ class CartController extends GetxController {
         
         if (responseData['success'] == true) {
           logger.i('✅ Cart cleared successfully');
+          cart.value = null;
           await fetchCart();
           return true;
         }
+      } else if (response.statusCode == 404) {
+        logger.i('⚠️ Cart not found on backend - clearing local cart');
+        cart.value = null;
+        return true;
       }
     } catch (e) {
       logger.e('❌ Exception: $e');

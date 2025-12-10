@@ -76,14 +76,14 @@ class NotificationPage extends StatelessWidget {
                 Icon(
                   Icons.notifications_off,
                   size: 80,
-                  color: Colors.grey[400],
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700] : Colors.grey[400],
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'No notifications',
                   style: TextStyle(
                     fontSize: 18,
-                    color: Colors.grey[600],
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[600],
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -91,7 +91,7 @@ class NotificationPage extends StatelessWidget {
                   'Notifications older than 7 days are auto-deleted',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[500],
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[500] : Colors.grey[500],
                   ),
                 ),
               ],

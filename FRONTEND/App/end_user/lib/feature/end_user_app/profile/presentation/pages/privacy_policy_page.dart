@@ -66,7 +66,7 @@ class PrivacyPolicyView extends StatelessWidget {
               Text(
                 'Last Updated: November 2025',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
                     ),
               ),
               const SizedBox(height: 20),
@@ -85,7 +85,7 @@ class PrivacyPolicyView extends StatelessWidget {
           title,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Colors.green[700],
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.green.shade400 : Colors.green[700],
               ),
         ),
         const SizedBox(height: 8),

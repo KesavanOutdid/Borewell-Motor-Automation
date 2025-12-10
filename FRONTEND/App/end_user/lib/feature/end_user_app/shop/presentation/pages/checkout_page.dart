@@ -243,15 +243,24 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.bold,
-        color: AppColors.textPrimary,
+        color: Theme.of(context).textTheme.titleLarge?.color ?? AppColors.textPrimary,
       ),
     );
   }
 
   void _populateAddressFields(AddressModel address) {
+    // Remove listeners to prevent hasModifiedAddress from being set to true
+    fullNameController.removeListener(_onFieldChanged);
+    phoneController.removeListener(_onFieldChanged);
+    emailController.removeListener(_onFieldChanged);
+    streetController.removeListener(_onFieldChanged);
+    cityController.removeListener(_onFieldChanged);
+    stateController.removeListener(_onFieldChanged);
+    pincodeController.removeListener(_onFieldChanged);
+    
     setState(() {
       selectedAddress = address;
       hasModifiedAddress = false;
@@ -263,6 +272,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
       stateController.text = address.state;
       pincodeController.text = address.pincode;
     });
+    
+    // Add listeners back
+    fullNameController.addListener(_onFieldChanged);
+    phoneController.addListener(_onFieldChanged);
+    emailController.addListener(_onFieldChanged);
+    streetController.addListener(_onFieldChanged);
+    cityController.addListener(_onFieldChanged);
+    stateController.addListener(_onFieldChanged);
+    pincodeController.addListener(_onFieldChanged);
   }
 
   Widget _buildSavedAddresses() {
@@ -283,11 +301,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Select from saved addresses',
             style: TextStyle(
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: Theme.of(context).textTheme.bodyMedium?.color ?? AppColors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -309,11 +327,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: isSelected ? AppColors.primaryGreen : Colors.grey.shade300,
+                        color: isSelected ? AppColors.primaryGreen : (Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade700 : Colors.grey.shade300),
                         width: isSelected ? 2 : 1,
                       ),
                       borderRadius: BorderRadius.circular(12),
-                      color: isSelected ? AppColors.primaryGreen.withValues(alpha: 0.1) : Colors.white,
+                      color: isSelected ? AppColors.primaryGreen.withValues(alpha: 0.1) : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -323,7 +341,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             Icon(
                               Icons.location_on,
                               size: 16,
-                              color: isSelected ? AppColors.primaryGreen : Colors.grey.shade600,
+                              color: isSelected ? AppColors.primaryGreen : (Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade400 : Colors.grey.shade600),
                             ),
                             const SizedBox(width: 4),
                             Expanded(
@@ -332,7 +350,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: isSelected ? AppColors.primaryGreen : AppColors.textPrimary,
+                                  color: isSelected ? AppColors.primaryGreen : (Theme.of(context).textTheme.titleMedium?.color ?? AppColors.textPrimary),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -345,7 +363,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           '${address.street}, ${address.city}',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey.shade700,
+                            color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade300 : Colors.grey.shade700,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -354,7 +372,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           address.pincode,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey.shade600,
+                            color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade400 : Colors.grey.shade600,
                           ),
                         ),
                       ],
@@ -392,7 +410,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade700 : Colors.grey.shade300),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -403,7 +421,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           borderSide: const BorderSide(color: Colors.red),
         ),
         filled: true,
-        fillColor: Colors.grey.shade50,
+        fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.grey.shade50,
       ),
     );
   }
@@ -426,13 +444,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
           border: Border.all(
             color: selectedPaymentMethod == value 
                 ? AppColors.primaryGreen 
-                : Colors.grey.shade300,
+                : (Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade700 : Colors.grey.shade300),
             width: selectedPaymentMethod == value ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
           color: selectedPaymentMethod == value 
               ? AppColors.primaryGreen.withValues(alpha: 0.05)
-              : Colors.white,
+              : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white),
         ),
         child: Row(
           children: [
@@ -441,14 +459,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
               decoration: BoxDecoration(
                 color: selectedPaymentMethod == value 
                     ? AppColors.primaryGreen 
-                    : Colors.grey.shade200,
+                    : (Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade800 : Colors.grey.shade200),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 icon,
                 color: selectedPaymentMethod == value 
                     ? Colors.white 
-                    : Colors.grey.shade600,
+                    : (Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade400 : Colors.grey.shade600),
               ),
             ),
             const SizedBox(width: 16),
@@ -463,14 +481,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       fontWeight: FontWeight.w600,
                       color: selectedPaymentMethod == value 
                           ? AppColors.primaryGreen 
-                          : AppColors.textPrimary,
+                          : (Theme.of(context).textTheme.titleMedium?.color ?? AppColors.textPrimary),
                     ),
                   ),
                   Text(
                     subtitle,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey.shade600,
+                      color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade400 : Colors.grey.shade600,
                     ),
                   ),
                 ],
@@ -496,19 +514,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade700 : Colors.grey.shade300),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Order Summary',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: Theme.of(context).textTheme.titleLarge?.color ?? AppColors.textPrimary,
             ),
           ),
           const Divider(height: 24),
@@ -539,7 +557,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           style: TextStyle(
             fontSize: isTotal ? 16 : 14,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            color: isTotal ? AppColors.textPrimary : Colors.grey.shade700,
+            color: isTotal ? (Theme.of(context).textTheme.titleMedium?.color ?? AppColors.textPrimary) : (Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade300 : Colors.grey.shade700),
           ),
         ),
         Text(
@@ -547,7 +565,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           style: TextStyle(
             fontSize: isTotal ? 18 : 14,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
-            color: isTotal ? AppColors.primaryGreen : AppColors.textPrimary,
+            color: isTotal ? AppColors.primaryGreen : (Theme.of(context).textTheme.titleMedium?.color ?? AppColors.textPrimary),
           ),
         ),
       ],
@@ -557,10 +575,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Widget _buildBottomBar(CartModel cart) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade300,
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.black.withValues(alpha: 0.3) : Colors.grey.shade300,
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -582,7 +600,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                disabledBackgroundColor: Colors.grey.shade400,
+                disabledBackgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade700 : Colors.grey.shade400,
               ),
               child: checkoutController.isProcessing.value
                   ? const SizedBox(
@@ -609,10 +627,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   Future<void> _placeOrder(CartModel cart) async {
     if (_formKey.currentState!.validate()) {
+      final userId = addressController.tokenService.getUserId();
+      
       if (selectedAddress != null && hasModifiedAddress) {
         final now = DateTime.now();
         final newAddress = AddressModel(
-          userId: selectedAddress!.userId,
+          userId: userId ?? 0,
           fullName: fullNameController.text.trim(),
           phone: phoneController.text.trim(),
           email: emailController.text.trim(),
@@ -622,6 +642,27 @@ class _CheckoutPageState extends State<CheckoutPage> {
           pincode: pincodeController.text.trim(),
           country: 'India',
           isDefault: false,
+          createdAt: now,
+          updatedAt: now,
+        );
+        
+        await addressController.createAddress(newAddress);
+      } else if (selectedAddress == null && 
+                 fullNameController.text.trim().isNotEmpty &&
+                 phoneController.text.trim().isNotEmpty &&
+                 emailController.text.trim().isNotEmpty) {
+        final now = DateTime.now();
+        final newAddress = AddressModel(
+          userId: userId ?? 0,
+          fullName: fullNameController.text.trim(),
+          phone: phoneController.text.trim(),
+          email: emailController.text.trim(),
+          street: streetController.text.trim(),
+          city: cityController.text.trim(),
+          state: stateController.text.trim(),
+          pincode: pincodeController.text.trim(),
+          country: 'India',
+          isDefault: addressController.addresses.isEmpty,
           createdAt: now,
           updatedAt: now,
         );

@@ -13,6 +13,7 @@ class SettingsView extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Theme.of(context).dialogTheme.backgroundColor ?? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white),
           title: const Text('Choose Theme'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -62,6 +63,7 @@ class SettingsView extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Theme.of(context).dialogTheme.backgroundColor ?? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white),
           title: const Text('Logout'),
           content: const Text('Are you sure you want to logout?'),
           actions: [

@@ -134,7 +134,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          dateFormat.format(item.timestamp),
+                          '${dateFormat.format(item.timestamp.toLocal())} IST',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey.shade600,
@@ -247,7 +247,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               ),
               const SizedBox(width: 8),
               Text(
-                dateFormat.format(order.createdAt),
+                '${dateFormat.format(order.createdAt.toLocal())} IST',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey.shade600,

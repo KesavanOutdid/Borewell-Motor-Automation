@@ -27,6 +27,7 @@ import '../../feature/end_user_app/shop/presentation/pages/orders_page.dart';
 import '../../feature/end_user_app/shop/presentation/pages/order_details_page.dart';
 import '../../feature/end_user_app/shop/presentation/pages/addresses_page.dart';
 import '../../feature/end_user_app/shop/presentation/pages/add_edit_address_page.dart';
+import '../../feature/end_user_app/shop/presentation/pages/vouchers_page.dart';
 
 class AppRoutes {
   static const splash = '/';
@@ -49,6 +50,7 @@ class AppRoutes {
   static const orderDetails = '/order-details';
   static const addresses = '/addresses';
   static const addAddress = '/add-address';
+  static const vouchers = '/vouchers';
 
   static final routes = [
     GetPage(
@@ -138,6 +140,10 @@ class AppRoutes {
     GetPage(
       name: addAddress,
       page: () => const AddEditAddressPage(),
+    ),
+    GetPage(
+      name: vouchers,
+      page: () => const VouchersPage(),
     ),
   ];
 }

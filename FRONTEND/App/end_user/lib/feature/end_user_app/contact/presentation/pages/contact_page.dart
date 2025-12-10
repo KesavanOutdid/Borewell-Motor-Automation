@@ -43,12 +43,12 @@ class ContactView extends StatelessWidget {
                   height: 100,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.green[100],
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.green.shade900.withOpacity(0.3) : Colors.green[100],
                   ),
                   child: Icon(
                     Icons.headset_mic,
                     size: 50,
-                    color: Colors.green[700],
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.green.shade400 : Colors.green[700],
                   ),
                 ),
               ),
@@ -60,10 +60,10 @@ class ContactView extends StatelessWidget {
                     ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 "We're here to help. Reach out to us with any questions, concerns, or feedback.",
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey, fontSize: 14),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 14),
               ),
               const SizedBox(height: 32),
               Row(

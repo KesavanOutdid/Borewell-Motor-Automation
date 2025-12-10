@@ -30,6 +30,7 @@ class ProfileView extends GetView<ProfileController> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Theme.of(context).dialogTheme.backgroundColor ?? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white),
           title: const Text('Choose Theme'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -79,6 +80,7 @@ class ProfileView extends GetView<ProfileController> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Theme.of(context).dialogTheme.backgroundColor ?? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white),
           title: const Text('Logout'),
           content: const Text('Are you sure you want to logout?'),
           actions: [
@@ -114,13 +116,118 @@ class ProfileView extends GetView<ProfileController> {
     );
   }
 
+  void _showEditProfileDialog(BuildContext context) {
+    controller.initEditFields();
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Theme(
+          data: Theme.of(context),
+          child: AlertDialog(
+            backgroundColor: Theme.of(context).dialogTheme.backgroundColor ?? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white),
+            title: const Text('Edit Profile'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: controller.nameEditingController,
+                    decoration: const InputDecoration(
+                      labelText: 'Name',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: controller.emailEditingController,
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: controller.phoneEditingController,
+                    decoration: const InputDecoration(
+                      labelText: 'Phone',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.phone,
+                    maxLength: 10,
+                  ),
+                  const SizedBox(height: 16),
+                  Obx(() => TextField(
+                    controller: controller.passwordEditingController,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      border: const OutlineInputBorder(),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          controller.isPasswordVisible.value
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          controller.isPasswordVisible.value = !controller.isPasswordVisible.value;
+                        },
+                      ),
+                    ),
+                    obscureText: !controller.isPasswordVisible.value,
+                    maxLength: 6,
+                  )),
+                ],
+              ),
+            ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Cancel'),
+            ),
+            Obx(() => TextButton(
+              onPressed: controller.isUpdating.value || !controller.hasChanges.value
+                  ? null
+                  : () async {
+                      final error = await controller.updateProfile();
+                      if (error == null) {
+                        Navigator.pop(context);
+                        Get.snackbar(
+                          'Success',
+                          'Profile updated successfully',
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: AppColors.success,
+                          colorText: Colors.white,
+                        );
+                      } else {
+                        Get.snackbar(
+                          'Error',
+                          error,
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: AppColors.error,
+                          colorText: Colors.white,
+                        );
+                      }
+                    },
+              child: controller.isUpdating.value
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Save'),
+            )),
+          ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        centerTitle: true,
-      ),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
@@ -149,263 +256,336 @@ class ProfileView extends GetView<ProfileController> {
         }
 
         return SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Stack(
-                    children: [
-                      Container(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF16A34A), Color(0xFF10B981)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(30),
+                    bottomRight: Radius.circular(30),
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      right: -40,
+                      top: -40,
+                      child: Container(
+                        width: 150,
+                        height: 150,
                         decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.1),
                           shape: BoxShape.circle,
-                          gradient: AppColors.primaryGradient,
-                          boxShadow: [AppColors.primaryShadow],
-                        ),
-                        child: CircleAvatar(
-                          radius: 50,
-                          backgroundColor: Colors.transparent,
-                          child: Text(
-                            controller.userName.value.isNotEmpty
-                                ? controller.userName.value[0].toUpperCase()
-                                : 'U',
-                            style: const TextStyle(
-                              fontSize: 40,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
                         ),
                       ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: InkWell(
-                          onTap: () => Get.toNamed('/editProfile'),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: AppColors.accentGradient,
-                              border: Border.all(color: Colors.white, width: 3),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primaryGreen.withOpacity(0.3),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
+                    ),
+                    Positioned(
+                      right: 20,
+                      bottom: -50,
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Profile',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 45,
+                                  backgroundColor: Colors.white,
+                                  child: Text(
+                                    controller.userName.value.isNotEmpty
+                                        ? controller.userName.value[0].toUpperCase()
+                                        : 'U',
+                                    style: const TextStyle(
+                                      fontSize: 36,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primaryGreen,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              controller.userName.value,
+                                              style: const TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.edit, color: Colors.white, size: 20),
+                                            onPressed: () => _showEditProfileDialog(context),
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 2),
+                                      if (controller.userEmail.value.isNotEmpty)
+                                        Text(
+                                          controller.userEmail.value,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.white70,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'ID: ${controller.userIdValue.value}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white70,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
-                            padding: const EdgeInsets.all(8),
-                            child: const Icon(
-                              Icons.edit,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                Center(
+              ),
+              Transform.translate(
+                offset: const Offset(0, -20),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Column(
                     children: [
-                      Text(
-                        controller.userName.value,
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      const SizedBox(height: 4),
-                      GestureDetector(
-                        onTap: () => _launchEmail(controller.userEmail.value),
-                        child: Text(
-                          controller.userEmail.value,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Colors.blue,
-                        
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardTheme.color,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [AppColors.cardShadow],
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _QuickActionCard(
+                                icon: Icons.shopping_bag,
+                                label: 'All Order',
+                                onTap: () => Get.toNamed('/orders'),
                               ),
+                            ),
+                            Container(
+                              width: 1,
+                              height: 60,
+                              color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade800 : Colors.grey.shade200,
+                            ),
+                            Expanded(
+                              child: _QuickActionCard(
+                                icon: Icons.local_offer,
+                                label: 'Voucher',
+                                onTap: () => Get.toNamed('/vouchers'),
+                              ),
+                            ),
+                            Container(
+                              width: 1,
+                              height: 60,
+                              color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade800 : Colors.grey.shade200,
+                            ),
+                            Expanded(
+                              child: _QuickActionCard(
+                                icon: Icons.location_on,
+                                label: 'Address',
+                                onTap: () => Get.toNamed('/addresses'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardTheme.color,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [AppColors.cardShadow],
+                        ),
+                        child: Column(
+                          children: [
+                            _ProfileMenuItem(
+                              icon: Icons.person,
+                              title: 'My Profile',
+                              iconColor: AppColors.primaryGreen,
+                              onTap: () => _showEditProfileDialog(context),
+                            ),
+                            const Divider(height: 1),
+                            _ProfileMenuItem(
+                              icon: Icons.notifications,
+                              title: 'Notification',
+                              iconColor: AppColors.primaryGreen,
+                              onTap: () => Get.toNamed('/notifications'),
+                            ),
+                            const Divider(height: 1),
+                            _ProfileMenuItem(
+                              icon: Icons.settings,
+                              title: 'Theame',
+                              iconColor: AppColors.primaryGreen,
+                              onTap: () => _showThemeDialog(context),
+                            ),
+                            const Divider(height: 1),
+                            _ProfileMenuItem(
+                              icon: Icons.contact_support,
+                              title: 'Contact Us',
+                              iconColor: AppColors.primaryGreen,
+                              onTap: () => Get.toNamed('/contact'),
+                            ),
+                            const Divider(height: 1),
+                            _ProfileMenuItem(
+                              icon: Icons.privacy_tip,
+                              title: 'Privacy Policy',
+                              iconColor: AppColors.primaryGreen,
+                              onTap: () => Get.toNamed('/privacyPolicy'),
+                            ),
+                            const Divider(height: 1),
+                            _ProfileMenuItem(
+                              icon: Icons.logout,
+                              title: 'Logout',
+                              iconColor: Colors.red,
+                              onTap: () => _showLogoutConfirmation(context),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  'App settings',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey,
-                      ),
-                ),
-                const SizedBox(height: 12),
-                Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  child: InkWell(
-                    onTap: () => _showThemeDialog(context),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-                      child: Row(
-                        children: [
-                          Icon(Icons.dark_mode, color: AppColors.primaryGreen),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              'Theme Settings',
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                          ),
-                          Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Help & Support',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey,
-                      ),
-                ),
-                const SizedBox(height: 12),
-                Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  child: InkWell(
-                    onTap: () => Get.toNamed('/contact'),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-                      child: Row(
-                        children: [
-                          Icon(Icons.support_agent, color: AppColors.primaryGreen),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              'Contact Us',
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                          ),
-                          Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  child: InkWell(
-                    onTap: () => Get.toNamed('/privacyPolicy'),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-                      child: Row(
-                        children: [
-                          Icon(Icons.privacy_tip, color: AppColors.primaryGreen),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              'Privacy Policy',
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                          ),
-                          Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Account',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey,
-                      ),
-                ),
-                const SizedBox(height: 12),
-                Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  child: InkWell(
-                    onTap: () => Get.toNamed('/orders'),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-                      child: Row(
-                        children: [
-                          Icon(Icons.shopping_bag, color: AppColors.primaryGreen),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              'My Orders',
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                          ),
-                          Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  child: InkWell(
-                    onTap: () => Get.toNamed('/addresses'),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-                      child: Row(
-                        children: [
-                          Icon(Icons.location_on, color: AppColors.primaryGreen),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              'My Addresses',
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                          ),
-                          Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  child: InkWell(
-                    onTap: () => _showLogoutConfirmation(context),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-                      child: Row(
-                        children: [
-                          Icon(Icons.logout, color: Colors.red[700]),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              'Logout',
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: Colors.red,
-                                  ),
-                            ),
-                          ),
-                          Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ],
-            ),
+              ),
+              const SizedBox(height: 24),
+            ],
           ),
         );
       }),
     );
   }
+}
 
+class _QuickActionCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _QuickActionCard({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: AppColors.primaryGreen, size: 28),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).textTheme.bodyMedium?.color ?? AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileMenuItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final Color iconColor;
+  final VoidCallback onTap;
+
+  const _ProfileMenuItem({
+    required this.icon,
+    required this.title,
+    required this.iconColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: title == 'Logout' ? Colors.red : (Theme.of(context).textTheme.titleMedium?.color ?? AppColors.textPrimary),
+                ),
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[600] : Colors.grey[400],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

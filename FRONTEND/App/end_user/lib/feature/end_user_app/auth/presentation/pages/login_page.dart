@@ -164,7 +164,7 @@ class _FormContentState extends State<_FormContent> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'Welcome Back',
+                  'Welcome',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 28,
