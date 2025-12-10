@@ -35,7 +35,7 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
                 <Header userInfo={userInfo} handleLogout={handleLogout} />
                 <div className="container-fluid py-4">
                     <div className="row">
-                        <div className="col-md-8 col-12 mx-auto">
+                        <div className="col-md-12 col-12 mx-auto">
                             <div className="card">
                                 <div className="card-header pb-3">
                                     <h6 className="mb-0">Create New Voucher</h6>

@@ -157,7 +157,7 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                                         onClick={() => handleEditVoucher(voucher)}
                                                                         style={{ marginRight: '5px' }}
                                                                     >
-                                                                        <i className="fas fa-edit"></i> Edit
+                                                                        <i className="fas fa-pen"></i> Edit
                                                                     </button>
                                                                     <button
                                                                         className="btn btn-sm btn-danger mb-0"
@@ -175,7 +175,7 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                             <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4 px-3">
                                                 <div className="mb-2 mb-md-0">
                                                     <span className="text-sm text-muted">
-                                                                Showing {((pagination.currentPage - 1) * pagination.limit) + 1} to {Math.min(pagination.currentPage * pagination.limit, pagination.totalFilteredOrders)} of {pagination.totalFilteredOrders} Vouchers
+                                                                Showing {((pagination.currentPage - 1) * pagination.limit) + 1} to {Math.min(pagination.currentPage * pagination.limit, pagination.totalVouchers)} of {pagination.totalVouchers} Vouchers
                                                     </span>
                                                 </div>
 
@@ -188,7 +188,7 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                             className="form-select form-select-sm"
                                                             style={{ width: 'auto', minWidth: '70px' }}
                                                             value={pagination.limit}
-                                                            onChange={(e) => handleLimitChange(parseInt(e.target.value), searchQuery, filterStatus)}
+                                                            onChange={(e) => handleLimitChange(parseInt(e.target.value))}
                                                         >
                                                             <option value={5}>5</option>
                                                             <option value={10}>10</option>
@@ -205,7 +205,7 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                             <li className={`page-item ${!pagination.hasPrevPage ? 'disabled' : ''}`}>
                                                                 <button
                                                                     className="page-link"
-                                                                    onClick={() => handlePageChange(pagination.currentPage - 1, searchQuery, filterStatus)}
+                                                                    onClick={() => handlePageChange(pagination.currentPage - 1)}
                                                                     disabled={!pagination.hasPrevPage}
                                                                     aria-label="Previous"
                                                                 >
@@ -230,7 +230,7 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                                     <li key={`page-${pageNum}`} className={`page-item ${pageNum === pagination.currentPage ? 'active' : ''}`}>
                                                                         <button
                                                                             className="page-link"
-                                                                            onClick={() => handlePageChange(pageNum, searchQuery, filterStatus)}
+                                                                            onClick={() => handlePageChange(pageNum)}
                                                                         >
                                                                             {pageNum}
                                                                         </button>
@@ -242,7 +242,7 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                             <li className={`page-item ${!pagination.hasNextPage ? 'disabled' : ''}`}>
                                                                 <button
                                                                     className="page-link"
-                                                                    onClick={() => handlePageChange(pagination.currentPage + 1, searchQuery, filterStatus)}
+                                                                    onClick={() => handlePageChange(pagination.currentPage + 1)}
                                                                     disabled={!pagination.hasNextPage}
                                                                     aria-label="Next"
                                                                 >
