@@ -21,7 +21,6 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
         description,
         setDescription,
         errorMessage,
-        setErrorMessage,
         handleVoucherCreate,
         loadingSubmit
     } = useManageVouchers(userInfo);

@@ -4,6 +4,7 @@ const path = require('path');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const connectDB = require('./config/db');
+const { redisClient } = require('./config/redis');
 const requestLogger = require('./middlewares/requestLogger');
 const errorHandler = require('./middlewares/errorHandler');
 const cors = require("cors");
@@ -39,19 +40,25 @@ app.get('/', (req, res) => {
 // Connect DB
 connectDB().then(() => {
     console.log('Database connected successfully.');
-    // Wait for both DB and MQTT to be fully ready before sending boot notifications
-    setTimeout(async () => {
-        try {
-            console.log('Attempting to send boot notifications...');
-            await sendBootNotificationsOnStartup();
-            console.log('Boot notifications sent successfully');
-        } catch (error) {
-            console.error('Failed to send boot notifications:', error.message);
-        }
-    }, 5000);
 }).catch(err => {
     console.error('Database connection failed:', err);
 });
+
+// Connect Redis (optional - caching will be disabled if not available)
+redisClient.connect().catch(() => {
+    // Silently fail - caching is optional
+});
+
+// Wait for DB to be ready, then send boot notifications
+setTimeout(async () => {
+    try {
+        console.log('Attempting to send boot notifications...');
+        await sendBootNotificationsOnStartup();
+        console.log('Boot notifications sent successfully');
+    } catch (error) {
+        console.error('Failed to send boot notifications:', error.message);
+    }
+}, 5000);
 
 function getLocalIP() {
     const interfaces = os.networkInterfaces();

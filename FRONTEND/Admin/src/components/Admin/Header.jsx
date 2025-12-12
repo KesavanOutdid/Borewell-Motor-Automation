@@ -38,7 +38,7 @@ const Header = ({ userInfo, handleLogout }) => {
                 return 'Create Products';
             case '/admin/manage-vouchers':
                 return 'Manage Vouchers';
-            case '/admin/edit-product':
+            case '/admin/edit-voucher':
                 return 'Edit Vouchers';
             case '/admin/add-voucher':
                 return 'Create Vouchers';

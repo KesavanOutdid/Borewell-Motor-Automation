@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
@@ -13,16 +13,14 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
 
     const {
         errorMessageEdit,
-        setErrorMessageEdit,
-        loadingUpdate,
-        setLoadingUpdate,
         currentVoucherDetails,
         setCurrentVoucherDetails,
         fetchVoucherById,
-        handleVoucherUpdate
+        handleVoucherUpdate,
+        loadingUpdate
     } = useManageVouchers(userInfo);
 
-    useEffect(() => {
+    const loadVoucherData = useCallback(async () => {
         if (voucher) {
             setCurrentVoucherDetails({
                 _id: voucher._id,
@@ -37,28 +35,29 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
             });
             setIsLoading(false);
         } else if (location.state?.id) {
-            const loadVoucher = async () => {
-                const data = await fetchVoucherById(location.state.id);
-                if (data) {
-                    setCurrentVoucherDetails({
-                        _id: data._id,
-                        voucher_code: data.voucher_code,
-                        discount_percentage: data.discount_percentage,
-                        start_date: data.start_date,
-                        end_date: data.end_date,
-                        max_usage: data.max_usage,
-                        description: data.description,
-                        status: data.status,
-                        used_count: data.used_count
-                    });
-                }
-                setIsLoading(false);
-            };
-            loadVoucher();
+            const data = await fetchVoucherById(location.state.id);
+            if (data) {
+                setCurrentVoucherDetails({
+                    _id: data._id,
+                    voucher_code: data.voucher_code,
+                    discount_percentage: data.discount_percentage,
+                    start_date: data.start_date,
+                    end_date: data.end_date,
+                    max_usage: data.max_usage,
+                    description: data.description,
+                    status: data.status,
+                    used_count: data.used_count
+                });
+            }
+            setIsLoading(false);
         } else {
             navigate('/admin/manage-vouchers');
         }
-    }, []);
+    }, [voucher, location.state?.id, fetchVoucherById, setCurrentVoucherDetails, navigate]);
+
+    useEffect(() => {
+        loadVoucherData();
+    }, [loadVoucherData]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;

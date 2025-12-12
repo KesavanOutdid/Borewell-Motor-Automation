@@ -6,6 +6,7 @@ const Device = require("../models/Device");
 const Product = require("../models/Product");
 const bcrypt = require('bcrypt');
 const path = require('path');
+const { cacheGet, cacheSet, cacheDelete, cacheDeletePattern, getCacheKey, CACHE_TTL } = require('../middlewares/cacheMiddleware');
 
 // Create role
 exports.createRole = async (req, res, next) => {
@@ -14,7 +15,7 @@ exports.createRole = async (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
 
-        const { role_id, role_name } = req.body;
+        const { role_id, role_name, createdBy } = req.body;
         // check duplicate by role_id or role_name
         const exists = await Role.findOne({ $or: [{ role_id }, { role_name }] });
         if (exists) return res.status(409).json({ success: false, message: 'Role already exists' });
@@ -25,6 +26,11 @@ exports.createRole = async (req, res, next) => {
             createdBy,
         });
         await role.save();
+
+        // Invalidate roles cache
+        await cacheDeletePattern('getRoles:*');
+        console.log('Cache DELETED: getRoles');
+
         res.status(201).json({ success: true, role });
     } catch (err) { next(err); }
 };
@@ -49,6 +55,10 @@ exports.editRole = async (req, res, next) => {
         role.updatedAt = new Date();
 
         await role.save();
+
+        // Invalidate roles cache
+        await cacheDeletePattern('getRoles:*');
+        console.log('Cache DELETED: getRoles');
 
         res.json({
             success: true,
@@ -100,6 +110,10 @@ exports.createUser = async (req, res, next) => {
 
         await user.save();
 
+        // Invalidate users cache
+        await cacheDeletePattern('getUsers:*');
+        console.log('Cache DELETED: getUsers');
+
         res.status(201).json({
             success: true,
             message: "User created successfully",
@@ -121,19 +135,28 @@ exports.getRoles = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit);
+        const cacheKey = getCacheKey('getRoles', { page, limit });
+
+        // Try to get from cache
+        const cachedRoles = await cacheGet(cacheKey);
+        if (cachedRoles) {
+            console.log(`Cache HIT: ${cacheKey}`);
+            return res.json(cachedRoles);
+        }
+
         const skip = (page - 1) * limit;
 
         // Get total count for pagination
         const totalRoles = await Role.countDocuments();
 
         const roles = await Role.find()
-            .sort({ createdAt: -1 }) // Sort by creation date, newest first
+            .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
 
         const totalPages = Math.ceil(totalRoles / limit);
 
-        res.json({
+        const response = {
             success: true,
             roles,
             pagination: {
@@ -144,7 +167,13 @@ exports.getRoles = async (req, res, next) => {
                 hasNextPage: page < totalPages,
                 hasPrevPage: page > 1
             }
-        });
+        };
+
+        // Cache the result
+        await cacheSet(cacheKey, response, CACHE_TTL.ROLES);
+        console.log(`Cache SET: ${cacheKey}`);
+
+        res.json(response);
     } catch (err) { next(err); }
 };
 
@@ -153,6 +182,15 @@ exports.getUsers = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
+        const cacheKey = getCacheKey('getUsers', { page, limit });
+
+        // Try to get from cache
+        const cachedUsers = await cacheGet(cacheKey);
+        if (cachedUsers) {
+            console.log(`Cache HIT: ${cacheKey}`);
+            return res.json(cachedUsers);
+        }
+
         const skip = (page - 1) * limit;
 
         // Overall total users
@@ -188,7 +226,7 @@ exports.getUsers = async (req, res, next) => {
 
         const totalPages = Math.ceil(totalUsers / limit);
 
-        res.json({
+        const response = {
             success: true,
             users: formatted,
             pagination: {
@@ -203,7 +241,13 @@ exports.getUsers = async (req, res, next) => {
                 hasNextPage: page < totalPages,
                 hasPrevPage: page > 1
             }
-        });
+        };
+
+        // Cache the result
+        await cacheSet(cacheKey, response, CACHE_TTL.USERS);
+        console.log(`Cache SET: ${cacheKey}`);
+
+        res.json(response);
 
     } catch (err) {
         next(err);
@@ -236,6 +280,10 @@ exports.manageUserUpdated = async (req, res, next) => {
         user.updatedAt = new Date();
 
         await user.save();
+
+        // Invalidate users cache
+        await cacheDeletePattern('getUsers:*');
+        console.log('Cache DELETED: getUsers');
 
         res.json({ success: true, message: 'User updated successfully' });
     } catch (err) {
@@ -271,6 +319,10 @@ exports.createDevice = async (req, res) => {
 
         await device.save();
 
+        // Invalidate devices cache
+        await cacheDeletePattern('getDevices:*');
+        console.log('Cache DELETED: getDevices');
+
         return res.status(201).json({
             message: "Device created successfully!",
             device
@@ -286,6 +338,15 @@ exports.getDevices = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
+        const cacheKey = getCacheKey('getDevices', { page, limit });
+
+        // Try to get from cache
+        const cachedDevices = await cacheGet(cacheKey);
+        if (cachedDevices) {
+            console.log(`Cache HIT: ${cacheKey}`);
+            return res.status(200).json(cachedDevices);
+        }
+
         const skip = (page - 1) * limit;
 
         // Total counts
@@ -336,7 +397,7 @@ exports.getDevices = async (req, res) => {
 
         const totalPages = Math.ceil(totalDevices / limit);
 
-        return res.status(200).json({
+        const response = {
             success: true,
             data: enrichedDevices,
             pagination: {
@@ -351,7 +412,13 @@ exports.getDevices = async (req, res) => {
                 hasNextPage: page < totalPages,
                 hasPrevPage: page > 1
             }
-        });
+        };
+
+        // Cache the result
+        await cacheSet(cacheKey, response, CACHE_TTL.DEVICES);
+        console.log(`Cache SET: ${cacheKey}`);
+
+        return res.status(200).json(response);
 
     } catch (error) {
         console.error("Get Devices Error:", error);
@@ -391,6 +458,10 @@ exports.updateDevice = async (req, res) => {
         device.updatedAt = new Date();
 
         await device.save();
+
+        // Invalidate devices cache
+        await cacheDeletePattern('getDevices:*');
+        console.log('Cache DELETED: getDevices');
 
         return res.status(200).json({
             message: "Device updated successfully!",
@@ -460,6 +531,12 @@ exports.deviceAssignToUser = async (req, res) => {
         device.updatedAt = now;
 
         await device.save();
+
+        // Invalidate devices and user caches
+        await cacheDeletePattern('getDevices:*');
+        await cacheDeletePattern('getAssignDevices:*');
+        await cacheDeletePattern('getUsers:*');
+        console.log('Cache DELETED: devices related caches');
 
         return res.status(200).json({
             success: true,

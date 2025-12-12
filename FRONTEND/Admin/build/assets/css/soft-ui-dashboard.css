@@ -20617,7 +20617,7 @@ hr.horizontal.gray-light {
 
     hr.horizontal.dark {
         /* background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0)); */
-            background-image: linear-gradient(to right, rgba(0, 0, 0, 0), #16A34A, rgba(0, 0, 0, 0));
+        background-image: linear-gradient(to right, rgba(0, 0, 0, 0), #16A34A, rgba(0, 0, 0, 0));
     }
 }
 
