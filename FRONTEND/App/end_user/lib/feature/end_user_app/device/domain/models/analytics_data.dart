@@ -20,27 +20,28 @@ class AnalyticsData {
   });
 
   factory AnalyticsData.fromJson(Map<String, dynamic> json) {
+    final hourlyData = (json['hourly'] as List<dynamic>?)
+            ?.map((e) => ChartDataPoint.fromJson(e as Map<String, dynamic>))
+            .toList() ?? [];
+    final todayData = (json['today'] as List<dynamic>?)
+            ?.map((e) => ChartDataPoint.fromJson(e as Map<String, dynamic>))
+            .toList() ?? [];
+    final weeklyData = (json['weekly'] as List<dynamic>?)
+            ?.map((e) => ChartDataPoint.fromJson(e as Map<String, dynamic>))
+            .toList() ?? [];
+    final monthlyData = (json['monthly'] as List<dynamic>?)
+            ?.map((e) => ChartDataPoint.fromJson(e as Map<String, dynamic>))
+            .toList() ?? [];
+    final yearlyData = (json['yearly'] as List<dynamic>?)
+            ?.map((e) => ChartDataPoint.fromJson(e as Map<String, dynamic>))
+            .toList() ?? [];
+    
     return AnalyticsData(
-      hourly: (json['hourly'] as List<dynamic>?)
-              ?.map((e) => ChartDataPoint.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
-      today: (json['today'] as List<dynamic>?)
-              ?.map((e) => ChartDataPoint.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
-      weekly: (json['weekly'] as List<dynamic>?)
-              ?.map((e) => ChartDataPoint.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
-      monthly: (json['monthly'] as List<dynamic>?)
-              ?.map((e) => ChartDataPoint.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
-      yearly: (json['yearly'] as List<dynamic>?)
-              ?.map((e) => ChartDataPoint.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
+      hourly: _fillHourlyData(hourlyData),
+      today: _fillTodayData(todayData),
+      weekly: _fillWeeklyData(weeklyData),
+      monthly: _fillMonthlyData(monthlyData),
+      yearly: _fillYearlyData(yearlyData),
       summary: json['summary'] != null 
           ? AnalyticsSummary.fromJson(json['summary'] as Map<String, dynamic>)
           : null,
@@ -51,6 +52,64 @@ class AnalyticsData {
           ? OverallStats.fromJson(json['overallStats'] as Map<String, dynamic>)
           : null,
     );
+  }
+
+  static List<ChartDataPoint> _fillHourlyData(List<ChartDataPoint> data) {
+    final filled = <ChartDataPoint>[];
+    final dataMap = {for (var point in data) point.label: point};
+    
+    for (int i = 0; i < 12; i++) {
+      final label = '${i * 5}m';
+      filled.add(dataMap[label] ?? ChartDataPoint(label: label, value: 0));
+    }
+    return filled;
+  }
+
+  static List<ChartDataPoint> _fillTodayData(List<ChartDataPoint> data) {
+    final filled = <ChartDataPoint>[];
+    final dataMap = {for (var point in data) point.label: point};
+    
+    for (int i = 0; i < 24; i++) {
+      final label = '${i}h';
+      filled.add(dataMap[label] ?? ChartDataPoint(label: label, value: 0));
+    }
+    return filled;
+  }
+
+  static List<ChartDataPoint> _fillWeeklyData(List<ChartDataPoint> data) {
+    final filled = <ChartDataPoint>[];
+    final days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    final dataMap = {for (var point in data) point.label: point};
+    
+    for (final day in days) {
+      filled.add(dataMap[day] ?? ChartDataPoint(label: day, value: 0));
+    }
+    return filled;
+  }
+
+  static List<ChartDataPoint> _fillMonthlyData(List<ChartDataPoint> data) {
+    final filled = <ChartDataPoint>[];
+    final now = DateTime.now();
+    final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+    final dataMap = {for (var point in data) point.label: point};
+    
+    for (int i = 1; i <= daysInMonth; i++) {
+      final label = '${i}d';
+      filled.add(dataMap[label] ?? ChartDataPoint(label: label, value: 0));
+    }
+    return filled;
+  }
+
+  static List<ChartDataPoint> _fillYearlyData(List<ChartDataPoint> data) {
+    final filled = <ChartDataPoint>[];
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final dataMap = {for (var point in data) point.label: point};
+    
+    for (final month in months) {
+      filled.add(dataMap[month] ?? ChartDataPoint(label: month, value: 0));
+    }
+    return filled;
   }
 }
 

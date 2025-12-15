@@ -778,8 +778,17 @@ class DeviceAnalyticsView extends StatelessWidget {
   }
 
   Widget _buildPerformanceChart(List<ChartDataPoint> data, Color color) {
+    final values = data.map((e) => e.value).toList();
+    final maxValue = values.isEmpty ? 100.0 : values.reduce(max);
+    final minValue = values.isEmpty ? 0.0 : values.reduce(min);
+    
+    final maxY = maxValue + (maxValue * 0.1);
+    final minY = 0.0;
+    
     return LineChart(
       LineChartData(
+        minY: minY,
+        maxY: maxY,
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
@@ -842,7 +851,8 @@ class DeviceAnalyticsView extends StatelessWidget {
               return FlSpot(entry.key.toDouble(), entry.value.value);
             }).toList(),
             isCurved: true,
-            curveSmoothness: 0.4,
+            curveSmoothness: 0.3,
+            preventCurveOverShooting: true,
             color: color,
             barWidth: 3,
             isStrokeCapRound: true,

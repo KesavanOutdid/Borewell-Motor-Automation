@@ -69,6 +69,7 @@ class DashboardView extends GetView<DashboardController> {
               shape: BoxShape.circle,
             ),
             child: FloatingActionButton(
+              heroTag: 'dashboard_cart_fab',
               onPressed: () => Get.to(() => const CartPage()),
               backgroundColor: Colors.transparent,
               elevation: 0,

@@ -4,6 +4,7 @@ import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -91,6 +92,12 @@ class DeviceAnalyticsController extends GetxController {
     if (serialNumber != null && imeiNumber != null) {
       fetchAnalytics(selectedMetricType.value);
     }
+  }
+
+  String _formatIndianDateTime(DateTime dateTime) {
+    final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
+    final istTime = dateTime.toLocal();
+    return '${dateFormat.format(istTime)} IST';
   }
 
   Future<void> fetchAnalytics(String type) async {
@@ -323,7 +330,7 @@ class DeviceAnalyticsController extends GetxController {
         ['Device IMEI:', imeiNumber ?? 'N/A'],
         ['Metric Type:', selectedMetric['label']],
         ['Period:', selectedPeriod.value.toUpperCase()],
-        ['Generated At:', DateTime.now().toString()],
+        ['Generated At:', _formatIndianDateTime(DateTime.now())],
         [],
         ['Label', 'Value', 'Timestamp'],
       ];
@@ -351,7 +358,7 @@ class DeviceAnalyticsController extends GetxController {
         csvData.add([
           point.label,
           point.value.toStringAsFixed(2),
-          point.timestamp?.toString() ?? 'N/A',
+          point.timestamp != null ? _formatIndianDateTime(point.timestamp!) : 'N/A',
         ]);
       }
 
@@ -500,7 +507,7 @@ class DeviceAnalyticsController extends GetxController {
                       pw.SizedBox(height: 4),
                       pw.Text('Period: ${selectedPeriod.value.toUpperCase()}', style: const pw.TextStyle(fontSize: 12)),
                       pw.SizedBox(height: 4),
-                      pw.Text('Generated: ${DateTime.now().toString().split('.')[0]}', style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
+                      pw.Text('Generated: ${_formatIndianDateTime(DateTime.now())}', style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
                     ],
                   ),
                 ],
@@ -703,7 +710,7 @@ class DeviceAnalyticsController extends GetxController {
               ),
               pw.Padding(
                 padding: const pw.EdgeInsets.all(6),
-                child: pw.Text(point.timestamp?.toString().split('.')[0] ?? 'N/A', style: const pw.TextStyle(fontSize: 8)),
+                child: pw.Text(point.timestamp != null ? _formatIndianDateTime(point.timestamp!) : 'N/A', style: const pw.TextStyle(fontSize: 8)),
               ),
             ],
           );

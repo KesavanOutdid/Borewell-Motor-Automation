@@ -361,6 +361,7 @@ class _HomeViewState extends State<HomeView> {
           ],
         ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'home_add_device_fab',
         onPressed: () => controller.showAddDeviceDialog(),
         backgroundColor: AppColors.primaryGreen,
         icon: const Icon(Icons.qr_code_scanner),
