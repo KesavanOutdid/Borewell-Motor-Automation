@@ -4,7 +4,6 @@ const path = require('path');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const connectDB = require('./config/db');
-const { redisClient } = require('./config/redis');
 const requestLogger = require('./middlewares/requestLogger');
 const errorHandler = require('./middlewares/errorHandler');
 const cors = require("cors");
@@ -42,11 +41,6 @@ connectDB().then(() => {
     console.log('Database connected successfully.');
 }).catch(err => {
     console.error('Database connection failed:', err);
-});
-
-// Connect Redis (optional - caching will be disabled if not available)
-redisClient.connect().catch(() => {
-    // Silently fail - caching is optional
 });
 
 // Wait for DB to be ready, then send boot notifications

@@ -1,7 +1,6 @@
 const { validationResult } = require('express-validator');
 const Address = require('../models/Address');
 const User = require('../models/User');
-const { cacheGet, cacheSet, cacheDelete, cacheDeletePattern, getCacheKey, CACHE_TTL } = require('../middlewares/cacheMiddleware');
 
 exports.createAddress = async (req, res, next) => {
     try {
@@ -38,10 +37,6 @@ exports.createAddress = async (req, res, next) => {
 
         await address.save();
 
-        // Invalidate addresses cache
-        await cacheDeletePattern('getAddresses:*');
-        console.log('Cache DELETED: addresses related caches');
-
         res.status(201).json({
             success: true,
             message: "Address created successfully",
@@ -73,14 +68,6 @@ exports.getAddresses = async (req, res, next) => {
             return res.status(400).json({ success: false, errors: errors.array() });
 
         const { user_id } = req.body;
-        const cacheKey = getCacheKey('getAddresses', { user_id });
-
-        // Try to get from cache
-        const cachedAddresses = await cacheGet(cacheKey);
-        if (cachedAddresses) {
-            console.log(`Cache HIT: ${cacheKey}`);
-            return res.status(200).json(cachedAddresses);
-        }
 
         // Verify user exists
         const user = await User.findOne({ user_id });
@@ -99,10 +86,6 @@ exports.getAddresses = async (req, res, next) => {
             }
         };
 
-        // Cache the result
-        await cacheSet(cacheKey, response, CACHE_TTL.ADDRESSES);
-        console.log(`Cache SET: ${cacheKey}`);
-
         res.status(200).json(response);
 
     } catch (err) {
@@ -118,14 +101,6 @@ exports.getAddressById = async (req, res, next) => {
             return res.status(400).json({ success: false, errors: errors.array() });
 
         const { user_id, address_id } = req.body;
-        const cacheKey = getCacheKey('getAddressById', { user_id, address_id });
-
-        // Try to get from cache
-        const cachedAddress = await cacheGet(cacheKey);
-        if (cachedAddress) {
-            console.log(`Cache HIT: ${cacheKey}`);
-            return res.status(200).json(cachedAddress);
-        }
 
         // Verify user exists
         const user = await User.findOne({ user_id });
@@ -142,10 +117,6 @@ exports.getAddressById = async (req, res, next) => {
             message: "Address fetched successfully",
             data: { address }
         };
-
-        // Cache the result
-        await cacheSet(cacheKey, response, CACHE_TTL.ADDRESSES);
-        console.log(`Cache SET: ${cacheKey}`);
 
         res.status(200).json(response);
 
@@ -188,11 +159,6 @@ exports.updateAddress = async (req, res, next) => {
         address.updatedBy = user.user_email;
 
         await address.save();
-
-        // Invalidate addresses cache
-        await cacheDeletePattern('getAddresses:*');
-        await cacheDeletePattern('getAddressById:*');
-        console.log('Cache DELETED: addresses related caches');
 
         res.status(200).json({
             success: true,
@@ -242,11 +208,6 @@ exports.deleteAddress = async (req, res, next) => {
         address.updatedBy = user.user_email;
         await address.save();
 
-        // Invalidate addresses cache
-        await cacheDeletePattern('getAddresses:*');
-        await cacheDeletePattern('getAddressById:*');
-        console.log('Cache DELETED: addresses related caches');
-
         res.status(200).json({
             success: true,
             message: "Address deleted successfully"
@@ -287,11 +248,6 @@ exports.setDefaultAddress = async (req, res, next) => {
         address.updatedAt = new Date();
         address.updatedBy = user.user_email;
         await address.save();
-
-        // Invalidate addresses cache
-        await cacheDeletePattern('getAddresses:*');
-        await cacheDeletePattern('getAddressById:*');
-        console.log('Cache DELETED: addresses related caches');
 
         res.status(200).json({
             success: true,

@@ -7,7 +7,6 @@ const Voucher = require('../models/Voucher');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const Telemetry = require("../models/Telemetry");
-const { cacheGet, cacheSet, cacheDelete, cacheDeletePattern, getCacheKey, CACHE_TTL } = require('../middlewares/cacheMiddleware');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change_this_secret';
 // const JWT_EXPIRES = '2h';
@@ -65,14 +64,6 @@ exports.login = async (req, res, next) => {
 exports.getProfileById = async (req, res, next) => {
     try {
         const userId = Number(req.params.user_id);
-        const cacheKey = getCacheKey('profile', { user_id: userId });
-
-        // Try to get from cache
-        const cachedProfile = await cacheGet(cacheKey);
-        if (cachedProfile) {
-            console.log(`Cache HIT: ${cacheKey}`);
-            return res.status(200).json(cachedProfile);
-        }
 
         // Only JWT verified users can access (authMiddleware already checked token)
         // Get user from DB
@@ -88,10 +79,6 @@ exports.getProfileById = async (req, res, next) => {
             success: true,
             user
         };
-
-        // Cache the result
-        await cacheSet(cacheKey, response, CACHE_TTL.PROFILE);
-        console.log(`Cache SET: ${cacheKey}`);
 
         res.status(200).json(response);
 
@@ -122,11 +109,6 @@ exports.updateProfile = async (req, res, next) => {
 
         if (!updatedUser)
             return res.status(404).json({ success: false, message: "User not found" });
-
-        // Invalidate cache
-        const cacheKey = getCacheKey('profile', { user_id: userId });
-        await cacheDelete(cacheKey);
-        console.log(`Cache DELETED: ${cacheKey}`);
 
         res.status(200).json({
             success: true,
@@ -179,11 +161,6 @@ exports.configIMEInumber = async (req, res, next) => {
             { new: true }
         );
 
-        // Invalidate device-related caches
-        await cacheDeletePattern('device_details:*');
-        await cacheDeletePattern('userAssignDevices:*');
-        console.log('Cache DELETED: device related caches');
-
         res.status(200).json({
             success: true,
             message: "IMEI & location configured successfully",
@@ -234,12 +211,6 @@ exports.startStopDevice = async (req, res) => {
             { $set: updateData }
         );
 
-        // Invalidate device-related caches
-        await cacheDeletePattern('device_details:*');
-        await cacheDeletePattern('userAssignDevices:*');
-        await cacheDeletePattern('userDeviceHistory:*');
-        console.log('Cache DELETED: device related caches');
-
         return res.status(200).json({
             success: true,
             message: start_status ? "Device started" : "Device stopped",
@@ -264,15 +235,6 @@ exports.userAssignDevices = async (req, res) => {
                 success: false,
                 message: "User ID is required"
             });
-        }
-
-        const cacheKey = getCacheKey('userAssignDevices', { user_id });
-
-        // Try to get from cache
-        const cachedDevices = await cacheGet(cacheKey);
-        if (cachedDevices) {
-            console.log(`Cache HIT: ${cacheKey}`);
-            return res.status(200).json(cachedDevices);
         }
 
         // Find all devices assigned to this user
@@ -318,10 +280,6 @@ exports.userAssignDevices = async (req, res) => {
             data: enrichedDevices
         };
 
-        // Cache the result
-        await cacheSet(cacheKey, response, CACHE_TTL.DEVICES);
-        console.log(`Cache SET: ${cacheKey}`);
-
         return res.status(200).json(response);
 
     } catch (error) {
@@ -340,14 +298,6 @@ exports.userDeviceDetails = async (req, res) => {
             return res.status(400).json({ success: false, errors: errors.array() });
 
         const { serial_number, imei_number } = req.body;
-        const cacheKey = getCacheKey('device_details', { serial_number, imei_number });
-
-        // Try to get from cache
-        const cachedDevice = await cacheGet(cacheKey);
-        if (cachedDevice) {
-            console.log(`Cache HIT: ${cacheKey}`);
-            return res.status(200).json(cachedDevice);
-        }
 
         const device = await Device.findOne({ serial_number, imei_number });
 
@@ -362,10 +312,6 @@ exports.userDeviceDetails = async (req, res) => {
             success: true,
             data: device
         };
-
-        // Cache the result
-        await cacheSet(cacheKey, response, CACHE_TTL.DEVICE_DETAILS);
-        console.log(`Cache SET: ${cacheKey}`);
 
         return res.status(200).json(response);
 
@@ -386,14 +332,6 @@ exports.userDeviceHistory = async (req, res) => {
         }
 
         const { user_id } = req.body;
-        const cacheKey = getCacheKey('userDeviceHistory', { user_id });
-
-        // Try to get from cache
-        const cachedHistory = await cacheGet(cacheKey);
-        if (cachedHistory) {
-            console.log(`Cache HIT: ${cacheKey}`);
-            return res.status(200).json(cachedHistory);
-        }
 
         // Validate user exists
         const user = await User.findOne({ user_id: parseInt(user_id) });
@@ -421,7 +359,6 @@ exports.userDeviceHistory = async (req, res) => {
                 count: 0,
                 data: []
             };
-            await cacheSet(cacheKey, response, CACHE_TTL.DEVICE_HISTORY);
             return res.status(200).json(response);
         }
 
@@ -464,10 +401,6 @@ exports.userDeviceHistory = async (req, res) => {
             data: response
         };
 
-        // Cache the result
-        await cacheSet(cacheKey, finalResponse, CACHE_TTL.DEVICE_HISTORY);
-        console.log(`Cache SET: ${cacheKey}`);
-
         return res.status(200).json(finalResponse);
 
     } catch (error) {
@@ -506,14 +439,6 @@ exports.getTelemetryAnalytics = async (req, res) => {
                 success: false,
                 message: `Invalid type, allowed: ${allowedTypes.join(", ")}`
             });
-        }
-
-        // Try to get from cache
-        const cacheKey = getCacheKey('telemetryAnalytics', { serial_number, imei_number, type });
-        const cachedAnalytics = await cacheGet(cacheKey);
-        if (cachedAnalytics) {
-            console.log(`Cache HIT: ${cacheKey}`);
-            return res.json(cachedAnalytics);
         }
 
         // build query filter
@@ -963,10 +888,6 @@ exports.getTelemetryAnalytics = async (req, res) => {
             }
         };
 
-        // Cache the result
-        await cacheSet(cacheKey, response, CACHE_TTL.DEFAULT);
-        console.log(`Cache SET: ${cacheKey}`);
-
         res.json(response);
 
     } catch (err) {
@@ -1069,14 +990,6 @@ exports.fetchCart = async (req, res, next) => {
             return res.status(400).json({ success: false, errors: errors.array() });
 
         const { user_id } = req.body;
-        const cacheKey = getCacheKey('fetchCart', { user_id });
-
-        // Try to get from cache
-        const cachedCart = await cacheGet(cacheKey);
-        if (cachedCart) {
-            console.log(`Cache HIT: ${cacheKey}`);
-            return res.status(200).json(cachedCart);
-        }
 
         // Verify user exists
         const user = await User.findOne({ user_id });
@@ -1165,10 +1078,6 @@ exports.fetchCart = async (req, res, next) => {
             cart
         };
 
-        // Cache the result
-        await cacheSet(cacheKey, response, CACHE_TTL.DEFAULT);
-        console.log(`Cache SET: ${cacheKey}`);
-
         res.status(200).json(response);
 
     } catch (err) {
@@ -1232,11 +1141,6 @@ exports.updatedCart = async (req, res, next) => {
 
         await cart.save();
 
-        // Invalidate cart cache
-        const cacheKey = getCacheKey('fetchCart', { user_id });
-        await cacheDelete(cacheKey);
-        console.log(`Cache DELETED: ${cacheKey}`);
-
         res.status(200).json({
             success: true,
             message: "Cart updated successfully",
@@ -1294,11 +1198,6 @@ exports.productDelete = async (req, res, next) => {
 
         await cart.save();
 
-        // Invalidate cart cache
-        const cacheKey = getCacheKey('fetchCart', { user_id });
-        await cacheDelete(cacheKey);
-        console.log(`Cache DELETED: ${cacheKey}`);
-
         res.status(200).json({
             success: true,
             message: "Product removed from cart successfully",
@@ -1338,11 +1237,6 @@ exports.allProductDelete = async (req, res, next) => {
         cart.updatedBy = user.user_email;
 
         await cart.save();
-
-        // Invalidate cart cache
-        const cacheKey = getCacheKey('fetchCart', { user_id });
-        await cacheDelete(cacheKey);
-        console.log(`Cache DELETED: ${cacheKey}`);
 
         res.status(200).json({
             success: true,
@@ -1441,14 +1335,6 @@ exports.createVoucher = async (req, res, next) => {
 exports.getAllVouchers = async (req, res, next) => {
     try {
         const { page = 1, limit = 10 } = req.query;
-        const cacheKey = getCacheKey('getAllVouchers', { page, limit });
-
-        // Try to get from cache
-        const cachedVouchers = await cacheGet(cacheKey);
-        if (cachedVouchers) {
-            console.log(`Cache HIT: ${cacheKey}`);
-            return res.status(200).json(cachedVouchers);
-        }
 
         const skip = (page - 1) * limit;
 
@@ -1476,10 +1362,6 @@ exports.getAllVouchers = async (req, res, next) => {
             }
         };
 
-        // Cache the result
-        await cacheSet(cacheKey, response, CACHE_TTL.DEFAULT);
-        console.log(`Cache SET: ${cacheKey}`);
-
         res.status(200).json(response);
 
     } catch (err) {
@@ -1494,15 +1376,6 @@ exports.getVoucherById = async (req, res, next) => {
         if (!id)
             return res.status(400).json({ success: false, message: "Voucher ID is required" });
 
-        const cacheKey = getCacheKey('getVoucherById', { id });
-
-        // Try to get from cache
-        const cachedVoucher = await cacheGet(cacheKey);
-        if (cachedVoucher) {
-            console.log(`Cache HIT: ${cacheKey}`);
-            return res.status(200).json(cachedVoucher);
-        }
-
         const voucher = await Voucher.findById(id);
         if (!voucher)
             return res.status(404).json({ success: false, message: "Voucher not found" });
@@ -1511,10 +1384,6 @@ exports.getVoucherById = async (req, res, next) => {
             success: true,
             data: voucher
         };
-
-        // Cache the result
-        await cacheSet(cacheKey, response, CACHE_TTL.DEFAULT);
-        console.log(`Cache SET: ${cacheKey}`);
 
         res.status(200).json(response);
 
@@ -1558,11 +1427,6 @@ exports.updateVoucher = async (req, res, next) => {
 
         const updatedVoucher = await Voucher.findByIdAndUpdate(id, updateData, { new: true });
 
-        // Invalidate voucher-related caches
-        await cacheDeletePattern('getAllVouchers:*');
-        await cacheDeletePattern('getVoucherById:*');
-        console.log('Cache DELETED: voucher related caches');
-
         res.status(200).json({
             success: true,
             message: "Voucher updated successfully",
@@ -1584,11 +1448,6 @@ exports.deleteVoucher = async (req, res, next) => {
         const voucher = await Voucher.findByIdAndDelete(id);
         if (!voucher)
             return res.status(404).json({ success: false, message: "Voucher not found" });
-
-        // Invalidate voucher-related caches
-        await cacheDeletePattern('getAllVouchers:*');
-        await cacheDeletePattern('getVoucherById:*');
-        console.log('Cache DELETED: voucher related caches');
 
         res.status(200).json({
             success: true,

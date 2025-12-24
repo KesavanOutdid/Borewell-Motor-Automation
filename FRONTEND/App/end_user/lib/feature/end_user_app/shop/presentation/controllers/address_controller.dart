@@ -11,7 +11,7 @@ class AddressController extends GetxController {
   var isLoading = false.obs;
   var selectedAddress = Rxn<AddressModel>();
   
-  final String baseUrl = 'http://192.168.0.33:3030';
+  final String baseUrl = 'http://192.168.0.11:3030';
   
   late TokenService tokenService;
   final logger = Logger();

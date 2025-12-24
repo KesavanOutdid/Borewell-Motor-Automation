@@ -4,7 +4,6 @@ const User = require('../models/User');
 const Product = require('../models/Product');
 const Cart = require('../models/Cart');
 const crypto = require('crypto');
-const { cacheGet, cacheSet, cacheDelete, cacheDeletePattern, getCacheKey, CACHE_TTL } = require('../middlewares/cacheMiddleware');
 
 const Razorpay = require('razorpay');
 
@@ -107,11 +106,6 @@ exports.createOrder = async (req, res, next) => {
                     error: err.message
                 });
             }
-
-            // Invalidate orders cache
-            await cacheDeletePattern('getOrders:*');
-            await cacheDeletePattern('getOrderById:*');
-            console.log('Cache DELETED: orders related caches');
         }
         // If razorpay payment, create razorpay order
         else if (payment_method === 'razorpay') {
@@ -202,11 +196,6 @@ exports.verifyPayment = async (req, res, next) => {
                 // Clear user's cart
                 await Cart.deleteOne({ user_id });
 
-                // Invalidate orders cache
-                await cacheDeletePattern('getOrders:*');
-                await cacheDeletePattern('getOrderById:*');
-                console.log('Cache DELETED: orders related caches');
-
                 return res.status(200).json({
                     success: true,
                     message: "Payment verified successfully",
@@ -281,11 +270,6 @@ exports.confirmCODOrder = async (req, res, next) => {
         order.updatedBy = user.user_email;
         await order.save();
 
-        // Invalidate orders cache
-        await cacheDeletePattern('getOrders:*');
-        await cacheDeletePattern('getOrderById:*');
-        console.log('Cache DELETED: orders related caches');
-
         return res.status(200).json({
             success: true,
             message: "COD order confirmed successfully",
@@ -352,11 +336,6 @@ exports.cancelOrder = async (req, res, next) => {
             order.updatedBy = user.user_email;
             await order.save();
 
-            // Invalidate orders cache
-            await cacheDeletePattern('getOrders:*');
-            await cacheDeletePattern('getOrderById:*');
-            console.log('Cache DELETED: orders related caches');
-
             return res.status(200).json({
                 success: true,
                 message: "Order cancelled successfully and inventory restored",
@@ -374,11 +353,6 @@ exports.cancelOrder = async (req, res, next) => {
             order.updatedAt = new Date();
             order.updatedBy = user.user_email;
             await order.save();
-
-            // Invalidate orders cache
-            await cacheDeletePattern('getOrders:*');
-            await cacheDeletePattern('getOrderById:*');
-            console.log('Cache DELETED: orders related caches');
 
             return res.status(500).json({
                 success: false,
@@ -400,14 +374,6 @@ exports.getOrders = async (req, res, next) => {
             return res.status(400).json({ success: false, errors: errors.array() });
 
         const { user_id } = req.body;
-        const cacheKey = getCacheKey('getOrders', { user_id });
-
-        // Try to get from cache
-        const cachedOrders = await cacheGet(cacheKey);
-        if (cachedOrders) {
-            console.log(`Cache HIT: ${cacheKey}`);
-            return res.status(200).json(cachedOrders);
-        }
 
         // Verify user exists
         const user = await User.findOne({ user_id });
@@ -427,10 +393,6 @@ exports.getOrders = async (req, res, next) => {
             }
         };
 
-        // Cache the result
-        await cacheSet(cacheKey, response, CACHE_TTL.ORDERS);
-        console.log(`Cache SET: ${cacheKey}`);
-
         return res.status(200).json(response);
 
     } catch (err) {
@@ -446,14 +408,6 @@ exports.getOrderById = async (req, res, next) => {
             return res.status(400).json({ success: false, errors: errors.array() });
 
         const { user_id, order_id } = req.body;
-        const cacheKey = getCacheKey('getOrderById', { user_id, order_id });
-
-        // Try to get from cache
-        const cachedOrder = await cacheGet(cacheKey);
-        if (cachedOrder) {
-            console.log(`Cache HIT: ${cacheKey}`);
-            return res.status(200).json(cachedOrder);
-        }
 
         // Verify user exists
         const user = await User.findOne({ user_id });
@@ -473,10 +427,6 @@ exports.getOrderById = async (req, res, next) => {
             }
         };
 
-        // Cache the result
-        await cacheSet(cacheKey, response, CACHE_TTL.ORDERS);
-        console.log(`Cache SET: ${cacheKey}`);
-
         return res.status(200).json(response);
 
     } catch (err) {
@@ -492,14 +442,6 @@ exports.getAllOrders = async (req, res, next) => {
         const skip = (page - 1) * limit;
         const search = req.query.search || '';
         const filterStatus = req.query.status || '';
-        const cacheKey = getCacheKey('getAllOrders', { page, limit, search, filterStatus });
-
-        // Try to get from cache
-        const cachedOrders = await cacheGet(cacheKey);
-        if (cachedOrders) {
-            console.log(`Cache HIT: ${cacheKey}`);
-            return res.status(200).json(cachedOrders);
-        }
 
         // Build search regex for multiple fields
         const searchRegex = { $regex: search, $options: 'i' };
@@ -601,10 +543,6 @@ exports.getAllOrders = async (req, res, next) => {
             }
         };
 
-        // Cache the result
-        await cacheSet(cacheKey, response, CACHE_TTL.ORDERS);
-        console.log(`Cache SET: ${cacheKey}`);
-
         return res.status(200).json(response);
 
     } catch (err) {
@@ -694,12 +632,6 @@ exports.updateOrderStatus = async (req, res, next) => {
 
         // Save the order
         const updatedOrder = await order.save();
-
-        // Invalidate orders cache
-        await cacheDeletePattern('getOrders:*');
-        await cacheDeletePattern('getOrderById:*');
-        await cacheDeletePattern('getAllOrders:*');
-        console.log('Cache DELETED: orders related caches');
 
         return res.status(200).json({
             success: true,

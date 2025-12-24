@@ -460,7 +460,7 @@ class ProfileView extends GetView<ProfileController> {
                             const Divider(height: 1),
                             _ProfileMenuItem(
                               icon: Icons.settings,
-                              title: 'Theame',
+                              title: 'Theme',
                               iconColor: AppColors.primaryGreen,
                               onTap: () => _showThemeDialog(context),
                             ),
