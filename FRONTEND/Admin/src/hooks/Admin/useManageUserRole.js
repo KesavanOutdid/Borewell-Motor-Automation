@@ -24,29 +24,39 @@ const useManageUserRole = (userInfo) => {
     });
 
     // Function to fetch user role data
-    const fetchUserRoleData = async (page = 1, limit = pagination.limit) => {
+    const fetchUserRoleData = async (page = 1, limit = pagination.limit, search = '') => {
         try {
-            const response = await fetch(`${API_BASE}/admin/getRoles?page=${page}&limit=${limit}`); // Ensure this matches the server route
+            const params = new URLSearchParams({ page, limit });
+            if (search) params.append('search', search);
+            
+            const response = await fetch(`${API_BASE}/admin/getRoles?${params.toString()}`);
             if (response.ok) {
                 const data = await response.json();
                 setUserRoleData(data.roles);
                 setPagination(data.pagination);
-                setLoading(false);  // Set loading to false after data is fetched
+                setLoading(false);
             } else {
                 const errorData = await response.json();
                 setErrorUserRole(`${errorData.message}`);
-                setLoading(false);  // Set loading to false after an error
+                setLoading(false);
             }
         } catch (error) {
             setErrorUserRole('An error occurred while fetching user role.');
-            setLoading(false);  // Set loading to false after an error
+            setLoading(false);
+        }
+    };
+
+    // Handle page change
+    const handlePageChange = (newPage, searchQuery = '') => {
+        if (newPage >= 1 && newPage <= pagination.totalPages) {
+            fetchUserRoleData(newPage, pagination.limit, searchQuery);
         }
     };
 
     // Handle limit change
-    const handleLimitChange = (newLimit) => {
+    const handleLimitChange = (newLimit, searchQuery = '') => {
         setPagination(prev => ({ ...prev, limit: newLimit }));
-        fetchUserRoleData(1, newLimit); // Reset to page 1 when changing limit
+        fetchUserRoleData(1, newLimit, searchQuery); // Reset to page 1 when changing limit
     };    
 
     // Close modal
@@ -95,7 +105,7 @@ const useManageUserRole = (userInfo) => {
     return {
         isModalCreate, setIsModalCreate, handleUserRoleCreate, isModalEdit, setIsModalEdit, setUserRole, userRole, closeModal, errorMessage,
         userRolesData, errorUserRole, loading, fetchUserRoleData, errorMessageEdit, setErrorMessageEdit, loadingSubmit, loadingUpdate, setLoadingUpdate,
-        pagination, handleLimitChange
+        pagination, handlePageChange, handleLimitChange
     };
 };
 

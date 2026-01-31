@@ -19,11 +19,10 @@ const Dashboard = ({ userInfo, handleLogout }) => {
 
     const { assignDevices } = useDashboard(userInfo);
 
-
     const API_KEY = 'AIzaSyD4_6anlN09mZ1H6hhnfryibQdAWfygUbo';
     const [selectedAssignedDevice, setSelectedAssignedDevice] = useState(null);
     const [latLonName, setLatLonName] = useState('');
-    const [regionNamesMap, setRegionNamesMap] = useState({});
+    // const [regionNamesMap, setRegionNamesMap] = useState({});
 
     const telemetry = useLiveTelemetry(selectedAssignedDevice?.serial_number);
     const { status, lastStart: liveLastStart, lastStop: liveLastStop } = useLiveStatus(selectedAssignedDevice?.serial_number);
@@ -44,7 +43,6 @@ const Dashboard = ({ userInfo, handleLogout }) => {
         const match = value.match(/-?\d+(\.\d+)?/);
         return match ? parseFloat(match[0]) : null;
     };
-
 
     const selectedLat = cleanCoordinate(selectedAssignedDevice?.latitude);
     const selectedLng = cleanCoordinate(selectedAssignedDevice?.longitude);
@@ -142,8 +140,7 @@ const Dashboard = ({ userInfo, handleLogout }) => {
                     }
                 }
             }
-            
-            setRegionNamesMap(regionMap);
+            // setRegionNamesMap(regionMap);
         };
 
         if (assignDevices.length > 0) {
@@ -225,31 +222,31 @@ const Dashboard = ({ userInfo, handleLogout }) => {
 
     const deviceOnlineStatus = getDeviceOnlineStatus();
 
-    const getUniqueRegions = () => {
-        const regions = assignDevices
-            .map(device => {
-                const lat = cleanCoordinate(device?.latitude);
-                const lng = cleanCoordinate(device?.longitude);
-                return { lat, lng, serialNumber: device.serial_number };
-            })
-            .filter(r => r.lat && r.lng);
+    // const getUniqueRegions = () => {
+    //     const regions = assignDevices
+    //         .map(device => {
+    //             const lat = cleanCoordinate(device?.latitude);
+    //             const lng = cleanCoordinate(device?.longitude);
+    //             return { lat, lng, serialNumber: device.serial_number };
+    //         })
+    //         .filter(r => r.lat && r.lng);
 
-        const uniqueRegions = Array.from(new Map(
-            regions.map(r => [`${r.lat},${r.lng}`, r.serialNumber])
-        ).values());
+    //     const uniqueRegions = Array.from(new Map(
+    //         regions.map(r => [`${r.lat},${r.lng}`, r.serialNumber])
+    //     ).values());
 
-        return uniqueRegions;
-    };
+    //     return uniqueRegions;
+    // };
 
-    const handleRegionChange = async (serialNumber) => {
-        const selected = assignDevices.find(d => d.serial_number === serialNumber);
-        if (selected) {
-            setSelectedAssignedDevice(selected);
-            localStorage.setItem("selectedDevice", JSON.stringify(selected));
-        }
-    };
+    // const handleRegionChange = async (serialNumber) => {
+    //     const selected = assignDevices.find(d => d.serial_number === serialNumber);
+    //     if (selected) {
+    //         setSelectedAssignedDevice(selected);
+    //         localStorage.setItem("selectedDevice", JSON.stringify(selected));
+    //     }
+    // };
 
-    const uniqueRegions = getUniqueRegions();
+    // const uniqueRegions = getUniqueRegions();
 
     return (
         <div className='' style={{ paddingTop: '15px' }}>
@@ -309,6 +306,27 @@ const Dashboard = ({ userInfo, handleLogout }) => {
                                             </div>
                                         </div>
                                         <div className="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+                                            <div className="card">
+                                                <div className="card-body p-3">
+                                                    <div className="row">
+                                                        <div className="col-8">
+                                                            <div className="numbers">
+                                                                <p className="text-sm text-dark font-weight-bold mb-2 d-block">Customer Email</p>
+                                                                <h5 className="font-weight-bolder mb-0">
+                                                                    <span className="text-success text-sm font-weight-bolder">{selectedAssignedDevice?.user_details?.user_email || '-'}</span>
+                                                                </h5>
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-4 text-end">
+                                                            <div className="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
+                                                                <i className="fas fa-phone opacity-10" aria-hidden="true"></i>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {/* <div className="col-xl-3 col-sm-6 mb-xl-0 mb-4">
                                             <div className="card shadow-sm border-0">
                                                 <div className="card-body p-3">
                                                     <div className="d-flex justify-content-between align-items-center">
@@ -328,7 +346,6 @@ const Dashboard = ({ userInfo, handleLogout }) => {
                                                                     return (
                                                                         <option key={serialNumber} value={serialNumber}>
                                                                             {regionName}
-                                                                            {/* {regionName?.split(" ").slice(0, 4).join(" ") || "Loading..."} */}
                                                                         </option>
                                                                     );
                                                                 })}
@@ -342,7 +359,7 @@ const Dashboard = ({ userInfo, handleLogout }) => {
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </div> */}
                                         <div className="col-xl-3 col-sm-6 mb-xl-0 mb-4">
                                             <div className="card shadow-sm border-0">
                                                 <div className="card-body p-3">

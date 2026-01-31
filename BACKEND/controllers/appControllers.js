@@ -7,6 +7,7 @@ const Voucher = require('../models/Voucher');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const Telemetry = require("../models/Telemetry");
+const { cacheDeletePattern } = require('../middlewares/cacheMiddleware');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change_this_secret';
 // const JWT_EXPIRES = '2h';
@@ -110,6 +111,9 @@ exports.updateProfile = async (req, res, next) => {
         if (!updatedUser)
             return res.status(404).json({ success: false, message: "User not found" });
 
+        await cacheDeletePattern('*profile*');
+        await cacheDeletePattern('*users*');
+
         res.status(200).json({
             success: true,
             message: "Profile updated successfully",
@@ -161,6 +165,9 @@ exports.configIMEInumber = async (req, res, next) => {
             { new: true }
         );
 
+        await cacheDeletePattern('*devices*');
+        await cacheDeletePattern('*analytics*');
+
         res.status(200).json({
             success: true,
             message: "IMEI & location configured successfully",
@@ -210,6 +217,9 @@ exports.startStopDevice = async (req, res) => {
             { serial_number, imei_number },
             { $set: updateData }
         );
+
+        await cacheDeletePattern('*devices*');
+        await cacheDeletePattern('*analytics*');
 
         return res.status(200).json({
             success: true,
@@ -972,6 +982,8 @@ exports.addCart = async (req, res, next) => {
 
         await cart.save();
 
+        await cacheDeletePattern('*cart*');
+
         res.status(201).json({
             success: true,
             message: "Product added to cart successfully",
@@ -1141,6 +1153,8 @@ exports.updatedCart = async (req, res, next) => {
 
         await cart.save();
 
+        await cacheDeletePattern('*cart*');
+
         res.status(200).json({
             success: true,
             message: "Cart updated successfully",
@@ -1198,6 +1212,8 @@ exports.productDelete = async (req, res, next) => {
 
         await cart.save();
 
+        await cacheDeletePattern('*cart*');
+
         res.status(200).json({
             success: true,
             message: "Product removed from cart successfully",
@@ -1237,6 +1253,8 @@ exports.allProductDelete = async (req, res, next) => {
         cart.updatedBy = user.user_email;
 
         await cart.save();
+
+        await cacheDeletePattern('*cart*');
 
         res.status(200).json({
             success: true,
@@ -1334,18 +1352,25 @@ exports.createVoucher = async (req, res, next) => {
 
 exports.getAllVouchers = async (req, res, next) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
+        const { page = 1, limit = 10, search = '' } = req.query;
 
         const skip = (page - 1) * limit;
 
-        const vouchers = await Voucher.find()
+        const searchFilter = search ? {
+            $or: [
+                { voucher_code: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
+            ]
+        } : {};
+
+        const vouchers = await Voucher.find(searchFilter)
             .skip(skip)
             .limit(parseInt(limit))
             .sort({ createdAt: -1 });
 
-        const total = await Voucher.countDocuments();
-        const totalActive = await Voucher.countDocuments({ status: true });
-        const totalInactive = await Voucher.countDocuments({ status: false });
+        const total = await Voucher.countDocuments(searchFilter);
+        const totalActive = await Voucher.countDocuments({ ...searchFilter, status: true });
+        const totalInactive = await Voucher.countDocuments({ ...searchFilter, status: false });
 
         const response = {
             success: true,

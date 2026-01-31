@@ -25,6 +25,8 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
     const fetchUserRoleDataCalled = useRef(false); // Ref to track if fetch user role has been called
     const [isFormDirty, setIsFormDirty] = useState(false);
     const [originalDetails, setOriginalDetails] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const searchTimeoutRef = useRef(null);
 
     // Auto-fetch device data
     useEffect(() => {
@@ -33,6 +35,19 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
             fetchUserRoleDataCalled.current = true;
         }
     }, [fetchUserRoleData]);
+
+    // Handle search with debounce
+    const handleSearch = (query) => {
+        setSearchQuery(query);
+        
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        searchTimeoutRef.current = setTimeout(() => {
+            fetchUserData(1, pagination.limit, query);
+        }, 500);
+    };
 
     // Fetch clients when roleName is "Client Admin", "End User", or "Installation and Service"
     useEffect(() => {
@@ -156,40 +171,38 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                         <div className="col-12">
                             <div className="card mb-4">
                                 <div className="card-header pb-2">
-                                    <div className="row g-2 align-items-center">
+                                    <div className="row g-2 align-items-center mb-3">
                                         <div className="col-md-2 col-6 d-flex align-items-center">
                                             <button className="btn btn-primary mb-0" style={{ padding: '10px', width: '50%' }} onClick={() => setIsModalCreate(true)}>
                                                 <i className="fas fa-file" aria-hidden="true" style={{ color: 'white' }}></i> Create
                                             </button>
                                         </div>
+                                        <div className="col-md-3 col-12">
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                placeholder="🔍 Search by Name, Email, Phone..."
+                                                value={searchQuery}
+                                                onChange={(e) => handleSearch(e.target.value)}
+                                                style={{ borderRadius: '6px', padding: '10px 15px', fontSize: '13px' }}
+                                            />
+                                        </div>
                                         <div className="col-md-2 col-6">
                                             <div style={{ backgroundColor: '#f0f9ff', padding: '10px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Total Users</p>
-                                                <p style={{ fontSize: '20px', color: '#1e40af', fontWeight: '700', margin: 0 }}>{pagination?.totalUsers || 0}</p>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Total</p>
+                                                <p style={{ fontSize: '18px', color: '#1e40af', fontWeight: '700', margin: 0 }}>{pagination?.totalUsers || 0}</p>
                                             </div>
                                         </div>
                                         <div className="col-md-2 col-6">
                                             <div style={{ backgroundColor: '#f0fdf4', padding: '10px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Active Users</p>
-                                                <p style={{ fontSize: '20px', color: '#15803d', fontWeight: '700', margin: 0 }}>{pagination?.totalActiveUsers || 0}</p>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Active</p>
+                                                <p style={{ fontSize: '18px', color: '#15803d', fontWeight: '700', margin: 0 }}>{pagination?.totalActiveUsers || 0}</p>
                                             </div>
                                         </div>
                                         <div className="col-md-2 col-6">
                                             <div style={{ backgroundColor: '#fef2f2', padding: '10px', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Inactive Users</p>
-                                                <p style={{ fontSize: '20px', color: '#991b1b', fontWeight: '700', margin: 0 }}>{pagination?.totalDeactiveUsers || 0}</p>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-2 col-6">
-                                            <div style={{ backgroundColor: '#fefce8', padding: '10px', borderRadius: '8px', border: '1px solid #fcd34d', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Admin Count</p>
-                                                <p style={{ fontSize: '20px', color: '#a16207', fontWeight: '700', margin: 0 }}>{pagination?.totalAdminUsers || 0}</p>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-2 col-6">
-                                            <div style={{ backgroundColor: '#f3e8ff', padding: '10px', borderRadius: '8px', border: '1px solid #e9d5ff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Customer Count</p>
-                                                <p style={{ fontSize: '20px', color: '#7e22ce', fontWeight: '700', margin: 0 }}>{pagination?.totalCustomerUsers || 0}</p>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Customers</p>
+                                                <p style={{ fontSize: '18px', color: '#991b1b', fontWeight: '700', margin: 0 }}>{pagination?.totalCustomerUsers || 0}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -502,7 +515,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                         className="form-select form-select-sm"
                                                         style={{ width: 'auto', minWidth: '70px' }}
                                                         value={pagination.limit}
-                                                        onChange={(e) => handleLimitChange(parseInt(e.target.value))}
+                                                        onChange={(e) => handleLimitChange(parseInt(e.target.value), searchQuery)}
                                                     >
                                                         <option value={5}>5</option>
                                                         <option value={10}>10</option>
@@ -519,7 +532,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                         <li className={`page-item ${!pagination.hasPrevPage ? 'disabled' : ''}`}>
                                                             <button
                                                                 className="page-link"
-                                                                onClick={() => handlePageChange(pagination.currentPage - 1)}
+                                                                onClick={() => handlePageChange(pagination.currentPage - 1, searchQuery)}
                                                                 disabled={!pagination.hasPrevPage}
                                                                 aria-label="Previous"
                                                             >
@@ -544,7 +557,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                                 <li key={`page-${pageNum}`} className={`page-item ${pageNum === pagination.currentPage ? 'active' : ''}`}>
                                                                     <button
                                                                         className="page-link"
-                                                                        onClick={() => handlePageChange(pageNum)}
+                                                                        onClick={() => handlePageChange(pageNum, searchQuery)}
                                                                     >
                                                                         {pageNum}
                                                                     </button>
@@ -556,7 +569,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                         <li className={`page-item ${!pagination.hasNextPage ? 'disabled' : ''}`}>
                                                             <button
                                                                 className="page-link"
-                                                                onClick={() => handlePageChange(pagination.currentPage + 1)}
+                                                                onClick={() => handlePageChange(pagination.currentPage + 1, searchQuery)}
                                                                 disabled={!pagination.hasNextPage}
                                                                 aria-label="Next"
                                                             >

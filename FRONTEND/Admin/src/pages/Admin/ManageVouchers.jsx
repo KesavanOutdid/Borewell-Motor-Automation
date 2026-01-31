@@ -8,6 +8,7 @@ import useManageVouchers from '../../hooks/Admin/useManageVouchers';
 const ManageVouchers = ({ userInfo, handleLogout }) => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
+    const searchTimeoutRef = useRef(null);
     const {
         vouchers,
         errorVouchers,
@@ -28,9 +29,18 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
         }
     }, [fetchVoucherData]);
 
-    const filteredVouchers = searchQuery.trim() === ''
-        ? vouchers
-        : vouchers.filter(v => v.voucher_code.toLowerCase().includes(searchQuery.toLowerCase()));
+    // Handle search with debounce
+    const handleSearch = (query) => {
+        setSearchQuery(query);
+        
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        searchTimeoutRef.current = setTimeout(() => {
+            fetchVoucherData(1, pagination.limit, query);
+        }, 500);
+    };
 
     const handleEditVoucher = (voucher) => {
         navigate('/admin/edit-voucher', { state: { voucher } });
@@ -97,9 +107,9 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                 <input
                                                     type="text"
                                                     className="form-control"
-                                                    placeholder="Search by code..."
+                                                    placeholder="🔍 Search vouchers..."
                                                     value={searchQuery}
-                                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                                    onChange={(e) => handleSearch(e.target.value)}
                                                     style={{ borderRadius: '6px', padding: '10px 15px', fontSize: '14px' }}
                                                 />
                                             </div>
@@ -116,7 +126,7 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                         <div style={{ textAlign: 'center', color: 'red', padding: '40px' }}>
                                             <p>{errorVouchers}</p>
                                         </div>
-                                    ) : filteredVouchers && filteredVouchers.length > 0 ? (
+                                    ) : vouchers && vouchers.length > 0 ? (
                                         <>
                                             <div style={{ overflowX: 'auto' }}>
                                                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -132,7 +142,7 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {filteredVouchers.map((voucher, index) => (
+                                                        {vouchers.map((voucher, index) => (
                                                             <tr key={`voucher-${index}`} style={{ borderBottom: '1px solid #e0e0e0', hover: { backgroundColor: '#f9f9f9' } }}>
                                                                 <td style={{ padding: '12px', fontWeight: '600', color: '#1e40af' }}>{voucher.voucher_code}</td>
                                                                 <td style={{ padding: '12px', color: '#333' }}>{voucher.discount_percentage}%</td>
@@ -188,7 +198,7 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                             className="form-select form-select-sm"
                                                             style={{ width: 'auto', minWidth: '70px' }}
                                                             value={pagination.limit}
-                                                            onChange={(e) => handleLimitChange(parseInt(e.target.value))}
+                                                            onChange={(e) => handleLimitChange(parseInt(e.target.value), searchQuery)}
                                                         >
                                                             <option value={5}>5</option>
                                                             <option value={10}>10</option>
@@ -205,7 +215,7 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                             <li className={`page-item ${!pagination.hasPrevPage ? 'disabled' : ''}`}>
                                                                 <button
                                                                     className="page-link"
-                                                                    onClick={() => handlePageChange(pagination.currentPage - 1)}
+                                                                    onClick={() => handlePageChange(pagination.currentPage - 1, searchQuery)}
                                                                     disabled={!pagination.hasPrevPage}
                                                                     aria-label="Previous"
                                                                 >
@@ -230,7 +240,7 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                                     <li key={`page-${pageNum}`} className={`page-item ${pageNum === pagination.currentPage ? 'active' : ''}`}>
                                                                         <button
                                                                             className="page-link"
-                                                                            onClick={() => handlePageChange(pageNum)}
+                                                                            onClick={() => handlePageChange(pageNum, searchQuery)}
                                                                         >
                                                                             {pageNum}
                                                                         </button>
@@ -242,7 +252,7 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                             <li className={`page-item ${!pagination.hasNextPage ? 'disabled' : ''}`}>
                                                                 <button
                                                                     className="page-link"
-                                                                    onClick={() => handlePageChange(pagination.currentPage + 1)}
+                                                                    onClick={() => handlePageChange(pagination.currentPage + 1, searchQuery)}
                                                                     disabled={!pagination.hasNextPage}
                                                                     aria-label="Next"
                                                                 >

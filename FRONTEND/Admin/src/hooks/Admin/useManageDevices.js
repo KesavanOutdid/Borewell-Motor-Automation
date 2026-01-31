@@ -63,10 +63,13 @@ const useManageDevices = (userInfo) => {
     }, [isModalAssign, API_BASE]);
 
     // Function to fetch device data
-    const fetchDeviceData = async (page = 1, limit = 10) => {
+    const fetchDeviceData = async (page = 1, limit = 10, search = '') => {
         try {
             setLoading(true);
-            const response = await fetch(`${API_BASE}/admin/getDevices?page=${page}&limit=${limit}`, {
+            const params = new URLSearchParams({ page, limit });
+            if (search) params.append('search', search);
+            
+            const response = await fetch(`${API_BASE}/admin/getDevices?${params.toString()}`, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" }
             });
@@ -211,14 +214,14 @@ const useManageDevices = (userInfo) => {
     };
 
     // Pagination functions
-    const handlePageChange = (newPage) => {
+    const handlePageChange = (newPage, searchQuery = '') => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
-            fetchDeviceData(newPage, pagination.limit);
+            fetchDeviceData(newPage, pagination.limit, searchQuery);
         }
     };
 
-    const handleLimitChange = (newLimit) => {
-        fetchDeviceData(1, newLimit); // Reset to page 1 when limit changes
+    const handleLimitChange = (newLimit, searchQuery = '') => {
+        fetchDeviceData(1, newLimit, searchQuery); // Reset to page 1 when limit changes
     };
 
     // fetch analytics Data

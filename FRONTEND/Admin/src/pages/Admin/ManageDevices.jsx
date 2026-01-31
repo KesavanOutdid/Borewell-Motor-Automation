@@ -26,6 +26,8 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
     const [currentDeviceDetails, setDeviceEditDetails] = useState(null);
     const [originalDeviceDetails, setOriginalDeviceDetails] = useState(null);
     const [isFormDirty, setIsFormDirty] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const searchTimeoutRef = useRef(null);
 
     // Auto-fetch device data
     useEffect(() => {
@@ -34,6 +36,19 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
             fetchDeviceDataCalled.current = true;
         }
     }, [fetchDeviceData]);
+
+    // Handle search with debounce
+    const handleSearch = (query) => {
+        setSearchQuery(query);
+        
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        searchTimeoutRef.current = setTimeout(() => {
+            fetchDeviceData(1, pagination.limit, query);
+        }, 500);
+    };
 
     // Populate currentDeviceDetails when editing
     useEffect(() => {
@@ -129,8 +144,8 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                         <div className="col-12">
                             <div className="card mb-4">
                                 <div className="card-header pb-2">
-                                    <div className="row g-2 align-items-center">
-                                        <div className="col-md-2 col-6 d-flex align-items-center">
+                                    <div className="row g-2 align-items-center mb-3">
+                                        <div className="col-md-3 col-12 d-flex gap-2">
                                             <button
                                                 className="btn btn-primary mb-0"
                                                 style={{ padding: '10px' }}
@@ -140,41 +155,39 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                             </button>
 
                                             <button
-                                                className="btn bg-gradient-secondary mb-0 ms-2"
+                                                className="btn bg-gradient-secondary mb-0"
                                                 style={{ padding: '10px' }}
                                                 onClick={() => setIsModalAssign(true)}
                                             >
-                                                <i className="fas fa-file" aria-hidden="true" style={{ color: 'white' }}></i> Assign Device
+                                                <i className="fas fa-file" aria-hidden="true" style={{ color: 'white' }}></i> Assign
                                             </button>
+                                        </div>
+                                        <div className="col-md-3 col-12">
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                placeholder="🔍 Search by Serial Number, User..."
+                                                value={searchQuery}
+                                                onChange={(e) => handleSearch(e.target.value)}
+                                                style={{ borderRadius: '6px', padding: '10px 15px', fontSize: '13px' }}
+                                            />
                                         </div>
                                         <div className="col-md-2 col-6">
                                             <div style={{ backgroundColor: '#f0f9ff', padding: '10px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Total Devices</p>
-                                                <p style={{ fontSize: '20px', color: '#1e40af', fontWeight: '700', margin: 0 }}>{pagination?.totalDevices || 0}</p>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Total</p>
+                                                <p style={{ fontSize: '18px', color: '#1e40af', fontWeight: '700', margin: 0 }}>{pagination?.totalDevices || 0}</p>
                                             </div>
                                         </div>
                                         <div className="col-md-2 col-6">
                                             <div style={{ backgroundColor: '#f0fdf4', padding: '10px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Active</p>
-                                                <p style={{ fontSize: '20px', color: '#15803d', fontWeight: '700', margin: 0 }}>{pagination?.totalActiveDevices || 0}</p>
+                                                <p style={{ fontSize: '18px', color: '#15803d', fontWeight: '700', margin: 0 }}>{pagination?.totalActiveDevices || 0}</p>
                                             </div>
                                         </div>
                                         <div className="col-md-2 col-6">
                                             <div style={{ backgroundColor: '#fef2f2', padding: '10px', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Inactive</p>
-                                                <p style={{ fontSize: '20px', color: '#991b1b', fontWeight: '700', margin: 0 }}>{pagination?.totalDeactiveDevices || 0}</p>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-2 col-6">
-                                            <div style={{ backgroundColor: '#fefce8', padding: '10px', borderRadius: '8px', border: '1px solid #fcd34d', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Assigned</p>
-                                                <p style={{ fontSize: '20px', color: '#a16207', fontWeight: '700', margin: 0 }}>{pagination?.totalAssignedDevices || 0}</p>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-2 col-6">
-                                            <div style={{ backgroundColor: '#f3e8ff', padding: '10px', borderRadius: '8px', border: '1px solid #e9d5ff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Un-Assigned</p>
-                                                <p style={{ fontSize: '20px', color: '#7e22ce', fontWeight: '700', margin: 0 }}>{pagination?.totalUnassignedDevices || 0}</p>
+                                                <p style={{ fontSize: '18px', color: '#991b1b', fontWeight: '700', margin: 0 }}>{pagination?.totalAssignedDevices || 0}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -634,7 +647,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                         className="form-select form-select-sm"
                                                         style={{ width: 'auto', minWidth: '70px' }}
                                                         value={pagination.limit}
-                                                        onChange={(e) => handleLimitChange(parseInt(e.target.value))}
+                                                        onChange={(e) => handleLimitChange(parseInt(e.target.value), searchQuery)}
                                                     >
                                                         <option value={5}>5</option>
                                                         <option value={10}>10</option>
@@ -651,7 +664,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                         <li className={`page-item ${!pagination.hasPrevPage ? 'disabled' : ''}`}>
                                                             <button
                                                                 className="page-link"
-                                                                onClick={() => handlePageChange(pagination.currentPage - 1)}
+                                                                onClick={() => handlePageChange(pagination.currentPage - 1, searchQuery)}
                                                                 disabled={!pagination.hasPrevPage}
                                                                 aria-label="Previous"
                                                             >
@@ -676,7 +689,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                                 <li key={pageNum} className={`page-item ${pageNum === pagination.currentPage ? 'active' : ''}`}>
                                                                     <button
                                                                         className="page-link"
-                                                                        onClick={() => handlePageChange(pageNum)}
+                                                                        onClick={() => handlePageChange(pageNum, searchQuery)}
                                                                     >
                                                                         {pageNum}
                                                                     </button>
@@ -688,7 +701,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                         <li className={`page-item ${!pagination.hasNextPage ? 'disabled' : ''}`}>
                                                             <button
                                                                 className="page-link"
-                                                                onClick={() => handlePageChange(pagination.currentPage + 1)}
+                                                                onClick={() => handlePageChange(pagination.currentPage + 1, searchQuery)}
                                                                 disabled={!pagination.hasNextPage}
                                                                 aria-label="Next"
                                                             >

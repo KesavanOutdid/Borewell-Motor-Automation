@@ -3,15 +3,19 @@ require('dotenv').config();
 
 let redisConnected = false;
 
+const redisHost = process.env.REDIS_HOST || 'localhost';
+const redisPort = parseInt(process.env.REDIS_PORT) || 6379;
+const redisPassword = process.env.REDIS_PASSWORD || undefined;
+const redisDb = parseInt(process.env.REDIS_DB) || 0;
+
 const redisClient = redis.createClient({
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT) || 6379,
-    password: process.env.REDIS_PASSWORD || undefined,
-    db: parseInt(process.env.REDIS_DB) || 0,
+    url: redisPassword 
+        ? `redis://:${redisPassword}@${redisHost}:${redisPort}/${redisDb}`
+        : `redis://${redisHost}:${redisPort}/${redisDb}`,
     socket: {
         reconnectStrategy: (retries) => {
             if (retries > 5) {
-                console.warn('Redis unavailable - caching disabled. Install Redis for better performance.');
+                console.warn('Redis unavailable - caching disabled. Make sure Redis is running on port 6379.');
                 return false;
             }
             return Math.min(retries * 100, 2000);
@@ -20,9 +24,7 @@ const redisClient = redis.createClient({
 });
 
 redisClient.on('error', (err) => {
-    if (redisConnected) {
-        console.error('Redis Connection Error:', err.message);
-    }
+    console.error('Redis Connection Error:', err.message);
 });
 
 redisClient.on('connect', () => {
@@ -31,7 +33,8 @@ redisClient.on('connect', () => {
 });
 
 redisClient.on('ready', () => {
-    console.log('✓ Redis Ready');
+    redisConnected = true;
+    console.log('✓ Redis Ready - Cache is operational');
 });
 
 redisClient.on('reconnecting', () => {

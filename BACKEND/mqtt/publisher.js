@@ -39,10 +39,15 @@ client.on('connect', () => {
 
     sendBoot();
 
-    intervals.push(setInterval(sendHeartbeat, 25 * 60 * 1000)); // 25 minutes
-    intervals.push(setInterval(sendStatusAck, 2 * 60 * 1000)); // 25 minutes
-    intervals.push(setInterval(sendTelemetry, 10000));
-    intervals.push(setInterval(sendAlert, 2 * 60 * 1000)); // 25 minutes
+    intervals.push(setInterval(sendHeartbeat, 10000)); // 25 minutes
+    intervals.push(setInterval(sendStatusAck, 25 * 60 * 1000)); // 25 minutes
+    intervals.push(setInterval(sendTelemetry, 25 * 60 * 1000));
+    intervals.push(setInterval(sendAlert, 10000)); // 25 minutes
+
+    // intervals.push(setInterval(sendHeartbeat, 25 * 60 * 1000)); // 25 minutes
+    // intervals.push(setInterval(sendStatusAck, 2 * 60 * 1000)); // 25 minutes
+    // intervals.push(setInterval(sendTelemetry, 10000));
+    // intervals.push(setInterval(sendAlert, 2 * 60 * 1000)); // 25 minutes
 });
 
 client.on('error', (err) => {

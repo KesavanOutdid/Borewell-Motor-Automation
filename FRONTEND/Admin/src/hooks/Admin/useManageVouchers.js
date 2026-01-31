@@ -36,11 +36,14 @@ const useManageVouchers = (userInfo) => {
     const [loadingUpdate, setLoadingUpdate] = useState(false);
     const [currentVoucherDetails, setCurrentVoucherDetails] = useState(null);
 
-    const fetchVoucherData = async (page = 1, limit = 10) => {
+    const fetchVoucherData = async (page = 1, limit = 10, search = '') => {
         try {
             setLoadingVouchers(true);
+            const params = new URLSearchParams({ page, limit });
+            if (search) params.append('search', search);
+            
             const response = await fetch(
-                `${API_BASE}/app/getAllVouchers?page=${page}&limit=${limit}`,
+                `${API_BASE}/app/getAllVouchers?${params.toString()}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${userInfo.token}`
@@ -244,14 +247,14 @@ const useManageVouchers = (userInfo) => {
         }
     };
 
-    const handlePageChange = (newPage) => {
+    const handlePageChange = (newPage, searchQuery = '') => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
-            fetchVoucherData(newPage, pagination.limit);
+            fetchVoucherData(newPage, pagination.limit, searchQuery);
         }
     };
 
-    const handleLimitChange = (newLimit) => {
-        fetchVoucherData(1, newLimit);
+    const handleLimitChange = (newLimit, searchQuery = '') => {
+        fetchVoucherData(1, newLimit, searchQuery);
     };
 
     return {

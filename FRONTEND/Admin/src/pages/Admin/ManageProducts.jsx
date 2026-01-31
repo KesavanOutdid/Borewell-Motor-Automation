@@ -9,6 +9,7 @@ const ManageProducts = ({ userInfo, handleLogout }) => {
     const API_BASE = process.env.REACT_APP_SERVER_URL;
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
+    const searchTimeoutRef = useRef(null);
     const {
         products,
         errorProducts,
@@ -29,9 +30,18 @@ const ManageProducts = ({ userInfo, handleLogout }) => {
         }
     }, [fetchProductData]);
 
-    const filteredProducts = searchQuery.trim() === ''
-        ? products
-        : products.filter(p => p.product_name.toLowerCase().includes(searchQuery.toLowerCase()));
+    // Handle search with debounce
+    const handleSearch = (query) => {
+        setSearchQuery(query);
+        
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        searchTimeoutRef.current = setTimeout(() => {
+            fetchProductData(1, pagination.limit, query);
+        }, 500);
+    };
 
     const handleViewProduct = (product) => {
         navigate('/admin/view-product', { state: { product } });
@@ -87,9 +97,9 @@ const ManageProducts = ({ userInfo, handleLogout }) => {
                                                 <input
                                                     type="text"
                                                     className="form-control"
-                                                    placeholder="Search by product name..."
+                                                    placeholder="🔍 Search products..."
                                                     value={searchQuery}
-                                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                                    onChange={(e) => handleSearch(e.target.value)}
                                                     style={{ borderRadius: '6px', padding: '10px 15px', fontSize: '14px' }}
                                                 />
                                             </div>
@@ -123,7 +133,7 @@ const ManageProducts = ({ userInfo, handleLogout }) => {
                                                 className="form-control"
                                                 style={{ padding: '8px', fontSize: '13px' }}
                                                 value={pagination.limit}
-                                                onChange={(e) => handleLimitChange(parseInt(e.target.value))}
+                                                onChange={(e) => handleLimitChange(parseInt(e.target.value), searchQuery)}
                                             >
                                                 <option value={5}>Show: 5</option>
                                                 <option value={8}>Show: 8</option>
@@ -144,10 +154,10 @@ const ManageProducts = ({ userInfo, handleLogout }) => {
                                         <div style={{ textAlign: 'center', color: 'red', padding: '40px' }}>
                                             <p>{errorProducts}</p>
                                         </div>
-                                    ) : filteredProducts && filteredProducts.length > 0 ? (
+                                    ) : products && products.length > 0 ? (
                                         <>
                                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-                                                {filteredProducts.map((product, index) => (
+                                                {products.map((product, index) => (
                                                     <div
                                                         key={`product-${index}`}
                                                         style={{
@@ -289,7 +299,7 @@ const ManageProducts = ({ userInfo, handleLogout }) => {
                                                                 className="form-select form-select-sm"
                                                                 style={{ width: 'auto', minWidth: '70px' }}
                                                                 value={pagination.limit}
-                                                                onChange={(e) => handleLimitChange(parseInt(e.target.value))}
+                                                                onChange={(e) => handleLimitChange(parseInt(e.target.value), searchQuery)}
                                                             >
                                                                 <option value={5}>5</option>
                                                                 <option value={10}>10</option>
@@ -306,7 +316,7 @@ const ManageProducts = ({ userInfo, handleLogout }) => {
                                                                 <li className={`page-item ${!pagination.hasPrevPage ? 'disabled' : ''}`}>
                                                                     <button
                                                                         className="page-link"
-                                                                        onClick={() => handlePageChange(pagination.currentPage - 1)}
+                                                                        onClick={() => handlePageChange(pagination.currentPage - 1, searchQuery)}
                                                                         disabled={!pagination.hasPrevPage}
                                                                         aria-label="Previous"
                                                                     >
@@ -331,7 +341,7 @@ const ManageProducts = ({ userInfo, handleLogout }) => {
                                                                         <li key={`page-${pageNum}`} className={`page-item ${pageNum === pagination.currentPage ? 'active' : ''}`}>
                                                                             <button
                                                                                 className="page-link"
-                                                                                onClick={() => handlePageChange(pageNum)}
+                                                                                onClick={() => handlePageChange(pageNum, searchQuery)}
                                                                             >
                                                                                 {pageNum}
                                                                             </button>
@@ -343,7 +353,7 @@ const ManageProducts = ({ userInfo, handleLogout }) => {
                                                                 <li className={`page-item ${!pagination.hasNextPage ? 'disabled' : ''}`}>
                                                                     <button
                                                                         className="page-link"
-                                                                        onClick={() => handlePageChange(pagination.currentPage + 1)}
+                                                                        onClick={() => handlePageChange(pagination.currentPage + 1, searchQuery)}
                                                                         disabled={!pagination.hasNextPage}
                                                                         aria-label="Next"
                                                                     >

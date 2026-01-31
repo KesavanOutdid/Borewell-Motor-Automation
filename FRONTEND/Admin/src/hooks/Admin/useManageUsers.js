@@ -59,23 +59,26 @@ const useManageUsers = (userInfo) => {
     };          
 
     // Function to fetch user data with pagination
-    const fetchUserData = async (page = 1, limit = 10) => {
+    const fetchUserData = async (page = 1, limit = 10, search = '') => {
         try {
             setLoadingUsers(true);
-            const response = await fetch(`${API_BASE}/admin/getUsers?page=${page}&limit=${limit}`); // Ensure this matches the server route
+            const params = new URLSearchParams({ page, limit });
+            if (search) params.append('search', search);
+            
+            const response = await fetch(`${API_BASE}/admin/getUsers?${params.toString()}`);
             if (response.ok) {
                 const data = await response.json();
-                setUsers(data.users); // Update state with fetched data
-                setPagination(data.pagination); // Update pagination state
-                setLoadingUsers(false);  // Set loading to false after data is fetched
+                setUsers(data.users);
+                setPagination(data.pagination);
+                setLoadingUsers(false);
             } else {
                 const errorData = await response.json();
                 setErrorUsers(`${errorData.message}`);
-                setLoadingUsers(false);  // Set loading to false after an error
+                setLoadingUsers(false);
             }
         } catch (error) {
             setErrorUsers('An error occurred while fetching users.');
-            setLoadingUsers(false);  // Set loading to false after an error
+            setLoadingUsers(false);
         }
     };  
 
@@ -146,14 +149,14 @@ const useManageUsers = (userInfo) => {
     };
 
     // Pagination functions
-    const handlePageChange = (newPage) => {
+    const handlePageChange = (newPage, searchQuery = '') => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
-            fetchUserData(newPage, pagination.limit);
+            fetchUserData(newPage, pagination.limit, searchQuery);
         }
     };
 
-    const handleLimitChange = (newLimit) => {
-        fetchUserData(1, newLimit); // Reset to page 1 when limit changes
+    const handleLimitChange = (newLimit, searchQuery = '') => {
+        fetchUserData(1, newLimit, searchQuery); // Reset to page 1 when limit changes
     };
 
     return {

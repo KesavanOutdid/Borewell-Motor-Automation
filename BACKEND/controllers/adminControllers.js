@@ -6,6 +6,7 @@ const Device = require("../models/Device");
 const Product = require("../models/Product");
 const bcrypt = require('bcrypt');
 const path = require('path');
+const { cacheDeletePattern } = require('../middlewares/cacheMiddleware');
 
 // Create role
 exports.createRole = async (req, res, next) => {
@@ -122,13 +123,20 @@ exports.getRoles = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit);
+        const search = req.query.search || '';
 
         const skip = (page - 1) * limit;
 
-        // Get total count for pagination
-        const totalRoles = await Role.countDocuments();
+        const searchFilter = search ? {
+            $or: [
+                { role_name: { $regex: search, $options: 'i' } }
+            ]
+        } : {};
 
-        const roles = await Role.find()
+        // Get total count for pagination
+        const totalRoles = await Role.countDocuments(searchFilter);
+
+        const roles = await Role.find(searchFilter)
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
@@ -157,20 +165,39 @@ exports.getUsers = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
 
         const skip = (page - 1) * limit;
 
+        const searchFilter = search ? {
+            $or: [
+                { user_name: { $regex: search, $options: 'i' } },
+                { user_email: { $regex: search, $options: 'i' } },
+                { user_phone: { $regex: search, $options: 'i' } }
+            ]
+        } : {};
+
+        const aggregatedSearchFilter = search ? {
+            $or: [
+                { user_name: { $regex: search, $options: 'i' } },
+                { user_email: { $regex: search, $options: 'i' } },
+                { user_phone: { $regex: search, $options: 'i' } },
+                { 'role.role_name': { $regex: search, $options: 'i' } }
+            ]
+        } : {};
+
         // Overall total users
-        const totalUsers = await User.countDocuments();
+        const totalUsers = await User.countDocuments(searchFilter);
 
         // Additional counts
-        const totalCustomerUsers = await User.countDocuments({ role_id: 2 });
-        const totalAdminUsers = await User.countDocuments({ role_id: 1 });
-        const totalActiveUsers = await User.countDocuments({ status: true });
-        const totalDeactiveUsers = await User.countDocuments({ status: false });
+        const totalCustomerUsers = await User.countDocuments({ ...searchFilter, role_id: 2 });
+        const totalAdminUsers = await User.countDocuments({ ...searchFilter, role_id: 1 });
+        const totalActiveUsers = await User.countDocuments({ ...searchFilter, status: true });
+        const totalDeactiveUsers = await User.countDocuments({ ...searchFilter, status: false });
 
         // Aggregation for users paging
         const users = await User.aggregate([
+            { $match: searchFilter },
             {
                 $lookup: {
                     from: "roles",
@@ -180,6 +207,7 @@ exports.getUsers = async (req, res, next) => {
                 }
             },
             { $unwind: { path: "$role", preserveNullAndEmptyArrays: true } },
+            { $match: aggregatedSearchFilter },
             { $project: { "role._id": 0, "role.createdAt": 0, "role.updatedAt": 0, "role.__v": 0 } },
             { $sort: { createdAt: -1 } },
             { $skip: skip },
@@ -244,6 +272,9 @@ exports.manageUserUpdated = async (req, res, next) => {
 
         await user.save();
 
+        await cacheDeletePattern('*users*');
+        await cacheDeletePattern('*profile*');
+
         res.json({ success: true, message: 'User updated successfully' });
     } catch (err) {
         console.error('Update user error:', err);
@@ -293,18 +324,35 @@ exports.getDevices = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
 
         const skip = (page - 1) * limit;
 
+        const searchFilter = search ? {
+            $or: [
+                { serial_number: { $regex: search, $options: 'i' } },
+                { imei_number: { $regex: search, $options: 'i' } }
+            ]
+        } : {};
+
+        const aggregatedSearchFilter = search ? {
+            $or: [
+                { serial_number: { $regex: search, $options: 'i' } },
+                { imei_number: { $regex: search, $options: 'i' } },
+                { 'user_details.user_name': { $regex: search, $options: 'i' } }
+            ]
+        } : {};
+
         // Total counts
-        const totalDevices = await Device.countDocuments();
-        const totalAssignedDevices = await Device.countDocuments({ assign_status: true });
-        const totalUnassignedDevices = await Device.countDocuments({ assign_status: false });
-        const totalActiveDevices = await Device.countDocuments({ status: true });
-        const totalDeactiveDevices = await Device.countDocuments({ status: false });
+        const totalDevices = await Device.countDocuments(searchFilter);
+        const totalAssignedDevices = await Device.countDocuments({ ...searchFilter, assign_status: true });
+        const totalUnassignedDevices = await Device.countDocuments({ ...searchFilter, assign_status: false });
+        const totalActiveDevices = await Device.countDocuments({ ...searchFilter, status: true });
+        const totalDeactiveDevices = await Device.countDocuments({ ...searchFilter, status: false });
 
         // Paginated device data with user details
         const devices = await Device.aggregate([
+            { $match: searchFilter },
             {
                 $lookup: {
                     from: "users",
@@ -316,6 +364,7 @@ exports.getDevices = async (req, res) => {
             {
                 $unwind: { path: "$user_details", preserveNullAndEmptyArrays: true }
             },
+            { $match: aggregatedSearchFilter },
             {
                 $project: {
                     "user_details.password": 0,
@@ -402,6 +451,9 @@ exports.updateDevice = async (req, res) => {
 
         await device.save();
 
+        await cacheDeletePattern('*devices*');
+        await cacheDeletePattern('*analytics*');
+
         return res.status(200).json({
             message: "Device updated successfully!",
             device
@@ -470,6 +522,10 @@ exports.deviceAssignToUser = async (req, res) => {
         device.updatedAt = now;
 
         await device.save();
+
+        await cacheDeletePattern('*devices*');
+        await cacheDeletePattern('*users*');
+        await cacheDeletePattern('*analytics*');
 
         return res.status(200).json({
             success: true,
@@ -787,13 +843,21 @@ exports.getProducts = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
         const skip = (page - 1) * limit;
 
-        const totalProducts = await Product.countDocuments();
-        const totalActiveProducts = await Product.countDocuments({ status: true });
-        const totalInactiveProducts = await Product.countDocuments({ status: false });
+        const searchFilter = search ? {
+            $or: [
+                { product_name: { $regex: search, $options: 'i' } },
+                { product_description: { $regex: search, $options: 'i' } }
+            ]
+        } : {};
 
-        const products = await Product.find()
+        const totalProducts = await Product.countDocuments(searchFilter);
+        const totalActiveProducts = await Product.countDocuments({ ...searchFilter, status: true });
+        const totalInactiveProducts = await Product.countDocuments({ ...searchFilter, status: false });
+
+        const products = await Product.find(searchFilter)
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
@@ -897,6 +961,8 @@ exports.updateProduct = async (req, res, next) => {
         product.updatedAt = new Date();
 
         await product.save();
+
+        await cacheDeletePattern('*products*');
 
         res.status(200).json({
             success: true,

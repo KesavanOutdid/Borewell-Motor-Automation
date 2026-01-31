@@ -21,6 +21,8 @@ const ManageUserRoles = ({ userInfo, handleLogout }) => {
     const [currentUserRoleDetails, setUserRoleEditDetails] = useState(null);
     const [originalUserRoleDetails, setOriginalUserRoleDetails] = useState(null);
     const [isFormDirty, setIsFormDirty] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const searchTimeoutRef = useRef(null);
 
     // Auto-fetch device data
     useEffect(() => {
@@ -29,6 +31,19 @@ const ManageUserRoles = ({ userInfo, handleLogout }) => {
             fetchUserRoleDataCalled.current = true;
         }
     }, [fetchUserRoleData]);
+
+    // Handle search with debounce
+    const handleSearch = (query) => {
+        setSearchQuery(query);
+        
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        searchTimeoutRef.current = setTimeout(() => {
+            fetchUserRoleData(1, pagination.limit, query);
+        }, 500);
+    };
 
 
 
@@ -101,10 +116,22 @@ const ManageUserRoles = ({ userInfo, handleLogout }) => {
                         <div className="col-12">
                             <div className="card mb-4">
                                 <div className="card-header pb-2">
-                                    <div className="w-40 text-end d-flex gap-2">
-                                        <button className="btn btn-primary mb-0 text-end" style={{ padding: '10px' }} onClick={() => setIsModalCreate(true)}>
-                                            <i className="fas fa-file" aria-hidden="true" style={{ color: 'white' }}></i> Create
-                                        </button>
+                                    <div className="row g-2 align-items-center mb-3">
+                                        <div className="col-md-2 col-6">
+                                            <button className="btn btn-primary mb-0" style={{ padding: '10px' }} onClick={() => setIsModalCreate(true)}>
+                                                <i className="fas fa-file" aria-hidden="true" style={{ color: 'white' }}></i> Create
+                                            </button>
+                                        </div>
+                                        <div className="col-md-4 col-12">
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                placeholder="🔍 Search by Role Name..."
+                                                value={searchQuery}
+                                                onChange={(e) => handleSearch(e.target.value)}
+                                                style={{ borderRadius: '6px', padding: '10px 15px', fontSize: '13px' }}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="card-body px-0 pt-0 pb-2">
@@ -221,7 +248,7 @@ const ManageUserRoles = ({ userInfo, handleLogout }) => {
                                                         className="form-select form-select-sm"
                                                         style={{ width: 'auto', minWidth: '70px' }}
                                                         value={pagination.limit}
-                                                        onChange={(e) => handleLimitChange(parseInt(e.target.value))}
+                                                        onChange={(e) => handleLimitChange(parseInt(e.target.value), searchQuery)}
                                                     >
                                                         <option value={5}>5</option>
                                                         <option value={10}>10</option>
@@ -238,7 +265,7 @@ const ManageUserRoles = ({ userInfo, handleLogout }) => {
                                                         <li className={`page-item ${!pagination.hasPrevPage ? 'disabled' : ''}`}>
                                                             <button
                                                                 className="page-link"
-                                                                onClick={() => handlePageChange(pagination.currentPage - 1)}
+                                                                onClick={() => handlePageChange(pagination.currentPage - 1, searchQuery)}
                                                                 disabled={!pagination.hasPrevPage}
                                                                 aria-label="Previous"
                                                             >
@@ -263,7 +290,7 @@ const ManageUserRoles = ({ userInfo, handleLogout }) => {
                                                                 <li key={`page-${pageNum}`} className={`page-item ${pageNum === pagination.currentPage ? 'active' : ''}`}>
                                                                     <button
                                                                         className="page-link"
-                                                                        onClick={() => handlePageChange(pageNum)}
+                                                                        onClick={() => handlePageChange(pageNum, searchQuery)}
                                                                     >
                                                                         {pageNum}
                                                                     </button>
@@ -275,7 +302,7 @@ const ManageUserRoles = ({ userInfo, handleLogout }) => {
                                                         <li className={`page-item ${!pagination.hasNextPage ? 'disabled' : ''}`}>
                                                             <button
                                                                 className="page-link"
-                                                                onClick={() => handlePageChange(pagination.currentPage + 1)}
+                                                                onClick={() => handlePageChange(pagination.currentPage + 1, searchQuery)}
                                                                 disabled={!pagination.hasNextPage}
                                                                 aria-label="Next"
                                                             >
