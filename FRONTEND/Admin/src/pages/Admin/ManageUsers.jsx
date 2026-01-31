@@ -36,7 +36,6 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
         }
     }, [fetchUserRoleData]);
 
-    // Handle search with debounce
     const handleSearch = (query) => {
         setSearchQuery(query);
         
@@ -45,9 +44,17 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
         }
 
         searchTimeoutRef.current = setTimeout(() => {
-            fetchUserData(1, pagination.limit, query);
+            fetchUserData(1, pagination.limit, query.trim());
         }, 500);
     };
+
+    useEffect(() => {
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, []);
 
     // Fetch clients when roleName is "Client Admin", "End User", or "Installation and Service"
     useEffect(() => {
@@ -67,12 +74,17 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
         const roleId = e.target.value;
         const selectedRole = userRolesData.find((role) => role.role_id === roleId);
 
-        // Set the selected role name exactly as it appears in userRolesData
         setSelectedUserRoleId(roleId);
         setSelectedUserRoleName(selectedRole?.role_name || '');
     };
 
-    // Auto-fetch user data
+    const handleUserCreateWrapper = async (e) => {
+        const result = await handleUserCreate(e);
+        if (result) {
+            fetchUserData(1, pagination.limit, searchQuery);
+        }
+    };
+
     useEffect(() => {
         if (!fetchUserDataCalled.current) {
             fetchUserData();
@@ -144,7 +156,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
             if (response.ok) {
                 showAlertSuccess('User updated successfully!');
                 closeModal();
-                fetchUserData(pagination.currentPage); // Stay on current page after update
+                fetchUserData(pagination.currentPage, pagination.limit, searchQuery);
                 setLoadingUpdate(false);
             } else {
                 const responseData = await response.json();
@@ -214,7 +226,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                             backgroundColor: "#fff", padding: "20px", borderRadius: "10px", width: "430px", maxHeight: "650px",
                                             overflowY: "auto", boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"
                                         }}>
-                                            <form className="form" onSubmit={handleUserCreate} style={{ overflowY: "auto" }}>
+                                            <form className="form" onSubmit={handleUserCreateWrapper} style={{ overflowY: "auto" }}>
                                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                                     <h5 style={{ margin: 0 }}>Create User</h5>
                                                     <button onClick={closeModal} style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer" }}>
@@ -487,8 +499,10 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                     ))
                                                 ) : (
                                                     <tr>
-                                                        <td colSpan="8" style={{ textAlign: 'center' }}>
-                                                            <p>No device data available.</p>
+                                                        <td colSpan="8" style={{ textAlign: 'center', padding: '20px' }}>
+                                                            <p style={{ margin: 0, color: '#6c757d' }}>
+                                                                {searchQuery ? `No users found matching "${searchQuery}"` : 'No users available.'}
+                                                            </p>
                                                         </td>
                                                     </tr>
                                                 )}

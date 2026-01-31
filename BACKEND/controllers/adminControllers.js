@@ -169,22 +169,46 @@ exports.getUsers = async (req, res, next) => {
 
         const skip = (page - 1) * limit;
 
-        const searchFilter = search ? {
-            $or: [
-                { user_name: { $regex: search, $options: 'i' } },
-                { user_email: { $regex: search, $options: 'i' } },
-                { user_phone: { $regex: search, $options: 'i' } }
-            ]
-        } : {};
+        let searchFilter = {};
+        let aggregatedSearchFilter = {};
 
-        const aggregatedSearchFilter = search ? {
-            $or: [
+        if (search) {
+            const searchConditions = [
+                { user_name: { $regex: search, $options: 'i' } },
+                { user_email: { $regex: search, $options: 'i' } }
+            ];
+
+            const aggregatedSearchConditions = [
                 { user_name: { $regex: search, $options: 'i' } },
                 { user_email: { $regex: search, $options: 'i' } },
-                { user_phone: { $regex: search, $options: 'i' } },
                 { 'role.role_name': { $regex: search, $options: 'i' } }
-            ]
-        } : {};
+            ];
+
+            const numericSearch = search.replace(/\D/g, '');
+            if (numericSearch) {
+                searchConditions.push({
+                    $expr: {
+                        $regexMatch: {
+                            input: { $toString: "$user_phone" },
+                            regex: numericSearch,
+                            options: 'i'
+                        }
+                    }
+                });
+                aggregatedSearchConditions.push({
+                    $expr: {
+                        $regexMatch: {
+                            input: { $toString: "$user_phone" },
+                            regex: numericSearch,
+                            options: 'i'
+                        }
+                    }
+                });
+            }
+
+            searchFilter = { $or: searchConditions };
+            aggregatedSearchFilter = { $or: aggregatedSearchConditions };
+        }
 
         // Overall total users
         const totalUsers = await User.countDocuments(searchFilter);

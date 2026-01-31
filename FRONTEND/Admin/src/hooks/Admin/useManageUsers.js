@@ -63,7 +63,9 @@ const useManageUsers = (userInfo) => {
         try {
             setLoadingUsers(true);
             const params = new URLSearchParams({ page, limit });
-            if (search) params.append('search', search);
+            if (search && search.trim() !== '') {
+                params.append('search', search.trim());
+            }
             
             const response = await fetch(`${API_BASE}/admin/getUsers?${params.toString()}`);
             if (response.ok) {
@@ -137,15 +139,15 @@ const useManageUsers = (userInfo) => {
             }
 
             showAlertSuccess('User created successfully!');
-            fetchUserData();
             closeModal();
+            return true;
 
         } catch (err) {
             console.log("Create Error:", err);
             setErrorMessage("Error creating user.");
+            setLoadingSubmit(false);
+            return false;
         }
-
-        setLoadingSubmit(false);
     };
 
     // Pagination functions
