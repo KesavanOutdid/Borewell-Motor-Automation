@@ -55,61 +55,45 @@ class AnalyticsData {
   }
 
   static List<ChartDataPoint> _fillHourlyData(List<ChartDataPoint> data) {
-    final filled = <ChartDataPoint>[];
-    final dataMap = {for (var point in data) point.label: point};
-    
-    for (int i = 0; i < 12; i++) {
-      final label = '${i * 5}m';
-      filled.add(dataMap[label] ?? ChartDataPoint(label: label, value: 0));
+    if (data.isEmpty) {
+      return List.generate(12, (i) => ChartDataPoint(label: '${i}', value: 0));
     }
-    return filled;
+    
+    return data;
   }
 
   static List<ChartDataPoint> _fillTodayData(List<ChartDataPoint> data) {
-    final filled = <ChartDataPoint>[];
-    final dataMap = {for (var point in data) point.label: point};
-    
-    for (int i = 0; i < 24; i++) {
-      final label = '${i}h';
-      filled.add(dataMap[label] ?? ChartDataPoint(label: label, value: 0));
+    if (data.isEmpty) {
+      return List.generate(24, (i) => ChartDataPoint(label: '${i}', value: 0));
     }
-    return filled;
+    
+    return data;
   }
 
   static List<ChartDataPoint> _fillWeeklyData(List<ChartDataPoint> data) {
-    final filled = <ChartDataPoint>[];
-    final days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    final dataMap = {for (var point in data) point.label: point};
-    
-    for (final day in days) {
-      filled.add(dataMap[day] ?? ChartDataPoint(label: day, value: 0));
+    if (data.isEmpty) {
+      return List.generate(7, (i) => ChartDataPoint(label: '${i}', value: 0));
     }
-    return filled;
+    
+    return data;
   }
 
   static List<ChartDataPoint> _fillMonthlyData(List<ChartDataPoint> data) {
-    final filled = <ChartDataPoint>[];
-    final now = DateTime.now();
-    final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
-    final dataMap = {for (var point in data) point.label: point};
-    
-    for (int i = 1; i <= daysInMonth; i++) {
-      final label = '${i}d';
-      filled.add(dataMap[label] ?? ChartDataPoint(label: label, value: 0));
+    if (data.isEmpty) {
+      final now = DateTime.now();
+      final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+      return List.generate(daysInMonth, (i) => ChartDataPoint(label: '${i + 1}', value: 0));
     }
-    return filled;
+    
+    return data;
   }
 
   static List<ChartDataPoint> _fillYearlyData(List<ChartDataPoint> data) {
-    final filled = <ChartDataPoint>[];
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    final dataMap = {for (var point in data) point.label: point};
-    
-    for (final month in months) {
-      filled.add(dataMap[month] ?? ChartDataPoint(label: month, value: 0));
+    if (data.isEmpty) {
+      return List.generate(12, (i) => ChartDataPoint(label: '${i + 1}', value: 0));
     }
-    return filled;
+    
+    return data;
   }
 }
 

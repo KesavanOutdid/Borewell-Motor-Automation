@@ -10,7 +10,7 @@ class LoginView extends GetView<LoginController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0FDF4),
+      backgroundColor: AppColors.backgroundLight,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -18,11 +18,7 @@ class LoginView extends GetView<LoginController> {
               Container(
                 width: double.infinity,
                 decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF16A34A), Color(0xFF10B981)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  gradient: AppColors.primaryGradient,
                 ),
                 child: Column(
                   children: [
@@ -90,7 +86,7 @@ class _Logo extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         const Text(
-          "Auto Harvest",
+          "AgriPlus",
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 24,

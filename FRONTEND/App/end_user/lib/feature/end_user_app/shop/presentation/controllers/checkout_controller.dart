@@ -13,7 +13,7 @@ import '../../../../../utils/theme/app_colors.dart';
 class CheckoutController extends GetxController {
   var isProcessing = false.obs;
   
-  final String baseUrl = 'http://192.168.0.11:3030';
+  final String baseUrl = 'http://192.168.0.8:3030';
   final String razorpayKeyId = 'rzp_test_oHoZ3Q1fF6pYEI';
   
   late TokenService tokenService;
@@ -209,7 +209,7 @@ class CheckoutController extends GetxController {
       'amount': amount,
       'currency': currency,
       'order_id': orderId,
-      'name': 'Auto Harvest',
+      'name': 'AgriPlus',
       'description': 'Order Payment',
       'prefill': {
         'contact': phone,

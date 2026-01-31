@@ -11,6 +11,8 @@ import '../../feature/end_user_app/device/presentation/pages/device_binding.dart
 import '../../feature/end_user_app/device/presentation/pages/device_details_page.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_history_page.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_analytics_page.dart';
+import '../../feature/end_user_app/device/presentation/pages/device_sharing_page.dart';
+import '../../feature/end_user_app/device/presentation/pages/device_sharing_binding.dart';
 import '../../feature/end_user_app/device/presentation/pages/add_device_page.dart' as config_device;
 import '../../feature/end_user_app/profile/presentation/pages/profile_page.dart';
 import '../../feature/end_user_app/profile/presentation/pages/profile_binding.dart';
@@ -38,6 +40,7 @@ class AppRoutes {
   static const deviceDetails = '/device/details';
   static const deviceHistory = '/device/history';
   static const deviceAnalytics = '/device/analytics';
+  static const deviceSharing = '/device/sharing';
   static const configureDevice = '/device/configure';
   static const profile = '/profile';
   static const editProfile = '/editProfile';
@@ -91,6 +94,11 @@ class AppRoutes {
       page: () => const DeviceAnalyticsView(),
     ),
     GetPage(
+      name: deviceSharing,
+      page: () => const DeviceSharingView(),
+      binding: DeviceSharingBinding(),
+    ),
+    GetPage(
       name: configureDevice,
       page: () => const config_device.ConfigureDeviceView(),
     ),
@@ -101,7 +109,7 @@ class AppRoutes {
     ),
     GetPage(
       name: editProfile,
-      page: () => const EditProfileView(),
+      page: () => const EditProfilePage(),
       binding: ProfileBinding(),
     ),
     GetPage(

@@ -7,6 +7,7 @@ const Voucher = require('../models/Voucher');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const Telemetry = require("../models/Telemetry");
+const DeviceShare = require("../models/DeviceShare");
 const { cacheDeletePattern } = require('../middlewares/cacheMiddleware');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change_this_secret';
@@ -192,13 +193,32 @@ exports.startStopDevice = async (req, res) => {
     try {
         const { serial_number, imei_number, user_email, start_status } = req.body;
 
-        const device = await Device.findOne({ serial_number, imei_number });
+        const user = await User.findOne({ user_email });
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
 
+        const device = await Device.findOne({ serial_number, imei_number });
         if (!device) {
-            return res.status(404).json({
-                success: false,
-                message: "Device not found"
+            return res.status(404).json({ success: false, message: "Device not found" });
+        }
+
+        // Permission Check: Must be master OR active shared user
+        let hasPermission = false;
+        if (Number(device.assigned_user_id) === Number(user.user_id)) {
+            hasPermission = true;
+        } else {
+            const share = await DeviceShare.findOne({
+                serial_number,
+                shared_to_user_id: user.user_id,
+                status: true,
+                acceptance_status: 'accepted'
             });
+            if (share) hasPermission = true;
+        }
+
+        if (!hasPermission) {
+            return res.status(403).json({ success: false, message: "You don't have permission to operate this device" });
         }
 
         let updateData = {
@@ -247,9 +267,11 @@ exports.userAssignDevices = async (req, res) => {
             });
         }
 
-        // Find all devices assigned to this user
-        const devices = await Device.aggregate([
-            { $match: { assigned_user_id: parseInt(user_id), assign_status: true, status: true } },
+        const userIdNum = parseInt(user_id);
+
+        // 1. Find all devices where this user is the Master
+        const masterDevices = await Device.aggregate([
+            { $match: { assigned_user_id: userIdNum, assign_status: true, status: true } },
             {
                 $lookup: {
                     from: "users",
@@ -264,18 +286,41 @@ exports.userAssignDevices = async (req, res) => {
                     preserveNullAndEmptyArrays: true
                 }
             },
-            {
-                $project: {
-                    "user_details.password": 0,
-                    "user_details.createdAt": 0,
-                    "user_details.updatedAt": 0,
-                    "user_details.__v": 0
-                }
-            },
-            { $sort: { createdAt: -1 } }
+            { $addFields: { role: 'master' } }
         ]);
 
-        const enrichedDevices = devices.map(device => ({
+        // 2. Find all devices shared with this user
+        const shares = await DeviceShare.find({ shared_to_user_id: userIdNum, status: true });
+        const sharedSerials = shares.map(s => s.serial_number);
+
+        const sharedDevices = await Device.aggregate([
+            { $match: { serial_number: { $in: sharedSerials }, status: true } },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "assigned_user_id",
+                    foreignField: "user_id",
+                    as: "user_details"
+                }
+            },
+            {
+                $unwind: {
+                    path: "$user_details",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            { $addFields: { role: 'shared' } }
+        ]);
+
+        const allDevices = [
+            ...masterDevices.map(d => ({ ...d, acceptance_status: 'accepted' })), 
+            ...sharedDevices.map(d => {
+                const share = shares.find(s => s.serial_number === d.serial_number);
+                return { ...d, acceptance_status: share ? share.acceptance_status : 'pending' };
+            })
+        ];
+
+        const enrichedDevices = allDevices.map(device => ({
             ...device,
             user_details: device.user_details ? {
                 user_name: device.user_details.user_name,
@@ -318,9 +363,40 @@ exports.userDeviceDetails = async (req, res) => {
             });
         }
 
+        // Determine role
+        let role = 'shared';
+        let acceptance_status = 'accepted'; // Default for master
+        if (device.assigned_user_id && req.user && req.user.user_id) {
+            if (Number(device.assigned_user_id) === Number(req.user.user_id)) {
+                role = 'master';
+            } else {
+                // If shared, check acceptance status
+                const share = await DeviceShare.findOne({ 
+                    serial_number, 
+                    shared_to_user_id: req.user.user_id 
+                });
+                if (share) {
+                    acceptance_status = share.acceptance_status;
+                }
+            }
+        }
+
+        // Fetch latest telemetry
+        const telemetryCollection = mongoose.connection.db.collection("borewell_telemetry");
+        const latestTelemetry = await telemetryCollection
+            .find({ serial_number })
+            .sort({ timestamp: -1 })
+            .limit(1)
+            .toArray();
+
         const response = {
             success: true,
-            data: device
+            data: {
+                ...device.toObject(),
+                role,
+                acceptance_status,
+                telemetry: latestTelemetry.length > 0 ? latestTelemetry[0] : null
+            }
         };
 
         return res.status(200).json(response);
@@ -352,13 +428,35 @@ exports.userDeviceHistory = async (req, res) => {
             });
         }
 
+        // 1. Get all serial numbers the user has access to
+        const masterDevices = await Device.find({ assigned_user_id: user.user_id, status: true });
+        const sharedShares = await DeviceShare.find({ 
+            shared_to_user_id: user.user_id, 
+            status: true,
+            acceptance_status: 'accepted'
+        });
+        
+        const serialNumbers = [
+            ...masterDevices.map(d => d.serial_number),
+            ...sharedShares.map(s => s.serial_number)
+        ];
+
+        if (serialNumbers.length === 0) {
+            return res.status(200).json({
+                success: true,
+                user_id,
+                count: 0,
+                data: []
+            });
+        }
+
         // DB collection
         const db = mongoose.connection.db;
         const historyCollection = db.collection("borewell_history");
 
-        // Fetch all history sessions for this user
+        // 2. Fetch all history sessions for these serial numbers
         const history = await historyCollection
-            .find({ user_id: parseInt(user_id) })
+            .find({ serial_number: { $in: serialNumbers } })
             .sort({ startAt: -1 })    // latest first
             .toArray();
 
@@ -1479,6 +1577,147 @@ exports.deleteVoucher = async (req, res, next) => {
             message: "Voucher deleted successfully"
         });
 
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.assignDeviceToOther = async (req, res, next) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty())
+            return res.status(400).json({ success: false, errors: errors.array() });
+
+        const { serial_number, master_user_id, shared_to_user_phone } = req.body;
+
+        // 1. Verify master ownership
+        const device = await Device.findOne({ serial_number, assigned_user_id: master_user_id });
+        if (!device) {
+            return res.status(404).json({ success: false, message: "Device not found or you are not the owner" });
+        }
+
+        // 2. Find shared user
+        const sharedUser = await User.findOne({ user_phone: shared_to_user_phone });
+        if (!sharedUser) {
+            return res.status(404).json({ success: false, message: "This number is not registered, please register" });
+        }
+
+        if (Number(sharedUser.user_id) === Number(master_user_id)) {
+            return res.status(400).json({ success: false, message: "Cannot share with yourself" });
+        }
+
+        // 3. Check current share count
+        const shareCount = await DeviceShare.countDocuments({ serial_number, master_user_id });
+        if (shareCount >= 3) {
+            return res.status(400).json({ success: false, message: "Maximum 3 persons sharing limit reached" });
+        }
+
+        // 4. Create or Update share
+        let share = await DeviceShare.findOne({ serial_number, shared_to_user_id: sharedUser.user_id });
+        if (share) {
+            return res.status(400).json({ success: false, message: "Device already shared with this user" });
+        }
+
+        share = new DeviceShare({
+            serial_number,
+            master_user_id,
+            shared_to_user_id: sharedUser.user_id,
+            shared_to_user_name: sharedUser.user_name,
+            shared_to_user_phone: sharedUser.user_phone,
+            history: [{
+                action: 'assigned',
+                performedBy: master_user_id
+            }]
+        });
+
+        await share.save();
+
+        res.status(200).json({ success: true, message: "Device shared successfully", data: share });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.getSharedUsers = async (req, res, next) => {
+    try {
+        const { serial_number, master_user_id } = req.body;
+        const shares = await DeviceShare.find({ serial_number, master_user_id });
+        res.status(200).json({ success: true, data: shares });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.updateShareStatus = async (req, res, next) => {
+    try {
+        const { serial_number, master_user_id, shared_to_user_id, status } = req.body;
+
+        const share = await DeviceShare.findOne({ serial_number, master_user_id, shared_to_user_id });
+        if (!share) {
+            return res.status(404).json({ success: false, message: "Share record not found" });
+        }
+
+        share.status = status;
+        share.updatedAt = new Date();
+        share.history.push({
+            action: status ? 'activated' : 'deactivated',
+            performedBy: master_user_id
+        });
+
+        await share.save();
+        res.status(200).json({ success: true, message: `Share ${status ? 'activated' : 'deactivated'} successfully`, data: share });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.respondToDeviceShare = async (req, res, next) => {
+    try {
+        const { serial_number, user_id, action } = req.body; // action: 'accepted' or 'rejected'
+
+        if (!['accepted', 'rejected'].includes(action)) {
+            return res.status(400).json({ success: false, message: "Invalid action. Must be 'accepted' or 'rejected'" });
+        }
+
+        const share = await DeviceShare.findOne({ serial_number, shared_to_user_id: user_id });
+        if (!share) {
+            return res.status(404).json({ success: false, message: "Sharing request not found" });
+        }
+
+        share.acceptance_status = action;
+        share.updatedAt = new Date();
+        share.history.push({
+            action: action,
+            performedBy: user_id
+        });
+
+        // If rejected, we might want to delete the record or just keep it as rejected
+        // The requirement says "accept or reject", usually it stays as record
+        
+        await share.save();
+
+        res.status(200).json({ 
+            success: true, 
+            message: `Sharing request ${action} successfully`,
+            data: share 
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.deleteShare = async (req, res, next) => {
+    try {
+        const { serial_number, master_user_id, shared_to_user_id } = req.body;
+
+        const share = await DeviceShare.findOneAndDelete({ serial_number, master_user_id, shared_to_user_id });
+        if (!share) {
+            return res.status(404).json({ success: false, message: "Share record not found" });
+        }
+
+        res.status(200).json({ success: true, message: "Share deleted successfully" });
     } catch (err) {
         next(err);
     }

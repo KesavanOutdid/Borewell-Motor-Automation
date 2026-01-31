@@ -325,7 +325,7 @@ class DeviceAnalyticsController extends GetxController {
       );
 
       List<List<dynamic>> csvData = [
-        ['Auto Harvest - Analytics Report'],
+        ['AgriPlus - Analytics Report'],
         ['Device Serial:', serialNumber ?? 'N/A'],
         ['Device IMEI:', imeiNumber ?? 'N/A'],
         ['Metric Type:', selectedMetric['label']],
@@ -475,7 +475,7 @@ class DeviceAnalyticsController extends GetxController {
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
                     pw.Text(
-                      'Auto Harvest - Analytics Report',
+                      'AgriPlus - Analytics Report',
                       style: pw.TextStyle(
                         fontSize: 24,
                         fontWeight: pw.FontWeight.bold,

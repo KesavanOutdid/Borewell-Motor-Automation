@@ -8,6 +8,7 @@ class PrimaryButton extends StatelessWidget {
   final double? width;
   final double height;
   final IconData? icon;
+  final Gradient? gradient;
 
   const PrimaryButton({
     super.key,
@@ -17,56 +18,62 @@ class PrimaryButton extends StatelessWidget {
     this.width,
     this.height = 56,
     this.icon,
+    this.gradient,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Container(
       width: width,
       height: height,
-      child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryGreen,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(50),
-          ),
-        ),
-        child: isLoading
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2.5,
-                ),
-              )
-            : icon != null
-                ? Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(icon, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
+      decoration: BoxDecoration(
+        gradient: gradient ?? AppColors.primaryGradient,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [AppColors.glowShadow],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: isLoading ? null : onPressed,
+          borderRadius: BorderRadius.circular(16),
+          child: Center(
+            child: isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 3,
+                    ),
+                  )
+                : icon != null
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(icon, size: 22, color: Colors.white),
+                          const SizedBox(width: 12),
+                          Text(
+                            text,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ],
+                      )
+                    : Text(
                         text,
                         style: const TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0.2,
                         ),
                       ),
-                    ],
-                  )
-                : Text(
-                    text,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
+          ),
+        ),
       ),
     );
   }
@@ -148,6 +155,8 @@ class AppCard extends StatelessWidget {
   final EdgeInsetsGeometry? margin;
   final VoidCallback? onTap;
   final Color? color;
+  final Gradient? gradient;
+  final bool elevated;
 
   const AppCard({
     super.key,
@@ -156,16 +165,20 @@ class AppCard extends StatelessWidget {
     this.margin,
     this.onTap,
     this.color,
+    this.gradient,
+    this.elevated = true,
   });
 
   @override
   Widget build(BuildContext context) {
     final cardContent = Container(
-      padding: padding ?? const EdgeInsets.all(16),
+      padding: padding ?? const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: color ?? Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [AppColors.cardShadow],
+        color: gradient == null ? (color ?? Theme.of(context).cardTheme.color) : null,
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: elevated ? [AppColors.cardShadow] : null,
+        border: !elevated ? Border.all(color: AppColors.textMuted.withOpacity(0.1), width: 1) : null,
       ),
       child: child,
     );
@@ -177,7 +190,7 @@ class AppCard extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(24),
             child: cardContent,
           ),
         ),
@@ -196,7 +209,7 @@ class GridCard extends StatelessWidget {
   final String? subtitle;
   final IconData icon;
   final VoidCallback onTap;
-  final Color? iconBackgroundColor;
+  final Gradient? gradient;
   final Widget? badge;
 
   const GridCard({
@@ -205,7 +218,7 @@ class GridCard extends StatelessWidget {
     this.subtitle,
     required this.icon,
     required this.onTap,
-    this.iconBackgroundColor,
+    this.gradient,
     this.badge,
   });
 
@@ -213,17 +226,17 @@ class GridCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: Theme.of(context).cardTheme.color,
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [AppColors.cardShadow],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(24),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -231,50 +244,45 @@ class GridCard extends StatelessWidget {
                   children: [
                     Container(
                       width: double.infinity,
-                      height: 100,
+                      height: 110,
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: iconBackgroundColor != null
-                              ? [iconBackgroundColor!, iconBackgroundColor!.withOpacity(0.7)]
-                              : [AppColors.primaryGreen, AppColors.emerald],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
+                        gradient: gradient ?? AppColors.primaryGradient,
+                        borderRadius: BorderRadius.circular(20),
                       ),
                       child: Icon(
                         icon,
                         color: Colors.white,
-                        size: 48,
+                        size: 52,
                       ),
                     ),
                     if (badge != null)
                       Positioned(
-                        top: 8,
-                        right: 8,
+                        top: 12,
+                        right: 12,
                         child: badge!,
                       ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).textTheme.titleMedium?.color,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (subtitle != null)
                   Padding(
-                    padding: const EdgeInsets.only(top: 4),
+                    padding: const EdgeInsets.only(top: 6),
                     child: Text(
                       subtitle!,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textSecondary,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textMuted,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -293,41 +301,58 @@ class StatusBadge extends StatelessWidget {
   final String text;
   final Color color;
   final bool showDot;
+  final bool glow;
 
   const StatusBadge({
     super.key,
     required this.text,
     required this.color,
     this.showDot = true,
+    this.glow = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+        boxShadow: glow ? [
+          BoxShadow(
+            color: color.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          )
+        ] : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (showDot) ...[
             Container(
-              width: 6,
-              height: 6,
+              width: 8,
+              height: 8,
               decoration: BoxDecoration(
                 color: color,
                 shape: BoxShape.circle,
+                boxShadow: glow ? [
+                  BoxShadow(
+                    color: color.withOpacity(0.6),
+                    blurRadius: 6,
+                    spreadRadius: 1,
+                  )
+                ] : null,
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
           ],
           Text(
             text,
             style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
               color: color,
             ),
           ),

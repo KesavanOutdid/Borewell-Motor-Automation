@@ -1,6 +1,6 @@
 # 🌾 Borewell Motor Automation System
 
-**Auto Harvest** - A comprehensive IoT-based borewell motor automation system with real-time monitoring, e-commerce integration, and voucher management.
+**AgriPlus** - A comprehensive IoT-based borewell motor automation system with real-time monitoring, e-commerce integration, and voucher management.
 
 ---
 

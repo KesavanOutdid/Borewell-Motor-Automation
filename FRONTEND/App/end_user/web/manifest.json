@@ -1,11 +1,11 @@
 {
-    "name": "Auto Harvest",
-    "short_name": "Auto Harvest",
+    "name": "AgriPlus",
+    "short_name": "AgriPlus",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "Auto Harvest - Borewell Motor Automation",
+    "description": "AgriPlus - Borewell Motor Automation",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

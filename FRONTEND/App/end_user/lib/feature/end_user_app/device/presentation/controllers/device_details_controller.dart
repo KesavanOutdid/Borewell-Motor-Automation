@@ -71,6 +71,7 @@ class DeviceDetailsController extends GetxController {
     liveData.assignAll({
       'serialNumber': serialNumber ?? '-',
       'imei': imeiNumber ?? '-',
+      'role': args['role'] ?? 'master',
       'motorHp': args['motor_hp']?.toString() ?? args['motorHp']?.toString() ?? '-',
       'location': locationText ?? _formatCoordinate(latitude, longitude),
       'latitude': latitude ?? 28.6139,
@@ -156,14 +157,13 @@ class DeviceDetailsController extends GetxController {
         if (json['success'] == true && json['data'] != null) {
           _applyDeviceData(Map<String, dynamic>.from(json['data']));
         } else {
-          _showMessage('Unable to load device details');
+          _showMessage(json['message'] ?? 'Unable to load device details');
         }
       } else if (response.statusCode == 401) {
         _handleUnauthorized();
-      } else if (response.statusCode == 404) {
-        _showMessage('Device not found');
       } else {
-        _showMessage('Failed to load device (${response.statusCode})');
+        final json = jsonDecode(response.body);
+        _showMessage(json['message'] ?? 'Failed to load device (${response.statusCode})');
       }
     } catch (e) {
       _showMessage('Connection failed: $e');
@@ -572,6 +572,7 @@ class DeviceDetailsController extends GetxController {
     liveData.assignAll({
       'serialNumber': data['serial_number'] ?? serialNumber ?? '-',
       'imei': data['imei_number'] ?? imeiNumber ?? '-',
+      'role': data['role'] ?? liveData['role'] ?? 'master',
       'motorHp': data['motor_hp']?.toString() ?? liveData['motorHp'] ?? '-',
       'location': locationText ?? liveData['location'] ?? '-',
       'latitude': latitude ?? 28.6139,

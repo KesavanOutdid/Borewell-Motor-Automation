@@ -6,6 +6,7 @@ import '../../../shop/presentation/pages/shop_home_page.dart';
 import '../../../shop/presentation/pages/cart_page.dart';
 import '../../../shop/presentation/pages/orders_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../../../utils/theme/app_colors.dart';
 
 class DashboardView extends GetView<DashboardController> {
@@ -13,75 +14,27 @@ class DashboardView extends GetView<DashboardController> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Obx(
       () => Scaffold(
-        body: _buildPage(controller.selectedIndex.value),
-        bottomNavigationBar: BottomAppBar(
-          shape: const CircularNotchedRectangle(),
-          notchMargin: 6,
-          color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
-          elevation: 8,
-          child: SizedBox(
-            height: 60,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _NavBarItem(
-                  icon: Icons.home_outlined,
-                  activeIcon: Icons.home,
-                  label: 'Home',
-                  isSelected: controller.selectedIndex.value == 0,
-                  onTap: () => controller.changePage(0),
-                ),
-                _NavBarItem(
-                  icon: Icons.devices_outlined,
-                  activeIcon: Icons.devices,
-                  label: 'Devices',
-                  isSelected: controller.selectedIndex.value == 1,
-                  onTap: () => controller.changePage(1),
-                ),
-                const SizedBox(width: 50),
-                _NavBarItem(
-                  icon: Icons.shopping_bag_outlined,
-                  activeIcon: Icons.shopping_bag,
-                  label: 'Orders',
-                  isSelected: controller.selectedIndex.value == 2,
-                  onTap: () => controller.changePage(2),
-                ),
-                _NavBarItem(
-                  icon: Icons.person_outline,
-                  activeIcon: Icons.person,
-                  label: 'Profile',
-                  isSelected: controller.selectedIndex.value == 3,
-                  onTap: () => controller.changePage(3),
-                ),
-              ],
+        drawer: _ModernDrawer(controller: controller),
+        body: Stack(
+          children: [
+            _buildPage(controller.selectedIndex.value),
+            Positioned(
+              left: 16,
+              bottom: 24,
+              child: _FloatingMenuButton(isDark: isDark),
             ),
-          ),
-        ),
-        floatingActionButton: Padding(
-          padding: const EdgeInsets.only(top: 20),
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: const BoxDecoration(
-              gradient: AppColors.primaryGradient,
-              shape: BoxShape.circle,
-            ),
-            child: FloatingActionButton(
-              heroTag: 'dashboard_cart_fab',
-              onPressed: () => Get.to(() => const CartPage()),
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              child: const Icon(
-                Icons.shopping_cart,
-                color: Colors.white,
-                size: 24,
+            if (controller.selectedIndex.value != 1)
+              Positioned(
+                right: 16,
+                bottom: 24,
+                child: _FloatingCartButton(),
               ),
-            ),
-          ),
+          ],
         ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       ),
     );
   }
@@ -102,46 +55,232 @@ class DashboardView extends GetView<DashboardController> {
   }
 }
 
-class _NavBarItem extends StatelessWidget {
+class _ModernDrawer extends StatelessWidget {
+  final DashboardController controller;
+  
+  const _ModernDrawer({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return SizedBox(
+      width: MediaQuery.of(context).size.width * 0.7,
+      child: Drawer(
+        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        child: SafeArea(
+          child: Column(
+            children: [
+              const SizedBox(height: 24),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.agriculture_rounded,
+                      color: Colors.white,
+                      size: 40,
+                    ),
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'AgriPlus',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          Text(
+                            'Smart Automation',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+              Expanded(
+                child: Obx(
+                  () => ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    children: [
+                      _DrawerItem(
+                        icon: Icons.store_rounded,
+                        label: 'Shop',
+                        isSelected: controller.selectedIndex.value == 0,
+                        onTap: () {
+                          controller.changePage(0);
+                          Navigator.of(context).pop();
+                        },
+                        color: AppColors.primaryGreen,
+                      ),
+                      const SizedBox(height: 8),
+                      _DrawerItem(
+                        icon: Icons.devices_rounded,
+                        label: 'My Devices',
+                        isSelected: controller.selectedIndex.value == 1,
+                        onTap: () {
+                          controller.changePage(1);
+                          Navigator.of(context).pop();
+                        },
+                        color: AppColors.primaryGreen,
+                      ),
+                      const SizedBox(height: 8),
+                      _DrawerItem(
+                        icon: Icons.shopping_bag_rounded,
+                        label: 'Orders',
+                        isSelected: controller.selectedIndex.value == 2,
+                        onTap: () {
+                          controller.changePage(2);
+                          Navigator.of(context).pop();
+                        },
+                        color: AppColors.primaryGreen,
+                      ),
+                      const SizedBox(height: 8),
+                      _DrawerItem(
+                        icon: Icons.person_rounded,
+                        label: 'Profile',
+                        isSelected: controller.selectedIndex.value == 3,
+                        onTap: () {
+                          controller.changePage(3);
+                          Navigator.of(context).pop();
+                        },
+                        color: AppColors.primaryGreen,
+                      ),
+                      const SizedBox(height: 24),
+                      const Divider(),
+                      const SizedBox(height: 8),
+                      _DrawerItem(
+                        icon: Icons.settings_rounded,
+                        label: 'Settings',
+                        isSelected: false,
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          Get.toNamed('/settings');
+                        },
+                        color: const Color(0xFF64748B),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DrawerItem extends StatelessWidget {
   final IconData icon;
-  final IconData activeIcon;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
+  final Color color;
 
-  const _NavBarItem({
+  const _DrawerItem({
     required this.icon,
-    required this.activeIcon,
     required this.label,
     required this.isSelected,
     required this.onTap,
+    required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? color : (isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.02)),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
           children: [
             Icon(
-              isSelected ? activeIcon : icon,
-              color: isSelected ? AppColors.primaryGreen : AppColors.textMuted,
-              size: 22,
+              icon,
+              color: isSelected ? Colors.white : (isDark ? Colors.white70 : AppColors.textSecondary),
+              size: 26,
             ),
-            const SizedBox(height: 2),
+            const SizedBox(width: 16),
             Text(
               label,
               style: TextStyle(
-                fontSize: 9,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? AppColors.primaryGreen : AppColors.textMuted,
+                fontSize: 16,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                color: isSelected ? Colors.white : (isDark ? Colors.white : AppColors.textPrimary),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FloatingMenuButton extends StatelessWidget {
+  final bool isDark;
+  
+  const _FloatingMenuButton({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Scaffold.of(context).openDrawer(),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.primaryGreen,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Icon(
+          Icons.menu_rounded,
+          color: Colors.white,
+          size: 28,
+        ),
+      ),
+    );
+  }
+}
+
+class _FloatingCartButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Get.to(() => const CartPage()),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.primaryOrange,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Icon(
+          Icons.shopping_cart_rounded,
+          color: Colors.white,
+          size: 28,
         ),
       ),
     );

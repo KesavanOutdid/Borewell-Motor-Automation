@@ -364,6 +364,7 @@ router.post(
 */
 router.post(
     '/userDeviceDetails',
+    authMiddleware(),
     [
         body('serial_number').notEmpty().withMessage("Serial number is required"),
         body('imei_number').notEmpty().withMessage("IMEI number is required"),
@@ -1136,6 +1137,218 @@ router.post(
     '/deleteVoucher',
     authMiddleware(),
     appCtrl.deleteVoucher
+);
+
+/**
+ * @swagger
+ * tags:
+ *   name: Device Sharing
+ *   description: Device sharing endpoints for Master users
+ */
+
+/**
+ * @swagger
+ * /app/assignDeviceToOther:
+ *   post:
+ *     summary: Master shares a device with another user (max 3 shares)
+ *     tags: [Device Sharing]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - serial_number
+ *               - master_user_id
+ *               - shared_to_user_phone
+ *             properties:
+ *               serial_number:
+ *                 type: string
+ *               master_user_id:
+ *                 type: number
+ *               shared_to_user_phone:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Device shared successfully
+ *       400:
+ *         description: Validation error or max shares reached
+ *       404:
+ *         description: User or Device not found
+ */
+router.post(
+    '/assignDeviceToOther',
+    authMiddleware(),
+    [
+        body('serial_number').notEmpty().withMessage("Serial number is required"),
+        body('master_user_id').notEmpty().withMessage("Master User ID is required"),
+        body('shared_to_user_phone').notEmpty().withMessage("Shared user phone is required")
+    ],
+    appCtrl.assignDeviceToOther
+);
+
+/**
+ * @swagger
+ * /app/getSharedUsers:
+ *   post:
+ *     summary: Get list of users a device is shared with
+ *     tags: [Device Sharing]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - serial_number
+ *               - master_user_id
+ *             properties:
+ *               serial_number:
+ *                 type: string
+ *               master_user_id:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Shared users list retrieved successfully
+ */
+router.post(
+    '/getSharedUsers',
+    authMiddleware(),
+    [
+        body('serial_number').notEmpty().withMessage("Serial number is required"),
+        body('master_user_id').notEmpty().withMessage("Master User ID is required")
+    ],
+    appCtrl.getSharedUsers
+);
+
+/**
+ * @swagger
+ * /app/updateShareStatus:
+ *   post:
+ *     summary: Activate/Deactivate a share
+ *     tags: [Device Sharing]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - serial_number
+ *               - master_user_id
+ *               - shared_to_user_id
+ *               - status
+ *             properties:
+ *               serial_number:
+ *                 type: string
+ *               master_user_id:
+ *                 type: number
+ *               shared_to_user_id:
+ *                 type: number
+ *               status:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Share status updated successfully
+ */
+router.post(
+    '/updateShareStatus',
+    authMiddleware(),
+    [
+        body('serial_number').notEmpty().withMessage("Serial number is required"),
+        body('master_user_id').notEmpty().withMessage("Master User ID is required"),
+        body('shared_to_user_id').notEmpty().withMessage("Shared User ID is required"),
+        body('status').isBoolean().withMessage("Status must be boolean")
+    ],
+    appCtrl.updateShareStatus
+);
+
+/**
+ * @swagger
+ * /app/deleteShare:
+ *   post:
+ *     summary: Delete a share
+ *     tags: [Device Sharing]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - serial_number
+ *               - master_user_id
+ *               - shared_to_user_id
+ *             properties:
+ *               serial_number:
+ *                 type: string
+ *               master_user_id:
+ *                 type: number
+ *               shared_to_user_id:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Share deleted successfully
+ */
+router.post(
+    '/deleteShare',
+    authMiddleware(),
+    [
+        body('serial_number').notEmpty().withMessage("Serial number is required"),
+        body('master_user_id').notEmpty().withMessage("Master User ID is required"),
+        body('shared_to_user_id').notEmpty().withMessage("Shared User ID is required")
+    ],
+    appCtrl.deleteShare
+);
+
+/**
+ * @swagger
+ * /app/respondToDeviceShare:
+ *   post:
+ *     summary: Accept or Reject a device share
+ *     tags: [Device Sharing]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - serial_number
+ *               - user_id
+ *               - action
+ *             properties:
+ *               serial_number:
+ *                 type: string
+ *               user_id:
+ *                 type: number
+ *               action:
+ *                 type: string
+ *                 enum: [accepted, rejected]
+ *     responses:
+ *       200:
+ *         description: Responded to share successfully
+ */
+router.post(
+    '/respondToDeviceShare',
+    authMiddleware(),
+    [
+        body('serial_number').notEmpty().withMessage("Serial number is required"),
+        body('user_id').notEmpty().withMessage("User ID is required"),
+        body('action').isIn(['accepted', 'rejected']).withMessage("Action must be 'accepted' or 'rejected'")
+    ],
+    appCtrl.respondToDeviceShare
 );
 
 module.exports = router;

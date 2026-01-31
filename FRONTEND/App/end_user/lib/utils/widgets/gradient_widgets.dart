@@ -8,6 +8,7 @@ class GradientButton extends StatelessWidget {
   final double? width;
   final double height;
   final IconData? icon;
+  final Gradient? gradient;
 
   const GradientButton({
     Key? key,
@@ -15,8 +16,9 @@ class GradientButton extends StatelessWidget {
     required this.onPressed,
     this.isLoading = false,
     this.width,
-    this.height = 50,
+    this.height = 56,
     this.icon,
+    this.gradient,
   }) : super(key: key);
 
   @override
@@ -25,15 +27,15 @@ class GradientButton extends StatelessWidget {
       width: width ?? double.infinity,
       height: height,
       decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [AppColors.primaryShadow],
+        gradient: gradient ?? AppColors.primaryGradient,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [AppColors.glowShadow],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: isLoading ? null : onPressed,
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(16),
           child: Center(
             child: isLoading
                 ? const SizedBox(
@@ -41,23 +43,24 @@ class GradientButton extends StatelessWidget {
                     height: 24,
                     child: CircularProgressIndicator(
                       color: Colors.white,
-                      strokeWidth: 2.5,
+                      strokeWidth: 3,
                     ),
                   )
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       if (icon != null) ...[
-                        Icon(icon, color: Colors.white, size: 20),
-                        const SizedBox(width: 8),
+                        Icon(icon, color: Colors.white, size: 22),
+                        const SizedBox(width: 12),
                       ],
                       Text(
                         text,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
                         ),
                       ),
                     ],
@@ -282,68 +285,101 @@ class MetricCard extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
-  final Color color;
+  final Gradient gradient;
 
   const MetricCard({
     Key? key,
     required this.label,
     required this.value,
     required this.icon,
-    required this.color,
+    required this.gradient,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final isNoData = value == '-' || value.isEmpty;
+    
+    Color backgroundColor;
+    Color iconColor;
+    
+    if (gradient == AppColors.purpleGradient) {
+      backgroundColor = const Color(0xFFE9E3F5);
+      iconColor = const Color(0xFF7C3AED);
+    } else if (gradient == AppColors.sunsetGradient) {
+      if (label == 'Motor Energy') {
+        backgroundColor = const Color(0xFFFFE8D6);
+        iconColor = const Color(0xFFFF8A00);
+      } else {
+        backgroundColor = const Color(0xFFFFDDE3);
+        iconColor = const Color(0xFFFF5C8D);
+      }
+    } else if (gradient == AppColors.primaryGradient) {
+      backgroundColor = const Color(0xFFD4F4E7);
+      iconColor = const Color(0xFF10B981);
+    } else if (gradient == AppColors.blueGradient) {
+      backgroundColor = const Color(0xFFD8F0FF);
+      iconColor = const Color(0xFF3B82F6);
+    } else if (gradient.toString().contains('FF4757')) {
+      backgroundColor = const Color(0xFFFFE5E8);
+      iconColor = const Color(0xFFFF4757);
+    } else {
+      backgroundColor = const Color(0xFFE9E3F5);
+      iconColor = const Color(0xFF7C3AED);
+    }
+    
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: iconColor.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(10),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [color, color.withOpacity(0.7)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.6),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: Colors.white, size: 20),
+              child: Icon(icon, color: iconColor, size: 22),
             ),
             const SizedBox(height: 8),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: color,
+            Flexible(
+              child: Text(
+                isNoData ? '-' : value,
+                style: TextStyle(
+                  fontSize: isNoData ? 14 : 13,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1F2937),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.grey.shade600,
+            const SizedBox(height: 2),
+            Flexible(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF6B7280),
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
             ),
           ],
         ),

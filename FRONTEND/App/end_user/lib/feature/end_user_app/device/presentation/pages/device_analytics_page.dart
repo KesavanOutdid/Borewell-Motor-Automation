@@ -783,7 +783,10 @@ class DeviceAnalyticsView extends StatelessWidget {
     final minValue = values.isEmpty ? 0.0 : values.reduce(min);
     
     final maxY = maxValue + (maxValue * 0.1);
-    final minY = 0.0;
+    final minY = minValue > 0 ? minValue - (minValue * 0.1) : 0.0;
+    
+    final yRange = maxY - minY;
+    final horizontalInterval = yRange > 0 ? yRange / 5 : 1.0;
     
     return LineChart(
       LineChartData(
@@ -792,7 +795,7 @@ class DeviceAnalyticsView extends StatelessWidget {
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
-          horizontalInterval: 1,
+          horizontalInterval: horizontalInterval,
           getDrawingHorizontalLine: (value) {
             return FlLine(
               color: Colors.grey[200]!,
@@ -832,9 +835,10 @@ class DeviceAnalyticsView extends StatelessWidget {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 45,
+              interval: horizontalInterval,
               getTitlesWidget: (value, meta) {
                 return Text(
-                  value >= 1000 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toStringAsFixed(0),
+                  value >= 1000 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toStringAsFixed(1),
                   style: TextStyle(
                     fontSize: 11,
                     color: Colors.grey[600],

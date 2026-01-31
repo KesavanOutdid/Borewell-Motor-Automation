@@ -11,8 +11,13 @@ import 'dart:convert';
 class HomeController extends GetxController {
   var devices = <Map<String, dynamic>>[].obs;
   var isLoading = false.obs;
+  var selectedFilter = 'All'.obs;
   late TokenService tokenService;
   final _storage = GetStorage();
+
+  void setFilter(String filter) {
+    selectedFilter.value = filter;
+  }
 
   @override
   void onInit() {
@@ -363,6 +368,38 @@ class HomeController extends GetxController {
     
     if (result != null && result.isNotEmpty) {
       assignDevice(result);
+    }
+  }
+    
+  Future<void> respondToShare(String serial, String action) async {
+    isLoading.value = true;
+    try {
+      final token = tokenService.getToken();
+      final userId = tokenService.getUserId();
+      final response = await http.post(
+        Uri.parse('${AppConfig.baseUrl}/app/respondToDeviceShare'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'serial_number': serial,
+          'user_id': userId,
+          'action': action,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        Get.snackbar('Success', 'Sharing request ${action} successfully');
+        fetchDevices();
+      } else {
+        Get.snackbar('Error', data['message'] ?? 'Failed to respond to request');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to respond to request');
+    } finally {
+      isLoading.value = false;
     }
   }
 }

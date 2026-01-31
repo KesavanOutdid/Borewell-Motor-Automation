@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/device_history_controller.dart';
+import '../../../../../utils/theme/app_colors.dart';
 
 class DeviceHistoryView extends StatefulWidget {
   const DeviceHistoryView({super.key});
@@ -22,156 +23,197 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
     controller.initialize(rawArgs is Map<String, dynamic> ? rawArgs : <String, dynamic>{});
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         title: const Text('Device History'),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: AppColors.textPrimary,
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (controller.records.isEmpty) {
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  children: [
-                    _buildHeader(controller),
-                    const SizedBox(height: 8),
-                    _buildSummaryGrid(controller),
-                  ],
+        return RefreshIndicator(
+          onRefresh: controller.refreshHistory,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: _buildHeader(controller),
                 ),
               ),
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: controller.refreshHistory,
-                  child: ListView(
-                    padding: const EdgeInsets.all(32),
-                    children: const [
-                      Icon(Icons.history, size: 72, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text(
-                        'No telemetry records found',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    ],
+              if (controller.summaryMetrics.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: _buildSummaryGrid(controller),
                   ),
                 ),
-              ),
-            ],
-          );
-        }
-
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                children: [
-                  _buildHeader(controller),
-                  const SizedBox(height: 8),
-                  _buildSummaryGrid(controller),
-                ],
-              ),
-            ),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: controller.refreshHistory,
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: controller.records.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _buildRecordCard(
-                        controller.records[index],
-                        index + 1,
-                        index,
-                      ),
-                    );
-                  },
+              if (controller.records.isEmpty)
+                SliverFillRemaining(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.history_rounded, size: 64, color: Colors.grey.shade300),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No telemetry records found',
+                          style: TextStyle(fontSize: 16, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _buildRecordCard(
+                            controller.records[index],
+                            index + 1,
+                            index,
+                          ),
+                        );
+                      },
+                      childCount: controller.records.length,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ],
+            ],
+          ),
         );
       }),
     );
   }
 
   Widget _buildHeader(DeviceHistoryController controller) {
-    return Card(
-      elevation: 1,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            const Icon(Icons.memory, size: 18, color: Colors.green),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Obx(
-                () => Text(
-                  controller.serialNumber.value,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.primaryGreen.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.history_toggle_off_rounded, color: AppColors.primaryGreen, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Usage Overview',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                 ),
-              ),
+                const SizedBox(height: 2),
+                Obx(() => Text(
+                  controller.serialNumber.value,
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                )),
+              ],
             ),
-            Obx(
-              () => Text(
-                '${controller.recordCount.value} records',
-                style: const TextStyle(fontSize: 12, color: Colors.black54),
-              ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade100),
             ),
-          ],
-        ),
+            child: Obx(() => Text(
+              '${controller.recordCount.value} Records',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.grey.shade700),
+            )),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildSummaryGrid(DeviceHistoryController controller) {
-    return Obx(() {
-      if (controller.summaryMetrics.isEmpty) {
-        return const SizedBox.shrink();
-      }
-
-      return GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-          childAspectRatio: 2.2,
-        ),
-        itemCount: controller.summaryMetrics.length,
-        itemBuilder: (context, index) {
-          final metric = controller.summaryMetrics[index];
-          return Card(
-            elevation: 1,
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    metric['label'] ?? '-',
-                    style: const TextStyle(fontSize: 11, color: Colors.black54),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    metric['value'] ?? '-',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Performance Summary',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+          ),
+          const SizedBox(height: 16),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 2.2,
             ),
-          );
-        },
-      );
-    });
+            itemCount: controller.summaryMetrics.length,
+            itemBuilder: (context, index) {
+              final metric = controller.summaryMetrics[index];
+              return Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withOpacity(0.04),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      metric['label'] ?? '-',
+                      style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontWeight: FontWeight.w600, letterSpacing: 0.2),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      metric['value'] ?? '-',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.primaryGreen),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildRecordCard(Map<String, dynamic> record, int displayIndex, int actualIndex) {
@@ -181,83 +223,88 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
       _chipData('Duration', _formatDuration(record['duration_minutes'])),
       _chipData('Current', _formatRange(record['minCurrent'], record['maxCurrent'], 'A')),
       _chipData('Voltage', _formatRange(record['minVoltage'], record['maxVoltage'], 'V')),
-    ]
-        .where((chip) => chip['value'] != '-')
-        .toList();
+    ].where((chip) => chip['value'] != '-').toList();
 
-    return Card(
-      elevation: 2,
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            _expandedIndex = isExpanded ? null : actualIndex;
-          });
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: isExpanded,
+          onExpansionChanged: (expanded) {
+            setState(() {
+              _expandedIndex = expanded ? actualIndex : null;
+            });
+          },
+          tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          title: Row(
             children: [
-              Row(
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '#$displayIndex',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primaryGreen),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  _formatDateOnly(record['date'] ?? record['startAt']),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                ),
+              ),
+            ],
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Row(
+              children: [
+                Icon(Icons.schedule_rounded, size: 14, color: Colors.grey.shade400),
+                const SizedBox(width: 4),
+                Text(
+                  _formatDuration(record['duration_minutes']),
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: Column(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'Record $displayIndex',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                    ),
+                  Divider(color: Colors.grey.shade100, height: 24),
+                  Row(
+                    children: [
+                      Expanded(child: _infoTile('Start Time', _formatDate(record['startAt']))),
+                      const SizedBox(width: 12),
+                      Expanded(child: _infoTile('Stop Time', _formatDate(record['stopAt']))),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _formatDateOnly(record['date'] ?? record['startAt']),
-                      style: const TextStyle(fontSize: 12, color: Colors.black54),
-                    ),
-                  ),
-                  Icon(
-                    isExpanded ? Icons.expand_less : Icons.expand_more,
-                    color: Colors.grey,
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: chips.map((chip) => _metricChip(chip['label']!, chip['value']!)).toList(),
                   ),
                 ],
               ),
-              if (!isExpanded) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Duration: ${_formatDuration(record['duration_minutes'])}',
-                  style: const TextStyle(fontSize: 13, color: Colors.black87),
-                ),
-              ],
-              if (isExpanded) ...[
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _infoTile('Start', _formatDate(record['startAt'])),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _infoTile('Stop', _formatDate(record['stopAt'])),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _infoTile('Duration', _formatDuration(record['duration_minutes'])),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: chips
-                      .map((chip) => _metricChip(chip['label']!, chip['value']!))
-                      .toList(),
-                ),
-              ],
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -269,18 +316,18 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
 
   Widget _metricChip(String label, String value) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.15),
+        color: AppColors.primaryGreen.withOpacity(0.04),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 10, color: Colors.black54)),
+          Text(label, style: TextStyle(fontSize: 9, color: Colors.grey.shade500, fontWeight: FontWeight.w600, letterSpacing: 0.3)),
           const SizedBox(height: 2),
-          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+          Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.primaryGreen)),
         ],
       ),
     );
@@ -290,17 +337,18 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade100),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 11, color: Colors.black45)),
-          const SizedBox(height: 4),
+          Text(label, style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 6),
           Text(
             value,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
           ),
         ],
       ),
@@ -315,7 +363,7 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
       final twoDigits = (int v) => v.toString().padLeft(2, '0');
       final hour = istTime.hour == 0 ? 12 : (istTime.hour > 12 ? istTime.hour - 12 : istTime.hour);
       final period = istTime.hour >= 12 ? 'PM' : 'AM';
-      return '${twoDigits(istTime.day)}/${twoDigits(istTime.month)}/${istTime.year} ${twoDigits(hour)}:${twoDigits(istTime.minute)} $period IST';
+      return '${twoDigits(istTime.day)}/${twoDigits(istTime.month)} ${twoDigits(hour)}:${twoDigits(istTime.minute)} $period';
     } catch (_) {
       return value.toString();
     }
@@ -328,41 +376,28 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
 
   String _formatDuration(dynamic value) {
     if (value == null) return '-';
-    if (value is Duration) {
-      return _durationToString(value);
-    }
-    if (value is num) {
-      final duration = Duration(minutes: value.toInt());
-      return _durationToString(duration);
-    }
+    if (value is Duration) return _durationToString(value);
+    if (value is num) return _durationToString(Duration(minutes: value.toInt()));
     return value.toString();
   }
 
   String _durationToString(Duration duration) {
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
-    if (hours > 0) {
-      return '${hours}h ${minutes}m';
-    }
-    if (minutes > 0) {
-      return '${minutes}m';
-    }
-    return '${duration.inMinutes}m';
+    if (hours > 0) return '${hours}h ${minutes}m';
+    return '${minutes}m';
   }
 
   String _formatRange(dynamic minValue, dynamic maxValue, String unit) {
     final min = _parseDouble(minValue);
     final max = _parseDouble(maxValue);
-
     if (min == null && max == null) return '-';
     if (min != null && max != null) {
-      if (min == max) {
-        return '${min.toStringAsFixed(2)} $unit';
-      }
-      return '${min.toStringAsFixed(2)} - ${max.toStringAsFixed(2)} $unit';
+      if (min == max) return '${min.toStringAsFixed(1)} $unit';
+      return '${min.toStringAsFixed(1)}-${max.toStringAsFixed(1)} $unit';
     }
     final value = (min ?? max)!;
-    return '${value.toStringAsFixed(2)} $unit';
+    return '${value.toStringAsFixed(1)} $unit';
   }
 
   String _formatNumber(dynamic value, String unit) {
@@ -370,18 +405,19 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
     if (parsed == null) return '-';
     return '${parsed.toStringAsFixed(2)} $unit';
   }
-  String _formatDateOnly(dynamic value) {
-  if (value == null) return '-';
-  try {
-    final dateTime = value is DateTime ? value : DateTime.parse(value.toString());
-    final istTime = _convertToIst(dateTime);
-    final twoDigits = (int v) => v.toString().padLeft(2, '0');
 
-    return '${twoDigits(istTime.day)}/${twoDigits(istTime.month)}/${istTime.year}';
-  } catch (_) {
-    return value.toString();
+  String _formatDateOnly(dynamic value) {
+    if (value == null) return '-';
+    try {
+      final dateTime = value is DateTime ? value : DateTime.parse(value.toString());
+      final istTime = _convertToIst(dateTime);
+      final twoDigits = (int v) => v.toString().padLeft(2, '0');
+      return '${twoDigits(istTime.day)}/${twoDigits(istTime.month)}/${istTime.year}';
+    } catch (_) {
+      return value.toString();
+    }
   }
-}
+
   double? _parseDouble(dynamic value) {
     if (value == null) return null;
     if (value is double) return value;

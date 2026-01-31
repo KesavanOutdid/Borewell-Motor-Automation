@@ -12,17 +12,20 @@ class SignupView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0FDF4),
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         title: const Text(
           "Create Account",
           style: TextStyle(
             fontWeight: FontWeight.bold,
             letterSpacing: 0.5,
+            color: Colors.white,
           ),
         ),
         centerTitle: true,
         elevation: 0,
+        backgroundColor: AppColors.primaryGreen,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SafeArea(
         child: SingleChildScrollView(

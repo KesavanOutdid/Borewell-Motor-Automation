@@ -240,7 +240,7 @@ class _ProductDetailsViewState extends State<ProductDetailsView> {
   Future<void> _shareProduct(String productName, String productPrice) async {
     try {
       final shareText = '''
-Check out this product from Auto Harvest!
+Check out this product from AgriPlus!
 
 $productName
 Price: ₹$productPrice

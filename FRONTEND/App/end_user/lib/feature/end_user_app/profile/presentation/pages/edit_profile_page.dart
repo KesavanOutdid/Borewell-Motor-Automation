@@ -1,133 +1,237 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/profile_controller.dart';
+import '../../../../../utils/theme/app_colors.dart';
 
-class EditProfileView extends GetView<ProfileController> {
-  const EditProfileView({super.key});
+class EditProfilePage extends StatefulWidget {
+  const EditProfilePage({super.key});
+
+  @override
+  State<EditProfilePage> createState() => _EditProfilePageState();
+}
+
+class _EditProfilePageState extends State<EditProfilePage> {
+  final controller = Get.find<ProfileController>();
+
+  @override
+  void initState() {
+    super.initState();
+    controller.initEditFields();
+  }
 
   @override
   Widget build(BuildContext context) {
-    controller.initEditFields();
-    
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.grey.shade50,
       appBar: AppBar(
         title: const Text('Edit Profile'),
-        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: isDark ? Colors.white : AppColors.textPrimary,
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 16),
-              TextField(
-                controller: controller.nameEditingController,
-                decoration: InputDecoration(
-                  labelText: 'Name',
-                  hintText: 'Enter your name',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Stack(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.primaryGreen, width: 2),
+                    ),
+                    child: CircleAvatar(
+                      radius: 50,
+                      backgroundColor: AppColors.primaryGreen.withOpacity(0.1),
+                      child: Text(
+                        controller.userName.value.isNotEmpty
+                            ? controller.userName.value[0].toUpperCase()
+                            : 'U',
+                        style: const TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryGreen,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: controller.emailEditingController,
-                keyboardType: TextInputType.emailAddress,
-                enabled: false,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  hintText: 'example@email.com',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: AppColors.primaryGreen,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                    ),
                   ),
-                  filled: true,
-                  fillColor: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.grey[800]
-                      : Colors.grey[200],
-                ),
+                ],
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: controller.phoneEditingController,
-                keyboardType: TextInputType.phone,
-                maxLength: 10,
-                decoration: InputDecoration(
-                  labelText: 'Phone',
-                  hintText: '10 digit phone number',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  counterText: '',
-                ),
-              ),
-              const SizedBox(height: 16),
-              Obx(
-                () => TextField(
+            ),
+            const SizedBox(height: 40),
+            _buildTextField(
+              label: 'Full Name',
+              hint: 'Enter your name',
+              icon: Icons.person_outline,
+              controller: controller.nameEditingController,
+            ),
+            const SizedBox(height: 20),
+            _buildTextField(
+              label: 'Email Address',
+              hint: 'Enter your email',
+              icon: Icons.email_outlined,
+              controller: controller.emailEditingController,
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 20),
+            _buildTextField(
+              label: 'Phone Number',
+              hint: 'Enter 10 digit number',
+              icon: Icons.phone_outlined,
+              controller: controller.phoneEditingController,
+              keyboardType: TextInputType.phone,
+              maxLength: 10,
+            ),
+            const SizedBox(height: 20),
+            Obx(() => _buildTextField(
+                  label: 'Password',
+                  hint: 'Update your password',
+                  icon: Icons.lock_outline,
                   controller: controller.passwordEditingController,
                   obscureText: !controller.isPasswordVisible.value,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    hintText: 'Change password (optional)',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      controller.isPasswordVisible.value
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      size: 20,
                     ),
-                    counterText: '',
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        controller.isPasswordVisible.value
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white70
-                            : Colors.grey,
-                      ),
-                      onPressed: () {
-                        controller.isPasswordVisible.value =
-                            !controller.isPasswordVisible.value;
-                      },
-                    ),
+                    onPressed: () => controller.isPasswordVisible.toggle(),
                   ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Obx(
-                () => ElevatedButton(
-                  onPressed: (controller.isUpdating.value || !controller.hasChanges.value)
-                      ? null
-                      : () async {
-                          final errorMessage = await controller.updateProfile();
-                          if (errorMessage != null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(errorMessage),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Profile updated successfully"),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                            Get.offNamed('/profile');
-                          }
-                        },
-                  child: controller.isUpdating.value
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Save Changes'),
-                ),
-              ),
-            ],
-          ),
+                )),
+            const SizedBox(height: 40),
+            Obx(() => SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: controller.isUpdating.value || !controller.hasChanges.value
+                        ? null
+                        : () async {
+                            final error = await controller.updateProfile();
+                            if (error == null) {
+                              Get.back();
+                              Get.snackbar(
+                                'Success',
+                                'Profile updated successfully',
+                                snackPosition: SnackPosition.BOTTOM,
+                                backgroundColor: AppColors.success,
+                                colorText: Colors.white,
+                                margin: const EdgeInsets.all(16),
+                                borderRadius: 12,
+                              );
+                            } else {
+                              Get.snackbar(
+                                'Error',
+                                error,
+                                snackPosition: SnackPosition.BOTTOM,
+                                backgroundColor: AppColors.error,
+                                colorText: Colors.white,
+                                margin: const EdgeInsets.all(16),
+                                borderRadius: 12,
+                              );
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryGreen,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      disabledBackgroundColor: AppColors.primaryGreen.withOpacity(0.5),
+                    ),
+                    child: controller.isUpdating.value
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 3,
+                            ),
+                          )
+                        : const Text(
+                            'Save Changes',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                  ),
+                )),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField({
+    required String label,
+    required String hint,
+    required IconData icon,
+    required TextEditingController controller,
+    TextInputType? keyboardType,
+    bool obscureText = false,
+    Widget? suffixIcon,
+    int? maxLength,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: isDark ? Colors.grey[400] : Colors.grey[700],
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          obscureText: obscureText,
+          maxLength: maxLength,
+          style: TextStyle(
+            color: isDark ? Colors.white : AppColors.textPrimary,
+            fontSize: 16,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
+            prefixIcon: Icon(icon, size: 20, color: AppColors.primaryGreen),
+            suffixIcon: suffixIcon,
+            counterText: "",
+            filled: true,
+            fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

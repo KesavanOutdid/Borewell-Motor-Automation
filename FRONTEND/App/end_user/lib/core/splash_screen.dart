@@ -67,7 +67,7 @@ class _SplashViewState extends State<SplashView> {
               ),
               const SizedBox(height: 30),
               const Text(
-                'Auto Harvest',
+                'AgriPlus',
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,

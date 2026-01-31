@@ -9,7 +9,9 @@ import 'package:get_storage/get_storage.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../config/env.dart';
 
+@pragma('vm:entry-point')
 class BackgroundNotificationService {
+  @pragma('vm:entry-point')
   static Future<void> initialize() async {
     final service = FlutterBackgroundService();
     
@@ -32,7 +34,7 @@ class BackgroundNotificationService {
         autoStart: true,
         isForegroundMode: true,
         notificationChannelId: 'background_service',
-        initialNotificationTitle: 'Auto Harvest',
+        initialNotificationTitle: 'AgriPlus',
         initialNotificationContent: 'Monitoring devices',
         foregroundServiceNotificationId: 888,
       ),

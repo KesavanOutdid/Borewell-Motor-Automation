@@ -84,7 +84,7 @@ class ContactView extends StatelessWidget {
                       icon: Icons.email,
                       title: 'Email us',
                       subtitle: 'Mon-Sat • 9.30am-6.30pm',
-                      onTap: () => _launchEmail('support@autoharvest.com'),
+                      onTap: () => _launchEmail('support@agriplus.com'),
                     ),
                   ),
                 ],
