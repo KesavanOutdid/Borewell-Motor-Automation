@@ -3,9 +3,12 @@ const mongoose = require("mongoose");
 const deviceShareSchema = new mongoose.Schema({
     serial_number: { type: String, required: true },
     master_user_id: { type: Number, required: true },
+    master_user_name: { type: String, default: null },
+    master_user_email: { type: String, default: null },
     shared_to_user_id: { type: Number, required: true },
     shared_to_user_name: { type: String, default: null },
     shared_to_user_phone: { type: Number, default: null },
+    shared_to_user_email: { type: String, default: null },
     status: { type: Boolean, default: true }, // true = active, false = deactivated
     acceptance_status: { 
         type: String, 
@@ -18,6 +21,8 @@ const deviceShareSchema = new mongoose.Schema({
         {
             action: { type: String, enum: ['assigned', 'deactivated', 'activated', 'deleted', 'accepted', 'rejected'] },
             performedBy: { type: Number }, // user_id who performed the action
+            performedBy_name: { type: String, default: null },
+            performedBy_email: { type: String, default: null },
             timestamp: { type: Date, default: Date.now }
         }
     ]

@@ -1590,10 +1590,15 @@ exports.assignDeviceToOther = async (req, res, next) => {
 
         const { serial_number, master_user_id, shared_to_user_phone } = req.body;
 
-        // 1. Verify master ownership
+        // 1. Verify master ownership and get master details
         const device = await Device.findOne({ serial_number, assigned_user_id: master_user_id });
         if (!device) {
             return res.status(404).json({ success: false, message: "Device not found or you are not the owner" });
+        }
+
+        const masterUser = await User.findOne({ user_id: master_user_id });
+        if (!masterUser) {
+            return res.status(404).json({ success: false, message: "Master user not found" });
         }
 
         // 2. Find shared user
@@ -1621,12 +1626,17 @@ exports.assignDeviceToOther = async (req, res, next) => {
         share = new DeviceShare({
             serial_number,
             master_user_id,
+            master_user_name: masterUser.user_name,
+            master_user_email: masterUser.user_email,
             shared_to_user_id: sharedUser.user_id,
             shared_to_user_name: sharedUser.user_name,
             shared_to_user_phone: sharedUser.user_phone,
+            shared_to_user_email: sharedUser.user_email,
             history: [{
                 action: 'assigned',
-                performedBy: master_user_id
+                performedBy: master_user_id,
+                performedBy_name: masterUser.user_name,
+                performedBy_email: masterUser.user_email
             }]
         });
 
@@ -1658,11 +1668,18 @@ exports.updateShareStatus = async (req, res, next) => {
             return res.status(404).json({ success: false, message: "Share record not found" });
         }
 
+        const masterUser = await User.findOne({ user_id: master_user_id });
+        if (!masterUser) {
+            return res.status(404).json({ success: false, message: "Master user not found" });
+        }
+
         share.status = status;
         share.updatedAt = new Date();
         share.history.push({
             action: status ? 'activated' : 'deactivated',
-            performedBy: master_user_id
+            performedBy: master_user_id,
+            performedBy_name: masterUser.user_name,
+            performedBy_email: masterUser.user_email
         });
 
         await share.save();
@@ -1685,11 +1702,18 @@ exports.respondToDeviceShare = async (req, res, next) => {
             return res.status(404).json({ success: false, message: "Sharing request not found" });
         }
 
+        const sharedUser = await User.findOne({ user_id });
+        if (!sharedUser) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
         share.acceptance_status = action;
         share.updatedAt = new Date();
         share.history.push({
             action: action,
-            performedBy: user_id
+            performedBy: user_id,
+            performedBy_name: sharedUser.user_name,
+            performedBy_email: sharedUser.user_email
         });
 
         // If rejected, we might want to delete the record or just keep it as rejected
