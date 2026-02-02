@@ -115,8 +115,20 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                     <div className="row">
                         <div className="col-md-12 col-12 mx-auto">
                             <div className="card">
-                                <div className="card-header pb-3">
+                                <div className="card-header pb-3" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <h6 className="mb-0">Edit Voucher - {currentVoucherDetails.voucher_code}</h6>
+                                    <button 
+                                        className="btn btn-sm mb-0"
+                                        style={{ 
+                                            backgroundColor: '#67748e', 
+                                            color: 'white',
+                                            padding: '8px 16px',
+                                            fontSize: '13px'
+                                        }}
+                                        onClick={() => navigate('/admin/manage-vouchers')}
+                                    >
+                                        <i className="fas fa-arrow-left me-2"></i>Back
+                                    </button>
                                 </div>
 
                                 <div className="card-body">

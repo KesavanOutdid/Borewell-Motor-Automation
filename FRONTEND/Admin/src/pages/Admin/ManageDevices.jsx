@@ -1,19 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
 import { sanitizeSerialNumber } from '../../utils/validation';
 import useManageDevices from '../../hooks/Admin/useManageDevices';
-import { formatDateToIST } from '../../utils/formatDateToIST';
 import { showAlertSuccess } from '../../utils/alert';
 
 const ManageDevices = ({ userInfo, handleLogout }) => {
     const API_BASE = process.env.REACT_APP_SERVER_URL;
+    const navigate = useNavigate();
 
     console.log(userInfo, 'profile data');
     
     const { setIsModalCreate, isModalCreate, setIsModalAssign, isModalAssign, serialNumber, setSerialNumber, errorMessage, successMessage, handleDeviceCreate, closeModal,
-        isModalEdit, setIsModalEdit, setIsModalView, isModalView, fetchDeviceData, devices, loading, errorDevice, serialNumberUpdate, deviceStatusUpdate, errorMessageEdit, setErrorMessageEdit,
+        isModalEdit, setIsModalEdit, fetchDeviceData, devices, loading, errorDevice, serialNumberUpdate, deviceStatusUpdate, errorMessageEdit, setErrorMessageEdit,
         users, selecteduser, handleuserSelection, selectedDevices, handleDeviceSelection, handleAssign, assignErrorMessage, loadingSubmit, loadingUpdate, setLoadingUpdate,
         pagination, handlePageChange, handleLimitChange, loadingAnalytics, errorAnalytics, chartType,
         // analytics,
@@ -22,7 +23,6 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
 
     console.log(successMessage);
     const fetchDeviceDataCalled = useRef(false);
-    const [deviceDetails, setDeviceDetails] = useState(null);
     const [currentDeviceDetails, setDeviceEditDetails] = useState(null);
     const [originalDeviceDetails, setOriginalDeviceDetails] = useState(null);
     const [isFormDirty, setIsFormDirty] = useState(false);
@@ -269,105 +269,6 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                         </div>
                                     )}
                                 </>
-                                {/* View Modal */}
-                                {isModalView && deviceDetails && (
-                                    <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1020 }}>
-                                        <div style={{ backgroundColor: "#fff", borderRadius: "12px", width: "95%", maxWidth: "600px", maxHeight: "80vh", overflowY: "auto", boxShadow: "0 10px 30px rgba(0, 0, 0, 0.2)" }}>
-                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px", borderBottom: "1px solid #e0e0e0" }}>
-                                                <h5 style={{ margin: 0, fontSize: "18px", fontWeight: "600", color: "#344767" }}>Device Details</h5>
-                                                <button onClick={closeModal} style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: "#666" }}>&times;</button>
-                                            </div>
-
-                                            <div style={{ padding: "10px" }}>
-                                                <div style={{ marginBottom: "20px" }}>
-                                                    <h6 style={{ fontSize: "13px", fontWeight: "600", color: "#8f9297", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>Device Information</h6>
-                                                    <div style={{ backgroundColor: "#f8f9fa", padding: "15px", borderRadius: "8px" }}>
-                                                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
-                                                            <div>
-                                                                <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>Serial Number</p>
-                                                                <p style={{ margin: "0", fontSize: "14px", fontWeight: "500", color: "#344767" }}>{deviceDetails.serial_number || '-'}</p>
-                                                            </div>
-                                                            <div>
-                                                                <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>Status</p>
-                                                                <span style={{ display: "inline-block", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", backgroundColor: deviceDetails.status ? "#d1fae5" : "#fee2e2", color: deviceDetails.status ? "#065f46" : "#991b1b" }}>
-                                                                    {deviceDetails.status ? 'Active' : 'Inactive'}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div style={{ marginBottom: "20px" }}>
-                                                    <h6 style={{ fontSize: "13px", fontWeight: "600", color: "#8f9297", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>System Information</h6>
-                                                    <div style={{ backgroundColor: "#f8f9fa", padding: "15px", borderRadius: "8px" }}>
-                                                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
-                                                            <div>
-                                                                <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>Created By</p>
-                                                                <p style={{ margin: "0", fontSize: "14px", fontWeight: "500", color: "#344767" }}>{deviceDetails.createdBy || '-'}</p>
-                                                            </div>
-                                                            <div>
-                                                                <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>Created At</p>
-                                                                <p style={{ margin: "0", fontSize: "14px", fontWeight: "500", color: "#344767" }}>{formatDateToIST(deviceDetails.createdAt) || '-'}</p>
-                                                            </div>
-                                                            <div>
-                                                                <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>Updated By</p>
-                                                                <p style={{ margin: "0", fontSize: "14px", fontWeight: "500", color: "#344767" }}>{deviceDetails.updatedBy || '-'}</p>
-                                                            </div>
-                                                            <div>
-                                                                <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>Updated At</p>
-                                                                <p style={{ margin: "0", fontSize: "14px", fontWeight: "500", color: "#344767" }}>{formatDateToIST(deviceDetails.updatedAt) || '-'}</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {deviceDetails.assign_status && (
-                                                    <>
-                                                        <div style={{ marginBottom: "20px" }}>
-                                                            <h6 style={{ fontSize: "13px", fontWeight: "600", color: "#8f9297", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>Assignment Information</h6>
-                                                            <div style={{ backgroundColor: "#f8f9fa", padding: "15px", borderRadius: "8px" }}>
-                                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
-                                                                    <div>
-                                                                        <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>Assigned By</p>
-                                                                        <p style={{ margin: "0", fontSize: "14px", fontWeight: "500", color: "#344767" }}>{deviceDetails.assignedBy || '-'}</p>
-                                                                    </div>
-                                                                    <div>
-                                                                        <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>Assigned At</p>
-                                                                        <p style={{ margin: "0", fontSize: "14px", fontWeight: "500", color: "#344767" }}>{formatDateToIST(deviceDetails.assignedAt || '-')}</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div style={{ marginBottom: "20px" }}>
-                                                            <h6 style={{ fontSize: "13px", fontWeight: "600", color: "#8f9297", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>User Information</h6>
-                                                            <div style={{ backgroundColor: "#f8f9fa", padding: "15px", borderRadius: "8px" }}>
-                                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
-                                                                    <div>
-                                                                        <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>User Name</p>
-                                                                        <p style={{ margin: "0", fontSize: "14px", fontWeight: "500", color: "#344767" }}>{deviceDetails.user_details?.user_name || '-'}</p>
-                                                                    </div>
-                                                                    <div>
-                                                                        <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>Phone</p>
-                                                                        <p style={{ margin: "0", fontSize: "14px", fontWeight: "500", color: "#344767" }}>{deviceDetails.user_details?.user_phone || '-'}</p>
-                                                                    </div>
-                                                                    <div>
-                                                                        <p style={{ margin: "0 0 5px 0", fontSize: "12px", color: "#8f9297" }}>Email</p>
-                                                                        <p style={{ margin: "0", fontSize: "14px", fontWeight: "500", color: "#344767" }}>{deviceDetails.user_details?.user_email || '-'}</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </>
-                                                )}
-                                            </div>
-
-                                            <div style={{ padding: "15px 20px", borderTop: "1px solid #e0e0e0", display: "flex", justifyContent: "center", gap: "10px" }}>
-                                                <button className="btn btn-secondary mb-0" style={{ padding: "10px 20px" }} onClick={closeModal}>Close</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
                                 {/* Assign Modal */}
                                 {isModalAssign && (
                                     <div
@@ -542,6 +443,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                 <tr>
                                                     <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">S.No</th>
                                                     <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Serial Number</th>
+                                                    <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Device Nickname</th>
                                                     <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Assign Device By</th>
                                                     <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Assign Status</th>
                                                     <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Device Status</th>
@@ -551,13 +453,13 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                             <tbody>
                                                 {loading ? (
                                                     <tr>
-                                                        <td colSpan="6" style={{ textAlign: 'center' }}>
+                                                        <td colSpan="7" style={{ textAlign: 'center' }}>
                                                             <p>Loading...</p>
                                                         </td>
                                                     </tr>
                                                 ) : errorDevice ? (
                                                     <tr>
-                                                        <td colSpan="6" style={{ textAlign: 'center', color: 'red' }}>
+                                                        <td colSpan="7" style={{ textAlign: 'center', color: 'red' }}>
                                                             <p>{errorDevice}</p>
                                                         </td>
                                                     </tr>
@@ -572,6 +474,11 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                             <td className="align-middle text-center">
                                                                 <span className="text-secondary text-xs font-weight-bold">
                                                                     {device.serial_number || '-'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="align-middle text-center">
+                                                                <span className="text-secondary text-xs font-weight-bold">
+                                                                    {device.device_nickname || '-'}
                                                                 </span>
                                                             </td>
                                                             <td className="align-middle text-center">
@@ -607,8 +514,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                                         <i className="fas fa-pen" aria-hidden="true" style={{ color: 'white' }}></i> Edit
                                                                     </button>
                                                                     <button className="btn btn-success mb-0" style={{ padding: '10px' }} onClick={() => {
-                                                                        setIsModalView(true); // Show the modal
-                                                                        setDeviceDetails(device); // Set the selected device's details
+                                                                        navigate('/admin/manage-devices-view', { state: { device } });
                                                                     }}>
                                                                         <i className="fas fa-eye" aria-hidden="true" style={{ color: 'white' }}></i> View
                                                                     </button>

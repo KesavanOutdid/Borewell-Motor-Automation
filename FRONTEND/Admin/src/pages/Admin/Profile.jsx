@@ -12,7 +12,6 @@ const Profile = ({ userInfo, handleLogout }) => {
         user_email,
         password,
         setUpdateUname,
-        setUpdatePhone,
         setUpdatePassword,
         errorMessage,
         successMessage,
@@ -91,9 +90,8 @@ const Profile = ({ userInfo, handleLogout }) => {
                                                         className="form-control"
                                                         id="mobile"
                                                         value={user_phone}
-                                                        maxLength={10}
-                                                        minLength={10}
-                                                        onChange={(e) => setUpdatePhone(e.target.value)}
+                                                        style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
+                                                        readOnly
                                                         autoComplete="off" />
                                                 </div>
                                                 <div className="mb-3">
@@ -103,6 +101,7 @@ const Profile = ({ userInfo, handleLogout }) => {
                                                         className="form-control"
                                                         id="email"
                                                         value={user_email}
+                                                        style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
                                                         readOnly
                                                         autoComplete="off" />
                                                 </div>

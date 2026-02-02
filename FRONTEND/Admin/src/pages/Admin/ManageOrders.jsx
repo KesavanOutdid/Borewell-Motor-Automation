@@ -171,8 +171,8 @@ const ManageOrders = ({ userInfo, handleLogout }) => {
                                                             <th style={{ padding: '12px', textAlign: 'left', fontSize: '13px', fontWeight: '600', color: '#333' }}>Order ID</th>
                                                             <th style={{ padding: '12px', textAlign: 'left', fontSize: '13px', fontWeight: '600', color: '#333' }}>Customer</th>
                                                             <th style={{ padding: '12px', textAlign: 'left', fontSize: '13px', fontWeight: '600', color: '#333' }}>Total</th>
-                                                            <th style={{ padding: '12px', textAlign: 'left', fontSize: '13px', fontWeight: '600', color: '#333' }}>Order Status</th>
-                                                            <th style={{ padding: '12px', textAlign: 'left', fontSize: '13px', fontWeight: '600', color: '#333' }}>Payment</th>
+                                                            <th style={{ padding: '12px', textAlign: 'center', fontSize: '13px', fontWeight: '600', color: '#333' }}>Order Status</th>
+                                                            <th style={{ padding: '12px', textAlign: 'center', fontSize: '13px', fontWeight: '600', color: '#333' }}>Payment</th>
                                                             <th style={{ padding: '12px', textAlign: 'left', fontSize: '13px', fontWeight: '600', color: '#333' }}>Method</th>
                                                             <th style={{ padding: '12px', textAlign: 'left', fontSize: '13px', fontWeight: '600', color: '#333' }}>Date</th>
                                                             <th style={{ padding: '12px', textAlign: 'center', fontSize: '13px', fontWeight: '600', color: '#333' }}>Action</th>
@@ -193,26 +193,32 @@ const ManageOrders = ({ userInfo, handleLogout }) => {
                                                                 <td style={{ padding: '12px', fontSize: '12px', fontWeight: '600' }}>
                                                                     ₹{order.order_summary?.grand_total || 0}
                                                                 </td>
-                                                                <td style={{ padding: '12px' }}>
+                                                                <td style={{ padding: '12px', textAlign: 'center' }}>
                                                                     <span style={{
                                                                         backgroundColor: getStatusBadgeColor(order.order_status),
                                                                         color: 'white',
-                                                                        padding: '4px 10px',
+                                                                        padding: '6px 12px',
                                                                         borderRadius: '4px',
                                                                         fontSize: '11px',
-                                                                        fontWeight: '600'
+                                                                        fontWeight: '600',
+                                                                        display: 'inline-block',
+                                                                        textAlign: 'center',
+                                                                        minWidth: '100px'
                                                                     }}>
                                                                         {order.order_status}
                                                                     </span>
                                                                 </td>
-                                                                <td style={{ padding: '12px' }}>
+                                                                <td style={{ padding: '12px', textAlign: 'center' }}>
                                                                     <span style={{
                                                                         backgroundColor: getPaymentStatusBadgeColor(order.payment_status),
                                                                         color: 'white',
-                                                                        padding: '4px 10px',
+                                                                        padding: '6px 12px',
                                                                         borderRadius: '4px',
                                                                         fontSize: '11px',
-                                                                        fontWeight: '600'
+                                                                        fontWeight: '600',
+                                                                        display: 'inline-block',
+                                                                        textAlign: 'center',
+                                                                        minWidth: '100px'
                                                                     }}>
                                                                         {order.payment_status}
                                                                     </span>

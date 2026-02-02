@@ -9,6 +9,7 @@ const UserSchema = new mongoose.Schema({
     user_email: {
         type: String,
         required: true,
+        unique: true,
         lowercase: true,
         match: [/^\S+@\S+\.\S+$/, "Invalid email format"]
     },
@@ -16,6 +17,7 @@ const UserSchema = new mongoose.Schema({
     user_phone: {
         type: Number,
         required: true,
+        unique: true,
         validate: {
             validator: v => /^[0-9]{10}$/.test(v.toString()),
             message: "Phone must be 10 digits"

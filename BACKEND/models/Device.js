@@ -16,6 +16,7 @@ const deviceSchema = new mongoose.Schema({
     latitude: { type: String, default: null },
     longitude: { type: String, default: null },
     motor_hp: { type: String, default: null },
+    device_nickname: { type: String, default: null },
 
     createdBy: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },

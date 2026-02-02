@@ -42,3 +42,17 @@ export const showAlertError = (title) => {
         showConfirmButton: false, // Optional: Hide the confirmation button
     });
 };
+
+// Function to show delete confirmation alert
+export const showDeleteConfirmation = async (itemName) => {
+    return Swal.fire({
+        title: `Are you sure you want to delete voucher "${itemName}"?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Delete',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        reverseButtons: true,
+    });
+};

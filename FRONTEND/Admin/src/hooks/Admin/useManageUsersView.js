@@ -4,12 +4,9 @@ const useManageUsersView = () => {
     const API_BASE = process.env.REACT_APP_SERVER_URL;
 
     const [assignedDevices, setAssignedDevices] = useState([]);
+    const [sharedDevices, setSharedDevices] = useState([]);
     const [loadingDevices, setLoadingDevices] = useState(true);
     const [errorDevices, setErrorDevices] = useState('');
-    const [isModalDeviceDetails, setIsModalDeviceDetails] = useState(false);
-    const [isModalDeviceHistory, setIsModalDeviceHistory] = useState(false);
-    const [selectedDeviceDetails, setSelectedDeviceDetails] = useState(null);
-    const [selectedDeviceForHistory, setSelectedDeviceForHistory] = useState(null);
     const [pagination, setPagination] = useState({
         currentPage: 1,
         totalPages: 1,
@@ -35,6 +32,7 @@ const useManageUsersView = () => {
             if (response.ok) {
                 const data = await response.json();
                 setAssignedDevices(data.data || []);
+                setSharedDevices(data.shared_devices || []);
                 setPagination({
                     currentPage: page,
                     totalPages: Math.ceil((data.count || 0) / limit),
@@ -47,6 +45,7 @@ const useManageUsersView = () => {
                 const errorData = await response.json();
                 setErrorDevices(errorData.message || 'Failed to fetch assigned devices');
                 setAssignedDevices([]);
+                setSharedDevices([]);
             }
         } catch (error) {
             console.error('Error fetching assigned devices:', error);
@@ -57,29 +56,7 @@ const useManageUsersView = () => {
         }
     };
 
-    const fetchDeviceDetails = async (serial_number, imei_number) => {
-        try {
-            const response = await fetch(`${API_BASE}/app/userDeviceDetails`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ serial_number, imei_number }),
-            });
 
-            if (response.ok) {
-                const data = await response.json();
-                setSelectedDeviceDetails(data.data);
-                setIsModalDeviceDetails(true);
-            } else {
-                const errorData = await response.json();
-                alert('Error fetching device details: ' + (errorData.message || 'Unknown error'));
-            }
-        } catch (error) {
-            console.error('Error fetching device details:', error);
-            alert('Error fetching device details');
-        }
-    };
 
     const handlePageChange = (newPage) => {
         setPagination(prev => ({ ...prev, currentPage: newPage }));
@@ -94,31 +71,15 @@ const useManageUsersView = () => {
         }));
     };
 
-    const closeModal = () => {
-        setIsModalDeviceDetails(false);
-        setIsModalDeviceHistory(false);
-        setSelectedDeviceDetails(null);
-        setSelectedDeviceForHistory(null);
-    };
-
     return {
         assignedDevices,
+        sharedDevices,
         loadingDevices,
         errorDevices,
         fetchUserAssignedDevices,
-        fetchDeviceDetails,
-        isModalDeviceDetails,
-        setIsModalDeviceDetails,
-        isModalDeviceHistory,
-        setIsModalDeviceHistory,
-        selectedDeviceDetails,
-        setSelectedDeviceDetails,
-        selectedDeviceForHistory,
-        setSelectedDeviceForHistory,
         pagination,
         handlePageChange,
-        handleLimitChange,
-        closeModal
+        handleLimitChange
     };
 };
 

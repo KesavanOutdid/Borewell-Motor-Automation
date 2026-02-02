@@ -180,6 +180,56 @@ router.post(
 
 /**
  * @swagger
+ * /app/updateDeviceNickname:
+ *   post:
+ *     summary: Update device nickname
+ *     tags: [App]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               serial_number:
+ *                 type: string
+ *                 description: Device serial number
+ *               device_nickname:
+ *                 type: string
+ *                 description: New nickname for the device (optional)
+ *               user_email:
+ *                 type: string
+ *                 format: email
+ *                 description: User email for verification
+ *             required:
+ *               - serial_number
+ *               - user_email
+ *     responses:
+ *       200:
+ *         description: Device nickname updated successfully
+ *       400:
+ *         description: Invalid input data
+ *       403:
+ *         description: Only device owner can update nickname
+ *       404:
+ *         description: Device or user not found
+ *       500:
+ *         description: Server error
+ */
+router.post(
+    '/updateDeviceNickname',
+    authMiddleware(),
+    [
+        body('serial_number').notEmpty().withMessage("Serial number is required"),
+        body('user_email').isEmail().withMessage("Valid user email is required")
+    ],
+    appCtrl.updateDeviceNickname
+);
+
+/**
+ * @swagger
  * /app/startStopDevice:
  *   post:
  *     summary: Start or Stop a device

@@ -271,13 +271,13 @@ const Dashboard = ({ userInfo, handleLogout }) => {
                                                             <div className="numbers">
                                                                 <p className="text-sm text-dark font-weight-bold mb-2 d-block">Customer Name</p>
                                                                 <h5 className="font-weight-bolder mb-0">
-                                                                    <span className="text-success text-sm font-weight-bolder">{selectedAssignedDevice?.user_details?.user_name || '-'}</span>
+                                                                    <span className="text-success font-weight-bolder d-block" style={{ fontSize: '0.75rem', lineHeight: '1.2', wordBreak: 'break-word' }}>{selectedAssignedDevice?.user_details?.user_name || '-'}</span>
                                                                 </h5>
                                                             </div>
                                                         </div>
                                                         <div className="col-4 text-end">
                                                             <div className="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
-                                                                <i className="fas fa-user opacity-10" aria-hidden="true"></i>
+                                                                <i className="fas fa-envelope opacity-10" aria-hidden="true"></i>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -292,13 +292,13 @@ const Dashboard = ({ userInfo, handleLogout }) => {
                                                             <div className="numbers">
                                                                 <p className="text-sm text-dark font-weight-bold mb-2 d-block">Customer Mobile</p>
                                                                 <h5 className="font-weight-bolder mb-0">
-                                                                    <span className="text-success text-sm font-weight-bolder">{selectedAssignedDevice?.user_details?.user_phone || '-'}</span>
+                                                                    <span className="text-success font-weight-bolder d-block" style={{ fontSize: '0.75rem', lineHeight: '1.2', wordBreak: 'break-word' }}>{selectedAssignedDevice?.user_details?.user_phone || '-'}</span>
                                                                 </h5>
                                                             </div>
                                                         </div>
                                                         <div className="col-4 text-end">
                                                             <div className="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
-                                                                <i className="fas fa-phone opacity-10" aria-hidden="true"></i>
+                                                                <i className="fas fa-envelope opacity-10" aria-hidden="true"></i>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -313,13 +313,13 @@ const Dashboard = ({ userInfo, handleLogout }) => {
                                                             <div className="numbers">
                                                                 <p className="text-sm text-dark font-weight-bold mb-2 d-block">Customer Email</p>
                                                                 <h5 className="font-weight-bolder mb-0">
-                                                                    <span className="text-success text-sm font-weight-bolder">{selectedAssignedDevice?.user_details?.user_email || '-'}</span>
+                                                                    <span className="text-success font-weight-bolder d-block" style={{ fontSize: '0.75rem', lineHeight: '1.2', wordBreak: 'break-word' }}>{selectedAssignedDevice?.user_details?.user_email || '-'}</span>
                                                                 </h5>
                                                             </div>
                                                         </div>
                                                         <div className="col-4 text-end">
                                                             <div className="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
-                                                                <i className="fas fa-phone opacity-10" aria-hidden="true"></i>
+                                                                <i className="fas fa-envelope opacity-10" aria-hidden="true"></i>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -361,41 +361,36 @@ const Dashboard = ({ userInfo, handleLogout }) => {
                                             </div>
                                         </div> */}
                                         <div className="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-                                            <div className="card shadow-sm border-0">
+                                            <div className="card">
                                                 <div className="card-body p-3">
-                                                    <div className="d-flex justify-content-between align-items-center">
-
-                                                        {/* Left side - Dropdown */}
-                                                        <div className="flex-grow-1 pe-2">
-                                                            <label className="text-sm text-dark font-weight-bold mb-1">
-                                                                Select Assigned Device
-                                                            </label>
-                                                            
-                                                            <select
-                                                                className="form-control form-select"
-                                                                value={selectedAssignedDevice?.serial_number || ""}
-                                                                onChange={(e) => {
-                                                                    const selected = assignDevices.find(
-                                                                        d => d.serial_number === e.target.value
-                                                                    );
-                                                                    setSelectedAssignedDevice(selected);
-                                                                    localStorage.setItem("selectedDevice", JSON.stringify(selected));
-                                                                }}
-                                                            >
-                                                                <option value="">Choose Assigned Device</option>
-
-                                                                {assignDevices.map(device => (
-                                                                    <option key={device._id} value={device.serial_number}>
-                                                                        {device.serial_number}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
+                                                    <div className="row">
+                                                        <div className="col-8">
+                                                            <div className="numbers">
+                                                                <p className="text-sm text-dark font-weight-bold mb-2 d-block">Select Assigned Device</p>
+                                                                <select
+                                                                    className="form-control form-select text-success font-weight-bolder"
+                                                                    style={{ height: 'auto', fontSize: '0.75rem', padding: '0.25rem', lineHeight: '1.2' }}
+                                                                    value={selectedAssignedDevice?.serial_number || ""}
+                                                                    onChange={(e) => {
+                                                                        const selected = assignDevices.find(
+                                                                            d => d.serial_number === e.target.value
+                                                                        );
+                                                                        setSelectedAssignedDevice(selected);
+                                                                        localStorage.setItem("selectedDevice", JSON.stringify(selected));
+                                                                    }}
+                                                                >
+                                                                    <option value="">Choose Device</option>
+                                                                    {assignDevices.map(device => (
+                                                                        <option key={device._id} value={device.serial_number}>
+                                                                            {device.serial_number}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
                                                         </div>
-
-                                                        {/* Right side - Icon */}
-                                                        <div className="text-end">
+                                                        <div className="col-4 text-end">
                                                             <div className="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
-                                                                <i className="fas fa-cogs text-white opacity-10"></i>
+                                                                <i className="fas fa-cogs opacity-10" aria-hidden="true"></i>
                                                             </div>
                                                         </div>
                                                     </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
@@ -7,30 +7,20 @@ import useManageUsersView from '../../hooks/Admin/useManageUsersView';
 import { formatDateToIST } from '../../utils/formatDateToIST';
 
 const ManageUsersView = ({ userInfo, handleLogout }) => {
-    const API_BASE = process.env.REACT_APP_SERVER_URL;
     const navigate = useNavigate();
     const location = useLocation();
     const selectedUser = location.state?.user;
 
     const {
         assignedDevices,
+        sharedDevices,
         loadingDevices,
         errorDevices,
         fetchUserAssignedDevices,
-        fetchDeviceDetails,
-        isModalDeviceDetails,
-        isModalDeviceHistory,
-        setIsModalDeviceHistory,
-        selectedDeviceDetails,
-        selectedDeviceForHistory,
-        setSelectedDeviceForHistory,
-        pagination,
-        closeModal
+        pagination
     } = useManageUsersView();
 
     const fetchDeviceDataCalled = useRef(false);
-    const [deviceHistoryData, setDeviceHistoryData] = useState([]);
-    const [loadingDeviceHistory, setLoadingDeviceHistory] = useState(false);
 
     useEffect(() => {
         if (!selectedUser) {
@@ -44,39 +34,48 @@ const ManageUsersView = ({ userInfo, handleLogout }) => {
         }
     }, [selectedUser, navigate, fetchUserAssignedDevices]);
 
-    const handleViewDeviceDetails = (device) => {
-        fetchDeviceDetails(device.serial_number, device.imei_number);
-    };
-
-    const handleViewDeviceHistory = async (device) => {
+    const handleViewDeviceDetails = async (device) => {
         try {
-            setSelectedDeviceForHistory(device);
-            setLoadingDeviceHistory(true);
+            const storedUser = JSON.parse(sessionStorage.getItem('adminUser'));
+            const token = storedUser?.token;
+            const API_BASE = process.env.REACT_APP_SERVER_URL;
 
-            const response = await fetch(`${API_BASE}/app/userDeviceHistory`, {
+            const response = await fetch(`${API_BASE}/app/userDeviceDetails`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ user_id: selectedUser.user_id }),
+                body: JSON.stringify({ 
+                    serial_number: device.serial_number, 
+                    imei_number: device.imei_number 
+                }),
             });
 
             if (response.ok) {
                 const data = await response.json();
-                const deviceHistoryRecords = data.data.find(
-                    item => item.serial_number === device.serial_number
-                );
-                setDeviceHistoryData(deviceHistoryRecords?.records || []);
-                setIsModalDeviceHistory(true);
+                navigate('/admin/device-details', { 
+                    state: { 
+                        deviceDetails: data.data 
+                    } 
+                });
             } else {
-                alert('Failed to fetch device history');
+                const errorData = await response.json();
+                alert('Error fetching device details: ' + (errorData.message || 'Unknown error'));
             }
         } catch (error) {
-            console.error('Error fetching device history:', error);
-            alert('Error fetching device history');
-        } finally {
-            setLoadingDeviceHistory(false);
+            console.error('Error fetching device details:', error);
+            alert('Error fetching device details');
         }
+    };
+
+    const handleViewDeviceHistory = (device) => {
+        navigate('/admin/device-history', { 
+            state: { 
+                device, 
+                user_id: selectedUser.user_id 
+            } 
+        });
     };
 
     const handleBackClick = () => {
@@ -207,8 +206,8 @@ const ManageUsersView = ({ userInfo, handleLogout }) => {
                                                     <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>S.No</th>
                                                     <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>Serial Number</th>
                                                     <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>IMEI Number</th>
-                                                    <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>Latitude</th>
-                                                    <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>Longitude</th>
+                                                    <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>Device Nickname</th>
+                                                    <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>Devices Role</th>
                                                     <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>Status</th>
                                                     <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>Actions</th>
                                                 </tr>
@@ -238,8 +237,12 @@ const ManageUsersView = ({ userInfo, handleLogout }) => {
                                                             <td className="text-center">{index + 1}</td>
                                                             <td className="text-center">{device.serial_number || '-'}</td>
                                                             <td className="text-center">{device.imei_number || '-'}</td>
-                                                            <td className="text-center">{device.latitude || '-'}</td>
-                                                            <td className="text-center">{device.longitude || '-'}</td>
+                                                            <td className="text-center">{device.device_nickname || '-'}</td>
+                                                            <td className="text-center">
+                                                                <span className={`badge badge-sm ${device.role === 'master' ? 'bg-gradient-primary' : 'bg-gradient-info'}`} style={{ width: '70px', textAlign: 'center', textTransform: 'capitalize' }}>
+                                                                    {device.role || 'master'}
+                                                                </span>
+                                                            </td>
                                                             <td className="text-center">
                                                                 <span className={`badge badge-sm ${device.status ? 'bg-gradient-success' : 'bg-gradient-secondary'}`} style={{ width: '70px', textAlign: 'center' }}>
                                                                     {device.status ? 'Active' : 'Inactive'}
@@ -290,213 +293,68 @@ const ManageUsersView = ({ userInfo, handleLogout }) => {
                             </div>
                         </div>
                     </div>
+
+                    {/* Shared Devices Section */}
+                    {sharedDevices && sharedDevices.length > 0 && (
+                        <div className="row mt-4">
+                            <div className="col-12">
+                                <div className="card mb-4">
+                                    <div className="card-header pb-2">
+                                        <h6>Shared Devices ({sharedDevices.length})</h6>
+                                    </div>
+                                    <div className="card-body px-0 pt-0 pb-2">
+                                        <div className="table-responsive p-0">
+                                            <table className="table align-items-center mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">S.No</th>
+                                                        <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Serial Number</th>
+                                                        <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Master User</th>
+                                                        <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Shared To</th>
+                                                        <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                                        <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Assigned At</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {sharedDevices.map((share, index) => (
+                                                        <tr key={share._id || index}>
+                                                            <td className="text-center">{index + 1}</td>
+                                                            <td className="text-center">{share.serial_number || '-'}</td>
+                                                            <td className="text-center">
+                                                                <div style={{ fontSize: '12px', fontWeight: '500' }}>{share.master_user_name || '-'}</div>
+                                                                <div style={{ fontSize: '11px', color: '#8f9297' }}>{share.master_user_email || '-'}</div>
+                                                            </td>
+                                                            <td className="text-center">
+                                                                <div style={{ fontSize: '12px', fontWeight: '500' }}>{share.shared_to_user_name || '-'}</div>
+                                                                <div style={{ fontSize: '11px', color: '#8f9297' }}>{share.shared_to_user_email || '-'}</div>
+                                                                <div style={{ fontSize: '11px', color: '#8f9297' }}>{share.shared_to_user_phone || '-'}</div>
+                                                            </td>
+                                                            <td className="text-center">
+                                                                <span className={`badge badge-sm ${
+                                                                    share.acceptance_status === 'accepted' ? 'bg-gradient-success' : 
+                                                                    share.acceptance_status === 'rejected' ? 'bg-gradient-danger' : 
+                                                                    'bg-gradient-warning'
+                                                                }`} style={{ width: '80px', textAlign: 'center', textTransform: 'capitalize' }}>
+                                                                    {share.acceptance_status || 'pending'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="text-center">
+                                                                <p className="text-xs font-weight-bold mb-0">
+                                                                    {share.assignedAt ? formatDateToIST(share.assignedAt) : '-'}
+                                                                </p>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                {isModalDeviceDetails && selectedDeviceDetails && (
-                    <div style={{
-                        position: "fixed",
-                        top: 0,
-                        left: 0,
-                        width: "100%",
-                        height: "100%",
-                        backgroundColor: "rgba(0, 0, 0, 0.5)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        zIndex: 1020
-                    }}>
-                        <div style={{
-                            backgroundColor: "#fff",
-                            padding: "20px",
-                            borderRadius: "10px",
-                            width: "600px",
-                            maxHeight: "80vh",
-                            overflowY: "auto",
-                            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"
-                        }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
-                                <div>
-                                    <h5 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#344767' }}>Device Details</h5>
-                                </div>
-                                <button
-                                    onClick={closeModal}
-                                    style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer" }}
-                                >
-                                    &times;
-                                </button>
-                            </div>
-                            <hr />
-                            <div style={{ padding: "15px 0" }}>
-                                <div className="row" style={{ marginBottom: '15px' }}>
-                                    <div className="col-md-6" style={{ marginBottom: '15px' }}>
-                                        <div style={{ fontSize: '13px', color: '#8f9297', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.5px' }}>Serial Number</div>
-                                        <div style={{ fontSize: '14px', color: '#344767', fontWeight: '500', marginTop: '5px' }}>{selectedDeviceDetails.serial_number || '-'}</div>
-                                    </div>
-                                    <div className="col-md-6" style={{ marginBottom: '15px' }}>
-                                        <div style={{ fontSize: '13px', color: '#8f9297', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.5px' }}>IMEI Number</div>
-                                        <div style={{ fontSize: '14px', color: '#344767', fontWeight: '500', marginTop: '5px' }}>{selectedDeviceDetails.imei_number || '-'}</div>
-                                    </div>
-                                </div>
-                                <div className="row" style={{ marginBottom: '15px' }}>
-                                    <div className="col-md-6" style={{ marginBottom: '15px' }}>
-                                        <div style={{ fontSize: '13px', color: '#8f9297', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.5px' }}>Latitude</div>
-                                        <div style={{ fontSize: '14px', color: '#344767', fontWeight: '500', marginTop: '5px' }}>{selectedDeviceDetails.latitude || '-'}</div>
-                                    </div>
-                                    <div className="col-md-6" style={{ marginBottom: '15px' }}>
-                                        <div style={{ fontSize: '13px', color: '#8f9297', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.5px' }}>Longitude</div>
-                                        <div style={{ fontSize: '14px', color: '#344767', fontWeight: '500', marginTop: '5px' }}>{selectedDeviceDetails.longitude || '-'}</div>
-                                    </div>
-                                </div>
-                                <div className="row" style={{ marginBottom: '15px' }}>
-                                    <div className="col-md-6" style={{ marginBottom: '15px' }}>
-                                        <div style={{ fontSize: '13px', color: '#8f9297', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.5px' }}>Motor HP</div>
-                                        <div style={{ fontSize: '14px', color: '#344767', fontWeight: '500', marginTop: '5px' }}>{selectedDeviceDetails.motor_hp || '-'}</div>
-                                    </div>
-                                    <div className="col-md-6" style={{ marginBottom: '15px' }}>
-                                        <div style={{ fontSize: '13px', color: '#8f9297', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.5px' }}>Start Status</div>
-                                        <div style={{ marginTop: '5px' }}>
-                                            <span className={`badge badge-sm ${selectedDeviceDetails.start_status ? 'bg-gradient-success' : 'bg-gradient-secondary'}`} style={{ width: '70px', textAlign: 'center' }}>
-                                                {selectedDeviceDetails.start_status ? 'Running' : 'Stopped'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="row" style={{ marginBottom: '15px' }}>
-                                    <div className="col-md-6" style={{ marginBottom: '15px' }}>
-                                        <div style={{ fontSize: '13px', color: '#8f9297', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.5px' }}>Started At</div>
-                                        <div style={{ fontSize: '14px', color: '#344767', fontWeight: '500', marginTop: '5px' }}>{selectedDeviceDetails.startAt ? formatDateToIST(selectedDeviceDetails.startAt) : '-'}</div>
-                                    </div>
-                                    <div className="col-md-6" style={{ marginBottom: '15px' }}>
-                                        <div style={{ fontSize: '13px', color: '#8f9297', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.5px' }}>Stopped At</div>
-                                        <div style={{ fontSize: '14px', color: '#344767', fontWeight: '500', marginTop: '5px' }}>{selectedDeviceDetails.stopAt ? formatDateToIST(selectedDeviceDetails.stopAt) : '-'}</div>
-                                    </div>
-                                </div>
-                                <div className="row" style={{ marginBottom: '15px' }}>
-                                    <div className="col-md-6" style={{ marginBottom: '15px' }}>
-                                        <div style={{ fontSize: '13px', color: '#8f9297', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.5px' }}>Config Status</div>
-                                        <div style={{ marginTop: '5px' }}>
-                                            <span className={`badge badge-sm ${selectedDeviceDetails.config_status ? 'bg-gradient-success' : 'bg-gradient-secondary'}`} style={{ width: '90px', textAlign: 'center' }}>
-                                                {selectedDeviceDetails.config_status ? 'Configured' : 'Not Configured'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-6" style={{ marginBottom: '15px' }}>
-                                        <div style={{ fontSize: '13px', color: '#8f9297', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.5px' }}>Status</div>
-                                        <div style={{ marginTop: '5px' }}>
-                                            <span className={`badge badge-sm ${selectedDeviceDetails.status ? 'bg-gradient-success' : 'bg-gradient-secondary'}`} style={{ width: '70px', textAlign: 'center' }}>
-                                                {selectedDeviceDetails.status ? 'Active' : 'Inactive'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="row">
-                                    <div className="col-md-6">
-                                        <div style={{ fontSize: '13px', color: '#8f9297', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.5px' }}>Created At</div>
-                                        <div style={{ fontSize: '14px', color: '#344767', fontWeight: '500', marginTop: '5px' }}>{selectedDeviceDetails.createdAt ? formatDateToIST(selectedDeviceDetails.createdAt) : '-'}</div>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <div style={{ fontSize: '13px', color: '#8f9297', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.5px' }}>Updated At</div>
-                                        <div style={{ fontSize: '14px', color: '#344767', fontWeight: '500', marginTop: '5px' }}>{selectedDeviceDetails.updatedAt ? formatDateToIST(selectedDeviceDetails.updatedAt) : '-'}</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <hr />
-                            <div style={{ display: "flex", justifyContent: "center" }}>
-                                <button
-                                    className="btn btn-secondary mb-0"
-                                    style={{ padding: '10px' }}
-                                    onClick={closeModal}
-                                >
-                                    Close
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {isModalDeviceHistory && selectedDeviceForHistory && (
-                    <div style={{
-                        position: "fixed",
-                        top: 0,
-                        left: 0,
-                        width: "100%",
-                        height: "100%",
-                        backgroundColor: "rgba(0, 0, 0, 0.5)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        zIndex: 1020
-                    }}>
-                        <div style={{
-                            backgroundColor: "#fff",
-                            padding: "20px",
-                            borderRadius: "10px",
-                            width: "900px",
-                            maxHeight: "80vh",
-                            overflowY: "auto",
-                            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"
-                        }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
-                                <div>
-                                    <h5 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#344767' }}>Device History ({deviceHistoryData.length})</h5>
-                                    <div style={{ fontSize: '13px', color: '#8f9297', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.5px', marginTop: '5px' }}>
-                                        Serial Number: {selectedDeviceForHistory.serial_number}
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={closeModal}
-                                    style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer" }}
-                                >
-                                    &times;
-                                </button>
-                            </div>
-                            <hr />
-                            
-                            <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
-                                {loadingDeviceHistory ? (
-                                    <p style={{ textAlign: 'center', padding: '20px' }}>Loading history...</p>
-                                ) : deviceHistoryData.length === 0 ? (
-                                    <p style={{ textAlign: 'center', padding: '20px' }}>No history records found</p>
-                                ) : (
-                                    <table className="table align-items-center mb-0">
-                                        <thead style={{ position: 'sticky', top: 0, backgroundColor: '#f8f9fa' }}>
-                                            <tr>
-                                                <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder" style={{ color: '#8f9297 !important' }}>Started At</th>
-                                                <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder" style={{ color: '#8f9297 !important' }}>Stopped At</th>
-                                                <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder" style={{ color: '#8f9297 !important' }}>Duration</th>
-                                                <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder" style={{ color: '#8f9297 !important' }}>Energy</th>
-                                                <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder" style={{ color: '#8f9297 !important' }}>Max Current</th>
-                                                <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder" style={{ color: '#8f9297 !important' }}>Min Current</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {deviceHistoryData.map((record, index) => (
-                                                <tr key={index}>
-                                                    <td className="text-center" style={{ fontSize: '12px' }}>{record.startAt ? formatDateToIST(record.startAt) : '-'}</td>
-                                                    <td className="text-center" style={{ fontSize: '12px' }}>{record.stopAt ? formatDateToIST(record.stopAt) : '-'}</td>
-                                                    <td className="text-center" style={{ fontSize: '12px' }}>{record.duration_minutes || '-'}</td>
-                                                    <td className="text-center" style={{ fontSize: '12px' }}>{record.energy_kwh.toFixed(2) || '-'} kWh</td>
-                                                    <td className="text-center" style={{ fontSize: '12px' }}>{record.maxCurrent.toFixed(2) || '-'}</td>
-                                                    <td className="text-center" style={{ fontSize: '12px' }}>{record.minCurrent.toFixed(2) || '-'}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                )}
-                            </div>
-                            <hr />
-                            <div style={{ display: "flex", justifyContent: "center" }}>
-                                <button
-                                    className="btn btn-secondary mb-0"
-                                    style={{ padding: '10px' }}
-                                    onClick={closeModal}
-                                >
-                                    Close
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
                 <Footer />
             </main>

@@ -4,6 +4,7 @@ import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
 import useManageVouchers from '../../hooks/Admin/useManageVouchers';
+import { showDeleteConfirmation } from '../../utils/alert';
 
 const ManageVouchers = ({ userInfo, handleLogout }) => {
     const navigate = useNavigate();
@@ -47,7 +48,8 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
     };
 
     const handleDeleteVoucher = async (id, code) => {
-        if (window.confirm(`Are you sure you want to delete voucher "${code}"?`)) {
+        const result = await showDeleteConfirmation(code);
+        if (result.isConfirmed) {
             await handleVoucherDelete(id);
             fetchVoucherData();
         }

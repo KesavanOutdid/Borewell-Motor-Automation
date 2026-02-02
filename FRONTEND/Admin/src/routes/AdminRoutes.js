@@ -4,6 +4,9 @@ import SignIn from '../pages/Admin/Auth/SignIn';
 import SignUp from '../pages/Admin/Auth/SignUp';
 import Dashboard from '../pages/Admin/Dashboard';
 import ManageDevices from '../pages/Admin/ManageDevices';
+import ManageDevicesView from '../pages/Admin/ManageDevicesView';
+import DeviceHistory from '../pages/Admin/DeviceHistory';
+import DeviceDetails from '../pages/Admin/DeviceDetails';
 import ManageUserRoles from '../pages/Admin/ManageUserRoles';
 import ManageUsers from '../pages/Admin/ManageUsers';
 import ManageUsersView from '../pages/Admin/ManageUsersView';
@@ -81,6 +84,30 @@ const AdminRoutes = () => {
                 path="manage-devices"
                 element={loggedIn ? (
                     <ManageDevices userInfo={userInfo} handleLogout={handleLogout} />
+                ) : (
+                    <Navigate to="/admin/signin" />
+                )}
+            />
+            <Route
+                path="manage-devices-view"
+                element={loggedIn ? (
+                    <ManageDevicesView userInfo={userInfo} handleLogout={handleLogout} />
+                ) : (
+                    <Navigate to="/admin/signin" />
+                )}
+            />
+            <Route
+                path="device-history"
+                element={loggedIn ? (
+                    <DeviceHistory userInfo={userInfo} handleLogout={handleLogout} />
+                ) : (
+                    <Navigate to="/admin/signin" />
+                )}
+            />
+            <Route
+                path="device-details"
+                element={loggedIn ? (
+                    <DeviceDetails userInfo={userInfo} handleLogout={handleLogout} />
                 ) : (
                     <Navigate to="/admin/signin" />
                 )}

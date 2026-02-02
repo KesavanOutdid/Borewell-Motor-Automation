@@ -77,12 +77,20 @@ exports.createUser = async (req, res, next) => {
         if (!role)
             return res.status(400).json({ success: false, message: 'Invalid role_id' });
 
-        // Email unique inside same role
-        const exists = await User.findOne({ user_email, role_id });
-        if (exists)
+        // Check if email already exists
+        const emailExists = await User.findOne({ user_email });
+        if (emailExists)
             return res.status(409).json({
                 success: false,
-                message: "Email already exists for this role"
+                message: "Email already exists"
+            });
+
+        // Check if phone already exists
+        const phoneExists = await User.findOne({ user_phone });
+        if (phoneExists)
+            return res.status(409).json({
+                success: false,
+                message: "Phone number already exists"
             });
 
         // AUTO-INCREMENT user_id
@@ -284,6 +292,14 @@ exports.manageUserUpdated = async (req, res, next) => {
         const user = await User.findOne({ user_id });
         if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
+        // Check if phone is being updated and if it already exists for another user
+        if (user_phone !== undefined && user_phone !== '' && user_phone !== user.user_phone) {
+            const phoneExists = await User.findOne({ user_phone, user_id: { $ne: user_id } });
+            if (phoneExists) {
+                return res.status(409).json({ success: false, message: 'Phone number already exists' });
+            }
+        }
+
         // Update fields (only update fields that are provided and not empty)
         if (user_name !== undefined && user_name !== '') user.user_name = user_name;
         if (user_phone !== undefined && user_phone !== '') user.user_phone = user_phone;
@@ -402,17 +418,26 @@ exports.getDevices = async (req, res) => {
             { $limit: limit }
         ]);
 
-        // Format response
-        const enrichedDevices = devices.map(device => ({
-            ...device,
-            user_details: device.user_details
-                ? {
-                    user_name: device.user_details.user_name,
-                    user_email: device.user_details.user_email,
-                    user_phone: device.user_details.user_phone,
-                    status: device.user_details.status
-                }
-                : null
+        // Fetch DeviceShare data for each device
+        const DeviceShare = require('../models/DeviceShare');
+        const enrichedDevices = await Promise.all(devices.map(async (device) => {
+            const sharedUsers = await DeviceShare.find({ 
+                serial_number: device.serial_number,
+                status: true 
+            }).select('-__v').lean();
+
+            return {
+                ...device,
+                user_details: device.user_details
+                    ? {
+                        user_name: device.user_details.user_name,
+                        user_email: device.user_details.user_email,
+                        user_phone: device.user_details.user_phone,
+                        status: device.user_details.status
+                    }
+                    : null,
+                shared_users: sharedUsers || []
+            };
         }));
 
         const totalPages = Math.ceil(totalDevices / limit);

@@ -95,6 +95,14 @@ exports.updateProfile = async (req, res, next) => {
 
         const { user_name, user_phone, status, password } = req.body;
 
+        // Check if phone is being updated and if it already exists for another user
+        if (user_phone) {
+            const phoneExists = await User.findOne({ user_phone, user_id: { $ne: userId } });
+            if (phoneExists) {
+                return res.status(409).json({ success: false, message: 'Phone number already exists' });
+            }
+        }
+
         const updateData = {};
         if (user_name) updateData.user_name = user_name;
         if (user_phone) updateData.user_phone = user_phone;
@@ -132,7 +140,7 @@ exports.configIMEInumber = async (req, res, next) => {
         if (!errors.isEmpty())
             return res.status(400).json({ success: false, errors: errors.array() });
 
-        const { serial_number, imei_number, user_email, timestamp, latitude, longitude, motor_hp } = req.body;
+        const { serial_number, imei_number, user_email, timestamp, latitude, longitude, motor_hp, device_nickname } = req.body;
 
         // Find user by email
         const user = await User.findOne({ user_email });
@@ -151,18 +159,26 @@ exports.configIMEInumber = async (req, res, next) => {
                 message: "Device not found or not assigned to this user"
             });
 
+        // Prepare update object
+        const updateData = {
+            imei_number,
+            latitude,
+            longitude,
+            motor_hp,
+            config_status: true,
+            updatedAt: new Date(timestamp),
+            updatedBy: user_email
+        };
+
+        // Add device_nickname if provided
+        if (device_nickname !== undefined) {
+            updateData.device_nickname = device_nickname;
+        }
+
         // Update device including location
         const updatedDevice = await Device.findOneAndUpdate(
             { serial_number, assigned_user_id: user.user_id },
-            {
-                imei_number,
-                latitude,
-                longitude,
-                motor_hp,
-                config_status: true,
-                updatedAt: new Date(timestamp),
-                updatedBy: user_email
-            },
+            updateData,
             { new: true }
         );
 
@@ -178,9 +194,65 @@ exports.configIMEInumber = async (req, res, next) => {
                 latitude: updatedDevice.latitude,
                 longitude: updatedDevice.longitude,
                 motor_hp: updatedDevice.motor_hp,
+                device_nickname: updatedDevice.device_nickname,
                 config_status: updatedDevice.config_status,
                 updatedAt: updatedDevice.updatedAt,
                 updatedBy: updatedDevice.updatedBy
+            }
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.updateDeviceNickname = async (req, res, next) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty())
+            return res.status(400).json({ success: false, errors: errors.array() });
+
+        const { serial_number, device_nickname, user_email } = req.body;
+
+        // Find user by email
+        const user = await User.findOne({ user_email });
+        if (!user)
+            return res.status(404).json({ success: false, message: "User not found" });
+
+        // Find device by serial number
+        const device = await Device.findOne({ serial_number });
+        if (!device)
+            return res.status(404).json({ success: false, message: "Device not found" });
+
+        // Check if user has permission (must be master user)
+        if (Number(device.assigned_user_id) !== Number(user.user_id))
+            return res.status(403).json({ 
+                success: false, 
+                message: "Only the device owner can update device nickname" 
+            });
+
+        // Update device nickname
+        const updatedDevice = await Device.findOneAndUpdate(
+            { serial_number },
+            {
+                device_nickname: device_nickname || null,
+                updatedBy: user_email,
+                updatedAt: new Date()
+            },
+            { new: true }
+        );
+
+        await cacheDeletePattern('*devices*');
+        await cacheDeletePattern('*analytics*');
+
+        res.status(200).json({
+            success: true,
+            message: "Device nickname updated successfully",
+            device: {
+                serial_number: updatedDevice.serial_number,
+                device_nickname: updatedDevice.device_nickname,
+                updatedBy: updatedDevice.updatedBy,
+                updatedAt: updatedDevice.updatedAt
             }
         });
 
@@ -320,7 +392,20 @@ exports.userAssignDevices = async (req, res) => {
             ...masterDevices.map(d => ({ ...d, acceptance_status: 'accepted' })), 
             ...sharedDevices.map(d => {
                 const share = shares.find(s => s.serial_number === d.serial_number);
-                return { ...d, acceptance_status: share ? share.acceptance_status : 'pending' };
+                return { 
+                    ...d, 
+                    acceptance_status: share ? share.acceptance_status : 'pending',
+                    share_info: share ? {
+                        master_user_id: share.master_user_id,
+                        master_user_name: share.master_user_name,
+                        master_user_email: share.master_user_email,
+                        shared_to_user_id: share.shared_to_user_id,
+                        shared_to_user_name: share.shared_to_user_name,
+                        shared_to_user_phone: share.shared_to_user_phone,
+                        shared_to_user_email: share.shared_to_user_email,
+                        assignedAt: share.assignedAt
+                    } : null
+                };
             })
         ];
 
@@ -333,10 +418,20 @@ exports.userAssignDevices = async (req, res) => {
             } : null
         }));
 
+        // 3. Find all device share relationships where this user is involved (as master or shared_to)
+        const sharedDeviceRelationships = await DeviceShare.find({
+            $or: [
+                { master_user_id: userIdNum },
+                { shared_to_user_id: userIdNum }
+            ],
+            status: true
+        }).sort({ assignedAt: -1 });
+
         const response = {
             success: true,
             count: enrichedDevices.length,
-            data: enrichedDevices
+            data: enrichedDevices,
+            shared_devices: sharedDeviceRelationships
         };
 
         return res.status(200).json(response);

@@ -364,13 +364,13 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                         </div>
                                                         <div style={{ marginBottom: "10px" }}>
                                                             <label>Mobile</label>
-                                                            <input type="text" name="mobile" className="form-control" style={{ width: "100%", padding: "8px", margin: "5px 0" }}
-                                                                value={currentUserDetails.user_phone} onChange={(e) => handleInputChange("user_phone", sanitizeMobile(e.target.value))} required />
+                                                            <input type="text" name="mobile" className="form-control" style={{ width: "100%", padding: "8px", margin: "5px 0", backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
+                                                                value={currentUserDetails.user_phone} readOnly required />
                                                         </div>
                                                         <div style={{ marginBottom: "10px" }}>
                                                             <label>E-mail</label>
-                                                            <input type="email" name="email" className="form-control" style={{ width: "100%", padding: "8px", margin: "5px 0" }}
-                                                                value={currentUserDetails.user_email} onChange={(e) => handleInputChange("user_email", sanitizeEmail(e.target.value))} readOnly required />
+                                                            <input type="email" name="email" className="form-control" style={{ width: "100%", padding: "8px", margin: "5px 0", backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
+                                                                value={currentUserDetails.user_email} readOnly required />
                                                         </div>
                                                         <div style={{ marginBottom: "10px" }}>
                                                             <label>Password</label>
