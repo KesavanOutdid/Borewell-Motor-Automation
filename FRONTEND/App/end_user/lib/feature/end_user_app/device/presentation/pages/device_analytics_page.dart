@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 
+import '../../../../../utils/theme/app_colors.dart';
 import '../controllers/device_analytics_controller.dart';
 import '../../domain/models/analytics_data.dart';
 
@@ -60,8 +61,8 @@ class DeviceAnalyticsView extends StatelessWidget {
             children: [
               Container(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.green.shade400, Colors.green.shade600],
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primaryGreen, AppColors.darkGreen],
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -97,8 +98,8 @@ class DeviceAnalyticsView extends StatelessWidget {
               Obx(() => Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.green.shade400, Colors.green.shade600],
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primaryGreen, AppColors.darkGreen],
                   ),
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -199,7 +200,7 @@ class DeviceAnalyticsView extends StatelessWidget {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: Colors.green.shade50,
+                  color: AppColors.primaryGreen.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -208,7 +209,7 @@ class DeviceAnalyticsView extends StatelessWidget {
                 height: 60,
                 child: CircularProgressIndicator(
                   strokeWidth: 4,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.green.shade400),
+                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
                 ),
               ),
             ],
@@ -248,10 +249,10 @@ class DeviceAnalyticsView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.green.shade50,
+                color: AppColors.primaryGreen.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.analytics_outlined, size: 64, color: Colors.green.shade300),
+              child: const Icon(Icons.analytics_outlined, size: 64, color: AppColors.primaryGreen),
             ),
             const SizedBox(height: 24),
             const Text(
@@ -303,7 +304,7 @@ class DeviceAnalyticsView extends StatelessWidget {
 
       return RefreshIndicator(
         onRefresh: controller.refreshAnalytics,
-        color: Colors.green.shade400,
+        color: AppColors.primaryGreen,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
@@ -365,8 +366,8 @@ class DeviceAnalyticsView extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: isSelected
-                        ? LinearGradient(
-                            colors: [Colors.green.shade400, Colors.green.shade600],
+                        ? const LinearGradient(
+                            colors: [AppColors.primaryGreen, AppColors.darkGreen],
                           )
                         : null,
                     borderRadius: BorderRadius.circular(16),
@@ -403,15 +404,15 @@ class DeviceAnalyticsView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.green.shade400, Colors.green.shade600],
+        gradient: const LinearGradient(
+          colors: [AppColors.primaryGreen, AppColors.darkGreen],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withOpacity(0.3),
+            color: AppColors.primaryGreen.withOpacity(0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -1024,7 +1025,7 @@ class DeviceAnalyticsView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: isPositive ? Colors.green.shade50 : Colors.red.shade50,
+              color: isPositive ? AppColors.primaryGreen.withOpacity(0.1) : Colors.red.shade50,
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
@@ -1032,7 +1033,7 @@ class DeviceAnalyticsView extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
-                color: isPositive ? Colors.green : Colors.red,
+                color: isPositive ? AppColors.primaryGreen : Colors.red,
               ),
             ),
           ),
@@ -1080,7 +1081,7 @@ class DeviceAnalyticsView extends StatelessWidget {
                   'Actual Value',
                   avg,
                   targetValue,
-                  Colors.green,
+                  AppColors.primaryGreen,
                 ),
               ),
               const SizedBox(width: 20),
@@ -1126,7 +1127,7 @@ class DeviceAnalyticsView extends StatelessWidget {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green.shade600,
+                    backgroundColor: AppColors.primaryGreen,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1151,7 +1152,7 @@ class DeviceAnalyticsView extends StatelessWidget {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green.shade600,
+                    backgroundColor: AppColors.primaryGreen,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

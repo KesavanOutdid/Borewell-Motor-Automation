@@ -721,25 +721,6 @@ class _HomeViewState extends State<HomeView> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: (isMaster ? Colors.blue : (isPending ? Colors.orange : Colors.green)).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(
-                                color: (isMaster ? Colors.blue : (isPending ? Colors.orange : Colors.green)).withOpacity(0.3),
-                              ),
-                            ),
-                            child: Text(
-                              isMaster ? 'Master' : (isPending ? 'Invited' : 'Shared'),
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: isMaster ? Colors.blue : (isPending ? Colors.orange : Colors.green),
-                              ),
-                            ),
-                          ),
                         ],
                       ),
                       const SizedBox(height: 4),

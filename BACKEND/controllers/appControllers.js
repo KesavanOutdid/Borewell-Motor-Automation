@@ -229,8 +229,12 @@ exports.startStopDevice = async (req, res) => {
 
         if (start_status === true) {
             updateData.startAt = new Date();
+            updateData.last_started_by = user.user_name;
+            updateData.last_started_by_email = user.user_email;
         } else {
             updateData.stopAt = new Date();
+            updateData.last_stopped_by = user.user_name;
+            updateData.last_stopped_by_email = user.user_email;
         }
 
         await Device.updateOne(
@@ -490,6 +494,8 @@ exports.userDeviceHistory = async (req, res) => {
                 minCurrent: h.minCurrent,
                 maxVoltage: h.maxVoltage,
                 minVoltage: h.minVoltage,
+                last_started_by: h.last_started_by || "-",
+                last_stopped_by: h.last_stopped_by || "-",
                 createdAt: h.createdAt,
                 updatedAt: h.updatedAt
             });

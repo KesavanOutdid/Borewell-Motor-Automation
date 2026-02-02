@@ -295,6 +295,14 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
                       Expanded(child: _infoTile('Stop Time', _formatDate(record['stopAt']))),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(child: _infoTile('Started By', record['started_by'] ?? '-')),
+                      const SizedBox(width: 12),
+                      Expanded(child: _infoTile('Stopped By', record['stopped_by'] ?? '-')),
+                    ],
+                  ),
                   const SizedBox(height: 16),
                   Wrap(
                     spacing: 8,

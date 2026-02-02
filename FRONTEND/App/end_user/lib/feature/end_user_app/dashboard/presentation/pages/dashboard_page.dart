@@ -167,14 +167,14 @@ class _ModernDrawer extends StatelessWidget {
                       const Divider(),
                       const SizedBox(height: 8),
                       _DrawerItem(
-                        icon: Icons.settings_rounded,
-                        label: 'Settings',
+                        icon: Icons.logout_rounded,
+                        label: 'Logout',
                         isSelected: false,
                         onTap: () {
                           Navigator.of(context).pop();
-                          Get.toNamed('/settings');
+                          Get.find<AuthController>().logout();
                         },
-                        color: const Color(0xFF64748B),
+                        color: AppColors.error,
                       ),
                     ],
                   ),

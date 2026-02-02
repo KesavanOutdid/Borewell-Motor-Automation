@@ -154,6 +154,9 @@ client.on("message", async (topic, message) => {
         /* HISTORY LOGIC (START / STOP SESSION)                   */
         /* ------------------------------------------------------ */
         if (type === "STATUS" && item.serial_number) {
+            // Fetch device details to know who started/stopped
+            const device = await db.collection("devices").findOne({ serial_number: item.serial_number });
+
             if (item.motor_running === true) {
                 // CHECK if session already open
                 const openSession = await db.collection("borewell_history").findOne({
@@ -172,6 +175,10 @@ client.on("message", async (topic, message) => {
                         date: new Date().toISOString().split("T")[0],
                         startAt: new Date(item.timestamp),
                         stopAt: null,
+                        started_by: device ? device.last_started_by : null,
+                        started_by_email: device ? device.last_started_by_email : null,
+                        stopped_by: null,
+                        stopped_by_email: null,
                         duration_minutes: 0,
                         energy_kwh: 0,
                         maxCurrent: 0,
@@ -203,6 +210,8 @@ client.on("message", async (topic, message) => {
                         {
                             $set: {
                                 stopAt: stopTime,
+                                stopped_by: device ? device.last_stopped_by : null,
+                                stopped_by_email: device ? device.last_stopped_by_email : null,
                                 duration_minutes: Math.round(duration),
                                 updatedAt: new Date()
                             }

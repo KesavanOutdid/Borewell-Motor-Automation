@@ -24,6 +24,10 @@ const deviceSchema = new mongoose.Schema({
     updatedAt: { type: Date, default: null },
     startAt: { type: Date, default: null },
     stopAt: { type: Date, default: null },
+    last_started_by: { type: String, default: null },
+    last_started_by_email: { type: String, default: null },
+    last_stopped_by: { type: String, default: null },
+    last_stopped_by_email: { type: String, default: null },
 });
 
 module.exports = mongoose.model("Device", deviceSchema);

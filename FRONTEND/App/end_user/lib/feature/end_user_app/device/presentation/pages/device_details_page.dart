@@ -133,28 +133,6 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
     });
   }
 
-  Widget _buildRoleBadge(String role) {
-    final isMaster = role == 'master';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: (isMaster ? Colors.blue : Colors.orange).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: (isMaster ? Colors.blue : Colors.orange).withOpacity(0.3),
-        ),
-      ),
-      child: Text(
-        isMaster ? 'Master' : 'Shared',
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          color: isMaster ? Colors.blue : Colors.orange,
-        ),
-      ),
-    );
-  }
-
   Widget _buildQuickActionsRow(BuildContext context, DeviceDetailsController controller) {
     final isMaster = controller.liveData['role'] == 'master';
     
@@ -255,7 +233,6 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                             ),
                           ),
                         ),
-                        _buildRoleBadge(controller.liveData['role'] ?? 'master'),
                       ],
                     ),
                     const SizedBox(height: 4),
