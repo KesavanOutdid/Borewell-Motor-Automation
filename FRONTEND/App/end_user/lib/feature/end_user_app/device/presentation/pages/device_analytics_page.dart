@@ -660,7 +660,7 @@ class DeviceAnalyticsView extends StatelessWidget {
   }
 
   Color _getScoreColor(int score) {
-    if (score >= 80) return Colors.green;
+    if (score >= 80) return AppColors.primaryGreen;
     if (score >= 60) return Colors.orange;
     return Colors.red;
   }
@@ -668,7 +668,7 @@ class DeviceAnalyticsView extends StatelessWidget {
   Color _getConsistencyColor(String consistency) {
     switch (consistency.toLowerCase()) {
       case 'excellent':
-        return Colors.green;
+        return AppColors.primaryGreen;
       case 'good':
         return Colors.blue;
       case 'fair':
@@ -683,7 +683,7 @@ class DeviceAnalyticsView extends StatelessWidget {
   Color _getTrendColor(String trend) {
     switch (trend.toLowerCase()) {
       case 'improving':
-        return Colors.green;
+        return AppColors.primaryGreen;
       case 'declining':
         return Colors.red;
       case 'stable':
@@ -907,7 +907,7 @@ class DeviceAnalyticsView extends StatelessWidget {
                 'Maximum',
                 max.toStringAsFixed(1),
                 Icons.trending_up,
-                Colors.green,
+                AppColors.primaryGreen,
                 'N/A',
                 true,
               ),
@@ -947,7 +947,7 @@ class DeviceAnalyticsView extends StatelessWidget {
               'Maximum',
               stats.max.toStringAsFixed(1),
               Icons.trending_up,
-              Colors.green,
+              AppColors.primaryGreen,
               '${stats.percentChange >= 0 ? '+' : ''}${stats.percentChange.toStringAsFixed(1)}%',
               stats.percentChange >= 0,
             ),
@@ -1289,7 +1289,7 @@ class DeviceAnalyticsView extends StatelessWidget {
     }
 
     final statsList = [
-      {'label': 'Total Run Time', 'value': formatRunTime(totalRunTimeHours), 'percent': 100.0, 'color': Colors.green},
+      {'label': 'Total Run Time', 'value': formatRunTime(totalRunTimeHours), 'percent': 100.0, 'color': AppColors.primaryGreen},
       {'label': 'Total Power Used', 'value': formatPower(totalPowerUsed), 'percent': totalPowerUsed > 0 ? 100.0 : 0.0, 'color': Colors.blue},
     ];
 

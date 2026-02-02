@@ -172,7 +172,7 @@ class _ModernDrawer extends StatelessWidget {
                         isSelected: false,
                         onTap: () {
                           Navigator.of(context).pop();
-                          Get.find<AuthController>().logout();
+                          Get.find<LoginController>().logout();
                         },
                         color: AppColors.error,
                       ),

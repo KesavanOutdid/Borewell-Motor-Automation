@@ -125,7 +125,7 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Usage Overview',
+                  'Records',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 2),
@@ -256,7 +256,7 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '#$displayIndex',
+                  'Record #$displayIndex',
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primaryGreen),
                 ),
               ),
