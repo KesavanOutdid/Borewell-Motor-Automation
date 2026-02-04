@@ -139,6 +139,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
   }
 
   void _showEditNicknameDialog(BuildContext context, DeviceDetailsController controller) {
+    print('DEBUG: _showEditNicknameDialog called');
     final nickname = controller.liveData['nickname']?.toString() ?? '';
     final serial = controller.liveData['serialNumber']?.toString() ?? '-';
     final initialValue = (nickname != '-' && nickname.isNotEmpty) ? nickname : '';
@@ -716,53 +717,123 @@ class SwipeButton extends StatefulWidget {
   State<SwipeButton> createState() => _SwipeButtonState();
 }
 
-class _SwipeButtonState extends State<SwipeButton> {
+class _SwipeButtonState extends State<SwipeButton> with SingleTickerProviderStateMixin {
   double _dragValue = 0.0;
   bool _isSwiped = false;
-  final double _height = 55.0;
+  final double _height = 64.0;
   bool _initialized = false;
+  late AnimationController _pulseController;
+  SwipeDirection? _lastDirection;
+
+  @override
+  void initState() {
+    super.initState();
+    _lastDirection = widget.direction;
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(SwipeButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.direction != widget.direction) {
+      _initialized = false;
+      _isSwiped = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final maxDrag = width - _height;
+        final totalWidth = constraints.maxWidth;
+        const double margin = 6.0;
+        final thumbSize = _height - 12.0; // 52px thumb in 64px container
+        final maxDrag = totalWidth - (margin * 2) - thumbSize;
         
         if (!_initialized) {
           _dragValue = widget.direction == SwipeDirection.right ? 0.0 : maxDrag;
           _initialized = true;
         }
 
+        final progress = maxDrag > 0 
+            ? (widget.direction == SwipeDirection.right 
+                ? (_dragValue / maxDrag) 
+                : (1.0 - (_dragValue / maxDrag)))
+            : 0.0;
+
         return Container(
           height: _height,
-          width: width,
+          width: totalWidth,
+          clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: widget.isEnabled 
-                ? widget.activeColor.withValues(alpha: 0.1) 
+                ? widget.activeColor.withOpacity(0.08)
                 : Colors.grey.shade100,
             borderRadius: BorderRadius.circular(_height / 2),
             border: Border.all(
               color: widget.isEnabled 
-                  ? widget.activeColor.withValues(alpha: 0.1) 
+                  ? widget.activeColor.withOpacity(0.15)
                   : Colors.grey.shade300,
+              width: 1.5,
             ),
           ),
           child: Stack(
+            alignment: Alignment.center,
             children: [
-               Center(
-                child: Text(
-                  widget.isEnabled ? widget.label : 'Offline',
-                  style: TextStyle(
-                    color: widget.isEnabled ? widget.activeColor.withValues(alpha: 0.8) : Colors.grey,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    letterSpacing: 0.5,
+              // Progress track
+              Positioned(
+                left: widget.direction == SwipeDirection.right ? margin : null,
+                right: widget.direction == SwipeDirection.left ? margin : null,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 0),
+                  height: _height - 12,
+                  width: (progress * (totalWidth - margin * 2)).clamp(0.0, totalWidth - margin * 2),
+                  decoration: BoxDecoration(
+                    color: widget.activeColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(_height / 2),
                   ),
                 ),
               ),
+              
+              // Animated Text
+              Opacity(
+                opacity: (1.0 - progress * 1.5).clamp(0.0, 1.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (widget.direction == SwipeDirection.right)
+                      _buildChevronGroup(true),
+                    const SizedBox(width: 8),
+                    Text(
+                      widget.isEnabled ? widget.label : 'OFFLINE',
+                      style: TextStyle(
+                        color: widget.isEnabled 
+                            ? widget.activeColor.withOpacity(0.8) 
+                            : Colors.grey.shade500,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    if (widget.direction == SwipeDirection.left)
+                      _buildChevronGroup(false),
+                  ],
+                ),
+              ),
+              
+              // Thumb
               Positioned(
-                left: _dragValue,
+                left: margin + _dragValue,
                 child: GestureDetector(
                   onHorizontalDragUpdate: (details) {
                     if (!widget.isEnabled || _isSwiped) return;
@@ -775,14 +846,14 @@ class _SwipeButtonState extends State<SwipeButton> {
                     
                     bool success = false;
                     if (widget.direction == SwipeDirection.right) {
-                      if (_dragValue > maxDrag * 0.7) {
+                      if (_dragValue > maxDrag * 0.75) {
                         success = true;
                         _dragValue = maxDrag;
                       } else {
                         _dragValue = 0.0;
                       }
                     } else {
-                      if (_dragValue < maxDrag * 0.3) {
+                      if (_dragValue < maxDrag * 0.25) {
                         success = true;
                         _dragValue = 0.0;
                       } else {
@@ -791,9 +862,7 @@ class _SwipeButtonState extends State<SwipeButton> {
                     }
 
                     if (success) {
-                      setState(() {
-                        _isSwiped = true;
-                      });
+                      setState(() => _isSwiped = true);
                       widget.onSwipe();
                       Future.delayed(const Duration(seconds: 2), () {
                         if (mounted) {
@@ -807,29 +876,50 @@ class _SwipeButtonState extends State<SwipeButton> {
                       setState(() {});
                     }
                   },
-                  child: Container(
-                    height: _height,
-                    width: _height,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 100),
+                    curve: Curves.easeOut,
+                    height: thumbSize,
+                    width: thumbSize,
                     decoration: BoxDecoration(
-                      color: widget.isEnabled ? (widget.direction == SwipeDirection.left && !_isSwiped ? Colors.white : widget.activeColor) : Colors.grey,
+                      color: widget.isEnabled ? widget.activeColor : Colors.grey.shade400,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: (widget.isEnabled ? widget.activeColor : Colors.grey).withValues(alpha: 0.4),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+                          color: (widget.isEnabled ? widget.activeColor : Colors.grey).withOpacity(0.4),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
                     child: Icon(
-                      widget.icon,
-                      color: widget.direction == SwipeDirection.left && !_isSwiped ? widget.activeColor : Colors.white,
-                      size: 24,
+                      _isSwiped ? Icons.check_rounded : widget.icon,
+                      color: Colors.white,
+                      size: 24, // Slightly smaller icon for better fit
                     ),
                   ),
                 ),
               ),
             ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildChevronGroup(bool isRight) {
+    return AnimatedBuilder(
+      animation: _pulseController,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _pulseController.value,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: List.generate(2, (index) => Icon(
+              isRight ? Icons.chevron_right_rounded : Icons.chevron_left_rounded,
+              color: widget.activeColor.withOpacity(0.5),
+              size: 18,
+            )),
           ),
         );
       },

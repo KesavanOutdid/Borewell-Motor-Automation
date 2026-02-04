@@ -182,7 +182,7 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 2.0,
+              childAspectRatio: 1.6,
             ),
             itemCount: controller.summaryMetrics.length,
             itemBuilder: (context, index) {

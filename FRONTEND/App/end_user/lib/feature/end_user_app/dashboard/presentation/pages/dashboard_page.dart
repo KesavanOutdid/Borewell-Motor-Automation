@@ -158,8 +158,8 @@ class _ModernDrawer extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     children: [
                       _DrawerItem(
-                        icon: Icons.devices_rounded,
-                        label: 'My Devices',
+                        icon: Icons.home_rounded,
+                        label: 'Home',
                         isSelected: controller.selectedIndex.value == 0,
                         onTap: () {
                           controller.changePage(0);

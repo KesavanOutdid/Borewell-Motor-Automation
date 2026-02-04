@@ -35,19 +35,21 @@ class OrdersPage extends StatelessWidget {
                       GestureDetector(
                         onTap: () => Scaffold.of(context).openDrawer(),
                         child: Container(
-                          padding: const EdgeInsets.all(8),
-                          margin: const EdgeInsets.only(right: 12),
+                          height: 48,
+                          width: 48,
+                          padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
+                            color: Colors.white.withOpacity(0.18),
+                            borderRadius: BorderRadius.circular(14),
                           ),
                           child: const Icon(
                             Icons.menu_rounded,
                             color: Colors.white,
-                            size: 24,
+                            size: 26,
                           ),
                         ),
                       ),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,21 +57,20 @@ class OrdersPage extends StatelessWidget {
                             const Text(
                               'My Orders',
                               style: TextStyle(
-                                fontSize: 32,
+                                fontSize: 28,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
-                                letterSpacing: -1.2,
-                                height: 1.1,
+                                letterSpacing: -0.8,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 2),
                             Text(
                               'Track & Manage',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white.withValues(alpha: 0.8),
-                                letterSpacing: 0.5,
+                                color: Colors.white.withOpacity(0.85),
+                                letterSpacing: 0.2,
                               ),
                             ),
                           ],

@@ -119,101 +119,124 @@ class ProfileView extends GetView<ProfileController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
 
-        if (controller.errorMessage.value.isNotEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                const SizedBox(height: 16),
-                Text(
-                  controller.errorMessage.value,
-                  style: const TextStyle(fontSize: 16),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => controller.fetchProfile(),
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return SingleChildScrollView(
+      if (controller.errorMessage.value.isNotEmpty) {
+        return Center(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  gradient: AppColors.primaryGradient,
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(40),
-                    bottomRight: Radius.circular(40),
-                  ),
+              const Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                controller.errorMessage.value,
+                style: const TextStyle(fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => controller.fetchProfile(),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        );
+      }
+
+      return SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(40),
+                  bottomRight: Radius.circular(40),
                 ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      right: -60,
-                      top: -60,
-                      child: Container(
-                        width: 200,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.08),
-                          shape: BoxShape.circle,
-                        ),
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    right: -60,
+                    top: -60,
+                    child: Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.08),
+                        shape: BoxShape.circle,
                       ),
                     ),
-                    Positioned(
-                      left: -40,
-                      top: 80,
-                      child: Container(
-                        width: 140,
-                        height: 140,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
-                          shape: BoxShape.circle,
-                        ),
+                  ),
+                  Positioned(
+                    left: -40,
+                    top: 80,
+                    child: Container(
+                      width: 140,
+                      height: 140,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        shape: BoxShape.circle,
                       ),
                     ),
-                    Positioned(
-                      right: 15,
-                      top: 45,
-                      child: IconButton(
-                        onPressed: () => Get.to(() => const EditProfilePage()),
-                        icon: const Icon(
-                          Icons.edit_rounded,
-                          color: Colors.white,
-                          size: 26,
-                        ),
+                  ),
+                  Positioned(
+                    right: 15,
+                    top: 45,
+                    child: IconButton(
+                      onPressed: () => Get.to(() => const EditProfilePage()),
+                      icon: const Icon(
+                        Icons.edit_rounded,
+                        color: Colors.white,
+                        size: 26,
                       ),
                     ),
-                    SafeArea(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 20, 24, 50),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Profile',
-                              style: TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                                letterSpacing: -1,
+                  ),
+                  SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 50),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Builder(
+                                builder: (context) => GestureDetector(
+                                  onTap: () => Scaffold.of(context).openDrawer(),
+                                  child: Container(
+                                    height: 48,
+                                    width: 48,
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.18),
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    child: const Icon(
+                                      Icons.menu_rounded,
+                                      color: Colors.white,
+                                      size: 26,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 40),
+                              const SizedBox(width: 16),
+                              const Text(
+                                'Profile',
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: -0.8,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 40),
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -384,8 +407,7 @@ class ProfileView extends GetView<ProfileController> {
             ],
           ),
         );
-      }),
-    );
+      });
   }
 
   Widget _buildMenuSection(BuildContext context, List<_MenuItemData> items) {

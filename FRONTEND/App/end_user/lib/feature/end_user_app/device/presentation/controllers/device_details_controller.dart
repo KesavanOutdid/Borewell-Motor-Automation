@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:get/get.dart';
+import '../../../home/presentation/controllers/home_controller.dart';
 import 'package:http/http.dart' as http;
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:geocoding/geocoding.dart';
@@ -69,6 +70,7 @@ class DeviceDetailsController extends GetxController {
 
     liveData.assignAll({
       'serialNumber': serialNumber ?? '-',
+      'nickname': args['device_nickname'] ?? args['nickname'] ?? (deviceChanged ? '-' : (liveData['nickname'] ?? '-')),
       'imei': imeiNumber ?? '-',
       'role': args['role'] ?? 'master',
       'motorHp': args['motor_hp']?.toString() ?? args['motorHp']?.toString() ?? '-',
@@ -184,22 +186,28 @@ class DeviceDetailsController extends GetxController {
   }
 
   Future<void> updateNickname(String newNickname) async {
+    print('DEBUG: updateNickname called with: $newNickname');
     if (serialNumber == null) {
+      print('DEBUG: serialNumber is null');
       _showMessage('Missing device information');
       return;
     }
 
     final token = tokenService.getToken();
     final userEmail = tokenService.getUserEmail();
+    print('DEBUG: userEmail: $userEmail');
     if (token == null || userEmail == null) {
+      print('DEBUG: token or userEmail is null');
       _handleUnauthorized();
       return;
     }
 
     isLoading.value = true;
     try {
+      final url = AppConfig.baseUrl + AppConfig.updateDeviceNicknameEndpoint;
+      print('DEBUG: calling POST $url');
       final response = await http.post(
-        Uri.parse(AppConfig.baseUrl + AppConfig.updateDeviceNicknameEndpoint),
+        Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -211,11 +219,22 @@ class DeviceDetailsController extends GetxController {
         }),
       );
 
+      print('DEBUG: response status: ${response.statusCode}');
+      print('DEBUG: response body: ${response.body}');
+
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
         if (json['success'] == true) {
           liveData['nickname'] = newNickname;
           liveData.refresh();
+          
+          // Sync with HomeController
+          try {
+            Get.find<HomeController>().fetchDevices();
+          } catch (e) {
+            print('DEBUG: Could not refresh HomeController: $e');
+          }
+          
           _showMessage('Nickname updated successfully');
         } else {
           _showMessage(json['message'] ?? 'Failed to update nickname');
@@ -614,6 +633,7 @@ class DeviceDetailsController extends GetxController {
 
     liveData.assignAll({
       'serialNumber': data['serial_number'] ?? serialNumber ?? '-',
+      'nickname': data['device_nickname'] ?? liveData['nickname'] ?? '-',
       'imei': data['imei_number'] ?? imeiNumber ?? '-',
       'role': data['role'] ?? liveData['role'] ?? 'master',
       'motorHp': data['motor_hp']?.toString() ?? liveData['motorHp'] ?? '-',

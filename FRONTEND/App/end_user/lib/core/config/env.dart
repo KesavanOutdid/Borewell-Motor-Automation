@@ -12,7 +12,7 @@ class AppConfig {
   static const String userDeviceHistoryEndpoint = "/app/userDeviceHistory";
   static const String userDeviceHistoryDetailsEndpoint = "/app/userDeviceHistoryDetails";
   static const String startStopDeviceEndpoint = "/app/startStopDevice";
-  static const String updateDeviceNicknameEndpoint = "/app/updateNickname";
+  static const String updateDeviceNicknameEndpoint = "/app/updateDeviceNickname";
   static const String analyticsEndpoint = "/app/analytics";
   static const String deviceAssignToUserEndpoint = "/admin/deviceAssignTouser";
   static const String getAllVouchersEndpoint = "/app/getAllVouchers";

@@ -79,56 +79,35 @@ class _HomeViewState extends State<HomeView> {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Expanded(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              GestureDetector(
-                                onTap: () => Scaffold.of(context).openDrawer(),
-                                child: Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Icon(
-                                    Icons.menu_rounded,
-                                    color: Colors.white,
-                                    size: 24,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'My Devices',
-                                      style: TextStyle(
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.w900,
-                                        color: Colors.white,
-                                        letterSpacing: -1.2,
-                                        height: 1.1,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Monitor & Control',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white.withValues(alpha: 0.8),
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                        GestureDetector(
+                          onTap: () => Scaffold.of(context).openDrawer(),
+                          child: Container(
+                            height: 48,
+                            width: 48,
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.18),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Icon(
+                              Icons.menu_rounded,
+                              color: Colors.white,
+                              size: 26,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            'Home',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: -0.8,
+                            ),
                           ),
                         ),
                         StreamBuilder<int>(
@@ -140,22 +119,16 @@ class _HomeViewState extends State<HomeView> {
                             return GestureDetector(
                               onTap: () => Get.toNamed('/notifications'),
                               child: Container(
-                                padding: const EdgeInsets.all(14),
+                                height: 48,
+                                width: 48,
+                                padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Colors.white.withValues(alpha: 0.25),
-                                      Colors.white.withValues(alpha: 0.15),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(18),
-                                  border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.3),
-                                    width: 1,
-                                  ),
+                                  color: Colors.white.withOpacity(0.18),
+                                  borderRadius: BorderRadius.circular(14),
                                 ),
                                 child: Stack(
                                   clipBehavior: Clip.none,
+                                  alignment: Alignment.center,
                                   children: [
                                     const Icon(
                                       Icons.notifications_rounded,
@@ -164,31 +137,31 @@ class _HomeViewState extends State<HomeView> {
                                     ),
                                     if (unreadCount > 0)
                                       Positioned(
-                                        right: -6,
-                                        top: -6,
+                                        right: -2,
+                                        top: -2,
                                         child: Container(
-                                          padding: const EdgeInsets.all(6),
+                                          padding: const EdgeInsets.all(4),
                                           decoration: BoxDecoration(
                                             gradient: AppColors.sunsetGradient,
                                             shape: BoxShape.circle,
-                                            border: Border.all(color: Colors.white, width: 2.5),
+                                            border: Border.all(color: Colors.white, width: 2),
                                             boxShadow: [
                                               BoxShadow(
-                                                color: AppColors.error.withValues(alpha: 0.5),
-                                                blurRadius: 8,
-                                                spreadRadius: 1,
+                                                color: Colors.black.withOpacity(0.1),
+                                                blurRadius: 4,
+                                                spreadRadius: 0,
                                               ),
                                             ],
                                           ),
                                           constraints: const BoxConstraints(
-                                            minWidth: 22,
-                                            minHeight: 22,
+                                            minWidth: 18,
+                                            minHeight: 18,
                                           ),
                                           child: Text(
                                             unreadCount > 99 ? '99+' : unreadCount.toString(),
                                             style: const TextStyle(
                                               color: Colors.white,
-                                              fontSize: 9,
+                                              fontSize: 8,
                                               fontWeight: FontWeight.w900,
                                             ),
                                             textAlign: TextAlign.center,
