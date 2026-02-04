@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 
 class DashboardController extends GetxController {
-  var selectedIndex = 1.obs;
+  var selectedIndex = 0.obs;
 
   void changePage(int index) {
     selectedIndex.value = index;
@@ -10,15 +10,15 @@ class DashboardController extends GetxController {
   String getPageTitle(int index) {
     switch (index) {
       case 0:
-        return 'Home';
-      case 1:
         return 'Devices';
+      case 1:
+        return 'Shop';
       case 2:
-        return 'Contact';
+        return 'Orders';
       case 3:
         return 'Profile';
       default:
-        return 'Home';
+        return 'Devices';
     }
   }
 }

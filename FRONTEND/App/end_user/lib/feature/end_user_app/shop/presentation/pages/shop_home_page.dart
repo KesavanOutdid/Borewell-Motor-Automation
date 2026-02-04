@@ -1,16 +1,14 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../../../utils/theme/app_colors.dart';
 import '../../../../../utils/widgets/gradient_widgets.dart';
-import '../../../../../core/services/token_service.dart';
 import '../controllers/shop_controller.dart';
 import '../controllers/cart_controller.dart';
 import '../controllers/voucher_controller.dart';
+import '../../data/models/voucher_model.dart';
 import 'product_details_page.dart';
-import 'cart_page.dart';
 
 class ShopHomeView extends StatefulWidget {
   const ShopHomeView({super.key});
@@ -25,7 +23,6 @@ class _ShopHomeViewState extends State<ShopHomeView> {
   late VoucherController voucherController;
   final ScrollController _voucherScrollController = ScrollController();
   Timer? _autoScrollTimer;
-  final Random _random = Random();
 
   @override
   void initState() {
@@ -72,14 +69,11 @@ class _ShopHomeViewState extends State<ShopHomeView> {
 
   @override
   Widget build(BuildContext context) {
-    final tokenService = Get.find<TokenService>();
-    final userName = tokenService.getUserName() ?? 'User';
-    
     print('🏪 ShopHomeView build - Products count: ${controller.products.length}');
     
-    return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
-      body: Column(
+    return Material(
+      color: AppColors.backgroundLight,
+      child: Column(
         children: [
           Container(
             width: double.infinity,
@@ -98,29 +92,53 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Column(
+                        child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Shop',
-                              style: TextStyle(
-                                fontSize: 36,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                                letterSpacing: -1.5,
-                                height: 1.1,
+                            GestureDetector(
+                              onTap: () => Scaffold.of(context).openDrawer(),
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                margin: const EdgeInsets.only(right: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.menu_rounded,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Borewell Automation Store',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white.withOpacity(0.8),
-                                letterSpacing: 0.5,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Shop',
+                                    style: TextStyle(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                      letterSpacing: -1.2,
+                                      height: 1.1,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Borewell Automation Store',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white.withValues(alpha: 0.8),
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -129,19 +147,19 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                       GestureDetector(
                         onTap: () => _showSearchBottomSheet(context),
                         child: Container(
-                          padding: const EdgeInsets.all(14),
+                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(18),
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
+                              color: Colors.white.withValues(alpha: 0.3),
                               width: 1,
                             ),
                           ),
                           child: const Icon(
                             Icons.search,
                             color: Colors.white,
-                            size: 26,
+                            size: 24,
                           ),
                         ),
                       ),
@@ -377,7 +395,6 @@ class _ShopHomeViewState extends State<ShopHomeView> {
     final imageUrl = controller.getImageUrl(product['product_main_image']);
     final productName = product['product_name'] ?? 'Unknown Product';
     final productPrice = product['product_price']?.toString() ?? '0';
-    final productDescription = product['product_description'] ?? '';
     final productQuantity = product['product_quantity'] ?? 0;
     final isOutOfStock = productQuantity <= 0;
 
@@ -516,10 +533,8 @@ class _ShopHomeViewState extends State<ShopHomeView> {
   }
 
   Widget _buildProductListCard(Map<String, dynamic> product, ShopController controller) {
-    final productId = product['product_id'];
     final productName = product['product_name'] ?? 'Unknown Product';
     final productPrice = product['product_price']?.toString() ?? '0';
-    final productDescription = product['product_description'] ?? '';
     final productQuantity = product['product_quantity'];
     final isOutOfStock = productQuantity == null || productQuantity == 0;
     final imageUrl = controller.getImageUrl(product['product_main_image']);
@@ -589,7 +604,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                   if (isOutOfStock)
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
+                        color: Colors.black.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Center(
@@ -704,7 +719,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
     );
   }
 
-  Widget _buildVoucherCard(voucher, int index) {
+  Widget _buildVoucherCard(VoucherModel voucher, int index) {
     final gradients = [
       [const Color(0xFFFF6B6B), const Color(0xFFFF8E53)],
       [const Color(0xFF4FACFE), const Color(0xFF00F2FE)],
@@ -739,7 +754,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: gradient[0].withOpacity(0.3),
+            color: gradient[0].withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -755,7 +770,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
               height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.15),
+                color: Colors.white.withValues(alpha: 0.15),
               ),
             ),
           ),
@@ -767,7 +782,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
               height: 120,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -799,7 +814,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.3),
+                          color: Colors.white.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -846,7 +861,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.3),
+                            color: Colors.white.withValues(alpha: 0.3),
                             width: 1.5,
                             style: BorderStyle.solid,
                           ),

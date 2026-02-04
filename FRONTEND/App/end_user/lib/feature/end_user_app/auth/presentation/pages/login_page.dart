@@ -4,7 +4,7 @@ import '../controllers/auth_controller.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../utils/theme/app_colors.dart';
 
-class LoginView extends GetView<LoginController> {
+class LoginView extends GetView<AuthController> {
   LoginView({super.key});
 
   @override
@@ -111,12 +111,12 @@ class _FormContentState extends State<_FormContent> {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   late TextEditingController emailController;
   late TextEditingController passwordController;
-  late LoginController controller;
+  late AuthController controller;
 
   @override
   void initState() {
     super.initState();
-    controller = Get.find<LoginController>();
+    controller = Get.find<AuthController>();
     emailController = TextEditingController(text: controller.email.value);
     passwordController = TextEditingController();
     

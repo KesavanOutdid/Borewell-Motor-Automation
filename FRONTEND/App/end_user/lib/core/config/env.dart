@@ -1,5 +1,5 @@
 class AppConfig {
-  static const String baseUrl = "http://192.168.0.32:3030";
+  static const String baseUrl = "http://192.168.0.6:3030";
   static const String loginEndpoint = "/app/login";
   static const String signupEndpoint = "/admin/createUser";
   static const String deviceEndpoint = "/api/devices";
@@ -12,9 +12,10 @@ class AppConfig {
   static const String userDeviceHistoryEndpoint = "/app/userDeviceHistory";
   static const String userDeviceHistoryDetailsEndpoint = "/app/userDeviceHistoryDetails";
   static const String startStopDeviceEndpoint = "/app/startStopDevice";
+  static const String updateDeviceNicknameEndpoint = "/app/updateNickname";
   static const String analyticsEndpoint = "/app/analytics";
   static const String deviceAssignToUserEndpoint = "/admin/deviceAssignTouser";
   static const String getAllVouchersEndpoint = "/app/getAllVouchers";
   static const String validateVoucherEndpoint = "/app/validateVoucher";
-  static const String socketIOUrl = "http://192.168.0.32:3030";
+  static const String socketIOUrl = "http://192.168.0.6:3030";
 }

@@ -6,7 +6,7 @@ import '../../../home/presentation/controllers/home_controller.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class LoginController extends GetxController {
+class AuthController extends GetxController {
   var email = "".obs;
   var password = "".obs;
   var isLoading = false.obs;

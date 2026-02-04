@@ -77,8 +77,8 @@ class SettingsView extends StatelessWidget {
               onPressed: () async {
                 Navigator.pop(context);
                 try {
-                  final loginController = Get.find<LoginController>();
-                  await loginController.logout();
+                  final authController = Get.find<AuthController>();
+                  await authController.logout();
                   
                   Get.delete<HomeController>();
                 } catch (e) {

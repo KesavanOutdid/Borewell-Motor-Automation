@@ -34,7 +34,7 @@ void main() async {
   Get.put(ThemeController());
 
   // 🔥 REQUIRED — Fix for Null Check Crash
-  Get.put(LoginController(), permanent: true);
+  Get.put(AuthController(), permanent: true);
   Get.put(HomeController(), permanent: true);
 
   runApp(

@@ -27,7 +27,6 @@ class DeviceDetailsController extends GetxController {
   Timer? _heartbeatTimer;
   String? _socketSerial;
   bool? _previousMotorRunning;
-  DateTime? _lastHeartbeatAt;
   static const Duration _istOffset = Duration(hours: 5, minutes: 30);
   static const Duration _heartbeatGrace = Duration(seconds: 20);
 
@@ -182,6 +181,53 @@ class DeviceDetailsController extends GetxController {
 
   Future<void> stopMotor() async {
     await _sendStartStopCommand(false);
+  }
+
+  Future<void> updateNickname(String newNickname) async {
+    if (serialNumber == null) {
+      _showMessage('Missing device information');
+      return;
+    }
+
+    final token = tokenService.getToken();
+    final userEmail = tokenService.getUserEmail();
+    if (token == null || userEmail == null) {
+      _handleUnauthorized();
+      return;
+    }
+
+    isLoading.value = true;
+    try {
+      final response = await http.post(
+        Uri.parse(AppConfig.baseUrl + AppConfig.updateDeviceNicknameEndpoint),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'serial_number': serialNumber,
+          'device_nickname': newNickname,
+          'user_email': userEmail,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        if (json['success'] == true) {
+          liveData['nickname'] = newNickname;
+          liveData.refresh();
+          _showMessage('Nickname updated successfully');
+        } else {
+          _showMessage(json['message'] ?? 'Failed to update nickname');
+        }
+      } else {
+        _showMessage('Update failed (${response.statusCode})');
+      }
+    } catch (e) {
+      _showMessage('Connection failed: $e');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Future<void> _sendStartStopCommand(bool start) async {
@@ -526,13 +572,11 @@ class DeviceDetailsController extends GetxController {
   }
 
   void _markHeartbeatReceived() {
-    _lastHeartbeatAt = DateTime.now();
     if (!isConnected.value) {
       isConnected.value = true;
     }
     _heartbeatTimer?.cancel();
     _heartbeatTimer = Timer(_heartbeatGrace, () {
-      _lastHeartbeatAt = null;
       isConnected.value = false;
     });
   }
@@ -540,7 +584,6 @@ class DeviceDetailsController extends GetxController {
   void _resetHeartbeatState() {
     _heartbeatTimer?.cancel();
     _heartbeatTimer = null;
-    _lastHeartbeatAt = null;
     if (isConnected.value) {
       isConnected.value = false;
     }

@@ -88,7 +88,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
               icon: Icons.email_outlined,
               controller: controller.emailEditingController,
               keyboardType: TextInputType.emailAddress,
-              readOnly: true,
+              enabled: false,
             ),
             const SizedBox(height: 20),
             _buildTextField(
@@ -98,7 +98,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
               controller: controller.phoneEditingController,
               keyboardType: TextInputType.phone,
               maxLength: 10,
-              readOnly: true,
+              enabled: false,
             ),
             const SizedBox(height: 20),
             Obx(() => _buildTextField(
@@ -188,7 +188,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     bool obscureText = false,
     Widget? suffixIcon,
     int? maxLength,
-    bool readOnly = false,
+    bool enabled = true,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -206,24 +206,30 @@ class _EditProfilePageState extends State<EditProfilePage> {
         const SizedBox(height: 8),
         TextField(
           controller: controller,
+          enabled: enabled,
           keyboardType: keyboardType,
           obscureText: obscureText,
           maxLength: maxLength,
-          readOnly: readOnly,
           style: TextStyle(
-            color: isDark ? Colors.white : AppColors.textPrimary,
+            color: enabled 
+                ? (isDark ? Colors.white : AppColors.textPrimary)
+                : Colors.grey[500],
             fontSize: 16,
           ),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
-            prefixIcon: Icon(icon, size: 20, color: readOnly ? Colors.grey : AppColors.primaryGreen),
+            prefixIcon: Icon(
+              icon, 
+              size: 20, 
+              color: enabled ? AppColors.primaryGreen : Colors.grey[400]
+            ),
             suffixIcon: suffixIcon,
             counterText: "",
             filled: true,
-            fillColor: readOnly 
-                ? (isDark ? Colors.grey.withOpacity(0.2) : Colors.grey.shade200)
-                : (isDark ? Colors.white.withOpacity(0.05) : Colors.white),
+            fillColor: isDark 
+                ? (enabled ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.02))
+                : (enabled ? Colors.white : Colors.grey.shade100),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -231,15 +237,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200,
               ),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
-            ),
             disabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade300,
+                color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.shade200,
               ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
             ),
           ),
         ),

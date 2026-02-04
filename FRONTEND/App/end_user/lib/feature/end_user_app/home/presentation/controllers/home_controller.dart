@@ -2,18 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:geocoding/geocoding.dart';
 import '../../../../../core/config/env.dart';
 import '../../../../../core/services/token_service.dart';
 import '../../../device/presentation/pages/qr_scanner_page.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:socket_io_client/socket_io_client.dart' as IO;
+
 class HomeController extends GetxController {
   var devices = <Map<String, dynamic>>[].obs;
   var isLoading = false.obs;
-  var selectedFilter = 'All'.obs;
+  var selectedFilter = 'Recently'.obs;
   late TokenService tokenService;
   final _storage = GetStorage();
+  IO.Socket? _socket;
 
   void setFilter(String filter) {
     selectedFilter.value = filter;
@@ -26,8 +30,63 @@ class HomeController extends GetxController {
   }
 
   @override
+  void onClose() {
+    _socket?.dispose();
+    super.onClose();
+  }
+
+  void _initSocket() {
+    try {
+      final token = tokenService.getToken();
+      _socket = IO.io(AppConfig.socketIOUrl, <String, dynamic>{
+        'transports': ['websocket'],
+        'autoConnect': true,
+        'query': {'token': token}
+      });
+
+      _socket!.onConnect((_) => print('🏠 Home Socket Connected'));
+      _socket!.onDisconnect((_) => print('🏠 Home Socket Disconnected'));
+
+      _socket!.on('LIVE_STATUS', (data) {
+        if (data != null && data['serial_number'] != null) {
+          final serial = data['serial_number'];
+          final payload = data['payload'];
+          if (payload != null) {
+            final newStatus = payload['motor_running'] == true;
+            _updateDeviceStatus(serial, newStatus);
+          }
+        }
+      });
+
+      _socket!.on('LIVE_TELEMETRY', (data) {
+        if (data != null && data['serial_number'] != null) {
+          final serial = data['serial_number'];
+          // You could update other telemetry here if needed
+          // For now we focus on status for the Home page
+        }
+      });
+    } catch (e) {
+      print('🏠 Home Socket Error: $e');
+    }
+  }
+
+  void _updateDeviceStatus(String serial, bool isRunning) {
+    int index = devices.indexWhere((d) => (d['serial_number'] ?? d['serialNumber']) == serial);
+    if (index != -1) {
+      var device = Map<String, dynamic>.from(devices[index]);
+      if (_isDeviceRunning(device) != isRunning) {
+        device['start_status'] = isRunning;
+        device['updatedAt'] = DateTime.now().toIso8601String();
+        devices[index] = device;
+        devices.refresh();
+      }
+    }
+  }
+
+  @override
   void onReady() {
     super.onReady();
+    _initSocket();
     fetchDevices();
   }
 
@@ -53,7 +112,26 @@ class HomeController extends GetxController {
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
         if (jsonData['success'] == true && jsonData['data'] != null) {
-          devices.value = List<Map<String, dynamic>>.from(jsonData['data']);
+          final List<dynamic> data = jsonData['data'];
+          final updatedDevices = <Map<String, dynamic>>[];
+          
+          for (var device in data) {
+            final mapDevice = Map<String, dynamic>.from(device);
+            final lat = _parseDouble(mapDevice['latitude']);
+            final lng = _parseDouble(mapDevice['longitude']);
+            
+            if (mapDevice['location'] == null || mapDevice['location'].toString().isEmpty || mapDevice['location'] == 'No Location') {
+              if (lat != null && lng != null) {
+                final address = await _getAddressFromCoordinates(lat, lng);
+                if (address != null) {
+                  mapDevice['location'] = address;
+                }
+              }
+            }
+            updatedDevices.add(mapDevice);
+          }
+          
+          devices.value = updatedDevices;
           await _storage.write('assigned_devices', devices);
         } else {
           devices.value = [];
@@ -82,10 +160,11 @@ class HomeController extends GetxController {
     }
   }
 
-  Future<void> toggleDevice(String deviceId, bool status) async {
+  Future<void> toggleDevice(String serialNumber, String imei, bool status) async {
     try {
-      final url = Uri.parse(AppConfig.baseUrl + AppConfig.deviceEndpoint);
+      final url = Uri.parse(AppConfig.baseUrl + AppConfig.startStopDeviceEndpoint);
       final token = tokenService.getToken();
+      final userEmail = tokenService.getUserEmail();
 
       final response = await http.post(
         url,
@@ -94,14 +173,19 @@ class HomeController extends GetxController {
           "Authorization": "Bearer $token",
         },
         body: jsonEncode({
-          "device_id": deviceId,
-          "status": status ? "ON" : "OFF",
+          "serial_number": serialNumber,
+          "imei_number": imei,
+          "user_email": userEmail,
+          "start_status": status,
         }),
       );
 
       if (response.statusCode == 200) {
+        // Update local state immediately for better UX and sorting
+        _updateDeviceStatus(serialNumber, status);
+        
         Future.delayed(Duration.zero, () {
-          Get.snackbar("Success", "Device toggled");
+          Get.snackbar("Success", "Motor ${status ? 'Started' : 'Stopped'} Successfully");
         });
         fetchDevices();
       } else if (response.statusCode == 401) {
@@ -110,8 +194,9 @@ class HomeController extends GetxController {
           Get.snackbar("Error", "Session expired. Please login again");
         });
       } else {
+        final body = jsonDecode(response.body);
         Future.delayed(Duration.zero, () {
-          Get.snackbar("Error", "Failed to toggle device");
+          Get.snackbar("Error", body['message'] ?? "Failed to toggle device");
         });
       }
     } catch (e) {
@@ -401,5 +486,119 @@ class HomeController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+
+  Future<String?> _getAddressFromCoordinates(double latitude, double longitude) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        List<String> addressParts = [];
+        
+        if (place.subLocality != null && place.subLocality!.isNotEmpty) {
+          addressParts.add(place.subLocality!);
+        }
+        if (place.locality != null && place.locality!.isNotEmpty) {
+          addressParts.add(place.locality!);
+        }
+        if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
+          addressParts.add(place.administrativeArea!);
+        }
+        
+        return addressParts.isNotEmpty ? addressParts.join(', ') : null;
+      }
+    } catch (e) {
+      return null;
+    }
+    return null;
+  }
+
+  List<Map<String, dynamic>> get displayDevices {
+    if (selectedFilter.value == 'Running') {
+      return devices.where((d) => _isDeviceRunning(d)).toList();
+    } else if (selectedFilter.value == 'Stopped') {
+      return devices.where((d) => _isDeviceConfigured(d) && !_isDeviceRunning(d)).toList();
+    } else if (selectedFilter.value == 'Recently') {
+      // Sort by isRunning first, then by updatedAt timestamp
+      var sorted = List<Map<String, dynamic>>.from(devices);
+      sorted.sort((a, b) {
+        // Running devices first
+        bool runningA = _isDeviceRunning(a);
+        bool runningB = _isDeviceRunning(b);
+        if (runningA != runningB) {
+          return runningA ? -1 : 1;
+        }
+        
+        // Then by updatedAt
+        DateTime timeA = _getUpdatedAt(a);
+        DateTime timeB = _getUpdatedAt(b);
+        return timeB.compareTo(timeA); // Descending (newest first)
+      });
+      return sorted.take(5).toList();
+    } else {
+      // 'All' - return all devices sorted by running status first
+      var sorted = List<Map<String, dynamic>>.from(devices);
+      sorted.sort((a, b) {
+        bool runningA = _isDeviceRunning(a);
+        bool runningB = _isDeviceRunning(b);
+        if (runningA != runningB) {
+          return runningA ? -1 : 1;
+        }
+        return _getUpdatedAt(b).compareTo(_getUpdatedAt(a));
+      });
+      return sorted;
+    }
+  }
+
+  DateTime _getUpdatedAt(Map<String, dynamic> device) {
+    final updated = device['updatedAt'] ?? 
+                  device['updated_at'] ?? 
+                  device['timestamp'] ?? 
+                  device['createdAt'] ?? 
+                  device['created_at'];
+    if (updated == null) return DateTime(2000);
+    if (updated is DateTime) return updated;
+    try {
+      return DateTime.parse(updated.toString());
+    } catch (e) {
+      return DateTime(2000);
+    }
+  }
+
+  bool _isDeviceConfigured(Map<String, dynamic> device) {
+    final imei = device['imei_number'] ?? device['imeiNumber'];
+    if (imei == null) return false;
+    return imei.toString().trim().isNotEmpty;
+  }
+
+  bool _isDeviceRunning(Map<String, dynamic> device) {
+    final status = device['start_status'] ?? 
+                  device['startStatus'] ?? 
+                  device['status'] ?? 
+                  device['device_status'] ??
+                  device['motor_running'] ??
+                  device['motor_status'];
+    if (status is bool) {
+      return status;
+    }
+    if (status is num) {
+      return status == 1;
+    }
+    if (status is String) {
+      final normalized = status.toLowerCase();
+      return normalized == 'running' || 
+             normalized == 'on' || 
+             normalized == 'true' || 
+             normalized == '1' ||
+             normalized == 'active';
+    }
+    return false;
   }
 }

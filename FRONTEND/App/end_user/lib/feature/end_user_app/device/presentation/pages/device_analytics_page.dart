@@ -574,7 +574,7 @@ class DeviceAnalyticsView extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Trend: ${comparison.trend.toUpperCase()}',
+                            'Trend ${comparison.trend.toUpperCase()}',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,

@@ -17,7 +17,12 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Device Details'),
+        title: Obx(() {
+          final nickname = controller.liveData['nickname']?.toString() ?? '-';
+          final serial = controller.liveData['serialNumber']?.toString() ?? '-';
+          final displayTitle = (nickname != '-' && nickname.isNotEmpty) ? nickname : serial;
+          return Text(displayTitle, style: const TextStyle(fontWeight: FontWeight.bold));
+        }),
         actions: [
           Obx(() {
             final isConnected = controller.isConnected.value;
@@ -56,7 +61,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildDevicePlacementCard(controller),
+                _buildDevicePlacementCard(context, controller),
                 const SizedBox(height: 20),
                 _buildQuickActionsRow(context, controller),
                 const SizedBox(height: 24),
@@ -133,16 +138,127 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
     });
   }
 
+  void _showEditNicknameDialog(BuildContext context, DeviceDetailsController controller) {
+    final nickname = controller.liveData['nickname']?.toString() ?? '';
+    final serial = controller.liveData['serialNumber']?.toString() ?? '-';
+    final initialValue = (nickname != '-' && nickname.isNotEmpty) ? nickname : '';
+    final textController = TextEditingController(text: initialValue);
+
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Edit Device Name',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Serial $serial',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                controller: textController,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: 'Nickname',
+                  hintText: 'e.g. Farm Motor 1',
+                  prefixIcon: const Icon(Icons.label_outline_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
+                  ),
+                ),
+                textCapitalization: TextCapitalization.words,
+              ),
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Get.back(),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final newName = textController.text.trim();
+                        if (newName.isNotEmpty) {
+                          Get.back();
+                          controller.updateNickname(newName);
+                        } else {
+                          Get.snackbar(
+                            'Error',
+                            'Please enter a name',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.red[100],
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryGreen,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Save Name',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildQuickActionsRow(BuildContext context, DeviceDetailsController controller) {
-    final isMaster = controller.liveData['role'] == 'master';
-    
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -166,34 +282,35 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
               onTap: () => _openAnalytics(controller),
             ),
           ),
-          if (isMaster)
-            Expanded(
-              child: _QuickActionCard(
-                icon: Icons.share_rounded,
-                label: 'Share',
-                gradient: AppColors.primaryGradient,
-                onTap: () => _openSharing(controller),
-              ),
+          Expanded(
+            child: _QuickActionCard(
+              icon: Icons.share_rounded,
+              label: 'Share',
+              gradient: AppColors.primaryGradient,
+              onTap: () => _openSharing(controller),
             ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildDevicePlacementCard(DeviceDetailsController controller) {
-    final serialNumber = controller.liveData['serialNumber'] ?? 'N/A';
+  Widget _buildDevicePlacementCard(BuildContext context, DeviceDetailsController controller) {
+    final nickname = controller.liveData['nickname']?.toString() ?? '';
+    final serial = controller.liveData['serialNumber']?.toString() ?? '-';
     final location = controller.liveData['location'] ?? 'Location not set';
-    final motorHp = controller.liveData['motorHp'] ?? '-';
     final imei = controller.liveData['imei'] ?? 'N/A';
     
+    final bool hasNickname = nickname.isNotEmpty && nickname != '-';
+    
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -203,81 +320,79 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withOpacity(0.1),
+                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  Icons.router_rounded,
-                  color: AppColors.primaryGreen,
-                  size: 28,
-                ),
+                child: const Icon(Icons.settings_input_component_rounded, size: 28, color: AppColors.primaryGreen),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            serialNumber,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
                     Text(
-                      'Motor HP $motorHp',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
+                      hasNickname ? nickname : serial,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.5,
                       ),
                     ),
+                    if (hasNickname)
+                      Text(
+                        'Serial $serial',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
                   ],
                 ),
               ),
+              IconButton(
+                onPressed: () => _showEditNicknameDialog(context, controller),
+                icon: const Icon(Icons.edit_outlined, color: AppColors.primaryGreen, size: 22),
+                tooltip: 'Edit Device Name',
+              ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           Row(
             children: [
-              Icon(Icons.location_on_rounded, size: 18, color: Colors.grey.shade400),
-              const SizedBox(width: 8),
+              const Icon(Icons.location_on_rounded, size: 24, color: Colors.blue),
+              const SizedBox(width: 16),
               Expanded(
                 child: Text(
                   location,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey.shade700,
-                    fontWeight: FontWeight.w500,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Row(
             children: [
-              Icon(Icons.sim_card_rounded, size: 18, color: Colors.grey.shade400),
-              const SizedBox(width: 8),
-              Text(
-                'IMEI $imei',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade700,
-                  fontWeight: FontWeight.w500,
+              const Icon(Icons.info_outline_rounded, size: 24, color: Colors.orange),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  'IMEI $imei',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
             ],
@@ -289,6 +404,9 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
 
   Widget _buildStatusControlCard(DeviceDetailsController controller) {
     final isRunning = controller.liveData['motorStatus'] == 'Running';
+    final isConnected = controller.isConnected.value;
+    final statusColor = isRunning ? AppColors.error : AppColors.primaryGreen;
+    
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -296,7 +414,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -304,45 +422,68 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
       ),
       child: Column(
         children: [
-          _buildInfoRow(
-            'Last updated on',
-            controller.liveData['lastUpdate'] ?? '-',
-          ),
-          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Device Status',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Get.isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: (isRunning ? Colors.green : Colors.grey).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  controller.liveData['deviceStatus'] ?? 'Ready',
-                  style: TextStyle(
-                    color: isRunning ? Colors.green : Colors.grey,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Motor Control',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        isRunning ? 'MOTOR RUNNING' : 'MOTOR STOPPED',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: statusColor,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          _buildInfoRow('Device Last Start', controller.liveData['lastStart'] ?? '-'),
-          const SizedBox(height: 16),
-          _buildInfoRow('Device Last Stop', controller.liveData['lastStop'] ?? '-'),
           const SizedBox(height: 24),
-          _buildSwipeControl(controller, isRunning),
+          SwipeButton(
+            onSwipe: () {
+              if (isRunning) {
+                controller.stopMotor();
+              } else {
+                controller.startMotor();
+              }
+            },
+            label: isRunning ? 'Swipe Left to Stop' : 'Swipe to Start',
+            icon: isRunning ? Icons.arrow_back_rounded : Icons.play_arrow_rounded,
+            activeColor: isRunning ? AppColors.error : AppColors.primaryGreen,
+            isEnabled: isConnected,
+            direction: isRunning ? SwipeDirection.left : SwipeDirection.right,
+          ),
+          const SizedBox(height: 20),
+          const Divider(),
+          const SizedBox(height: 16),
+          _buildInfoRow('Last Updated', controller.liveData['lastUpdate'] ?? '-'),
+          const SizedBox(height: 12),
+          _buildInfoRow('Device Status', controller.liveData['deviceStatus'] ?? 'Ready'),
         ],
       ),
     );
@@ -358,7 +499,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -453,7 +594,6 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
 
   Widget _buildLiveDataGrid(
       BuildContext context, DeviceDetailsController controller) {
-    final isRunning = controller.liveData['motorStatus'] == 'Running';
     final metrics = [
       {
         'label': 'Motor Frequency',
@@ -550,187 +690,151 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
       gradient: metric['gradient'] as Gradient,
     );
   }
-
-  Widget _buildSwipeControl(DeviceDetailsController controller, bool isRunning) {
-    return _SwipeControlWidget(
-      controller: controller,
-      isRunning: isRunning,
-    );
-  }
-
 }
 
-class _SwipeControlWidget extends StatefulWidget {
-  final DeviceDetailsController controller;
-  final bool isRunning;
+enum SwipeDirection { left, right }
 
-  const _SwipeControlWidget({
-    required this.controller,
-    required this.isRunning,
-  });
+class SwipeButton extends StatefulWidget {
+  final VoidCallback onSwipe;
+  final String label;
+  final IconData icon;
+  final Color activeColor;
+  final bool isEnabled;
+  final SwipeDirection direction;
+
+  const SwipeButton({
+    Key? key,
+    required this.onSwipe,
+    required this.label,
+    required this.icon,
+    required this.activeColor,
+    this.isEnabled = true,
+    this.direction = SwipeDirection.right,
+  }) : super(key: key);
 
   @override
-  State<_SwipeControlWidget> createState() => _SwipeControlWidgetState();
+  State<SwipeButton> createState() => _SwipeButtonState();
 }
 
-class _SwipeControlWidgetState extends State<_SwipeControlWidget> {
-  double _dragPosition = 0.0;
-  bool _isProcessing = false;
+class _SwipeButtonState extends State<SwipeButton> {
+  double _dragValue = 0.0;
+  bool _isSwiped = false;
+  final double _height = 55.0;
+  bool _initialized = false;
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width - 100;
-    final maxDrag = screenWidth - 70;
-    final progressRatio = (_dragPosition.abs() / maxDrag).clamp(0.0, 1.0);
-    final isConnected = widget.controller.isConnected.value;
-    
-    return Opacity(
-      opacity: isConnected ? 1.0 : 0.5,
-      child: Container(
-        height: 65,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(35),
-          gradient: LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: widget.isRunning 
-                ? [AppColors.error, AppColors.error.withOpacity(0.8)]
-                : [AppColors.lightGreen, AppColors.primaryGreen],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final maxDrag = width - _height;
+        
+        if (!_initialized) {
+          _dragValue = widget.direction == SwipeDirection.right ? 0.0 : maxDrag;
+          _initialized = true;
+        }
+
+        return Container(
+          height: _height,
+          width: width,
+          decoration: BoxDecoration(
+            color: widget.isEnabled 
+                ? widget.activeColor.withValues(alpha: 0.1) 
+                : Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(_height / 2),
+            border: Border.all(
+              color: widget.isEnabled 
+                  ? widget.activeColor.withValues(alpha: 0.1) 
+                  : Colors.grey.shade300,
+            ),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: (widget.isRunning ? AppColors.error : AppColors.primaryGreen).withOpacity(0.4),
-              blurRadius: 15,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            Center(
-              child: AnimatedOpacity(
-                opacity: (1.0 - progressRatio * 2.0).clamp(0.0, 1.0),
-                duration: const Duration(milliseconds: 100),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (widget.isRunning) ...[
-                      Icon(
-                        Icons.chevron_left,
-                        color: Colors.white.withOpacity(0.9),
-                        size: 28,
-                      ),
-                      const SizedBox(width: 8),
-                    ] else ...[
-                      Icon(
-                        Icons.chevron_right,
-                        color: Colors.white.withOpacity(0.9),
-                        size: 28,
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    Text(
-                      widget.isRunning ? 'Swipe Left to Stop' : 'Swipe Right to Start',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    if (widget.isRunning) ...[
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.chevron_left,
-                        color: Colors.white.withOpacity(0.9),
-                        size: 28,
-                      ),
-                    ] else ...[
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.chevron_right,
-                        color: Colors.white.withOpacity(0.9),
-                        size: 28,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 30),
-              curve: Curves.easeOut,
-              left: widget.isRunning ? null : 3 + _dragPosition,
-              right: widget.isRunning ? 3 + _dragPosition.abs() : null,
-              top: 3,
-              child: GestureDetector(
-                onHorizontalDragUpdate: (details) {
-                  if (_isProcessing || !isConnected) return;
-                  setState(() {
-                    if (!widget.isRunning && details.delta.dx > 0) {
-                      _dragPosition = (_dragPosition + details.delta.dx).clamp(0.0, maxDrag);
-                    } else if (widget.isRunning && details.delta.dx < 0) {
-                      _dragPosition = (_dragPosition + details.delta.dx).clamp(-maxDrag, 0.0);
-                    }
-                  });
-                },
-                onHorizontalDragEnd: (details) async {
-                  if (_isProcessing || !isConnected) return;
-                  
-                  if (_dragPosition.abs() > maxDrag * 0.7) {
-                    setState(() => _isProcessing = true);
-                    
-                    if (_dragPosition > 0) {
-                      await widget.controller.startMotor();
-                    } else {
-                      await widget.controller.stopMotor();
-                    }
-                    
-                    setState(() => _isProcessing = false);
-                  }
-                  
-                  setState(() => _dragPosition = 0.0);
-                },
-                child: Container(
-                  width: 59,
-                  height: 59,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.25),
-                        blurRadius: 10,
-                        spreadRadius: 1,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
+          child: Stack(
+            children: [
+               Center(
+                child: Text(
+                  widget.isEnabled ? widget.label : 'Offline',
+                  style: TextStyle(
+                    color: widget.isEnabled ? widget.activeColor.withValues(alpha: 0.8) : Colors.grey,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    letterSpacing: 0.5,
                   ),
-                  child: _isProcessing
-                      ? Padding(
-                          padding: const EdgeInsets.all(15),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 3,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              widget.isRunning ? AppColors.error : AppColors.primaryGreen,
-                            ),
-                          ),
-                        )
-                      : Icon(
-                          widget.isRunning 
-                              ? Icons.arrow_back_rounded 
-                              : Icons.play_arrow_rounded,
-                          color: widget.isRunning ? AppColors.error : AppColors.primaryGreen,
-                          size: 34,
-                        ),
                 ),
               ),
-            ),
-          ],
-        ),
-    ),
-  );
-}
+              Positioned(
+                left: _dragValue,
+                child: GestureDetector(
+                  onHorizontalDragUpdate: (details) {
+                    if (!widget.isEnabled || _isSwiped) return;
+                    setState(() {
+                      _dragValue = (_dragValue + details.delta.dx).clamp(0.0, maxDrag);
+                    });
+                  },
+                  onHorizontalDragEnd: (details) {
+                    if (!widget.isEnabled || _isSwiped) return;
+                    
+                    bool success = false;
+                    if (widget.direction == SwipeDirection.right) {
+                      if (_dragValue > maxDrag * 0.7) {
+                        success = true;
+                        _dragValue = maxDrag;
+                      } else {
+                        _dragValue = 0.0;
+                      }
+                    } else {
+                      if (_dragValue < maxDrag * 0.3) {
+                        success = true;
+                        _dragValue = 0.0;
+                      } else {
+                        _dragValue = maxDrag;
+                      }
+                    }
+
+                    if (success) {
+                      setState(() {
+                        _isSwiped = true;
+                      });
+                      widget.onSwipe();
+                      Future.delayed(const Duration(seconds: 2), () {
+                        if (mounted) {
+                          setState(() {
+                            _dragValue = widget.direction == SwipeDirection.right ? 0.0 : maxDrag;
+                            _isSwiped = false;
+                          });
+                        }
+                      });
+                    } else {
+                      setState(() {});
+                    }
+                  },
+                  child: Container(
+                    height: _height,
+                    width: _height,
+                    decoration: BoxDecoration(
+                      color: widget.isEnabled ? (widget.direction == SwipeDirection.left && !_isSwiped ? Colors.white : widget.activeColor) : Colors.grey,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: (widget.isEnabled ? widget.activeColor : Colors.grey).withValues(alpha: 0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      widget.icon,
+                      color: widget.direction == SwipeDirection.left && !_isSwiped ? widget.activeColor : Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _QuickActionCard extends StatelessWidget {

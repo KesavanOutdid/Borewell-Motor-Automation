@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../controllers/dashboard_controller.dart';
 import '../../../home/presentation/pages/home_page.dart';
+import '../../../home/presentation/controllers/home_controller.dart';
 import '../../../shop/presentation/pages/shop_home_page.dart';
 import '../../../shop/presentation/pages/cart_page.dart';
 import '../../../shop/presentation/pages/orders_page.dart';
@@ -12,28 +14,63 @@ import '../../../../../utils/theme/app_colors.dart';
 class DashboardView extends GetView<DashboardController> {
   const DashboardView({super.key});
 
+  Future<bool> _showExitDialog(BuildContext context) async {
+    return await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Exit App'),
+            content: const Text('Are you sure you want to exit?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('No'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Yes'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    return Obx(
-      () => Scaffold(
-        drawer: _ModernDrawer(controller: controller),
-        body: Stack(
-          children: [
-            _buildPage(controller.selectedIndex.value),
-            Positioned(
-              left: 16,
-              bottom: 24,
-              child: _FloatingMenuButton(isDark: isDark),
-            ),
-            if (controller.selectedIndex.value != 1)
-              Positioned(
-                right: 16,
-                bottom: 24,
-                child: _FloatingCartButton(),
-              ),
-          ],
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        
+        // If not on Home page (index 0), go to Home first
+        if (controller.selectedIndex.value != 0) {
+          controller.changePage(0);
+          return;
+        }
+
+        // If already on Home, show exit confirmation
+        final shouldPop = await _showExitDialog(context);
+        if (shouldPop) {
+          SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+        }
+      },
+      child: Obx(
+        () => Scaffold(
+          drawer: _ModernDrawer(controller: controller),
+          body: Stack(
+            children: [
+              _buildPage(controller.selectedIndex.value),
+              if (controller.selectedIndex.value == 1 ||
+                  controller.selectedIndex.value == 2)
+                Positioned(
+                  right: 16,
+                  bottom: 24,
+                  child: _FloatingCartButton(),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -42,15 +79,15 @@ class DashboardView extends GetView<DashboardController> {
   Widget _buildPage(int index) {
     switch (index) {
       case 0:
-        return const ShopHomeView();
-      case 1:
         return HomeView();
+      case 1:
+        return const ShopHomeView();
       case 2:
         return const OrdersPage();
       case 3:
         return const ProfileView();
       default:
-        return const ShopHomeView();
+        return HomeView();
     }
   }
 }
@@ -121,8 +158,8 @@ class _ModernDrawer extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     children: [
                       _DrawerItem(
-                        icon: Icons.store_rounded,
-                        label: 'Shop',
+                        icon: Icons.devices_rounded,
+                        label: 'My Devices',
                         isSelected: controller.selectedIndex.value == 0,
                         onTap: () {
                           controller.changePage(0);
@@ -132,8 +169,8 @@ class _ModernDrawer extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       _DrawerItem(
-                        icon: Icons.devices_rounded,
-                        label: 'My Devices',
+                        icon: Icons.store_rounded,
+                        label: 'Shop',
                         isSelected: controller.selectedIndex.value == 1,
                         onTap: () {
                           controller.changePage(1);
@@ -170,9 +207,17 @@ class _ModernDrawer extends StatelessWidget {
                         icon: Icons.logout_rounded,
                         label: 'Logout',
                         isSelected: false,
-                        onTap: () {
+                        onTap: () async {
                           Navigator.of(context).pop();
-                          Get.find<LoginController>().logout();
+                          try {
+                            final authController = Get.find<AuthController>();
+                            await authController.logout();
+                            Get.delete<HomeController>();
+                          } catch (e) {
+                            print('Logout error: $e');
+                          }
+                          await Future.delayed(const Duration(milliseconds: 200));
+                          Get.offAllNamed('/login');
                         },
                         color: AppColors.error,
                       ),
