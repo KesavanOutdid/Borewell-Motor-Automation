@@ -427,12 +427,23 @@ class HomeView extends GetView<HomeController> {
                         ],
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        'IMEI: $imei',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade500,
+                      RichText(
+                        text: TextSpan(
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey.shade500,
+                          ),
+                          children: [
+                            const TextSpan(
+                              text: 'IMEI ',
+                              style: TextStyle(
+                                color: AppColors.primaryGreen,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            TextSpan(text: imei),
+                          ],
                         ),
                       ),
                     ],

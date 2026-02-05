@@ -13,7 +13,7 @@ import '../../../../../utils/theme/app_colors.dart';
 class CheckoutController extends GetxController {
   var isProcessing = false.obs;
   
-  final String baseUrl = 'http://10.149.200.218:3030';
+  final String baseUrl = 'http://192.168.0.9:3030';
   final String razorpayKeyId = 'rzp_test_oHoZ3Q1fF6pYEI';
   
   late TokenService tokenService;

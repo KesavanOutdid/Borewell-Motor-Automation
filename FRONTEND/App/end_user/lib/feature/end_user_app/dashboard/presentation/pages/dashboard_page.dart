@@ -8,7 +8,10 @@ import '../../../shop/presentation/pages/shop_home_page.dart';
 import '../../../shop/presentation/pages/cart_page.dart';
 import '../../../shop/presentation/pages/orders_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
+import 'about_agriplus_page.dart';
+import '../../../profile/presentation/controllers/profile_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../../../core/config/env.dart';
 import '../../../../../utils/theme/app_colors.dart';
 
 class DashboardView extends GetView<DashboardController> {
@@ -100,6 +103,7 @@ class _ModernDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final profileController = Get.find<ProfileController>();
     
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.7,
@@ -109,49 +113,83 @@ class _ModernDrawer extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: 24),
-              Container(
+              Image.asset(
+                'assets/images/image.png',
+                height: 80,
+              ),
+              const Text(
+                'AgriPlus',
+                style: TextStyle(
+                  color: AppColors.primaryGreen,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Obx(() => Container(
                 margin: const EdgeInsets.symmetric(horizontal: 12),
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: AppColors.primaryGreen,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   children: [
-                    Image.asset(
-                      'assets/images/image.png',
-                      width: 45,
-                      height: 45,
-                      color: Colors.white,
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1),
+                      ),
+                      child: ClipOval(
+                        child: profileController.userProfileImage.value.isNotEmpty
+                            ? Image.network(
+                                "${AppConfig.baseUrl}${profileController.userProfileImage.value}",
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => 
+                                  const Icon(Icons.person, color: Colors.white, size: 30),
+                              )
+                            : const Icon(Icons.person, color: Colors.white, size: 30),
+                      ),
                     ),
-                    const SizedBox(width: 16),
-                    const Expanded(
+                    const SizedBox(width: 12),
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'AgriPlus',
-                            style: TextStyle(
+                            profileController.userName.value.isNotEmpty 
+                                ? profileController.userName.value 
+                                : 'AgriPlus',
+                            style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 24,
+                              fontSize: 16,
                               fontWeight: FontWeight.w900,
                               letterSpacing: -0.5,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          Text(
-                            'Smart Automation',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
+                          if (profileController.userPhone.value.isNotEmpty)
+                            Text(
+                              "+91 ${profileController.userPhone.value}",
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
                         ],
                       ),
                     ),
                   ],
                 ),
-              ),
+              )),
               const SizedBox(height: 32),
               Expanded(
                 child: Obx(
@@ -203,6 +241,17 @@ class _ModernDrawer extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
                       const Divider(),
+                      const SizedBox(height: 8),
+                      _DrawerItem(
+                        icon: Icons.info_outline_rounded,
+                        label: 'About AgriPlus',
+                        isSelected: false,
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          Get.to(() => const AboutAgriPlusPage());
+                        },
+                        color: AppColors.primaryGreen,
+                      ),
                       const SizedBox(height: 8),
                       _DrawerItem(
                         icon: Icons.logout_rounded,

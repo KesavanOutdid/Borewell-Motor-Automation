@@ -174,12 +174,17 @@ class ProfileController extends GetxController {
       final body = {
         "user_name": nameEditingController.text,
         "user_email": emailEditingController.text,
-        "user_phone": phoneEditingController.text,
         "role_id": roleIdValue.value,
       };
       
+      // Only send phone if it's different and parse as int to match backend expectation
+      final currentPhone = phoneEditingController.text;
+      if (currentPhone != userPhone.value) {
+        body["user_phone"] = int.tryParse(currentPhone) ?? currentPhone;
+      }
+
       if (password != oldPassword.value) {
-        body["password"] = password;
+        body["password"] = int.tryParse(password) ?? password;
       }
 
       logger.d('📦 Body: $body');

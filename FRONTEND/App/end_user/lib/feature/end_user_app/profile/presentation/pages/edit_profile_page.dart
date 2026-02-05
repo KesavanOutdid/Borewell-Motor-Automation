@@ -233,24 +233,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             final error = await controller.updateProfile();
                             if (error == null) {
                               Get.back();
-                              Get.snackbar(
-                                'Success',
-                                'Profile updated successfully',
-                                snackPosition: SnackPosition.BOTTOM,
+                              Get.rawSnackbar(
+                                title: 'Success',
+                                message: 'Profile updated successfully',
                                 backgroundColor: AppColors.success,
-                                colorText: Colors.white,
-                                margin: const EdgeInsets.all(16),
-                                borderRadius: 12,
                               );
                             } else {
-                              Get.snackbar(
-                                'Error',
-                                error,
-                                snackPosition: SnackPosition.BOTTOM,
+                              Get.rawSnackbar(
+                                title: 'Error',
+                                message: error,
                                 backgroundColor: AppColors.error,
-                                colorText: Colors.white,
-                                margin: const EdgeInsets.all(16),
-                                borderRadius: 12,
                               );
                             }
                           },
