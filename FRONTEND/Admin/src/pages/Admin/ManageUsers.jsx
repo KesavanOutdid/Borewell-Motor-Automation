@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
+import TableSkeleton from '../../components/Common/TableSkeleton';
 import { sanitizeName, sanitizeMobile, sanitizeEmail, sanitizePassword } from '../../utils/validation';
 import useManageUsers from '../../hooks/Admin/useManageUsers';
 import { showAlertSuccess } from '../../utils/alert';
@@ -428,11 +429,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                             </thead>
                                             <tbody>
                                                 {loadingUsers ? (
-                                                    <tr>
-                                                        <td colSpan="8" style={{ textAlign: 'center' }}>
-                                                            <p>Loading...</p>
-                                                        </td>
-                                                    </tr>
+                                                    <TableSkeleton rows={8} columns={7} />
                                                 ) : errorUsers ? (
                                                     <tr>
                                                         <td colSpan="8" style={{ textAlign: 'center', color: 'red' }}>

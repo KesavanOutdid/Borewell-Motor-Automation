@@ -3,6 +3,7 @@ import { renderCharts } from '../../charts/Admin/chart';
 import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
+import TableSkeleton from '../../components/Common/TableSkeleton';
 import { Link } from 'react-router-dom';
 import { useChannelHistory } from '../../hooks/Admin/useChannelHistory';
 
@@ -134,11 +135,7 @@ const ChannelHistory = ({ userInfo, handleLogout }) => {
                                             </thead>
                                             <tbody>
                                                 {loading ? (
-                                                    <tr>
-                                                        <td colSpan="8" style={{ textAlign: 'center' }}>
-                                                            <p>Loading...</p>
-                                                        </td>
-                                                    </tr>
+                                                    <TableSkeleton rows={8} columns={8} />
                                                 ) : error ? (
                                                     <tr>
                                                         <td colSpan="8" style={{ textAlign: 'center', color: 'red' }}>

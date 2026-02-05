@@ -411,6 +411,43 @@ router.post("/manageUserUpdated", adminCtrl.manageUserUpdated);
 
 /**
  * @swagger
+ * /admin/uploadProfileImage/{user_id}:
+ *   post:
+ *     summary: Upload profile image for user (Admin)
+ *     tags: [Admin]
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: User ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: Profile image file (max 5MB, PNG/JPG/JPEG only)
+ *               updatedBy:
+ *                 type: string
+ *                 description: Admin email who is updating
+ *     responses:
+ *       200:
+ *         description: Profile image uploaded successfully
+ *       400:
+ *         description: No image file uploaded or invalid file type
+ *       404:
+ *         description: User not found
+ */
+router.post('/uploadProfileImage/:user_id', uploadImage.single('image'), adminCtrl.uploadProfileImage);
+
+/**
+ * @swagger
  * /admin/getAssignDevices:
  *   get:
  *     summary: Get all assigned devices with pagination

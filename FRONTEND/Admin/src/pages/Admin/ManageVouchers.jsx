@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
+import TableSkeleton from '../../components/Common/TableSkeleton';
 import useManageVouchers from '../../hooks/Admin/useManageVouchers';
 import { showDeleteConfirmation } from '../../utils/alert';
 
@@ -121,8 +122,23 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
 
                                 <div className="card-body">
                                     {loadingVouchers ? (
-                                        <div style={{ textAlign: 'center', padding: '40px' }}>
-                                            <p>Loading vouchers...</p>
+                                        <div style={{ overflowX: 'auto' }}>
+                                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                                <thead>
+                                                    <tr style={{ backgroundColor: '#f5f7fa', borderBottom: '2px solid #e0e0e0' }}>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Code</th>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Discount %</th>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Valid From</th>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Valid Until</th>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Usage</th>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Status</th>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <TableSkeleton rows={8} columns={7} />
+                                                </tbody>
+                                            </table>
                                         </div>
                                     ) : errorVouchers ? (
                                         <div style={{ textAlign: 'center', color: 'red', padding: '40px' }}>

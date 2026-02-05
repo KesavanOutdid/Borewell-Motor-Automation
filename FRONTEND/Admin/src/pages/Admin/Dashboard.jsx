@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
+import PageSkeleton from '../../components/Common/PageSkeleton';
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 import MotorFrequency from "../../charts/Admin/MotorFrequency";
 import MotorEnergy from "../../charts/Admin/MotorEnergy";
@@ -17,7 +18,7 @@ import useLiveHeartbeat from "../../hooks/Admin/useLiveHeartbeat";
 
 const Dashboard = ({ userInfo, handleLogout }) => {
 
-    const { assignDevices } = useDashboard(userInfo);
+    const { assignDevices, assignDeviceLoading } = useDashboard(userInfo);
 
     const API_KEY = 'AIzaSyD4_6anlN09mZ1H6hhnfryibQdAWfygUbo';
     const [selectedAssignedDevice, setSelectedAssignedDevice] = useState(null);
@@ -247,6 +248,21 @@ const Dashboard = ({ userInfo, handleLogout }) => {
     // };
 
     // const uniqueRegions = getUniqueRegions();
+
+    if (assignDeviceLoading) {
+        return (
+            <div className='' style={{ paddingTop: '15px' }}>
+                <Sidebar />
+                <main className="main-content position-relative h-100 mt-1 border-radius-lg ">
+                    <Header userInfo={userInfo} handleLogout={handleLogout} />
+                    <div className="container-fluid py-4">
+                        <PageSkeleton />
+                    </div>
+                    <Footer />
+                </main>
+            </div>
+        );
+    }
 
     return (
         <div className='' style={{ paddingTop: '15px' }}>

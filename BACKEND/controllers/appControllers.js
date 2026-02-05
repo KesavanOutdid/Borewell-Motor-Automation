@@ -134,6 +134,45 @@ exports.updateProfile = async (req, res, next) => {
     }
 };
 
+exports.uploadProfileImage = async (req, res, next) => {
+    try {
+        const userId = Number(req.params.user_id);
+
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No image file uploaded' });
+        }
+
+        const imageUrl = `/upload/img/${req.file.filename}`;
+
+        const updatedUser = await User.findOneAndUpdate(
+            { user_id: userId },
+            { 
+                profile_image: imageUrl,
+                updatedBy: req.user.user_email,
+                updatedAt: new Date()
+            },
+            { new: true, select: "-password" }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        await cacheDeletePattern('*profile*');
+        await cacheDeletePattern('*users*');
+
+        res.status(200).json({
+            success: true,
+            message: "Profile image uploaded successfully",
+            profile_image: imageUrl,
+            user: updatedUser
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
 exports.configIMEInumber = async (req, res, next) => {
     try {
         const errors = validationResult(req);

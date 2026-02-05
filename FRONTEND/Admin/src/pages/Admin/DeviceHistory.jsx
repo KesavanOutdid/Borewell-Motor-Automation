@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
+import TableSkeleton from '../../components/Common/TableSkeleton';
 
 const DeviceHistory = ({ userInfo, handleLogout }) => {
     const API_BASE = process.env.REACT_APP_SERVER_URL;
@@ -79,62 +80,62 @@ const DeviceHistory = ({ userInfo, handleLogout }) => {
                                 </div>
 
                                 <div className="card-body px-0 pt-0 pb-2">
-                                    {loadingDeviceHistory ? (
-                                        <div style={{ textAlign: 'center', padding: '20px' }}>
-                                            <p>Loading device history...</p>
-                                        </div>
-                                    ) : deviceHistoryData.length === 0 ? (
-                                        <div style={{ textAlign: 'center', padding: '20px' }}>
-                                            <p>No history data available</p>
-                                        </div>
-                                    ) : (
-                                        <div className="table-responsive p-0" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-                                            <table className="table align-items-center mb-0">
-                                                <thead style={{ position: 'sticky', top: 0, backgroundColor: '#f8f9fa' }}>
+                                    <div className="table-responsive p-0" style={{ maxHeight: '600px', overflowY: 'auto' }}>
+                                        <table className="table align-items-center mb-0">
+                                            <thead style={{ position: 'sticky', top: 0, backgroundColor: '#f8f9fa' }}>
+                                                <tr>
+                                                    <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>S.No</th>
+                                                    <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>Started At</th>
+                                                    <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>Stopped At</th>
+                                                    <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>Duration (min)</th>
+                                                    <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>Energy (kWh)</th>
+                                                    <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>Max Current</th>
+                                                    <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>Min Current</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {loadingDeviceHistory ? (
+                                                    <TableSkeleton rows={8} columns={7} />
+                                                ) : deviceHistoryData.length === 0 ? (
                                                     <tr>
-                                                        <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>S.No</th>
-                                                        <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>Started At</th>
-                                                        <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>Stopped At</th>
-                                                        <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>Duration (min)</th>
-                                                        <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>Energy (kWh)</th>
-                                                        <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>Max Current</th>
-                                                        <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style={{ color: '#8f9297 !important' }}>Min Current</th>
+                                                        <td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>
+                                                            <p>No history data available</p>
+                                                        </td>
                                                     </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {deviceHistoryData.map((record, index) => (
+                                                ) : (
+                                                    deviceHistoryData.map((record, index) => (
                                                         <tr key={index}>
                                                             <td className="text-center">
                                                                 <p className="text-xs font-weight-bold mb-0">{index + 1}</p>
                                                             </td>
                                                             <td className="text-center">
                                                                 <p className="text-xs font-weight-bold mb-0">
-                                                                    {record.startedAt ? new Date(record.startedAt).toLocaleString() : '-'}
+                                                                    {record.startAt ? new Date(record.startAt).toLocaleString() : '-'}
                                                                 </p>
                                                             </td>
                                                             <td className="text-center">
                                                                 <p className="text-xs font-weight-bold mb-0">
-                                                                    {record.stoppedAt ? new Date(record.stoppedAt).toLocaleString() : '-'}
+                                                                    {record.stopAt ? new Date(record.stopAt).toLocaleString() : '-'}
                                                                 </p>
                                                             </td>
                                                             <td className="text-center">
-                                                                <p className="text-xs font-weight-bold mb-0">{record.duration || '-'}</p>
+                                                                <p className="text-xs font-weight-bold mb-0">{record.duration_minutes || '-'}</p>
                                                             </td>
                                                             <td className="text-center">
-                                                                <p className="text-xs font-weight-bold mb-0">{record.energy || '-'}</p>
+                                                                <p className="text-xs font-weight-bold mb-0">{record.energy_kwh ? record.energy_kwh.toFixed(3) : '-'}</p>
                                                             </td>
                                                             <td className="text-center">
-                                                                <p className="text-xs font-weight-bold mb-0">{record.max_current || '-'}</p>
+                                                                <p className="text-xs font-weight-bold mb-0">{record.maxCurrent ? record.maxCurrent.toFixed(3) : '-'}</p>
                                                             </td>
                                                             <td className="text-center">
-                                                                <p className="text-xs font-weight-bold mb-0">{record.min_current || '-'}</p>
+                                                                <p className="text-xs font-weight-bold mb-0">{record.minCurrent ? record.minCurrent.toFixed(3) : '-'}</p>
                                                             </td>
                                                         </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    )}
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>

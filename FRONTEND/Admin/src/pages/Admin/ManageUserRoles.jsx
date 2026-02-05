@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
+import TableSkeleton from '../../components/Common/TableSkeleton';
 import useManageUserRole from '../../hooks/Admin/useManageUserRole';
 import { sanitizeName } from '../../utils/validation';
 import { formatDateToIST } from '../../utils/formatDateToIST';
@@ -151,11 +152,7 @@ const ManageUserRoles = ({ userInfo, handleLogout }) => {
                                             </thead>
                                             <tbody>
                                                 {loading ? (
-                                                    <tr>
-                                                        <td colSpan="8" style={{ textAlign: 'center' }}>
-                                                            <p>Loading...</p>
-                                                        </td>
-                                                    </tr>
+                                                    <TableSkeleton rows={8} columns={5} />
                                                 ) : errorUserRole ? (
                                                     <tr>
                                                         <td colSpan="8" style={{ textAlign: 'center', color: 'red' }}>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
+import CardSkeleton from '../../components/Common/CardSkeleton';
 import useManageProducts from '../../hooks/Admin/useManageProducts';
 
 const ManageProducts = ({ userInfo, handleLogout }) => {
@@ -147,9 +148,7 @@ const ManageProducts = ({ userInfo, handleLogout }) => {
 
                                 <div className="card-body">
                                     {loadingProducts ? (
-                                        <div style={{ textAlign: 'center', padding: '40px' }}>
-                                            <p>Loading products...</p>
-                                        </div>
+                                        <CardSkeleton cards={pagination.limit || 5} />
                                     ) : errorProducts ? (
                                         <div style={{ textAlign: 'center', color: 'red', padding: '40px' }}>
                                             <p>{errorProducts}</p>

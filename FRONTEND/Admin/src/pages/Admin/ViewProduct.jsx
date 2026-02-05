@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
+import ContentSkeleton from '../../components/Common/ContentSkeleton';
 
 const ViewProduct = ({ userInfo, handleLogout }) => {
     const API_BASE = process.env.REACT_APP_SERVER_URL;
@@ -35,7 +36,7 @@ const ViewProduct = ({ userInfo, handleLogout }) => {
                 <main className="main-content position-relative h-100 mt-1 border-radius-lg">
                     <Header userInfo={userInfo} handleLogout={handleLogout} />
                     <div className="container-fluid py-4">
-                        <p style={{ textAlign: 'center' }}>Loading...</p>
+                        <ContentSkeleton />
                     </div>
                 </main>
             </div>

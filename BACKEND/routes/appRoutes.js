@@ -3,6 +3,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const appCtrl = require('../controllers/appControllers');
 const authMiddleware = require('../middlewares/authMiddleware');
+const { uploadImage } = require('../config/multerConfig');
 const router = express.Router();
 
 /**
@@ -103,6 +104,42 @@ router.get('/profile/:user_id', authMiddleware(), appCtrl.getProfileById);
  *         description: Profile updated successfully
  */
 router.put('/updatedProfile/:user_id', authMiddleware(), appCtrl.updateProfile);
+
+/**
+ * @swagger
+ * /app/uploadProfileImage/{user_id}:
+ *   post:
+ *     summary: Upload profile image for user
+ *     tags: [App]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: User ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: Profile image file (max 5MB, PNG/JPG/JPEG only)
+ *     responses:
+ *       200:
+ *         description: Profile image uploaded successfully
+ *       400:
+ *         description: No image file uploaded or invalid file type
+ *       404:
+ *         description: User not found
+ */
+router.post('/uploadProfileImage/:user_id', authMiddleware(), uploadImage.single('image'), appCtrl.uploadProfileImage);
 
 /**
  * @swagger

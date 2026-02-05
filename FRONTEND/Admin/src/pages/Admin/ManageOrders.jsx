@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
+import TableSkeleton from '../../components/Common/TableSkeleton';
 import useManageOrders from '../../hooks/Admin/useManageOrders';
 
 const ManageOrders = ({ userInfo, handleLogout }) => {
@@ -155,8 +156,24 @@ const ManageOrders = ({ userInfo, handleLogout }) => {
 
                                 <div className="card-body">
                                     {loadingOrders ? (
-                                        <div style={{ textAlign: 'center', padding: '40px' }}>
-                                            <p>Loading orders...</p>
+                                        <div style={{ overflowX: 'auto' }}>
+                                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                                <thead>
+                                                    <tr style={{ borderBottom: '2px solid #e9ecef', backgroundColor: '#f8f9fa' }}>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontSize: '13px', fontWeight: '600', color: '#333' }}>Order ID</th>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontSize: '13px', fontWeight: '600', color: '#333' }}>Customer</th>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontSize: '13px', fontWeight: '600', color: '#333' }}>Total</th>
+                                                        <th style={{ padding: '12px', textAlign: 'center', fontSize: '13px', fontWeight: '600', color: '#333' }}>Order Status</th>
+                                                        <th style={{ padding: '12px', textAlign: 'center', fontSize: '13px', fontWeight: '600', color: '#333' }}>Payment</th>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontSize: '13px', fontWeight: '600', color: '#333' }}>Method</th>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontSize: '13px', fontWeight: '600', color: '#333' }}>Date</th>
+                                                        <th style={{ padding: '12px', textAlign: 'center', fontSize: '13px', fontWeight: '600', color: '#333' }}>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <TableSkeleton rows={8} columns={8} />
+                                                </tbody>
+                                            </table>
                                         </div>
                                     ) : errorOrders ? (
                                         <div style={{ textAlign: 'center', color: 'red', padding: '40px' }}>

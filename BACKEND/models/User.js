@@ -26,6 +26,8 @@ const UserSchema = new mongoose.Schema({
 
     password: { type: Number, required: true },
 
+    profile_image: { type: String, default: null },
+
     // Assignment fields
     assigned_serial_number: { type: String, default: null },
     assign_status: { type: Boolean, default: false },

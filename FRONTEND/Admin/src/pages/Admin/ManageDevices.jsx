@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
+import TableSkeleton from '../../components/Common/TableSkeleton';
 import { sanitizeSerialNumber } from '../../utils/validation';
 import useManageDevices from '../../hooks/Admin/useManageDevices';
 import { showAlertSuccess } from '../../utils/alert';
@@ -452,11 +453,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                             </thead>
                                             <tbody>
                                                 {loading ? (
-                                                    <tr>
-                                                        <td colSpan="7" style={{ textAlign: 'center' }}>
-                                                            <p>Loading...</p>
-                                                        </td>
-                                                    </tr>
+                                                    <TableSkeleton rows={8} columns={7} />
                                                 ) : errorDevice ? (
                                                     <tr>
                                                         <td colSpan="7" style={{ textAlign: 'center', color: 'red' }}>

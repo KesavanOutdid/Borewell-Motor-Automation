@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
+import ContentSkeleton from '../../components/Common/ContentSkeleton';
 // import StatusTimeline from '../../components/Admin/StatusTimeline';
 import useViewOrder from '../../hooks/Admin/useViewOrder';
 import { showAlertSuccess, showAlertError } from '../../utils/alert';
@@ -64,9 +65,7 @@ const ViewOrder = ({ userInfo, handleLogout }) => {
                 <main className="main-content position-relative h-100 mt-1 border-radius-lg">
                     <Header userInfo={userInfo} handleLogout={handleLogout} />
                     <div className="container-fluid py-4">
-                        <div style={{ textAlign: 'center', padding: '40px' }}>
-                            <p>Loading order details...</p>
-                        </div>
+                        <ContentSkeleton />
                     </div>
                     <Footer />
                 </main>

@@ -11,19 +11,67 @@ const Profile = ({ userInfo, handleLogout }) => {
         user_phone,
         user_email,
         password,
+        profile_image,
+        selectedImage,
         setUpdateUname,
         setUpdatePassword,
+        setSelectedImage,
         errorMessage,
         successMessage,
         setErrorMessage,
+        setSuccessMessage,
         userModified,
         loadingUpdate,
+        loadingImageUpload,
         handleUpdate,
+        handleImageUpload,
     } = useProfile(userInfo);
 
     const handleFormSubmit = async (e) => {
         e.preventDefault();
         await handleUpdate(userInfo, setErrorMessage, Swal);
+    };
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file size
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            if (file.size > maxSize) {
+                setErrorMessage("Image size must be less than 5MB");
+                setSuccessMessage('');
+                e.target.value = null;
+                return;
+            }
+
+            // Validate file type
+            const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+            if (!allowedTypes.includes(file.type)) {
+                setErrorMessage("Only PNG and JPG images are allowed");
+                setSuccessMessage('');
+                e.target.value = null;
+                return;
+            }
+
+            setErrorMessage('');
+            setSuccessMessage('');
+            setSelectedImage(file);
+        }
+    };
+
+    const handleImageSubmit = async () => {
+        if (selectedImage) {
+            await handleImageUpload(selectedImage);
+        }
+    };
+
+    const getImageUrl = () => {
+        if (selectedImage) {
+            return URL.createObjectURL(selectedImage);
+        } else if (profile_image) {
+            return `${process.env.REACT_APP_SERVER_URL}${profile_image}`;
+        }
+        return "https://cdn-icons-png.flaticon.com/512/149/149071.png";
     };
 
     return (
@@ -48,6 +96,14 @@ const Profile = ({ userInfo, handleLogout }) => {
                     {/* Profile update start */}
                     <div className="row">
                         <div className="col-md-12 mt-4">
+                            {/* Error Messages */}
+                            {errorMessage && (
+                                <div className="alert alert-danger alert-dismissible fade show" role="alert" style={{ marginBottom: '15px' }}>
+                                    <i className="fas fa-exclamation-circle me-2"></i>
+                                    {errorMessage}
+                                    <button type="button" className="btn-close" onClick={() => setErrorMessage('')}></button>
+                                </div>
+                            )}
                             <div className="card">
                                 <div className="card-header pb-0 px-3">
                                     <h6 className="mb-0">Profile Update</h6>
@@ -57,15 +113,92 @@ const Profile = ({ userInfo, handleLogout }) => {
                                         <div className="list-group-item border-0 p-4 mb-2 bg-gray-100 border-radius-lg">
                                             {/* Avatar Image */}
                                             <div className="d-flex flex-column align-items-center">
-                                                <div className="position-relative mb-3">
+                                                <div className="position-relative mb-3" style={{ cursor: selectedImage ? 'default' : 'pointer' }}>
                                                     <img
-                                                        src="https://cdn-icons-png.flaticon.com/512/149/149071.png"
+                                                        src={getImageUrl()}
                                                         alt="profile_image"
                                                         id="profile_image"
-                                                        className="border-radius-lg shadow-sm"
-                                                        style={{ width: '250px', height: '250px', objectFit: 'cover' }} 
+                                                        className="border-radius-lg shadow"
+                                                        style={{ 
+                                                            width: '200px', 
+                                                            height: '200px', 
+                                                            objectFit: 'cover',
+                                                            border: '4px solid #fff',
+                                                            transition: 'all 0.3s ease'
+                                                        }} 
+                                                        onClick={() => !selectedImage && document.getElementById('imageUpload').click()}
+                                                    />
+                                                    {!selectedImage && (
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-primary btn-sm rounded-circle position-absolute"
+                                                            style={{
+                                                                bottom: '10px',
+                                                                right: '10px',
+                                                                width: '45px',
+                                                                height: '45px',
+                                                                padding: '0',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                                                            }}
+                                                            onClick={() => document.getElementById('imageUpload').click()}
+                                                            disabled={loadingImageUpload}
+                                                        >
+                                                            <i className="fas fa-camera" style={{ fontSize: '18px' }}></i>
+                                                        </button>
+                                                    )}
+                                                    <input
+                                                        type="file"
+                                                        id="imageUpload"
+                                                        accept="image/png, image/jpeg, image/jpg"
+                                                        style={{ display: 'none' }}
+                                                        onChange={handleImageChange}
                                                     />
                                                 </div>
+
+                                                {selectedImage ? (
+                                                    <div className="d-flex gap-2 mt-2">
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-success btn-sm"
+                                                            onClick={handleImageSubmit}
+                                                            disabled={loadingImageUpload}
+                                                            style={{ minWidth: '100px' }}
+                                                        >
+                                                            {loadingImageUpload ? (
+                                                                <>
+                                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                                    Uploading...
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <i className="fas fa-check me-2"></i>
+                                                                    Save
+                                                                </>
+                                                            )}
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-outline-secondary btn-sm"
+                                                            onClick={() => {
+                                                                setSelectedImage(null);
+                                                                document.getElementById('imageUpload').value = null;
+                                                                setErrorMessage('');
+                                                            }}
+                                                            disabled={loadingImageUpload}
+                                                        >
+                                                            <i className="fas fa-times me-2"></i>
+                                                            Cancel
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center mt-2">
+                                                        <p className="text-sm text-muted mb-0">Click camera icon to change photo</p>
+                                                        <small className="text-muted" style={{ fontSize: '11px' }}>Max: 5MB (PNG, JPG, JPEG)</small>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -121,9 +254,6 @@ const Profile = ({ userInfo, handleLogout }) => {
                                                     <button className="btn btn-primary" id="Update" disabled={!userModified || loadingUpdate}>{loadingUpdate ? "Updating..." : "Update"}</button>
                                                 </div>
                                             </form>
-                                            {/* Success/Error Messages */}
-                                            {successMessage && <div className="text-success" style={{ paddingBottom: '20px', textAlign: 'center' }}>{successMessage}</div>}
-                                            {errorMessage && <div className="text-danger" style={{ paddingBottom: '20px', textAlign: 'center' }}>{errorMessage}</div>}
                                         </div>
                                     </div>
                                 </div>
