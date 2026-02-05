@@ -4,15 +4,8 @@ import 'package:get/get.dart';
 import '../controllers/device_history_controller.dart';
 import '../../../../../utils/theme/app_colors.dart';
 
-class DeviceHistoryView extends StatefulWidget {
+class DeviceHistoryView extends StatelessWidget {
   const DeviceHistoryView({super.key});
-
-  @override
-  State<DeviceHistoryView> createState() => _DeviceHistoryViewState();
-}
-
-class _DeviceHistoryViewState extends State<DeviceHistoryView> {
-  int? _expandedIndex;
 
   static const Duration _istOffset = Duration(hours: 5, minutes: 30);
 
@@ -78,6 +71,8 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: _buildRecordCard(
+                            context,
+                            controller,
                             controller.records[index],
                             index + 1,
                             index,
@@ -216,8 +211,7 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
     );
   }
 
-  Widget _buildRecordCard(Map<String, dynamic> record, int displayIndex, int actualIndex) {
-    final isExpanded = _expandedIndex == actualIndex;
+  Widget _buildRecordCard(BuildContext context, DeviceHistoryController controller, Map<String, dynamic> record, int displayIndex, int actualIndex) {
     final chips = [
       _chipData('Energy', _formatNumber(record['energy_kwh'], 'kWh')),
       _chipData('Duration', _formatDuration(record['duration_minutes'])),
@@ -239,97 +233,99 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
       ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          initiallyExpanded: isExpanded,
-          onExpansionChanged: (expanded) {
-            setState(() {
-              _expandedIndex = expanded ? actualIndex : null;
-            });
-          },
-          tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'Record #$displayIndex',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primaryGreen),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  _formatDateOnly(record['date'] ?? record['startAt']),
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-                ),
-              ),
-            ],
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        child: Obx(() {
+          final isExpanded = controller.expandedIndex.value == actualIndex;
+          return ExpansionTile(
+            key: ValueKey('history_record_$actualIndex'),
+            initiallyExpanded: isExpanded,
+            onExpansionChanged: (expanded) {
+              controller.toggleExpanded(actualIndex);
+            },
+            tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            title: Row(
               children: [
-                Row(
-                  children: [
-                    Icon(Icons.schedule_rounded, size: 14, color: Colors.grey.shade400),
-                    const SizedBox(width: 4),
-                    Text(
-                      _formatDuration(record['duration_minutes']),
-                      style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(width: 16),
-                    Icon(Icons.person_outline_rounded, size: 14, color: Colors.grey.shade400),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        'By ${record['started_by'] ?? '-'}',
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Record #$displayIndex',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primaryGreen),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _formatDateOnly(record['date'] ?? record['startAt']),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  ),
                 ),
               ],
             ),
-          ),
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 8),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Divider(color: Colors.grey.shade100, height: 24),
                   Row(
                     children: [
-                      Expanded(child: _infoTile('Start Time', _formatDate(record['startAt']))),
-                      const SizedBox(width: 12),
-                      Expanded(child: _infoTile('Stop Time', _formatDate(record['stopAt']))),
+                      Icon(Icons.schedule_rounded, size: 14, color: Colors.grey.shade400),
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatDuration(record['duration_minutes']),
+                        style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(width: 16),
+                      Icon(Icons.person_outline_rounded, size: 14, color: Colors.grey.shade400),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          'By ${record['started_by'] ?? '-'}',
+                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(child: _infoTile('Started By', record['started_by'] ?? '-')),
-                      const SizedBox(width: 12),
-                      Expanded(child: _infoTile('Stopped By', record['stopped_by'] ?? '-')),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: chips.map((chip) => _metricChip(chip['label']!, chip['value']!)).toList(),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: Column(
+                  children: [
+                    Divider(color: Colors.grey.shade100, height: 24),
+                    Row(
+                      children: [
+                        Expanded(child: _infoTile('Start Time', _formatDate(record['startAt']))),
+                        const SizedBox(width: 12),
+                        Expanded(child: _infoTile('Stop Time', _formatDate(record['stopAt']))),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(child: _infoTile('Started By', record['started_by'] ?? '-')),
+                        const SizedBox(width: 12),
+                        Expanded(child: _infoTile('Stopped By', record['stopped_by'] ?? '-')),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: chips.map((chip) => _metricChip(chip['label']!, chip['value']!)).toList(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        }),
       ),
     );
   }

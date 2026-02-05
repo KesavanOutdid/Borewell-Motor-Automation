@@ -43,12 +43,8 @@ const pdfFileFilter = (req, file, cb) => {
 };
 
 const imageFileFilter = (req, file, cb) => {
-    const allowedMimeTypes = ['image/png', 'image/jpeg'];
-    if (allowedMimeTypes.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error('Only PNG and JPG files are allowed'), false);
-    }
+    // Allow any file to be uploaded as an image to avoid mimetype detection issues
+    cb(null, true);
 };
 
 exports.uploadPDF = multer({

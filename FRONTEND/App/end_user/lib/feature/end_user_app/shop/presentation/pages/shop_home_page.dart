@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../../../../utils/theme/app_colors.dart';
 import '../../../../../utils/widgets/gradient_widgets.dart';
 import '../controllers/shop_controller.dart';
@@ -79,7 +80,14 @@ class _ShopHomeViewState extends State<ShopHomeView> {
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
             decoration: const BoxDecoration(
-              gradient: AppColors.primaryGradient,
+              image: DecorationImage(
+                image: AssetImage('assets/images/shop.png'),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Colors.black26,
+                  BlendMode.darken,
+                ),
+              ),
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(40),
                 bottomRight: Radius.circular(40),
@@ -123,22 +131,13 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                                   const Text(
                                     'Shop',
                                     style: TextStyle(
-                                      fontSize: 28,
+                                      fontSize: 26,
                                       fontWeight: FontWeight.w900,
                                       color: Colors.white,
                                       letterSpacing: -0.8,
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Borewell Automation Store',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white.withOpacity(0.85),
-                                      letterSpacing: 0.2,
-                                    ),
-                                  ),
+                                 
                                 ],
                               ),
                             ),
@@ -187,10 +186,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
             print('📊 Obx rebuild - isLoading: ${controller.isLoading.value}, products: ${controller.products.length}');
             
             if (controller.isLoading.value && controller.products.isEmpty) {
-              print('⏳ Showing loading indicator');
-              return const SliverFillRemaining(
-                child: Center(child: CircularProgressIndicator()),
-              );
+              return _buildShopHomeSkeleton();
             }
 
             if (controller.products.isEmpty) {
@@ -894,6 +890,129 @@ class _ShopHomeViewState extends State<ShopHomeView> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildShopHomeSkeleton() {
+    return SliverList(
+      delegate: SliverChildListDelegate([
+        // Voucher Section Skeleton
+        _buildVoucherSkeleton(),
+        // Product List Skeleton
+        ...List.generate(
+          5,
+          (index) => Shimmer.fromColors(
+            baseColor: Colors.grey.shade200,
+            highlightColor: Colors.grey.shade100,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: Colors.grey.shade200, width: 1),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 8),
+                        Container(
+                          width: double.infinity,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          width: 150,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          width: 80,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _buildVoucherSkeleton() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: Row(
+            children: [
+              Icon(Icons.local_offer, color: Colors.grey, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Available Offers',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 145,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            itemCount: 3,
+            itemBuilder: (context, index) {
+              return Shimmer.fromColors(
+                baseColor: Colors.grey.shade200,
+                highlightColor: Colors.grey.shade100,
+                child: Container(
+                  width: 280,
+                  height: 135,
+                  margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 }

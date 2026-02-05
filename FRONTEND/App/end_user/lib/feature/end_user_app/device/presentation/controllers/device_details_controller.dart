@@ -29,7 +29,7 @@ class DeviceDetailsController extends GetxController {
   String? _socketSerial;
   bool? _previousMotorRunning;
   static const Duration _istOffset = Duration(hours: 5, minutes: 30);
-  static const Duration _heartbeatGrace = Duration(seconds: 20);
+  static const Duration _heartbeatGrace = Duration(seconds: 120);
 
   @override
   void onInit() {
@@ -54,6 +54,19 @@ class DeviceDetailsController extends GetxController {
     imeiNumber = args['imei_number'] ?? args['imeiNumber'] ?? imeiNumber;
 
     final deviceChanged = previousSerial != serialNumber || previousImei != imeiNumber;
+    
+    // Check initial connection status from args
+    final lastSeenStr = args['updatedAt'] ?? args['lastUpdate'] ?? args['timestamp'];
+    if (lastSeenStr != null) {
+      try {
+        final lastSeen = DateTime.parse(lastSeenStr.toString()).toUtc();
+        final now = DateTime.now().toUtc();
+        if (now.difference(lastSeen).inSeconds < 120) {
+          isConnected.value = true;
+          _startHeartbeatTimer();
+        }
+      } catch (_) {}
+    }
 
     if (!_initialized || deviceChanged) {
       _resetHeartbeatState();
@@ -570,7 +583,7 @@ class DeviceDetailsController extends GetxController {
   }
 
   void _applyHeartbeatPayload(Map<String, dynamic> payload) {
-    _markHeartbeatReceived();
+    _startHeartbeatTimer();
     final timestamp = _formatDate(payload['timestamp']);
     if (timestamp != null) {
       liveData['lastUpdate'] = timestamp;
@@ -590,7 +603,7 @@ class DeviceDetailsController extends GetxController {
     liveData.refresh();
   }
 
-  void _markHeartbeatReceived() {
+  void _startHeartbeatTimer() {
     if (!isConnected.value) {
       isConnected.value = true;
     }

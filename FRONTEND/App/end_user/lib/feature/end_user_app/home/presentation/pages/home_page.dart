@@ -1,58 +1,12 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shimmer/shimmer.dart';
 import '../controllers/home_controller.dart';
 import '../../../../../core/services/notification_storage_service.dart';
 import '../../../../../utils/theme/app_colors.dart';
 
-class HomeView extends StatefulWidget {
+class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
-
-  @override
-  State<HomeView> createState() => _HomeViewState();
-}
-
-class _HomeViewState extends State<HomeView> {
-  final ScrollController _voucherScrollController = ScrollController();
-  Timer? _autoScrollTimer;
-  late HomeController controller;
-
-  @override
-  void initState() {
-    super.initState();
-    controller = Get.find<HomeController>();
-    _startAutoScroll();
-  }
-
-  @override
-  void dispose() {
-    _autoScrollTimer?.cancel();
-    _voucherScrollController.dispose();
-    super.dispose();
-  }
-
-  void _startAutoScroll() {
-    _autoScrollTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (_voucherScrollController.hasClients) {
-        final maxScroll = _voucherScrollController.position.maxScrollExtent;
-        final currentScroll = _voucherScrollController.offset;
-        
-        if (currentScroll >= maxScroll) {
-          _voucherScrollController.animateTo(
-            0,
-            duration: const Duration(milliseconds: 800),
-            curve: Curves.easeInOut,
-          );
-        } else {
-          _voucherScrollController.animateTo(
-            currentScroll + 210,
-            duration: const Duration(milliseconds: 800),
-            curve: Curves.easeInOut,
-          );
-        }
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,10 +20,17 @@ class _HomeViewState extends State<HomeView> {
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
               decoration: const BoxDecoration(
-                gradient: AppColors.primaryGradient,
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(40),
                   bottomRight: Radius.circular(40),
+                ),
+                image: DecorationImage(
+                  image: AssetImage('assets/images/Gemini_Generated_Image_8ytdc78ytdc78ytd.png'),
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(
+                    Colors.black38,
+                    BlendMode.darken,
+                  ),
                 ),
               ),
               child: SafeArea(
@@ -86,28 +47,34 @@ class _HomeViewState extends State<HomeView> {
                           child: Container(
                             height: 48,
                             width: 48,
-                            padding: const EdgeInsets.all(10),
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.18),
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(15),
                             ),
                             child: const Icon(
                               Icons.menu_rounded,
                               color: Colors.white,
-                              size: 26,
+                              size: 24,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Text(
-                            'Home',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: -0.8,
-                            ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Home',
+                                style: TextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                      
+                            ],
                           ),
                         ),
                         StreamBuilder<int>(
@@ -121,10 +88,10 @@ class _HomeViewState extends State<HomeView> {
                               child: Container(
                                 height: 48,
                                 width: 48,
-                                padding: const EdgeInsets.all(10),
+                                padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: Colors.white.withOpacity(0.18),
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(15),
                                 ),
                                 child: Stack(
                                   clipBehavior: Clip.none,
@@ -133,36 +100,29 @@ class _HomeViewState extends State<HomeView> {
                                     const Icon(
                                       Icons.notifications_rounded,
                                       color: Colors.white,
-                                      size: 26,
+                                      size: 24,
                                     ),
                                     if (unreadCount > 0)
                                       Positioned(
-                                        right: -2,
-                                        top: -2,
+                                        right: -4,
+                                        top: -4,
                                         child: Container(
                                           padding: const EdgeInsets.all(4),
                                           decoration: BoxDecoration(
-                                            gradient: AppColors.sunsetGradient,
+                                            color: Colors.green,
                                             shape: BoxShape.circle,
-                                            border: Border.all(color: Colors.white, width: 2),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black.withOpacity(0.1),
-                                                blurRadius: 4,
-                                                spreadRadius: 0,
-                                              ),
-                                            ],
+                                            border: Border.all(color: Colors.white, width: 0.8),
                                           ),
                                           constraints: const BoxConstraints(
-                                            minWidth: 18,
-                                            minHeight: 18,
+                                            minWidth: 16,
+                                            minHeight: 16,
                                           ),
                                           child: Text(
                                             unreadCount > 99 ? '99+' : unreadCount.toString(),
                                             style: const TextStyle(
                                               color: Colors.white,
-                                              fontSize: 8,
-                                              fontWeight: FontWeight.w900,
+                                              fontSize: 7,
+                                              fontWeight: FontWeight.w400,
                                             ),
                                             textAlign: TextAlign.center,
                                           ),
@@ -193,6 +153,10 @@ class _HomeViewState extends State<HomeView> {
                     _buildFilterChip('Running'),
                     const SizedBox(width: 8),
                     _buildFilterChip('Stopped'),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('Online'),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('Offline'),
                   ],
                 ),
               )),
@@ -200,7 +164,7 @@ class _HomeViewState extends State<HomeView> {
             Expanded(
               child: Obx(() {
                 if (controller.isLoading.value) {
-                  return const Center(child: CircularProgressIndicator());
+                  return _buildSkeletonList();
                 }
 
                 if (controller.devices.isEmpty) {
@@ -281,8 +245,8 @@ class _HomeViewState extends State<HomeView> {
                     itemCount: displayDevices.length,
                     itemBuilder: (context, index) {
                       final device = displayDevices[index];
-                      final isConfigured = _isDeviceConfigured(device);
-                      final isRunning = _isDeviceRunning(device);
+                      final isConfigured = controller.isDeviceConfigured(device);
+                      final isRunning = controller.isDeviceRunning(device);
                       return _buildDeviceListCard(device, isConfigured, isRunning);
                     },
                   ),
@@ -292,7 +256,7 @@ class _HomeViewState extends State<HomeView> {
           ],
         ),
         Positioned(
-          right: 16,
+          left: 16,
           bottom: 24,
           child: GestureDetector(
             onTap: () => controller.showAddDeviceDialog(),
@@ -325,38 +289,8 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  bool _isDeviceConfigured(Map<String, dynamic> device) {
-    final imei = device['imei_number'] ?? device['imeiNumber'];
-    if (imei == null) return false;
-    return imei.toString().trim().isNotEmpty;
-  }
-
-  bool _isDeviceRunning(Map<String, dynamic> device) {
-    final status = device['start_status'] ?? 
-                  device['startStatus'] ?? 
-                  device['status'] ?? 
-                  device['device_status'] ??
-                  device['motor_running'] ??
-                  device['motor_status'];
-    if (status is bool) {
-      return status;
-    }
-    if (status is num) {
-      return status == 1;
-    }
-    if (status is String) {
-      final normalized = status.toLowerCase();
-      return normalized == 'running' || 
-             normalized == 'on' || 
-             normalized == 'true' || 
-             normalized == '1' ||
-             normalized == 'active';
-    }
-    return false;
-  }
-
   void _navigateDevice(Map<String, dynamic> device) async {
-    final route = _isDeviceConfigured(device)
+    final route = controller.isDeviceConfigured(device)
         ? '/device/details'
         : '/device/configure';
     await Get.toNamed(route, arguments: device);
@@ -394,20 +328,23 @@ class _HomeViewState extends State<HomeView> {
 
   Widget _buildDeviceListCard(Map<String, dynamic> device, bool isConfigured, bool isRunning) {
     final deviceId = device['serial_number'] ?? device['serialNumber'] ?? 'N/A';
-    final deviceName = device['device_nickname'] ?? device['device_name'] ?? deviceId;
+    final deviceNickname = device['device_nickname'] ?? device['device_name'];
+    final deviceName = (deviceNickname != null && deviceNickname.toString().isNotEmpty) ? deviceNickname : deviceId;
     final lat = device['latitude'];
     final lng = device['longitude'];
     final location = (device['location'] != null && device['location'].toString().isNotEmpty && device['location'] != 'No Location')
-        ? device['location']
+        ? device['location'].toString()
         : (lat != null && lng != null ? "$lat, $lng" : "No Location");
     final imei = device['imei_number'] ?? device['imeiNumber'] ?? 'N/A';
+    final isOnline = controller.isOnline(device);
+    
     final deviceStatus = !isConfigured 
         ? 'Not Configured' 
-        : (isRunning ? 'Running' : 'Stopped');
+        : (isRunning ? 'Running' : (isOnline ? 'Stopped' : 'Offline'));
     
     final statusColor = !isConfigured 
         ? AppColors.primaryOrange 
-        : (isRunning ? AppColors.primaryGreen : AppColors.textMuted);
+        : (isRunning ? AppColors.primaryGreen : (isOnline ? AppColors.textMuted : Colors.grey));
     
     final acceptanceStatus = device['acceptance_status'] ?? 'accepted';
     final isPending = acceptanceStatus == 'pending';
@@ -427,7 +364,7 @@ class _HomeViewState extends State<HomeView> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Left Icon/Image section (like Shop list)
+                // Left Icon/Image section
                 Container(
                   width: 50,
                   height: 50,
@@ -447,16 +384,28 @@ class _HomeViewState extends State<HomeView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        deviceName,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                          letterSpacing: -0.5,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              deviceName,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                                letterSpacing: -0.5,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Icon(
+                            Icons.wifi_rounded,
+                            size: 14,
+                            color: isOnline ? AppColors.primaryGreen : Colors.grey.shade400,
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 4),
                       Row(
@@ -513,13 +462,14 @@ class _HomeViewState extends State<HomeView> {
                     if (!isPending && isConfigured) ...[
                       const SizedBox(height: 8),
                       GestureDetector(
-                        onTap: () => controller.toggleDevice(deviceId, imei, !isRunning),
+                        onTap: isOnline ? () => controller.toggleDevice(deviceId, imei, !isRunning) : null,
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: isRunning ? Colors.red : AppColors.primaryGreen,
+                            color: isOnline 
+                                ? (isRunning ? Colors.red : AppColors.primaryGreen)
+                                : Colors.grey.shade300,
                             shape: BoxShape.circle,
-                            boxShadow: [], // Explicitly remove any potential shadow
                           ),
                           child: Icon(
                             isRunning ? Icons.stop_rounded : Icons.play_arrow_rounded,
@@ -569,6 +519,98 @@ class _HomeViewState extends State<HomeView> {
                 ],
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkeletonList() {
+    return ListView.builder(
+      padding: EdgeInsets.zero,
+      itemCount: 5,
+      itemBuilder: (context, index) => _buildSkeletonCard(),
+    );
+  }
+
+  Widget _buildSkeletonCard() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: const BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: Color(0xFFF5F5F5), width: 1),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 120,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: 180,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    width: 100,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Container(
+                  width: 60,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),

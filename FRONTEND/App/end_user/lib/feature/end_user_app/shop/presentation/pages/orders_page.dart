@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../../../../utils/theme/app_colors.dart';
 import '../controllers/orders_controller.dart';
 
@@ -18,7 +19,14 @@ class OrdersPage extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
             decoration: const BoxDecoration(
-              gradient: AppColors.primaryGradient,
+              image: DecorationImage(
+                image: AssetImage('assets/images/orders.png'),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Colors.black26,
+                  BlendMode.darken,
+                ),
+              ),
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(40),
                 bottomRight: Radius.circular(40),
@@ -55,24 +63,15 @@ class OrdersPage extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'My Orders',
+                              'Orders',
                               style: TextStyle(
-                                fontSize: 28,
+                                fontSize: 26,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
                                 letterSpacing: -0.8,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Track & Manage',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white.withOpacity(0.85),
-                                letterSpacing: 0.2,
-                              ),
-                            ),
+                            
                           ],
                         ),
                       ),
@@ -85,7 +84,7 @@ class OrdersPage extends StatelessWidget {
           Expanded(
             child: Obx(() {
         if (controller.isLoading.value && controller.orders.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return _buildSkeleton();
         }
 
         if (controller.orders.isEmpty) {
@@ -287,5 +286,66 @@ class OrdersPage extends StatelessWidget {
       default:
         return Colors.grey;
     }
+  }
+
+  Widget _buildSkeleton() {
+    return ListView.builder(
+      padding: EdgeInsets.zero,
+      itemCount: 6,
+      itemBuilder: (context, index) => _buildSkeletonCard(),
+    );
+  }
+
+  Widget _buildSkeletonCard() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: const BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: Color(0xFFEEEEEE), width: 1),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 180,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: 100,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.white),
+          ],
+        ),
+      ),
+    );
   }
 }

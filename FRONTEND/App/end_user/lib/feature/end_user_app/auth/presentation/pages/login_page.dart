@@ -18,7 +18,14 @@ class LoginView extends GetView<AuthController> {
               Container(
                 width: double.infinity,
                 decoration: const BoxDecoration(
-                  gradient: AppColors.primaryGradient,
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/Gemini_Generated_Image_8ytdc78ytdc78ytd.png'),
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                      Colors.black38,
+                      BlendMode.darken,
+                    ),
+                  ),
                 ),
                 child: Column(
                   children: [

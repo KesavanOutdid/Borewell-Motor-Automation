@@ -11,7 +11,7 @@ class OrdersController extends GetxController {
   var isLoading = false.obs;
   var selectedOrder = Rxn<OrderModel>();
   
-  final String baseUrl = 'http://192.168.0.6:3030';
+  final String baseUrl = 'http://10.149.200.218:3030';
   
   late TokenService tokenService;
   final logger = Logger();

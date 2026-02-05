@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../../../../utils/theme/app_colors.dart';
 import '../controllers/voucher_controller.dart';
 
@@ -49,7 +50,7 @@ class VouchersPage extends StatelessWidget {
           Expanded(
             child: Obx(() {
               if (controller.isLoading.value && controller.vouchers.isEmpty) {
-                return const Center(child: CircularProgressIndicator());
+                return _buildSkeleton();
               }
 
               if (controller.vouchers.isEmpty) {
@@ -264,6 +265,35 @@ class VouchersPage extends StatelessWidget {
                 ),
               ],
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkeleton() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: 4,
+      itemBuilder: (context, index) => _buildSkeletonCard(),
+    );
+  }
+
+  Widget _buildSkeletonCard() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Container(
+          height: 120,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),

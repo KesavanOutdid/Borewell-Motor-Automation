@@ -15,6 +15,7 @@ class DeviceHistoryController extends GetxController {
   final imeiNumber = '-'.obs;
   final lastUpdated = '-'.obs;
   final recordCount = 0.obs;
+  final expandedIndex = Rxn<int>();
 
   late TokenService tokenService;
 
@@ -86,6 +87,14 @@ class DeviceHistoryController extends GetxController {
 
   Future<void> refreshHistory() async {
     await fetchHistory();
+  }
+
+  void toggleExpanded(int index) {
+    if (expandedIndex.value == index) {
+      expandedIndex.value = null;
+    } else {
+      expandedIndex.value = index;
+    }
   }
 
   void _applyHistoryData(Map<String, dynamic> json) {

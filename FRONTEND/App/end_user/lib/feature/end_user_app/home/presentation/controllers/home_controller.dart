@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -18,6 +19,7 @@ class HomeController extends GetxController {
   late TokenService tokenService;
   final _storage = GetStorage();
   IO.Socket? _socket;
+  Timer? _offlineCheckTimer;
 
   void setFilter(String filter) {
     selectedFilter.value = filter;
@@ -32,6 +34,7 @@ class HomeController extends GetxController {
   @override
   void onClose() {
     _socket?.dispose();
+    _offlineCheckTimer?.cancel();
     super.onClose();
   }
 
@@ -51,6 +54,7 @@ class HomeController extends GetxController {
         if (data != null && data['serial_number'] != null) {
           final serial = data['serial_number'];
           final payload = data['payload'];
+          _updateDeviceLastSeen(serial);
           if (payload != null) {
             final newStatus = payload['motor_running'] == true;
             _updateDeviceStatus(serial, newStatus);
@@ -61,8 +65,14 @@ class HomeController extends GetxController {
       _socket!.on('LIVE_TELEMETRY', (data) {
         if (data != null && data['serial_number'] != null) {
           final serial = data['serial_number'];
-          // You could update other telemetry here if needed
-          // For now we focus on status for the Home page
+          _updateDeviceLastSeen(serial);
+        }
+      });
+
+      _socket!.on('LIVE_HEARTBEAT', (data) {
+        if (data != null && data['serial_number'] != null) {
+          final serial = data['serial_number'];
+          _updateDeviceLastSeen(serial);
         }
       });
     } catch (e) {
@@ -70,11 +80,21 @@ class HomeController extends GetxController {
     }
   }
 
+  void _updateDeviceLastSeen(String serial) {
+    int index = devices.indexWhere((d) => (d['serial_number'] ?? d['serialNumber']) == serial);
+    if (index != -1) {
+      var device = Map<String, dynamic>.from(devices[index]);
+      device['updatedAt'] = DateTime.now().toIso8601String();
+      devices[index] = device;
+      devices.refresh();
+    }
+  }
+
   void _updateDeviceStatus(String serial, bool isRunning) {
     int index = devices.indexWhere((d) => (d['serial_number'] ?? d['serialNumber']) == serial);
     if (index != -1) {
       var device = Map<String, dynamic>.from(devices[index]);
-      if (_isDeviceRunning(device) != isRunning) {
+      if (isDeviceRunning(device) != isRunning) {
         device['start_status'] = isRunning;
         device['updatedAt'] = DateTime.now().toIso8601String();
         devices[index] = device;
@@ -88,6 +108,11 @@ class HomeController extends GetxController {
     super.onReady();
     _initSocket();
     fetchDevices();
+    
+    // Periodically refresh the UI to update Online/Offline status
+    _offlineCheckTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      devices.refresh();
+    });
   }
 
   Future<void> fetchDevices() async {
@@ -117,6 +142,30 @@ class HomeController extends GetxController {
           
           for (var device in data) {
             final mapDevice = Map<String, dynamic>.from(device);
+            final serial = mapDevice['serial_number'] ?? mapDevice['serialNumber'];
+            
+            // Check if we have this device already to preserve real-time status
+            final existingIndex = devices.indexWhere((d) => (d['serial_number'] ?? d['serialNumber']) == serial);
+            if (existingIndex != -1) {
+              final existingDevice = devices[existingIndex];
+              final existingUpdate = existingDevice['updatedAt'];
+              final newUpdate = mapDevice['updatedAt'];
+              
+              if (existingUpdate != null) {
+                DateTime? existingTime;
+                DateTime? newTime;
+                
+                try { existingTime = DateTime.parse(existingUpdate.toString()); } catch (_) {}
+                try { newTime = newUpdate != null ? DateTime.parse(newUpdate.toString()) : null; } catch (_) {}
+                
+                // If local status is newer or from socket, preserve it
+                if (newTime == null || existingTime!.isAfter(newTime)) {
+                  mapDevice['updatedAt'] = existingUpdate;
+                  mapDevice['start_status'] = existingDevice['start_status'];
+                }
+              }
+            }
+
             final lat = _parseDouble(mapDevice['latitude']);
             final lng = _parseDouble(mapDevice['longitude']);
             
@@ -187,7 +236,6 @@ class HomeController extends GetxController {
         Future.delayed(Duration.zero, () {
           Get.snackbar("Success", "Motor ${status ? 'Started' : 'Stopped'} Successfully");
         });
-        fetchDevices();
       } else if (response.statusCode == 401) {
         Get.offAllNamed('/login');
         Future.delayed(Duration.zero, () {
@@ -522,16 +570,34 @@ class HomeController extends GetxController {
 
   List<Map<String, dynamic>> get displayDevices {
     if (selectedFilter.value == 'Running') {
-      return devices.where((d) => _isDeviceRunning(d)).toList();
+      return devices.where((d) => isDeviceRunning(d)).toList();
     } else if (selectedFilter.value == 'Stopped') {
-      return devices.where((d) => _isDeviceConfigured(d) && !_isDeviceRunning(d)).toList();
+      return devices.where((d) => isDeviceConfigured(d) && !isDeviceRunning(d)).toList();
+    } else if (selectedFilter.value == 'Online') {
+      var filtered = devices.where((d) => isOnline(d)).toList();
+      filtered.sort((a, b) {
+        bool runningA = isDeviceRunning(a);
+        bool runningB = isDeviceRunning(b);
+        if (runningA != runningB) return runningA ? -1 : 1;
+        return _getUpdatedAt(b).compareTo(_getUpdatedAt(a));
+      });
+      return filtered;
+    } else if (selectedFilter.value == 'Offline') {
+      var filtered = devices.where((d) => !isOnline(d)).toList();
+      filtered.sort((a, b) {
+        bool runningA = isDeviceRunning(a);
+        bool runningB = isDeviceRunning(b);
+        if (runningA != runningB) return runningA ? -1 : 1;
+        return _getUpdatedAt(b).compareTo(_getUpdatedAt(a));
+      });
+      return filtered;
     } else if (selectedFilter.value == 'Recently') {
       // Sort by isRunning first, then by updatedAt timestamp
       var sorted = List<Map<String, dynamic>>.from(devices);
       sorted.sort((a, b) {
         // Running devices first
-        bool runningA = _isDeviceRunning(a);
-        bool runningB = _isDeviceRunning(b);
+        bool runningA = isDeviceRunning(a);
+        bool runningB = isDeviceRunning(b);
         if (runningA != runningB) {
           return runningA ? -1 : 1;
         }
@@ -546,8 +612,8 @@ class HomeController extends GetxController {
       // 'All' - return all devices sorted by running status first
       var sorted = List<Map<String, dynamic>>.from(devices);
       sorted.sort((a, b) {
-        bool runningA = _isDeviceRunning(a);
-        bool runningB = _isDeviceRunning(b);
+        bool runningA = isDeviceRunning(a);
+        bool runningB = isDeviceRunning(b);
         if (runningA != runningB) {
           return runningA ? -1 : 1;
         }
@@ -572,13 +638,13 @@ class HomeController extends GetxController {
     }
   }
 
-  bool _isDeviceConfigured(Map<String, dynamic> device) {
+  bool isDeviceConfigured(Map<String, dynamic> device) {
     final imei = device['imei_number'] ?? device['imeiNumber'];
     if (imei == null) return false;
     return imei.toString().trim().isNotEmpty;
   }
 
-  bool _isDeviceRunning(Map<String, dynamic> device) {
+  bool isDeviceRunning(Map<String, dynamic> device) {
     final status = device['start_status'] ?? 
                   device['startStatus'] ?? 
                   device['status'] ?? 
@@ -600,5 +666,36 @@ class HomeController extends GetxController {
              normalized == 'active';
     }
     return false;
+  }
+
+  bool isOnline(Map<String, dynamic> device) {
+    // Check real-time connectivity based on last update timestamp (2 minute threshold)
+    final lastUpdate = _getUpdatedAt(device);
+    final now = DateTime.now();
+    final difference = now.difference(lastUpdate).inSeconds;
+    
+    // Also check static status as a fallback
+    final staticStatus = device['device_status']?.toString().toLowerCase() ?? 
+                        device['status']?.toString().toLowerCase() ?? '';
+    
+    return difference < 120 && staticStatus != 'offline';
+  }
+
+  String getLastSeenText(Map<String, dynamic> device) {
+    final lastUpdate = _getUpdatedAt(device);
+    final now = DateTime.now();
+    final difference = now.difference(lastUpdate);
+
+    if (difference.inSeconds < 30) {
+      return 'Just now';
+    } else if (difference.inMinutes < 1) {
+      return '${difference.inSeconds}s ago';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else {
+      return '${difference.inDays}d ago';
+    }
   }
 }

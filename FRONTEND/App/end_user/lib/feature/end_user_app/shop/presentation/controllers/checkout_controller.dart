@@ -13,7 +13,7 @@ import '../../../../../utils/theme/app_colors.dart';
 class CheckoutController extends GetxController {
   var isProcessing = false.obs;
   
-  final String baseUrl = 'http://192.168.0.6:3030';
+  final String baseUrl = 'http://10.149.200.218:3030';
   final String razorpayKeyId = 'rzp_test_oHoZ3Q1fF6pYEI';
   
   late TokenService tokenService;
@@ -47,10 +47,12 @@ class CheckoutController extends GetxController {
     final userEmail = tokenService.getUserEmail();
     
     if (userId == null || userEmail == null) {
-      Get.snackbar(
-        'Error',
-        'User not logged in',
-        snackPosition: SnackPosition.BOTTOM,
+      Get.defaultDialog(
+        title: 'Error',
+        middleText: 'User not logged in',
+        textConfirm: 'OK',
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
       );
       return;
     }
@@ -279,10 +281,12 @@ class CheckoutController extends GetxController {
     final token = tokenService.getToken();
     
     if (userId == null || token == null) {
-      Get.snackbar(
-        'Error',
-        'User not logged in',
-        snackPosition: SnackPosition.BOTTOM,
+      Get.defaultDialog(
+        title: 'Error',
+        middleText: 'User not logged in',
+        textConfirm: 'OK',
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
       );
       return;
     }

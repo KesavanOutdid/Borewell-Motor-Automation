@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:logger/logger.dart';
+import 'dart:io';
 import '../../../../../core/config/env.dart';
 import '../../../../../core/services/token_service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:http_parser/http_parser.dart';
 
 class ProfileController extends GetxController {
   var userName = "".obs;
@@ -11,12 +15,16 @@ class ProfileController extends GetxController {
   var userPhone = "".obs;
   var userIdValue = 0.obs;
   var roleIdValue = 0.obs;
+  var userProfileImage = "".obs;
   var isLoading = false.obs;
   var isUpdating = false.obs;
   var isPasswordVisible = false.obs;
   var errorMessage = "".obs;
   var hasChanges = false.obs;
   var oldPassword = "".obs;
+
+  final logger = Logger();
+  final ImagePicker _picker = ImagePicker();
 
   void _checkChanges() {
     hasChanges.value = nameEditingController.text != userName.value ||
@@ -59,18 +67,21 @@ class ProfileController extends GetxController {
   }
 
   Future<void> fetchProfile() async {
+    logger.i('👤 fetchProfile called');
     isLoading.value = true;
     errorMessage.value = "";
     final userId = tokenService.getUserId();
     final token = tokenService.getToken();
 
     if (userId == null || userId == 0) {
+      logger.e('❌ userId is null or 0');
       isLoading.value = false;
       errorMessage.value = "User ID not found";
       return;
     }
 
     final url = Uri.parse("${AppConfig.baseUrl}/app/profile/$userId");
+    logger.i('🌐 URL: $url');
 
     try {
       final response = await http.get(
@@ -80,6 +91,9 @@ class ProfileController extends GetxController {
           "Authorization": "Bearer $token",
         },
       );
+
+      logger.i('📡 Response Status: ${response.statusCode}');
+      logger.d('📄 Body: ${response.body}');
 
       isLoading.value = false;
 
@@ -92,6 +106,7 @@ class ProfileController extends GetxController {
           userPhone.value = user['user_phone']?.toString() ?? "";
           userIdValue.value = user['user_id'] ?? 0;
           roleIdValue.value = user['role_id'] ?? 0;
+          userProfileImage.value = user['profile_image'] ?? "";
           oldPassword.value = user['password']?.toString() ?? "";
         } else {
           isLoading.value = false;
@@ -124,6 +139,7 @@ class ProfileController extends GetxController {
   }
 
   Future<String?> updateProfile() async {
+    logger.i('📝 updateProfile called');
     if (nameEditingController.text.isEmpty) {
       return "Name cannot be empty";
     }
@@ -146,11 +162,13 @@ class ProfileController extends GetxController {
     final userId = tokenService.getUserId();
 
     if (userId == null || userId == 0) {
+      logger.e('❌ userId is null or 0');
       isUpdating.value = false;
       return "User ID not found";
     }
 
     final url = Uri.parse("${AppConfig.baseUrl}${AppConfig.updateProfileEndpoint}/$userId");
+    logger.i('🌐 URL: $url');
 
     try {
       final body = {
@@ -164,6 +182,8 @@ class ProfileController extends GetxController {
         body["password"] = password;
       }
 
+      logger.d('📦 Body: $body');
+
       final response = await http.put(
         url,
         headers: {
@@ -172,6 +192,9 @@ class ProfileController extends GetxController {
         },
         body: jsonEncode(body),
       );
+
+      logger.i('📡 Response Status: ${response.statusCode}');
+      logger.d('📄 Body: ${response.body}');
 
       isUpdating.value = false;
 
@@ -198,6 +221,83 @@ class ProfileController extends GetxController {
     } catch (e) {
       isUpdating.value = false;
       return "Connection failed: $e";
+    }
+  }
+
+  Future<void> pickAndUploadImage(ImageSource source) async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        imageQuality: 50,
+      );
+
+      if (image != null) {
+        await uploadProfileImage(File(image.path));
+      }
+    } catch (e) {
+      Get.rawSnackbar(title: "Error", message: "Failed to pick image: $e");
+    }
+  }
+
+  Future<void> uploadProfileImage(File imageFile) async {
+    logger.i('🖼️ uploadProfileImage called');
+    isUpdating.value = true;
+    final token = tokenService.getToken();
+    final userId = tokenService.getUserId();
+
+    if (userId == null || userId == 0) {
+      logger.e('❌ userId is null or 0');
+      isUpdating.value = false;
+      Get.rawSnackbar(title: "Error", message: "User ID not found");
+      return;
+    }
+
+    final url = Uri.parse("${AppConfig.baseUrl}${AppConfig.uploadProfileImageEndpoint}/$userId");
+    logger.i('🌐 URL: $url');
+    logger.i('📁 File Path: ${imageFile.path}');
+
+    try {
+      var request = http.MultipartRequest('POST', url);
+      request.headers['Authorization'] = 'Bearer $token';
+      
+      // Determine content type from file extension
+      String extension = imageFile.path.split('.').last.toLowerCase();
+      String mimeType = 'image/jpeg'; // default
+      if (extension == 'png') mimeType = 'image/png';
+      else if (extension == 'jpg' || extension == 'jpeg') mimeType = 'image/jpeg';
+      else if (extension == 'gif') mimeType = 'image/gif';
+      else if (extension == 'webp') mimeType = 'image/webp';
+
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'image',
+          imageFile.path,
+          contentType: MediaType.parse(mimeType),
+        ),
+      );
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      logger.i('📡 Response Status: ${response.statusCode}');
+      logger.d('📄 Body: ${response.body}');
+
+      isUpdating.value = false;
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        if (responseData['success'] == true) {
+          userProfileImage.value = responseData['profile_image'] ?? "";
+          Get.rawSnackbar(title: "Success", message: "Profile image updated successfully");
+        } else {
+          Get.rawSnackbar(title: "Error", message: responseData['message'] ?? "Upload failed");
+        }
+      } else {
+        Get.rawSnackbar(title: "Error", message: "Failed to upload image: ${response.statusCode}");
+      }
+    } catch (e) {
+      isUpdating.value = false;
+      Get.rawSnackbar(title: "Error", message: "Connection failed: $e");
     }
   }
 

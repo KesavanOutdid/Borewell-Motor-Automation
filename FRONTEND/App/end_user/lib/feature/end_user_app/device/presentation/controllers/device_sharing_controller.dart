@@ -44,7 +44,13 @@ class DeviceSharingController extends GetxController {
         }
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to fetch shared users');
+      Get.defaultDialog(
+        title: 'Error',
+        middleText: 'Failed to fetch shared users: $e',
+        textConfirm: 'OK',
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
     } finally {
       isLoading.value = false;
     }
@@ -55,7 +61,13 @@ class DeviceSharingController extends GetxController {
     
     // Validate phone
     if (phone.length != 10) {
-      Get.snackbar('Error', 'Phone must be 10 digits');
+      Get.defaultDialog(
+        title: 'Validation Error',
+        middleText: 'Phone number must be exactly 10 digits',
+        textConfirm: 'OK',
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
       return;
     }
 
@@ -76,7 +88,13 @@ class DeviceSharingController extends GetxController {
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
-        Get.snackbar('Success', 'Device shared successfully');
+        Get.defaultDialog(
+          title: 'Success',
+          middleText: 'Device shared successfully',
+          textConfirm: 'OK',
+          confirmTextColor: Colors.white,
+          onConfirm: () => Get.back(),
+        );
         fetchSharedUsers();
       } else {
         String errorMessage = data['message'] ?? 'Failed to share device';
@@ -84,10 +102,22 @@ class DeviceSharingController extends GetxController {
         if (response.statusCode == 404 && errorMessage.contains('not registered')) {
           errorMessage = 'User not registered. Please ask them to register first.';
         }
-        Get.snackbar('Error', errorMessage);
+        Get.defaultDialog(
+          title: 'Error',
+          middleText: errorMessage,
+          textConfirm: 'OK',
+          confirmTextColor: Colors.white,
+          onConfirm: () => Get.back(),
+        );
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to share device');
+      Get.defaultDialog(
+        title: 'Error',
+        middleText: 'Failed to share device: $e',
+        textConfirm: 'OK',
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
     } finally {
       isLoading.value = false;
     }
@@ -114,7 +144,13 @@ class DeviceSharingController extends GetxController {
         fetchSharedUsers();
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to update status');
+      Get.defaultDialog(
+        title: 'Error',
+        middleText: 'Failed to update status: $e',
+        textConfirm: 'OK',
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
     } finally {
       isLoading.value = false;
     }
@@ -138,10 +174,22 @@ class DeviceSharingController extends GetxController {
 
       if (response.statusCode == 200) {
         fetchSharedUsers();
-        Get.snackbar('Success', 'Share deleted successfully');
+        Get.defaultDialog(
+          title: 'Success',
+          middleText: 'Share deleted successfully',
+          textConfirm: 'OK',
+          confirmTextColor: Colors.white,
+          onConfirm: () => Get.back(),
+        );
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to delete share');
+      Get.defaultDialog(
+        title: 'Error',
+        middleText: 'Failed to delete share: $e',
+        textConfirm: 'OK',
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
     } finally {
       isLoading.value = false;
     }
@@ -165,14 +213,32 @@ class DeviceSharingController extends GetxController {
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
-        Get.snackbar('Success', 'Request ${action} successfully');
+        Get.defaultDialog(
+          title: 'Success',
+          middleText: 'Request $action successfully',
+          textConfirm: 'OK',
+          confirmTextColor: Colors.white,
+          onConfirm: () => Get.back(),
+        );
         if (serialNumber != null) fetchSharedUsers();
         // If it's the current user accepting/rejecting from home, they might need a refresh
       } else {
-        Get.snackbar('Error', data['message'] ?? 'Failed to respond to request');
+        Get.defaultDialog(
+          title: 'Error',
+          middleText: data['message'] ?? 'Failed to respond to request',
+          textConfirm: 'OK',
+          confirmTextColor: Colors.white,
+          onConfirm: () => Get.back(),
+        );
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to respond to request');
+      Get.defaultDialog(
+        title: 'Error',
+        middleText: 'Failed to respond to request: $e',
+        textConfirm: 'OK',
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
     } finally {
       isLoading.value = false;
     }

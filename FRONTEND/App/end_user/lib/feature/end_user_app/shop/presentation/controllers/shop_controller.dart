@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -14,7 +15,7 @@ class ShopController extends GetxController {
   var hasNextPage = false.obs;
   var searchQuery = ''.obs;
   
-  final String baseUrl = 'http://192.168.0.6:3030';
+  final String baseUrl = 'http://10.149.200.218:3030';
   final int limit = 10;
   
   late TokenService tokenService;
@@ -114,10 +115,12 @@ class ShopController extends GetxController {
     } catch (e, stackTrace) {
       logger.e('❌ Exception caught: $e');
       logger.e('Stack trace: $stackTrace');
-      Get.snackbar(
-        'Error',
-        'Failed to load products: $e',
-        snackPosition: SnackPosition.BOTTOM,
+      Get.defaultDialog(
+        title: 'Error',
+        middleText: 'Failed to load products: $e',
+        textConfirm: 'OK',
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
       );
     } finally {
       isLoading.value = false;

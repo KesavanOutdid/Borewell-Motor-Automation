@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../../core/config/env.dart';
 import '../controllers/profile_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../home/presentation/controllers/home_controller.dart';
@@ -117,11 +120,106 @@ class ProfileView extends GetView<ProfileController> {
     );
   }
 
+  void _showImageSourceDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Profile Photo',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildSourceOption(
+                  context,
+                  icon: Icons.camera_alt_rounded,
+                  label: 'Camera',
+                  onTap: () {
+                    Navigator.pop(context);
+                    controller.pickAndUploadImage(ImageSource.camera);
+                  },
+                ),
+                _buildSourceOption(
+                  context,
+                  icon: Icons.photo_library_rounded,
+                  label: 'Gallery',
+                  onTap: () {
+                    Navigator.pop(context);
+                    controller.pickAndUploadImage(ImageSource.gallery);
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 30),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSourceOption(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.primaryGreen.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: AppColors.primaryGreen,
+              size: 30,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       if (controller.isLoading.value) {
-        return const Center(child: CircularProgressIndicator());
+        return _buildSkeleton(context);
       }
 
       if (controller.errorMessage.value.isNotEmpty) {
@@ -211,15 +309,15 @@ class ProfileView extends GetView<ProfileController> {
                                   child: Container(
                                     height: 48,
                                     width: 48,
-                                    padding: const EdgeInsets.all(10),
+                                    padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
                                       color: Colors.white.withOpacity(0.18),
-                                      borderRadius: BorderRadius.circular(14),
+                                      borderRadius: BorderRadius.circular(15),
                                     ),
                                     child: const Icon(
                                       Icons.menu_rounded,
                                       color: Colors.white,
-                                      size: 26,
+                                      size: 24,
                                     ),
                                   ),
                                 ),
@@ -228,10 +326,10 @@ class ProfileView extends GetView<ProfileController> {
                               const Text(
                                 'Profile',
                                 style: TextStyle(
-                                  fontSize: 28,
+                                  fontSize: 26,
                                   fontWeight: FontWeight.w900,
                                   color: Colors.white,
-                                  letterSpacing: -0.8,
+                                  letterSpacing: -0.5,
                                 ),
                               ),
                             ],
@@ -245,22 +343,50 @@ class ProfileView extends GetView<ProfileController> {
                                 shape: BoxShape.circle,
                                 border: Border.all(color: Colors.white, width: 3),
                               ),
-                              child: CircleAvatar(
-                                radius: 45,
-                                backgroundColor: Colors.white,
-                                child: Text(
-                                  controller.userName.value.isNotEmpty
-                                      ? controller.userName.value[0].toUpperCase()
-                                      : 'U',
-                                  style: TextStyle(
-                                    fontSize: 38,
-                                    fontWeight: FontWeight.w900,
-                                    foreground: Paint()
-                                      ..shader = AppColors.primaryGradient.createShader(
-                                        const Rect.fromLTWH(0, 0, 200, 70),
-                                      ),
+                              child: Stack(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 45,
+                                    backgroundColor: Colors.white,
+                                    backgroundImage: controller.userProfileImage.value.isNotEmpty
+                                        ? NetworkImage("${AppConfig.baseUrl}${controller.userProfileImage.value}")
+                                        : null,
+                                    child: controller.userProfileImage.value.isEmpty
+                                        ? Text(
+                                            controller.userName.value.isNotEmpty
+                                                ? controller.userName.value[0].toUpperCase()
+                                                : 'U',
+                                            style: TextStyle(
+                                              fontSize: 38,
+                                              fontWeight: FontWeight.w900,
+                                              foreground: Paint()
+                                                ..shader = AppColors.primaryGradient.createShader(
+                                                  const Rect.fromLTWH(0, 0, 200, 70),
+                                                ),
+                                            ),
+                                          )
+                                        : null,
                                   ),
-                                ),
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: GestureDetector(
+                                      onTap: () => _showImageSourceDialog(context),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.white,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.camera_alt,
+                                          size: 16,
+                                          color: AppColors.primaryGreen,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             const SizedBox(width: 20),
@@ -416,6 +542,55 @@ class ProfileView extends GetView<ProfileController> {
         padding: const EdgeInsets.only(bottom: 12),
         child: _ProfileMenuTile(item: item),
       )).toList(),
+    );
+  }
+
+  Widget _buildSkeleton(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            Container(
+              height: 250,
+              width: double.infinity,
+              color: Colors.white,
+            ),
+            Transform.translate(
+              offset: const Offset(0, -30),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    Container(
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ...List.generate(
+                      4,
+                      (index) => Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Container(
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -118,10 +118,11 @@ class _ModernDrawer extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(
-                      Icons.agriculture_rounded,
+                    Image.asset(
+                      'assets/images/image.png',
+                      width: 45,
+                      height: 45,
                       color: Colors.white,
-                      size: 40,
                     ),
                     const SizedBox(width: 16),
                     const Expanded(
