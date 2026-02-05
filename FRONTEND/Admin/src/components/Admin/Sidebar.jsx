@@ -1,5 +1,7 @@
 import {useState} from 'react';
 import { Link, useLocation, useNavigate  } from 'react-router-dom';
+import './Sidebar.css';
+
 const Sidebar = () => {
     const [isSidebarPinned, setSidebarPinned] = useState(true);
     const location = useLocation();
@@ -23,7 +25,7 @@ const Sidebar = () => {
         navigate(path); // Perform the redirection
     };
     return (
-        <aside className="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3 bg-white" id="sidenav-main">
+        <aside className="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3 sidebar-topographic" id="sidenav-main">
             <div className="sidenav-header">
                 <i className="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
                 <Link className="navbar-brand m-0" href="#">
@@ -32,8 +34,8 @@ const Sidebar = () => {
                 </Link>
             </div>
             <hr className="horizontal dark mt-0"/>
-            <div className="collapse navbar-collapse  w-auto  max-height-vh-100 h-100" id="sidenav-collapse-main">
-                <ul className="navbar-nav">
+            <div className="collapse navbar-collapse w-auto" id="sidenav-collapse-main">
+                <ul className="navbar-nav sidebar-nav-content">
                     <li className="nav-item">
                         <Link className={location.pathname === '/admin/dashboard' ? 'nav-link  active' : 'nav-link'} to="/admin/dashboard" onClick={(e) => handleNavClick(e, '/admin/dashboard')}>
                             <div className="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
@@ -137,6 +139,57 @@ const Sidebar = () => {
                         </Link>
                     </li> */}
                 </ul>
+                <div className="sidebar-bottom-image">
+                    <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+                        {/* Sky gradient */}
+                        <defs>
+                            <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style={{ stopColor: '#87CEEB', stopOpacity: 1 }} />
+                                <stop offset="100%" style={{ stopColor: '#B0E0E6', stopOpacity: 1 }} />
+                            </linearGradient>
+                            <linearGradient id="fieldGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style={{ stopColor: '#90EE90', stopOpacity: 1 }} />
+                                <stop offset="100%" style={{ stopColor: '#228B22', stopOpacity: 1 }} />
+                            </linearGradient>
+                        </defs>
+                        
+                        {/* Sky */}
+                        <rect width="200" height="70" fill="url(#skyGradient)" />
+                        
+                        {/* Mountains */}
+                        <polygon points="0,50 40,20 80,50" fill="#8B7355" opacity="0.7" />
+                        <polygon points="60,50 100,15 140,50" fill="#A0826D" opacity="0.6" />
+                        
+                        {/* Fields */}
+                        <rect y="50" width="200" height="70" fill="url(#fieldGradient)" />
+                        
+                        {/* Field rows */}
+                        <line x1="0" y1="60" x2="200" y2="65" stroke="#7CB342" strokeWidth="2" opacity="0.6" />
+                        <line x1="0" y1="70" x2="200" y2="75" stroke="#7CB342" strokeWidth="2" opacity="0.6" />
+                        <line x1="0" y1="80" x2="200" y2="85" stroke="#558B2F" strokeWidth="2" opacity="0.6" />
+                        <line x1="0" y1="90" x2="200" y2="95" stroke="#558B2F" strokeWidth="2" opacity="0.6" />
+                        
+                        {/* Windmill */}
+                        <rect x="160" y="40" width="4" height="35" fill="#8B4513" />
+                        <polygon points="162,38 162,30 166,34" fill="#DC143C" />
+                        <polygon points="162,38 170,38 166,34" fill="#DC143C" />
+                        <polygon points="162,38 162,46 166,42" fill="#DC143C" />
+                        <polygon points="162,38 154,38 158,34" fill="#DC143C" />
+                        
+                        {/* Trees */}
+                        <rect x="20" y="55" width="3" height="10" fill="#8B4513" />
+                        <circle cx="21.5" cy="52" r="5" fill="#228B22" />
+                        
+                        <rect x="180" y="58" width="3" height="12" fill="#8B4513" />
+                        <circle cx="181.5" cy="55" r="6" fill="#2E7D32" />
+                        
+                        {/* Fence */}
+                        <line x1="10" y1="65" x2="10" y2="75" stroke="#8B4513" strokeWidth="1.5" />
+                        <line x1="18" y1="65" x2="18" y2="75" stroke="#8B4513" strokeWidth="1.5" />
+                        <line x1="10" y1="68" x2="18" y2="68" stroke="#8B4513" strokeWidth="1" />
+                        <line x1="10" y1="72" x2="18" y2="72" stroke="#8B4513" strokeWidth="1" />
+                    </svg>
+                </div>
             </div>
       </aside>
   );

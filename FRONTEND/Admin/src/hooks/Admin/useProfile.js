@@ -10,7 +10,6 @@ export const useProfile = (userInfo) => {
     const [password, setUpdatePassword] = useState('');
     const [profile_image, setProfileImage] = useState('');
     const [selectedImage, setSelectedImage] = useState(null);
-    const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [initialUserData, setInitialUserData] = useState({});
     const [userModified, setUserModified] = useState(false);
@@ -137,7 +136,6 @@ export const useProfile = (userInfo) => {
 
         setLoadingImageUpload(true);
         setErrorMessage('');
-        setSuccessMessage('');
 
         try {
             const formData = new FormData();
@@ -189,10 +187,8 @@ export const useProfile = (userInfo) => {
         setUpdatePhone,
         setUpdatePassword,
         setSelectedImage,
-        successMessage,
         errorMessage,
         setErrorMessage,
-        setSuccessMessage,
         userModified,
         loadingUpdate,
         loadingImageUpload,

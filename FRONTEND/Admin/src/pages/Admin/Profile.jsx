@@ -17,9 +17,7 @@ const Profile = ({ userInfo, handleLogout }) => {
         setUpdatePassword,
         setSelectedImage,
         errorMessage,
-        successMessage,
         setErrorMessage,
-        setSuccessMessage,
         userModified,
         loadingUpdate,
         loadingImageUpload,
@@ -38,8 +36,16 @@ const Profile = ({ userInfo, handleLogout }) => {
             // Validate file size
             const maxSize = 5 * 1024 * 1024; // 5MB
             if (file.size > maxSize) {
-                setErrorMessage("Image size must be less than 5MB");
-                setSuccessMessage('');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'File Too Large',
+                    text: 'Image size must be less than 5MB',
+                    timer: 5000,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
+                    position: 'top-end',
+                    toast: true
+                });
                 e.target.value = null;
                 return;
             }
@@ -47,14 +53,21 @@ const Profile = ({ userInfo, handleLogout }) => {
             // Validate file type
             const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
             if (!allowedTypes.includes(file.type)) {
-                setErrorMessage("Only PNG and JPG images are allowed");
-                setSuccessMessage('');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Format',
+                    text: 'Only PNG and JPG images are allowed',
+                    timer: 5000,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
+                    position: 'top-end',
+                    toast: true
+                });
                 e.target.value = null;
                 return;
             }
 
             setErrorMessage('');
-            setSuccessMessage('');
             setSelectedImage(file);
         }
     };
@@ -82,7 +95,7 @@ const Profile = ({ userInfo, handleLogout }) => {
                 {/* Header */}
                 <Header userInfo={userInfo} handleLogout={handleLogout} />
                 <div className="container-fluid">
-                    <div className="page-header border-radius-lg mt-4 d-flex flex-column justify-content-end">
+                    {/* <div className="page-header border-radius-lg mt-4 d-flex flex-column justify-content-end">
                         <span className="mask bg-primary opacity-9"></span>
                         <div className="w-100 position-relative p-3">
                             <div className="d-flex justify-content-between align-items-end">
@@ -91,7 +104,7 @@ const Profile = ({ userInfo, handleLogout }) => {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div> */}
 
                     {/* Profile update start */}
                     <div className="row">
@@ -118,12 +131,13 @@ const Profile = ({ userInfo, handleLogout }) => {
                                                         src={getImageUrl()}
                                                         alt="profile_image"
                                                         id="profile_image"
-                                                        className="border-radius-lg shadow"
+                                                        className="shadow"
                                                         style={{ 
                                                             width: '200px', 
                                                             height: '200px', 
                                                             objectFit: 'cover',
                                                             border: '4px solid #fff',
+                                                            borderRadius: '50%',
                                                             transition: 'all 0.3s ease'
                                                         }} 
                                                         onClick={() => !selectedImage && document.getElementById('imageUpload').click()}

@@ -43,7 +43,8 @@ const pdfFileFilter = (req, file, cb) => {
 };
 
 const imageFileFilter = (req, file, cb) => {
-    if (file.mimetype === 'image/png' || file.mimetype === 'image/jpeg' || file.mimetype === 'image/jpg') {
+    const allowedMimeTypes = ['image/png', 'image/jpeg'];
+    if (allowedMimeTypes.includes(file.mimetype)) {
         cb(null, true);
     } else {
         cb(new Error('Only PNG and JPG files are allowed'), false);
