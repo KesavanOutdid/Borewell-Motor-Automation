@@ -1,8 +1,8 @@
 const admin = require("firebase-admin");
 const path = require("path");
 
-// Initialize Firebase Admin
-try {
+// Initialize Firebase Admin    
+try { 
     if (admin.apps.length === 0) {
         let credential;
         

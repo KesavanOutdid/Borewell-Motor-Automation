@@ -24,3 +24,4 @@ package.json
 # Secrets
 BACKEND/config/firebase-service-account.json
 BACKEND/.env
+
