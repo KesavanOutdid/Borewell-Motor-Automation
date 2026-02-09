@@ -232,7 +232,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         : () async {
                             final error = await controller.updateProfile();
                             if (error == null) {
-                              Get.back();
+                              Navigator.of(context).pop();
                               Get.rawSnackbar(
                                 title: 'Success',
                                 message: 'Profile updated successfully',

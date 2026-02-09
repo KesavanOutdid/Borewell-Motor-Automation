@@ -658,7 +658,7 @@ class ConfigureDeviceController extends GetxController {
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () {
-                      Get.back();
+                      Navigator.of(Get.overlayContext!).pop();
                       Get.offAllNamed('/home');
                     },
                     style: ElevatedButton.styleFrom(

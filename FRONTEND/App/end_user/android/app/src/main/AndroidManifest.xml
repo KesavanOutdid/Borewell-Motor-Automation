@@ -44,10 +44,10 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyD4_6anlN09mZ1H6hhnfryibQdAWfygUbo"/>
         
-        <service
-            android:name="id.flutter.flutter_background_service.BackgroundService"
-            android:foregroundServiceType="dataSync"
-            android:exported="true" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="high_importance_channel" />
+        
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

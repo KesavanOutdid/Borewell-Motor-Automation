@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const Telemetry = require("../models/Telemetry");
 const DeviceShare = require("../models/DeviceShare");
+const { sendPushNotification } = require('../utils/notificationHelper');
 const { cacheDeletePattern } = require('../middlewares/cacheMiddleware');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change_this_secret';
@@ -129,6 +130,60 @@ exports.updateProfile = async (req, res, next) => {
             user: updatedUser
         });
 
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.updateFcmToken = async (req, res, next) => {
+    try {
+        const { user_email, fcm_token } = req.body;
+
+        if (!user_email || !fcm_token) {
+            return res.status(400).json({ success: false, message: "user_email and fcm_token are required" });
+        }
+
+        const user = await User.findOneAndUpdate(
+            { user_email },
+            { 
+                $addToSet: { fcm_tokens: fcm_token },
+                updatedAt: new Date() 
+            },
+            { new: true }
+        );
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        res.status(200).json({ success: true, message: "FCM token registered successfully" });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.removeFcmToken = async (req, res, next) => {
+    try {
+        const { user_email, fcm_token } = req.body;
+
+        if (!user_email || !fcm_token) {
+            return res.status(400).json({ success: false, message: "user_email and fcm_token are required" });
+        }
+
+        const user = await User.findOneAndUpdate(
+            { user_email },
+            { 
+                $pull: { fcm_tokens: fcm_token },
+                updatedAt: new Date() 
+            },
+            { new: true }
+        );
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        res.status(200).json({ success: true, message: "FCM token removed successfully" });
     } catch (err) {
         next(err);
     }
@@ -352,6 +407,48 @@ exports.startStopDevice = async (req, res) => {
             { serial_number, imei_number },
             { $set: updateData }
         );
+
+        // Notify all users associated with this device via FCM
+        try {
+            // 1. Get Master User
+            const masterUser = await User.findOne({ user_id: device.assigned_user_id });
+            
+            // 2. Get Shared Users
+            const shares = await DeviceShare.find({ 
+                serial_number, 
+                status: true, 
+                acceptance_status: 'accepted' 
+            });
+            const sharedUserIds = shares.map(s => s.shared_to_user_id);
+            const sharedUsers = await User.find({ user_id: { $in: sharedUserIds } });
+
+            // 3. Collect all unique tokens
+            const allUsers = [masterUser, ...sharedUsers].filter(u => u != null);
+            const uniqueTokens = new Set();
+            allUsers.forEach(u => {
+                if (u.fcm_tokens && Array.isArray(u.fcm_tokens)) {
+                    u.fcm_tokens.forEach(t => uniqueTokens.add(t));
+                } else if (u.fcm_token) {
+                    uniqueTokens.add(u.fcm_token);
+                }
+            });
+
+            const tokensArray = Array.from(uniqueTokens);
+            if (tokensArray.length > 0) {
+                const title = start_status ? "🟢 Motor Started" : "🔴 Motor Stopped";
+                const body = `Device ${serial_number} was ${start_status ? 'started' : 'stopped'} by ${user.user_name}`;
+                
+                sendPushNotification(tokensArray, { title, body }, {
+                    type: "STATUS",
+                    serial_number,
+                    action: start_status ? "START" : "STOP",
+                    timestamp: String(Date.now())
+                });
+            }
+        } catch (notifyError) {
+            console.error("[Notification Error] Failed to send start/stop FCM:", notifyError);
+            // Don't fail the request if notification fails
+        }
 
         await cacheDeletePattern('*devices*');
         await cacheDeletePattern('*analytics*');
@@ -708,7 +805,7 @@ exports.getTelemetryAnalytics = async (req, res) => {
             },
             {
                 $facet: {
-                    // Hourly: Last 60 hours with sequential labels (0, 1, 2, ..., 59)
+                    // Hourly: Last 60 hours with time labels
                     hourly: [
                         {
                             $match: {
@@ -731,29 +828,17 @@ exports.getTelemetryAnalytics = async (req, res) => {
                         { $sort: { timestamp: 1 } },
                         { $limit: 60 },
                         {
-                            $group: {
-                                _id: null,
-                                items: { $push: "$$ROOT" }
-                            }
-                        },
-                        {
-                            $unwind: {
-                                path: "$items",
-                                includeArrayIndex: "index"
-                            }
-                        },
-                        {
                             $project: {
                                 _id: 0,
-                                label: { $toString: "$index" },
-                                value: "$items.value",
-                                timestamp: "$items.timestamp",
-                                count: "$items.count"
+                                label: { $dateToString: { format: "%H:%M", date: "$timestamp" } },
+                                value: "$value",
+                                timestamp: "$timestamp",
+                                count: "$count"
                             }
                         }
                     ],
 
-                    // Today: Last 24 hours with sequential labels (1-24)
+                    // Today: Last 24 hours with hour labels
                     today: [
                         {
                             $match: {
@@ -772,29 +857,17 @@ exports.getTelemetryAnalytics = async (req, res) => {
                         },
                         { $sort: { timestamp: 1 } },
                         {
-                            $group: {
-                                _id: null,
-                                items: { $push: "$$ROOT" }
-                            }
-                        },
-                        {
-                            $unwind: {
-                                path: "$items",
-                                includeArrayIndex: "index"
-                            }
-                        },
-                        {
                             $project: {
                                 _id: 0,
-                                label: { $toString: { $add: ["$index", 1] } },
-                                value: "$items.value",
-                                timestamp: "$items.timestamp",
-                                count: "$items.count"
+                                label: { $dateToString: { format: "%H:00", date: "$timestamp" } },
+                                value: "$value",
+                                timestamp: "$timestamp",
+                                count: "$count"
                             }
                         }
                     ],
 
-                    // Weekly: Last 7 days with sequential labels (1-7)
+                    // Weekly: Last 7 days with day labels (Mon, Tue, etc.)
                     weekly: [
                         {
                             $match: {
@@ -815,29 +888,22 @@ exports.getTelemetryAnalytics = async (req, res) => {
                         },
                         { $sort: { timestamp: 1 } },
                         {
-                            $group: {
-                                _id: null,
-                                items: { $push: "$$ROOT" }
-                            }
-                        },
-                        {
-                            $unwind: {
-                                path: "$items",
-                                includeArrayIndex: "index"
-                            }
-                        },
-                        {
                             $project: {
                                 _id: 0,
-                                label: { $toString: { $add: ["$index", 1] } },
-                                value: "$items.value",
-                                timestamp: "$items.timestamp",
-                                count: "$items.count"
+                                label: {
+                                    $arrayElemAt: [
+                                        ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+                                        { $subtract: [{ $dayOfWeek: "$timestamp" }, 1] }
+                                    ]
+                                },
+                                value: "$value",
+                                timestamp: "$timestamp",
+                                count: "$count"
                             }
                         }
                     ],
 
-                    // Monthly: Last 30 days with sequential labels (1-30)
+                    // Monthly: Last 30 days with day numbers (01, 02, etc.)
                     monthly: [
                         {
                             $match: {
@@ -858,29 +924,17 @@ exports.getTelemetryAnalytics = async (req, res) => {
                         },
                         { $sort: { timestamp: 1 } },
                         {
-                            $group: {
-                                _id: null,
-                                items: { $push: "$$ROOT" }
-                            }
-                        },
-                        {
-                            $unwind: {
-                                path: "$items",
-                                includeArrayIndex: "index"
-                            }
-                        },
-                        {
                             $project: {
                                 _id: 0,
-                                label: { $toString: { $add: ["$index", 1] } },
-                                value: "$items.value",
-                                timestamp: "$items.timestamp",
-                                count: "$items.count"
+                                label: { $dateToString: { format: "%d", date: "$timestamp" } },
+                                value: "$value",
+                                timestamp: "$timestamp",
+                                count: "$count"
                             }
                         }
                     ],
 
-                    // Yearly: By year and month with sequential labels (1-12 per year)
+                    // Yearly: By year and month with month names (Jan, Feb, etc.)
                     yearly: [
                         {
                             $group: {
@@ -895,24 +949,17 @@ exports.getTelemetryAnalytics = async (req, res) => {
                         },
                         { $sort: { timestamp: 1 } },
                         {
-                            $group: {
-                                _id: null,
-                                items: { $push: "$$ROOT" }
-                            }
-                        },
-                        {
-                            $unwind: {
-                                path: "$items",
-                                includeArrayIndex: "index"
-                            }
-                        },
-                        {
                             $project: {
                                 _id: 0,
-                                label: { $toString: { $add: ["$index", 1] } },
-                                value: "$items.value",
-                                timestamp: "$items.timestamp",
-                                count: "$items.count"
+                                label: {
+                                    $arrayElemAt: [
+                                        ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+                                        { $month: "$timestamp" }
+                                    ]
+                                },
+                                value: "$value",
+                                timestamp: "$timestamp",
+                                count: "$count"
                             }
                         }
                     ]
@@ -920,7 +967,13 @@ exports.getTelemetryAnalytics = async (req, res) => {
             }
         ]);
 
-        const result = analytics[0];
+        const result = analytics[0] || {
+            hourly: [],
+            today: [],
+            weekly: [],
+            monthly: [],
+            yearly: []
+        };
 
         // Helper function to calculate statistics and trends
         const calculateStats = (data, periodType) => {
@@ -1125,10 +1178,12 @@ exports.getTelemetryAnalytics = async (req, res) => {
             type,
             serial_number,
             imei_number,
-            data: result,
-            summary,
-            comparisons,
-            overallStats,
+            data: {
+                ...result,
+                summary,
+                comparisons,
+                overallStats
+            },
             metadata: {
                 generatedAt: new Date().toISOString(),
                 metricType: type,

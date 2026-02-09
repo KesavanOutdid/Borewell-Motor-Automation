@@ -5,6 +5,7 @@ import '../../../../../core/services/notification_storage_service.dart';
 import '../../../home/presentation/controllers/home_controller.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class AuthController extends GetxController {
   var email = "".obs;
@@ -40,9 +41,32 @@ class AuthController extends GetxController {
     authToken.value = tokenService.getToken() ?? "";
     userId.value = tokenService.getUserId() ?? 0;
     userName.value = tokenService.getUserName() ?? "";
+    email.value = tokenService.getUserEmail() ?? "";
   }
 
   Future<void> logout() async {
+    try {
+      final messaging = FirebaseMessaging.instance;
+      final token = await messaging.getToken();
+      if (token != null && email.value.isNotEmpty) {
+        final url = Uri.parse(AppConfig.baseUrl + AppConfig.removeFcmTokenEndpoint);
+        await http.post(
+          url,
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer ${authToken.value}"
+          },
+          body: jsonEncode({
+            "user_email": email.value,
+            "fcm_token": token
+          }),
+        );
+        print('🔔 FCM Token Removed on Logout: $token');
+      }
+    } catch (e) {
+      print('❌ Error removing FCM token on logout: $e');
+    }
+
     email.value = "";
     password.value = "";
     authToken.value = "";
@@ -55,6 +79,31 @@ class AuthController extends GetxController {
     
     final notificationService = NotificationStorageService();
     await notificationService.clearAllNotifications();
+  }
+
+  Future<void> updateFcmToken() async {
+    try {
+      final messaging = FirebaseMessaging.instance;
+      final token = await messaging.getToken();
+      
+      if (token != null && email.value.isNotEmpty) {
+        final url = Uri.parse(AppConfig.baseUrl + AppConfig.updateFcmTokenEndpoint);
+        await http.post(
+          url,
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer ${authToken.value}"
+          },
+          body: jsonEncode({
+            "user_email": email.value,
+            "fcm_token": token
+          }),
+        );
+        print('🔔 FCM Token Updated: $token');
+      }
+    } catch (e) {
+      print('❌ Error updating FCM token: $e');
+    }
   }
 
   bool isValidEmail(String email) {
@@ -113,6 +162,9 @@ class AuthController extends GetxController {
             userEmail: userData['user_email'] ?? email.value,
           );
           await tokenService.saveLastEmail(email.value);
+          
+          // Update FCM Token on successful login
+          await updateFcmToken();
           
           Get.offAllNamed('/home');
           

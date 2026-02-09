@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../controllers/device_sharing_controller.dart';
 import '../../../../../utils/theme/app_colors.dart';
@@ -45,6 +46,10 @@ class DeviceSharingView extends GetView<DeviceSharingController> {
                       child: TextField(
                         controller: phoneController,
                         keyboardType: TextInputType.phone,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(10),
+                        ],
                         decoration: InputDecoration(
                           hintText: 'Enter phone number',
                           border: OutlineInputBorder(
@@ -57,9 +62,17 @@ class DeviceSharingView extends GetView<DeviceSharingController> {
                     const SizedBox(width: 12),
                     ElevatedButton(
                       onPressed: () {
-                        if (phoneController.text.isNotEmpty) {
+                        if (phoneController.text.length == 10) {
                           controller.assignToUser(phoneController.text);
                           phoneController.clear();
+                        } else {
+                          Get.snackbar(
+                            'Invalid Number',
+                            'Please enter a 10-digit phone number',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.red.withOpacity(0.8),
+                            colorText: Colors.white,
+                          );
                         }
                       },
                       style: ElevatedButton.styleFrom(

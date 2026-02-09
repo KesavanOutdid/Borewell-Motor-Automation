@@ -20,27 +20,52 @@ class NotificationStorageService {
     required String serialNumber,
     String? timestamp,
   }) async {
+    print("📦 [Storage] Saving notification: $title");
     final notifications = getAllNotifications();
     
+    // Format timestamp if it's a numeric string
+    String formattedTimestamp = timestamp ?? DateTime.now().toIso8601String();
+    if (timestamp != null && RegExp(r'^\d+$').hasMatch(timestamp)) {
+      try {
+        final ms = int.parse(timestamp);
+        final date = DateTime.fromMillisecondsSinceEpoch(ms);
+        formattedTimestamp = "${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}";
+      } catch (e) {
+        print("📦 [Storage] Timestamp parse error: $e");
+      }
+    }
+
     final notification = {
       'id': DateTime.now().millisecondsSinceEpoch.toString(),
       'type': type,
       'title': title,
       'body': body,
       'serialNumber': serialNumber,
-      'timestamp': timestamp ?? DateTime.now().toIso8601String(),
+      'timestamp': formattedTimestamp,
       'isRead': false,
       'createdAt': DateTime.now().toIso8601String(),
     };
 
     notifications.insert(0, notification);
     await _storage.write(_notificationsKey, notifications);
+    print("📦 [Storage] Notification saved. Total count: ${notifications.length}");
   }
 
   List<Map<String, dynamic>> getAllNotifications() {
-    final data = _storage.read(_notificationsKey);
-    if (data == null) return [];
-    return List<Map<String, dynamic>>.from(data);
+    try {
+      final data = _storage.read(_notificationsKey);
+      if (data == null) {
+        print("📦 [Storage] No notifications found in storage");
+        return [];
+      }
+      final list = List<dynamic>.from(data);
+      final result = list.map((item) => Map<String, dynamic>.from(item)).toList();
+      print("📦 [Storage] Loaded ${result.length} notifications");
+      return result;
+    } catch (e) {
+      print("📦 [Storage] Error reading notifications: $e");
+      return [];
+    }
   }
 
   List<Map<String, dynamic>> getUnreadNotifications() {

@@ -1,0 +1,172 @@
+const admin = require("firebase-admin");
+const path = require("path");
+
+// Initialize Firebase Admin
+try {
+    if (admin.apps.length === 0) {
+        let credential;
+        
+        // Try to load from file first
+        try {
+            const serviceAccount = require("../config/firebase-service-account.json");
+            credential = admin.credential.cert(serviceAccount);
+            console.log("Firebase Admin: Initializing with service account file");
+        } catch (fileError) {
+            // Fallback to environment variables if file is missing
+            if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
+                credential = admin.credential.cert({
+                    projectId: process.env.FIREBASE_PROJECT_ID,
+                    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+                    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                });
+                console.log("Firebase Admin: Initializing with environment variables");
+            } else {
+                throw new Error("Missing both firebase-service-account.json and Firebase environment variables.");
+            }
+        }
+
+        admin.initializeApp({
+            credential
+        });
+        console.log("Firebase Admin initialized successfully");
+    }
+} catch (error) {
+    console.error("Firebase Admin initialization failed:", error.message);
+}
+
+/**
+ * Send FCM notification to a specific user
+ * @param {string|string[]} tokens - User's FCM device token(s)
+ * @param {object} notification - { title, body }
+ * @param {object} data - Optional data payload
+ */
+exports.sendPushNotification = async (tokens, notification, data = {}) => {
+    if (!tokens || (Array.isArray(tokens) && tokens.length === 0)) return;
+
+    if (admin.apps.length === 0) {
+        console.error("[Notification] Skip sending: Firebase Admin not initialized (missing service account).");
+        return;
+    }
+
+    // Convert single string token to array if necessary
+    const targetTokens = Array.isArray(tokens) ? tokens : [tokens];
+
+    const message = {
+        notification,
+        data: {
+            ...data,
+            click_action: "FLUTTER_NOTIFICATION_CLICK",
+        },
+        android: {
+            priority: "high",
+            notification: {
+                channelId: "high_importance_channel",
+                priority: "high",
+                clickAction: "FLUTTER_NOTIFICATION_CLICK"
+            }
+        },
+        tokens: targetTokens
+    };
+
+    try {
+        const response = await admin.messaging().sendEachForMulticast(message);
+        console.log(`[Notification] Successfully sent ${response.successCount} messages. ${response.failureCount} failed.`);
+        
+        // If some tokens failed, they might be invalid (uninstalled app etc.)
+        if (response.failureCount > 0) {
+            response.responses.forEach((resp, idx) => {
+                if (!resp.success) {
+                    console.log(`[Notification] Token at index ${idx} failed: ${resp.error.message}`);
+                }
+            });
+        }
+        return response;
+    } catch (error) {
+        console.error("[Notification] Error sending multicast push notification:", error);
+    }
+};
+
+/**
+ * Send notification based on MQTT message type to ALL associated users
+ * @param {object} db - MongoDB instance
+ * @param {string} userId - Original user ID from MQTT (usually master)
+ * @param {string} type - ALERT, STATUS, etc.
+ * @param {object} payload - MQTT payload
+ */
+exports.notifyUser = async (db, userId, type, payload) => {
+    console.log(`[Notification] Processing notifyUser for device: ${payload.serial_number}, type: ${type}`);
+    try {
+        const serial_number = payload.serial_number;
+        if (!serial_number) return;
+
+        // 1. Find the device to get the master user
+        const device = await db.collection("devices").findOne({ serial_number });
+        if (!device) {
+            console.log(`[Notification] Device ${serial_number} not found in DB`);
+            return;
+        }
+
+        // 2. Collect all associated user IDs (Master + Shared)
+        const userIds = new Set();
+        userIds.add(Number(device.assigned_user_id));
+
+        const shares = await db.collection("device_shares").find({
+            serial_number,
+            status: true,
+            acceptance_status: 'accepted'
+        }).toArray();
+        
+        shares.forEach(share => userIds.add(Number(share.shared_to_user_id)));
+
+        // 3. Fetch all unique tokens for these users
+        const users = await db.collection("users").find({ 
+            user_id: { $in: Array.from(userIds) } 
+        }).toArray();
+
+        const allTokens = new Set();
+        users.forEach(user => {
+            const tokens = user.fcm_tokens || (user.fcm_token ? [user.fcm_token] : []);
+            tokens.forEach(t => allTokens.add(t));
+        });
+
+        const tokensArray = Array.from(allTokens);
+        if (tokensArray.length === 0) {
+            console.log(`[Notification] No FCM tokens found for any user associated with device ${serial_number}`);
+            return;
+        }
+
+        console.log(`[Notification] Found ${tokensArray.length} tokens across ${users.length} users.`);
+
+        let title = "";
+        let body = "";
+
+        if (type === "ALERT") {
+            title = `⚠️ Device Alert: ${serial_number}`;
+            body = `${payload.alert_type || 'Alert'}: ${payload.description || 'Device alert reported'}`;
+        } else if (type === "STATUS") {
+            const running = payload.motor_running === true;
+            title = running ? "🟢 Motor Started" : "🔴 Motor Stopped";
+            body = `Device ${serial_number} is now ${running ? 'Running' : 'Stopped'}`;
+        } else {
+            console.log(`[Notification] Skipping notification for type: ${type}`);
+            return;
+        }
+
+        console.log(`[Notification] Sending: "${title}" to ${tokensArray.length} targets`);
+
+        const dataPayload = {
+            type,
+            serial_number,
+            timestamp: String(payload.timestamp || Date.now())
+        };
+
+        if (type === "STATUS") {
+            dataPayload.action = payload.motor_running === true ? 'START' : 'STOP';
+        }
+
+        await this.sendPushNotification(tokensArray, { title, body }, dataPayload);
+
+    } catch (error) {
+        console.error("[Notification] Error in notifyUser:", error);
+    }
+};

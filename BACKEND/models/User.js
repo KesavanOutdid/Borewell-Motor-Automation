@@ -40,7 +40,8 @@ const UserSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: null },
 
-    status: { type: Boolean, default: true }
+    status: { type: Boolean, default: true },
+    fcm_tokens: { type: [String], default: [] }
 
 });
 

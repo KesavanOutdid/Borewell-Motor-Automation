@@ -10,7 +10,7 @@ class CartController extends GetxController {
   var cart = Rxn<CartModel>();
   var isLoading = false.obs;
   
-  final String baseUrl = 'http://192.168.0.9:3030';
+  final String baseUrl = 'http://192.168.1.78:3030';
   
   late TokenService tokenService;
   final logger = Logger();

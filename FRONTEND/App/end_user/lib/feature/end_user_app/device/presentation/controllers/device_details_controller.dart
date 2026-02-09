@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../home/presentation/controllers/home_controller.dart';
 import 'package:http/http.dart' as http;
@@ -9,7 +10,7 @@ import 'package:geocoding/geocoding.dart';
 
 import '../../../../../core/config/env.dart';
 import '../../../../../core/services/token_service.dart';
-import '../../../../../core/services/notification_service.dart';
+// import '../../../../../core/services/notification_service.dart';
 
 class DeviceDetailsController extends GetxController {
   final liveData = <String, dynamic>{}.obs;
@@ -17,7 +18,7 @@ class DeviceDetailsController extends GetxController {
   final isLoading = false.obs;
 
   late TokenService tokenService;
-  final NotificationService _notificationService = NotificationService();
+  // removed NotificationService as per user request to use only FCM
 
   String? serialNumber;
   String? imeiNumber;
@@ -40,18 +41,18 @@ class DeviceDetailsController extends GetxController {
   @override
   void onClose() {
     _closeSocket();
-    if (serialNumber != null) {
-      _notificationService.cancelNotification(serialNumber!);
-    }
     super.onClose();
   }
 
   void initialize(Map<String, dynamic> args) async {
+    print('🔧 [DETAILS] Initializing DeviceDetails for args: $args');
     final previousSerial = serialNumber;
     final previousImei = imeiNumber;
 
     serialNumber = args['serial_number'] ?? args['serialNumber'] ?? serialNumber;
     imeiNumber = args['imei_number'] ?? args['imeiNumber'] ?? imeiNumber;
+
+    print('🔧 [DETAILS] Serial: $serialNumber, IMEI: $imeiNumber');
 
     final deviceChanged = previousSerial != serialNumber || previousImei != imeiNumber;
     
@@ -140,6 +141,7 @@ class DeviceDetailsController extends GetxController {
   }
 
   Future<void> fetchDeviceDetails() async {
+    print('🔧 [DETAILS] Fetching latest device details for $serialNumber');
     if (serialNumber == null || imeiNumber == null) {
       _showMessage('Missing device information');
       return;
@@ -152,10 +154,12 @@ class DeviceDetailsController extends GetxController {
     }
 
     isLoading.value = true;
+    final url = Uri.parse(AppConfig.baseUrl + AppConfig.userDeviceDetailsEndpoint);
+    print('🔧 [DETAILS] API Request: POST $url');
 
     try {
       final response = await http.post(
-        Uri.parse(AppConfig.baseUrl + AppConfig.userDeviceDetailsEndpoint),
+        url,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -166,8 +170,11 @@ class DeviceDetailsController extends GetxController {
         }),
       );
 
+      print('🔧 [DETAILS] API Response: Status ${response.statusCode}');
+
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
+        print('🔧 [DETAILS] Data received successfully');
         if (json['success'] == true && json['data'] != null) {
           _applyDeviceData(Map<String, dynamic>.from(json['data']));
         } else {
@@ -263,6 +270,7 @@ class DeviceDetailsController extends GetxController {
   }
 
   Future<void> _sendStartStopCommand(bool start) async {
+    print('🔧 [DETAILS] Sending Start/Stop Command: ${start ? 'START' : 'STOP'} for $serialNumber');
     if (serialNumber == null || imeiNumber == null) {
       _showMessage('Missing device information');
       return;
@@ -280,9 +288,13 @@ class DeviceDetailsController extends GetxController {
       return;
     }
 
+    final url = Uri.parse(AppConfig.baseUrl + AppConfig.startStopDeviceEndpoint);
+    print('🔧 [DETAILS] API Request: POST $url');
+    print('🔧 [DETAILS] Body: {serial: $serialNumber, status: $start, email: $userEmail}');
+
     try {
       final response = await http.post(
-        Uri.parse(AppConfig.baseUrl + AppConfig.startStopDeviceEndpoint),
+        url,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -294,6 +306,9 @@ class DeviceDetailsController extends GetxController {
           'start_status': start,
         }),
       );
+
+      print('🔧 [DETAILS] API Response: Status ${response.statusCode}');
+      print('🔧 [DETAILS] Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
@@ -337,6 +352,8 @@ class DeviceDetailsController extends GetxController {
     _reconnectTimer?.cancel();
     _disconnectSocket();
 
+    print('🔌 [DETAILS SOCKET] Connecting to $serial...');
+
     try {
       final token = tokenService.getToken();
       
@@ -350,22 +367,42 @@ class DeviceDetailsController extends GetxController {
       });
 
       _socket!.on('connect', (_) {
+        print('🔌 [DETAILS SOCKET] Connected for $serial');
         isConnected.value = true;
       });
 
-      _socket!.on('disconnect', (_) {
+      _socket!.on('disconnect', (reason) {
+        print('🔌 [DETAILS SOCKET] Disconnected for $serial. Reason: $reason');
         isConnected.value = false;
         _scheduleReconnect();
       });
 
-      _socket!.on('LIVE_STATUS', (data) => _handleLiveStatus(data));
-      _socket!.on('LIVE_TELEMETRY', (data) => _handleLiveTelemetry(data));
-      _socket!.on('LIVE_ALERT', (data) => _handleLiveAlert(data));
-      _socket!.on('LIVE_HEARTBEAT', (data) => _handleLiveHeartbeat(data));
-      _socket!.on('LIVE_BOOT', (data) => _handleLiveBoot(data));
+      _socket!.on('connect_error', (err) => print('🔌 [DETAILS SOCKET] Connection Error: $err'));
+
+      _socket!.on('LIVE_STATUS', (data) {
+        print('🔌 [DETAILS SOCKET] LIVE_STATUS: $data');
+        _handleLiveStatus(data);
+      });
+      _socket!.on('LIVE_TELEMETRY', (data) {
+        print('🔌 [DETAILS SOCKET] LIVE_TELEMETRY: $data');
+        _handleLiveTelemetry(data);
+      });
+      _socket!.on('LIVE_ALERT', (data) {
+        print('🔌 [DETAILS SOCKET] LIVE_ALERT: $data');
+        _handleLiveAlert(data);
+      });
+      _socket!.on('LIVE_HEARTBEAT', (data) {
+        print('🔌 [DETAILS SOCKET] LIVE_HEARTBEAT: $data');
+        _handleLiveHeartbeat(data);
+      });
+      _socket!.on('LIVE_BOOT', (data) {
+        print('🔌 [DETAILS SOCKET] LIVE_BOOT: $data');
+        _handleLiveBoot(data);
+      });
 
       _socket!.connect();
-    } catch (_) {
+    } catch (e) {
+      print('🔌 [DETAILS SOCKET] Error: $e');
       _scheduleReconnect();
     }
   }
@@ -462,22 +499,10 @@ class DeviceDetailsController extends GetxController {
     if (running && (_previousMotorRunning == false || _previousMotorRunning == null)) {
       final startTime = _formatDate(payload['timestamp']) ?? _formattedNow();
       liveData['lastStart'] = startTime;
-      if (serialNumber != null) {
-        _notificationService.showMotorRunningNotification(
-          serialNumber: serialNumber!,
-          startTime: startTime,
-        );
-      }
     }
     if (!running && _previousMotorRunning == true) {
       final stopTime = _formatDate(payload['timestamp']) ?? _formattedNow();
       liveData['lastStop'] = stopTime;
-      if (serialNumber != null) {
-        _notificationService.showMotorStoppedNotification(
-          serialNumber: serialNumber!,
-          stopTime: stopTime,
-        );
-      }
     }
     _previousMotorRunning = running;
     liveData.refresh();
@@ -509,16 +534,6 @@ class DeviceDetailsController extends GetxController {
       final faultCode = _formatMetric(telemetry['fault_code']);
       if (faultCode != '-' && faultCode.isNotEmpty) {
         liveData['alert'] = faultCode;
-        
-        if (serialNumber != null && faultCode != '0') {
-          final timestamp = _formatDate(telemetry['timestamp']);
-          _notificationService.showAlertNotification(
-            serialNumber: serialNumber!,
-            alertMessage: 'Fault Code: $faultCode',
-            timestamp: timestamp,
-            deviceStatus: 'Warning',
-          );
-        }
       }
     }
     final updated = _formatDate(telemetry['timestamp']);
@@ -536,30 +551,6 @@ class DeviceDetailsController extends GetxController {
     final timestamp = _formatDate(payload['timestamp']);
     if (timestamp != null) {
       liveData['lastUpdate'] = timestamp;
-    }
-    
-    if (serialNumber != null && alertMessage != '-' && alertMessage.isNotEmpty) {
-      final alertType = payload['alert_type']?.toString() ?? '';
-      final deviceStatus = payload['device_status']?.toString() ?? '';
-      final description = payload['description']?.toString() ?? '';
-      
-      String fullAlertMessage = alertMessage;
-      if (alertType.isNotEmpty) {
-        fullAlertMessage = 'Type: $alertType';
-      }
-      if (deviceStatus.isNotEmpty) {
-        fullAlertMessage += '\nStatus: $deviceStatus';
-      }
-      if (description.isNotEmpty) {
-        fullAlertMessage += '\n$description';
-      }
-      
-      _notificationService.showAlertNotification(
-        serialNumber: serialNumber!,
-        alertMessage: fullAlertMessage,
-        timestamp: timestamp,
-        deviceStatus: deviceStatus,
-      );
     }
     
     liveData.refresh();
@@ -668,18 +659,6 @@ class DeviceDetailsController extends GetxController {
       'signalStrength': _formatMetric(telemetry['signal_strength']),
     });
 
-    if (isRunning && !wasRunning && serialNumber != null) {
-      _notificationService.showMotorRunningNotification(
-        serialNumber: serialNumber!,
-        startTime: liveData['lastStart'] as String?,
-      );
-    } else if (!isRunning && wasRunning && serialNumber != null) {
-      _notificationService.showMotorStoppedNotification(
-        serialNumber: serialNumber!,
-        stopTime: liveData['lastStop'] as String?,
-      );
-    }
-
     _previousMotorRunning = isRunning;
   }
 
@@ -749,11 +728,21 @@ class DeviceDetailsController extends GetxController {
   }
 
   void _showMessage(String message) {
-    Get.snackbar('Device', message, snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 2));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Get.overlayContext != null) {
+        Get.snackbar('Device', message, snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 2));
+      } else {
+        print('🔧 [DETAILS] Message: $message');
+      }
+    });
   }
 
   void _handleUnauthorized() {
     Get.offAllNamed('/login');
-    Get.snackbar('Session expired', 'Please login again', snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 2));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Get.overlayContext != null) {
+        Get.snackbar('Session expired', 'Please login again', snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 2));
+      }
+    });
   }
 }

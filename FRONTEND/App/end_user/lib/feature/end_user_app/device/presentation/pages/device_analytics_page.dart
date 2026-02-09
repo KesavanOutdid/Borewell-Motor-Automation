@@ -312,10 +312,6 @@ class DeviceAnalyticsView extends StatelessWidget {
             children: [
               _buildPeriodSelector(controller),
               const SizedBox(height: 16),
-              if (data.overallStats != null)
-                _buildOverallStatsCard(data.overallStats!),
-              if (data.overallStats != null)
-                const SizedBox(height: 16),
               _buildPerformanceCard(controller, chartData),
               const SizedBox(height: 16),
               _buildMetricsRow(chartData),
@@ -397,97 +393,6 @@ class DeviceAnalyticsView extends StatelessWidget {
           );
         }).toList(),
       ),
-    );
-  }
-
-  Widget _buildOverallStatsCard(OverallStats stats) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.primaryGreen, AppColors.darkGreen],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primaryGreen.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          const Text(
-            'Overall Performance',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: _buildOverallStatItem(
-                  'Performance',
-                  '${stats.averagePerformance}%',
-                  Icons.speed,
-                ),
-              ),
-              Expanded(
-                child: _buildOverallStatItem(
-                  'Data Points',
-                  '${stats.totalDataPoints}',
-                  Icons.data_usage,
-                ),
-              ),
-              Expanded(
-                child: _buildOverallStatItem(
-                  'Anomalies',
-                  '${stats.totalAnomalies}',
-                  Icons.warning_amber_rounded,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOverallStatItem(String label, String value, IconData icon) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: Icon(icon, color: Colors.white, size: 28),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.white.withOpacity(0.9),
-          ),
-        ),
-      ],
     );
   }
 

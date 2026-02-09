@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'services/token_service.dart';
 import 'services/permission_service.dart';
+import 'package:agri_plus/feature/end_user_app/auth/presentation/controllers/auth_controller.dart';
 
 class SplashView extends StatefulWidget {
   const SplashView({super.key});
@@ -40,6 +41,13 @@ class _SplashViewState extends State<SplashView> {
     final token = tokenService.getToken();
     
     if (token != null && token.isNotEmpty) {
+      // Refresh FCM token on every app launch if logged in
+      try {
+        final authController = Get.find<AuthController>();
+        authController.updateFcmToken();
+      } catch (e) {
+        print('Error updating FCM token on splash: $e');
+      }
       Get.offAllNamed('/home');
     } else {
       Get.offAllNamed('/login');

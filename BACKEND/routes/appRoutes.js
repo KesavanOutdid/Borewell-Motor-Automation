@@ -267,6 +267,78 @@ router.post(
 
 /**
  * @swagger
+ * /app/updateFcmToken:
+ *   post:
+ *     summary: Update user's FCM token for push notifications
+ *     tags: [App]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - user_email
+ *               - fcm_token
+ *             properties:
+ *               user_email:
+ *                 type: string
+ *               fcm_token:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: FCM token updated successfully
+ */
+router.post(
+    '/updateFcmToken',
+    authMiddleware(),
+    [
+        body('user_email').isEmail().withMessage("Valid user email is required"),
+        body('fcm_token').notEmpty().withMessage("FCM token is required")
+    ],
+    appCtrl.updateFcmToken
+);
+
+/**
+ * @swagger
+ * /app/removeFcmToken:
+ *   post:
+ *     summary: Remove user's FCM token on logout
+ *     tags: [App]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - user_email
+ *               - fcm_token
+ *             properties:
+ *               user_email:
+ *                 type: string
+ *               fcm_token:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: FCM token removed successfully
+ */
+router.post(
+    '/removeFcmToken',
+    authMiddleware(),
+    [
+        body('user_email').isEmail().withMessage("Valid user email is required"),
+        body('fcm_token').notEmpty().withMessage("FCM token is required")
+    ],
+    appCtrl.removeFcmToken
+);
+
+/**
+ * @swagger
  * /app/startStopDevice:
  *   post:
  *     summary: Start or Stop a device

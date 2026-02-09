@@ -13,3 +13,14 @@ BACKEND/logs/*.log
 .DS_Store
 FRONTEND/ADMIN/node_modules/
 BACKEND/logs/*.log
+
+# E2E and Performance Tests
+tests/
+playwright.config.ts
+node_modules/
+package-lock.json
+package.json
+
+# Secrets
+BACKEND/config/firebase-service-account.json
+BACKEND/.env

@@ -39,6 +39,7 @@ class HomeController extends GetxController {
   }
 
   void _initSocket() {
+    print('🏠 [HOME] Initializing Socket.IO connection...');
     try {
       final token = tokenService.getToken();
       _socket = IO.io(AppConfig.socketIOUrl, <String, dynamic>{
@@ -47,22 +48,26 @@ class HomeController extends GetxController {
         'query': {'token': token}
       });
 
-      _socket!.onConnect((_) => print('🏠 Home Socket Connected'));
-      _socket!.onDisconnect((_) => print('🏠 Home Socket Disconnected'));
+      _socket!.onConnect((_) => print('🏠 [HOME] Socket Connected successfully'));
+      _socket!.onDisconnect((_) => print('🏠 [HOME] Socket Disconnected'));
+      _socket!.onConnectError((err) => print('🏠 [HOME] Socket Connection Error: $err'));
 
       _socket!.on('LIVE_STATUS', (data) {
+        print('🏠 [HOME] Socket LIVE_STATUS received: $data');
         if (data != null && data['serial_number'] != null) {
           final serial = data['serial_number'];
           final payload = data['payload'];
           _updateDeviceLastSeen(serial);
           if (payload != null) {
             final newStatus = payload['motor_running'] == true;
+            print('🏠 [HOME] Updating device $serial status to: ${newStatus ? 'RUNNING' : 'STOPPED'}');
             _updateDeviceStatus(serial, newStatus);
           }
         }
       });
 
       _socket!.on('LIVE_TELEMETRY', (data) {
+        print('🏠 [HOME] Socket LIVE_TELEMETRY received for: ${data?['serial_number']}');
         if (data != null && data['serial_number'] != null) {
           final serial = data['serial_number'];
           _updateDeviceLastSeen(serial);
@@ -70,13 +75,14 @@ class HomeController extends GetxController {
       });
 
       _socket!.on('LIVE_HEARTBEAT', (data) {
+        print('🏠 [HOME] Socket LIVE_HEARTBEAT received for: ${data?['serial_number']}');
         if (data != null && data['serial_number'] != null) {
           final serial = data['serial_number'];
           _updateDeviceLastSeen(serial);
         }
       });
     } catch (e) {
-      print('🏠 Home Socket Error: $e');
+      print('🏠 [HOME] Socket initialization Error: $e');
     }
   }
 
@@ -116,11 +122,15 @@ class HomeController extends GetxController {
   }
 
   Future<void> fetchDevices() async {
+    print('🏠 [HOME] Fetching user assigned devices...');
     isLoading.value = true;
 
     final url = Uri.parse(AppConfig.baseUrl + AppConfig.userAssignedDevicesEndpoint);
     final token = tokenService.getToken();
     final userId = tokenService.getUserId();
+
+    print('🏠 [HOME] API Request: POST $url');
+    print('🏠 [HOME] User ID: $userId');
 
     try {
       final response = await http.post(
@@ -134,10 +144,13 @@ class HomeController extends GetxController {
         }),
       );
 
+      print('🏠 [HOME] API Response: Status ${response.statusCode}');
+
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
         if (jsonData['success'] == true && jsonData['data'] != null) {
           final List<dynamic> data = jsonData['data'];
+          print('🏠 [HOME] Received ${data.length} devices from server');
           final updatedDevices = <Map<String, dynamic>>[];
           
           for (var device in data) {
@@ -188,7 +201,9 @@ class HomeController extends GetxController {
         }
       } else if (response.statusCode == 401) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          Get.snackbar("Error", "Session expired. Please login again");
+          if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
+            Get.snackbar("Error", "Session expired. Please login again");
+          }
         });
         Future.delayed(const Duration(milliseconds: 500), () {
           Get.offAllNamed('/login');
@@ -197,12 +212,16 @@ class HomeController extends GetxController {
         devices.value = [];
       } else {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          Get.snackbar("Error", "Failed to fetch devices");
+          if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
+            Get.snackbar("Error", "Failed to fetch devices");
+          }
         });
       }
     } catch (e) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Get.snackbar("Error", "Connection failed: $e");
+        if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
+          Get.snackbar("Error", "Connection failed: $e");
+        }
       });
     } finally {
       isLoading.value = false;
@@ -210,10 +229,14 @@ class HomeController extends GetxController {
   }
 
   Future<void> toggleDevice(String serialNumber, String imei, bool status) async {
+    print('🏠 [HOME] Toggle device request: $serialNumber, Action: ${status ? 'START' : 'STOP'}');
     try {
       final url = Uri.parse(AppConfig.baseUrl + AppConfig.startStopDeviceEndpoint);
       final token = tokenService.getToken();
       final userEmail = tokenService.getUserEmail();
+
+      print('🏠 [HOME] API Request: POST $url');
+      print('🏠 [HOME] Body: {serial: $serialNumber, status: $status, email: $userEmail}');
 
       final response = await http.post(
         url,
@@ -229,27 +252,45 @@ class HomeController extends GetxController {
         }),
       );
 
+      print('🏠 [HOME] API Response: Status ${response.statusCode}');
+      print('🏠 [HOME] Response Body: ${response.body}');
+
       if (response.statusCode == 200) {
         // Update local state immediately for better UX and sorting
         _updateDeviceStatus(serialNumber, status);
         
-        Future.delayed(Duration.zero, () {
-          Get.snackbar("Success", "Motor ${status ? 'Started' : 'Stopped'} Successfully");
+        // Use WidgetsBinding to ensure the overlay is available
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (Get.overlayContext != null) {
+            Get.snackbar(
+              "Success", 
+              "Motor ${status ? 'Started' : 'Stopped'} Successfully",
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.green.withOpacity(0.8),
+              colorText: Colors.white,
+            );
+          }
         });
       } else if (response.statusCode == 401) {
         Get.offAllNamed('/login');
         Future.delayed(Duration.zero, () {
-          Get.snackbar("Error", "Session expired. Please login again");
+          if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
+            Get.snackbar("Error", "Session expired. Please login again");
+          }
         });
       } else {
         final body = jsonDecode(response.body);
         Future.delayed(Duration.zero, () {
-          Get.snackbar("Error", body['message'] ?? "Failed to toggle device");
+          if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
+            Get.snackbar("Error", body['message'] ?? "Failed to toggle device");
+          }
         });
       }
     } catch (e) {
       Future.delayed(Duration.zero, () {
-        Get.snackbar("Error", "Connection failed: $e");
+        if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
+          Get.snackbar("Error", "Connection failed: $e");
+        }
       });
     }
   }

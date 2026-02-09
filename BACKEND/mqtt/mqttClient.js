@@ -2,6 +2,7 @@ require('dotenv').config();
 const mqtt = require('mqtt');
 const { logToFile } = require('./utils/fileLogger');
 const connectToDatabase = require('../config/db');
+const { notifyUser } = require('../utils/notificationHelper');
 
 const clientId = `receiver_${Math.random().toString(16).substr(2, 8)}`;
 
@@ -154,6 +155,7 @@ client.on("message", async (topic, message) => {
         /* HISTORY LOGIC (START / STOP SESSION)                   */
         /* ------------------------------------------------------ */
         if (type === "STATUS" && item.serial_number) {
+            const userId = Number(item.user_id);
             // Fetch device details to know who started/stopped
             const device = await db.collection("devices").findOne({ serial_number: item.serial_number });
 
@@ -161,8 +163,7 @@ client.on("message", async (topic, message) => {
                 // CHECK if session already open
                 const openSession = await db.collection("borewell_history").findOne({
                     serial_number: item.serial_number,
-                    imei_number: item.imei_number,
-                    user_id: item.user_id,
+                    user_id: userId,
                     stopAt: null
                 });
 
@@ -171,9 +172,9 @@ client.on("message", async (topic, message) => {
                     await db.collection("borewell_history").insertOne({
                         serial_number: item.serial_number,
                         imei_number: item.imei_number,
-                        user_id: item.user_id,
+                        user_id: userId,
                         date: new Date().toISOString().split("T")[0],
-                        startAt: new Date(item.timestamp),
+                        startAt: new Date(item.timestamp || Date.now()),
                         stopAt: null,
                         started_by: device ? device.last_started_by : null,
                         started_by_email: device ? device.last_started_by_email : null,
@@ -188,7 +189,8 @@ client.on("message", async (topic, message) => {
                         createdAt: new Date(),
                         updatedAt: new Date()
                     });
-                    console.log("HISTORY: Start session created");
+                    console.log(`HISTORY: Start session created for ${item.serial_number}`);
+                    notifyUser(db, userId, "STATUS", item);
                 }
 
             } else if (item.motor_running === false) {
@@ -196,13 +198,12 @@ client.on("message", async (topic, message) => {
                 // CLOSE existing session
                 const session = await db.collection("borewell_history").findOne({
                     serial_number: item.serial_number,
-                    imei_number: item.imei_number,
-                    user_id: item.user_id,
+                    user_id: userId,
                     stopAt: null
                 });
 
                 if (session) {
-                    const stopTime = new Date(item.timestamp);
+                    const stopTime = new Date(item.timestamp || Date.now());
                     const duration = (stopTime - new Date(session.startAt)) / 60000;
 
                     await db.collection("borewell_history").updateOne(
@@ -217,7 +218,8 @@ client.on("message", async (topic, message) => {
                             }
                         }
                     );
-                    console.log("HISTORY: Session closed");
+                    console.log(`HISTORY: Session closed for ${item.serial_number}`);
+                    notifyUser(db, userId, "STATUS", item);
                 }
             }
         }
@@ -243,11 +245,12 @@ client.on("message", async (topic, message) => {
         }
 
         /* ------------------------------------------------------ */
-        /* SEND LIVE UPDATES TO WEBSOCKET CLIENTS                  */
-        /* ------------------------------------------------------ */
-        /* ------------------------------------------------------ */
         /* SEND LIVE UPDATES TO SOCKET.IO CLIENTS                 */
         /* ------------------------------------------------------ */
+        if (type === "ALERT") {
+            notifyUser(db, item.user_id, type, item);
+        }
+
         if (global.io) {
             if (type === "BOOT") {
                 global.io.emit("LIVE_BOOT", {
