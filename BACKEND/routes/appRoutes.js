@@ -143,6 +143,29 @@ router.post('/uploadProfileImage/:user_id', authMiddleware(), uploadImage.single
 
 /**
  * @swagger
+ * /app/deleteProfileImage/{user_id}:
+ *   delete:
+ *     summary: Delete profile image for user
+ *     tags: [App]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: Profile image deleted successfully
+ *       404:
+ *         description: User not found
+ */
+router.delete('/deleteProfileImage/:user_id', authMiddleware(), appCtrl.deleteProfileImage);
+
+/**
+ * @swagger
  * /app/configIMEInumber:
  *   post:
  *     summary: Configure IMEI number for a device

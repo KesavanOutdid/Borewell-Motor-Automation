@@ -72,6 +72,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     controller.pickAndUploadImage(ImageSource.gallery);
                   },
                 ),
+                if (controller.userProfileImage.value.isNotEmpty)
+                  _buildSourceOption(
+                    context,
+                    icon: Icons.delete_outline_rounded,
+                    label: 'Remove',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showRemoveImageConfirmation(context);
+                    },
+                    color: Colors.red,
+                  ),
               ],
             ),
             const SizedBox(height: 30),
@@ -81,12 +92,41 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
+  void _showRemoveImageConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).dialogTheme.backgroundColor ?? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white),
+        title: const Text('Remove Photo'),
+        content: const Text('Are you sure you want to remove your profile photo?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              controller.removeProfileImage();
+            },
+            child: const Text(
+              'Remove',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSourceOption(
     BuildContext context, {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
+    Color? color,
   }) {
+    final effectiveColor = color ?? AppColors.primaryGreen;
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -94,12 +134,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.primaryGreen.withOpacity(0.1),
+              color: effectiveColor.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
-              color: AppColors.primaryGreen,
+              color: effectiveColor,
               size: 30,
             ),
           ),

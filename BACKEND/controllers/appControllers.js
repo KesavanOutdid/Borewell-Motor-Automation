@@ -10,6 +10,8 @@ const Telemetry = require("../models/Telemetry");
 const DeviceShare = require("../models/DeviceShare");
 const { sendPushNotification } = require('../utils/notificationHelper');
 const { cacheDeletePattern } = require('../middlewares/cacheMiddleware');
+const fs = require('fs');
+const path = require('path');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change_this_secret';
 // const JWT_EXPIRES = '2h';
@@ -221,6 +223,46 @@ exports.uploadProfileImage = async (req, res, next) => {
             message: "Profile image uploaded successfully",
             profile_image: imageUrl,
             user: updatedUser
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.deleteProfileImage = async (req, res, next) => {
+    try {
+        const userId = Number(req.params.user_id);
+
+        const user = await User.findOne({ user_id: userId });
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        if (user.profile_image) {
+            const filePath = path.join(__dirname, '..', user.profile_image);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+        }
+
+        user.profile_image = "";
+        user.updatedBy = req.user.user_email;
+        user.updatedAt = new Date();
+        await user.save();
+
+        await cacheDeletePattern('*profile*');
+        await cacheDeletePattern('*users*');
+
+        res.status(200).json({
+            success: true,
+            message: "Profile image deleted successfully",
+            user: {
+                user_id: user.user_id,
+                user_name: user.user_name,
+                user_email: user.user_email,
+                profile_image: ""
+            }
         });
 
     } catch (err) {

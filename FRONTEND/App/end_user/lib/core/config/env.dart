@@ -13,6 +13,7 @@ class AppConfig {
   static const String userDeviceHistoryDetailsEndpoint = "/app/userDeviceHistoryDetails";
   static const String startStopDeviceEndpoint = "/app/startStopDevice";
   static const String uploadProfileImageEndpoint = "/app/uploadProfileImage";
+  static const String deleteProfileImageEndpoint = "/app/deleteProfileImage";
   static const String updateDeviceNicknameEndpoint = "/app/updateDeviceNickname";
   static const String updateFcmTokenEndpoint = "/app/updateFcmToken";
   static const String removeFcmTokenEndpoint = "/app/removeFcmToken";

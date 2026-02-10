@@ -306,6 +306,52 @@ class ProfileController extends GetxController {
     }
   }
 
+  Future<void> removeProfileImage() async {
+    logger.i('🗑️ removeProfileImage called');
+    isUpdating.value = true;
+    final token = tokenService.getToken();
+    final userId = tokenService.getUserId();
+
+    if (userId == null || userId == 0) {
+      logger.e('❌ userId is null or 0');
+      isUpdating.value = false;
+      Get.rawSnackbar(title: "Error", message: "User ID not found");
+      return;
+    }
+
+    final url = Uri.parse("${AppConfig.baseUrl}${AppConfig.deleteProfileImageEndpoint}/$userId");
+    logger.i('🌐 URL: $url');
+
+    try {
+      final response = await http.delete(
+        url,
+        headers: {
+          "Authorization": "Bearer $token",
+        },
+      );
+
+      logger.i('📡 Response Status: ${response.statusCode}');
+      logger.d('📄 Body: ${response.body}');
+
+      isUpdating.value = false;
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        if (responseData['success'] == true) {
+          userProfileImage.value = "";
+          Get.rawSnackbar(title: "Success", message: "Profile image removed successfully");
+        } else {
+          Get.rawSnackbar(title: "Error", message: responseData['message'] ?? "Removal failed");
+        }
+      } else {
+        Get.rawSnackbar(title: "Error", message: "Failed to remove image: ${response.statusCode}");
+      }
+    } catch (e) {
+      isUpdating.value = false;
+      Get.rawSnackbar(title: "Error", message: "Connection failed: $e");
+    }
+  }
+
   Future<String?> changePassword(String newPassword) async {
     if (newPassword.isEmpty || newPassword.length != 6) {
       return "New password must be 6 digits";
