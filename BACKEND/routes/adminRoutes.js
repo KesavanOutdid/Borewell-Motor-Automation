@@ -8,6 +8,29 @@ const router = express.Router();
 
 /**
  * @swagger
+ * /admin/getDeviceBorewellHistory:
+ *   get:
+ *     summary: Get borewell history for a specific device
+ *     tags: [Admin]
+ *     parameters:
+ *       - in: query
+ *         name: serial_number
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Device serial number
+ *     responses:
+ *       200:
+ *         description: List of history records
+ *       400:
+ *         description: Serial number required
+ *       500:
+ *         description: Server error
+ */
+router.get("/getDeviceBorewellHistory", adminCtrl.getDeviceBorewellHistory);
+
+/**
+ * @swagger
  * /admin/createRole:
  *   post:
  *     summary: Create a new role

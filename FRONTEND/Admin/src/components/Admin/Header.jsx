@@ -11,6 +11,8 @@ const Header = ({ userInfo, handleLogout }) => {
                 return 'Dashboard';
             case '/admin/manage-devices':
                 return 'Manage Devices';
+            case '/admin/manage-devices-view':
+                return 'Device Details';
             case '/admin/manage-clients':
                 return 'Manage Clients';
             case '/admin/manage-user-roles':
@@ -19,6 +21,10 @@ const Header = ({ userInfo, handleLogout }) => {
                 return 'Manage Users';
             case '/admin/manage-users-view':
                 return 'User Details & Devices';
+            case '/admin/device-details':
+                return 'Device Details';
+            case '/admin/device-history':
+                return 'Device History';
             case '/admin/manage-device-type':
                 return 'Manage Device Type';
             case '/admin/channel-history':
@@ -61,7 +67,7 @@ const Header = ({ userInfo, handleLogout }) => {
                         <li className="breadcrumb-item text-sm"><Link className="opacity-5 text-dark" href="#">Pages</Link></li>
                         <li className="breadcrumb-item text-sm text-dark active" aria-current="page">{pageTitle()}</li>
                     </ol>
-                    <h6 className="font-weight-bolder mb-0">{userInfo.user_email}</h6>
+                    <h6 className="font-weight-bolder mb-0">{pageTitle()}</h6>
                 </nav>
                 <div className="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar" style={{ flexGrow: '0' }}>
                     <ul className="navbar-nav  justify-content-end">

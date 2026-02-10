@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
@@ -6,9 +6,34 @@ import Footer from '../../components/Admin/Footer';
 import { formatDateToIST } from '../../utils/formatDateToIST';
 
 const ManageDevicesView = ({ userInfo, handleLogout }) => {
+    const API_BASE = process.env.REACT_APP_SERVER_URL;
     const navigate = useNavigate();
     const location = useLocation();
     const deviceDetails = location.state?.device;
+
+    const [history, setHistory] = useState([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+
+    useEffect(() => {
+        const fetchHistory = async () => {
+            if (deviceDetails?.serial_number) {
+                setLoadingHistory(true);
+                try {
+                    const response = await fetch(`${API_BASE}/admin/getDeviceBorewellHistory?serial_number=${deviceDetails.serial_number}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        setHistory(data.data || []);
+                    }
+                } catch (error) {
+                    console.error("Error fetching device history:", error);
+                } finally {
+                    setLoadingHistory(false);
+                }
+            }
+        };
+
+        fetchHistory();
+    }, [deviceDetails, API_BASE]);
 
     const handleBackClick = () => {
         navigate('/admin/manage-devices');
@@ -185,6 +210,68 @@ const ManageDevicesView = ({ userInfo, handleLogout }) => {
                                             </div>
                                         </div>
                                     )}
+
+                                    <div style={{ marginBottom: '30px' }}>
+                                        <h6 style={{ fontSize: '13px', fontWeight: '600', color: '#8f9297', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '15px' }}>Device History</h6>
+                                        <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', overflowX: 'auto' }}>
+                                            {loadingHistory ? (
+                                                <div className="text-center py-4">
+                                                    <div className="spinner-border text-primary" role="status">
+                                                        <span className="visually-hidden">Loading...</span>
+                                                    </div>
+                                                </div>
+                                            ) : history.length > 0 ? (
+                                                <table className="table align-items-center mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Date</th>
+                                                            <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Start Time</th>
+                                                            <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Stop Time</th>
+                                                            <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Duration (Min)</th>
+                                                            <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Energy (kWh)</th>
+                                                            <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Started By</th>
+                                                            <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Stopped By</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {history.map((record, index) => (
+                                                            <tr key={index}>
+                                                                <td>
+                                                                    <div className="d-flex px-2 py-1">
+                                                                        <div className="d-flex flex-column justify-content-center">
+                                                                            <h6 className="mb-0 text-sm">{record.date || '-'}</h6>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <p className="text-xs font-weight-bold mb-0">{record.startAt ? formatDateToIST(record.startAt) : '-'}</p>
+                                                                </td>
+                                                                <td>
+                                                                    <p className="text-xs font-weight-bold mb-0">{record.stopAt ? formatDateToIST(record.stopAt) : '-'}</p>
+                                                                </td>
+                                                                <td>
+                                                                    <p className="text-xs font-weight-bold mb-0">{record.duration_minutes || '-'}</p>
+                                                                </td>
+                                                                <td>
+                                                                    <p className="text-xs font-weight-bold mb-0">{record.energy_kwh || '-'}</p>
+                                                                </td>
+                                                                <td>
+                                                                    <p className="text-xs font-weight-bold mb-0">{record.started_by || '-'}</p>
+                                                                </td>
+                                                                <td>
+                                                                    <p className="text-xs font-weight-bold mb-0">{record.stopped_by || '-'}</p>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            ) : (
+                                                <div className="text-center py-4">
+                                                    <p className="text-sm mb-0">No history records found for this device.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

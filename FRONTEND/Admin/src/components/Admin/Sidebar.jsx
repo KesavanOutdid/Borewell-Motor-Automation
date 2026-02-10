@@ -39,7 +39,7 @@ const Sidebar = () => {
                     <li className="nav-item">
                         <Link className={location.pathname === '/admin/dashboard' ? 'nav-link  active' : 'nav-link'} to="/admin/dashboard" onClick={(e) => handleNavClick(e, '/admin/dashboard')}>
                             <div className="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                                <i className="fas fa-home" style={{fontZize: '12px', color: '#344767', lineHeight: '12'}}></i>
+                                <i className="fas fa-home" style={{fontSize: '12px', color: '#344767', lineHeight: '12px'}}></i>
                             </div>
                             <span className="nav-link-text ms-1">Dashboard</span>
                         </Link>

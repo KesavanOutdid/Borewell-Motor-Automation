@@ -450,6 +450,62 @@ exports.startStopDevice = async (req, res) => {
             { $set: updateData }
         );
 
+        // Save to borewell_history
+        try {
+            const db = mongoose.connection.db;
+            const historyCollection = db.collection("borewell_history");
+
+            if (start_status === true) {
+                await historyCollection.insertOne({
+                    serial_number,
+                    imei_number,
+                    user_id: user.user_id,
+                    date: new Date().toISOString().split("T")[0],
+                    startAt: updateData.startAt,
+                    stopAt: null,
+                    started_by: user.user_name,
+                    started_by_email: user.user_email,
+                    stopped_by: null,
+                    stopped_by_email: null,
+                    duration_minutes: 0,
+                    energy_kwh: 0,
+                    maxCurrent: 0,
+                    minCurrent: 9999,
+                    maxVoltage: 0,
+                    minVoltage: 9999,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                });
+            } else {
+                // Find the latest open session for this device and user
+                const session = await historyCollection.findOne({
+                    serial_number,
+                    user_id: user.user_id,
+                    stopAt: null
+                });
+
+                if (session) {
+                    const stopTime = updateData.stopAt;
+                    const duration = (stopTime - new Date(session.startAt)) / 60000;
+
+                    await historyCollection.updateOne(
+                        { _id: session._id },
+                        {
+                            $set: {
+                                stopAt: stopTime,
+                                stopped_by: user.user_name,
+                                stopped_by_email: user.user_email,
+                                duration_minutes: Math.round(duration),
+                                updatedAt: new Date()
+                            }
+                        }
+                    );
+                }
+            }
+        } catch (historyError) {
+            console.error("[History Error] Failed to log to borewell_history:", historyError);
+        }
+
         // Notify all users associated with this device via FCM
         try {
             // 1. Get Master User
@@ -631,7 +687,12 @@ exports.userDeviceDetails = async (req, res) => {
 
         const { serial_number, imei_number } = req.body;
 
-        const device = await Device.findOne({ serial_number, imei_number });
+        const query = { serial_number };
+        if (imei_number) {
+            query.imei_number = imei_number;
+        }
+
+        const device = await Device.findOne(query);
 
         if (!device) {
             return res.status(404).json({
@@ -767,8 +828,8 @@ exports.userDeviceHistory = async (req, res) => {
                 minCurrent: h.minCurrent,
                 maxVoltage: h.maxVoltage,
                 minVoltage: h.minVoltage,
-                last_started_by: h.last_started_by || "-",
-                last_stopped_by: h.last_stopped_by || "-",
+                started_by: h.started_by || "-",
+                stopped_by: h.stopped_by || "-",
                 createdAt: h.createdAt,
                 updatedAt: h.updatedAt
             });
@@ -1985,3 +2046,38 @@ exports.deleteShare = async (req, res, next) => {
 };
 
 
+
+exports.getDeviceBorewellHistory = async (req, res) => {
+    try {
+        const { serial_number } = req.query;
+
+        if (!serial_number) {
+            return res.status(400).json({
+                success: false,
+                message: "Serial number is required"
+            });
+        }
+
+        const db = mongoose.connection.db;
+        const historyCollection = db.collection("borewell_history");
+
+        const history = await historyCollection
+            .find({ serial_number: serial_number })
+            .sort({ startAt: -1 })
+            .toArray();
+
+        return res.status(200).json({
+            success: true,
+            serial_number,
+            count: history.length,
+            data: history
+        });
+
+    } catch (error) {
+        console.error("getDeviceBorewellHistory Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Server error"
+        });
+    }
+};

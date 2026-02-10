@@ -7,6 +7,7 @@ const Product = require("../models/Product");
 const bcrypt = require('bcrypt');
 const path = require('path');
 const { cacheDeletePattern } = require('../middlewares/cacheMiddleware');
+const mongoose = require('mongoose');
 
 // Create role
 exports.createRole = async (req, res, next) => {
@@ -1256,3 +1257,38 @@ exports.uploadMultipleImages = async (req, res, next) => {
 //         res.status(500).json({ success: false, message: err.message });
 //     }
 // };
+
+exports.getDeviceBorewellHistory = async (req, res) => {
+    try {
+        const { serial_number } = req.query;
+
+        if (!serial_number) {
+            return res.status(400).json({
+                success: false,
+                message: "Serial number is required"
+            });
+        }
+
+        const db = mongoose.connection.db;
+        const historyCollection = db.collection("borewell_history");
+
+        const history = await historyCollection
+            .find({ serial_number: serial_number })
+            .sort({ startAt: -1 })
+            .toArray();
+
+        return res.status(200).json({
+            success: true,
+            serial_number,
+            count: history.length,
+            data: history
+        });
+
+    } catch (error) {
+        console.error("getDeviceBorewellHistory Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Server error"
+        });
+    }
+};

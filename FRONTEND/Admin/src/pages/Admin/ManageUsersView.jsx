@@ -102,12 +102,19 @@ const ManageUsersView = ({ userInfo, handleLogout }) => {
         checkDevicesHistory();
     }, [assignedDevices, sharedDevices, selectedUser]);
 
-    const handleViewDeviceDetails = async (device) => {
+    const handleViewDeviceHistory = async (device, isMasterDevice = true) => {
+        // For shared devices, find the device in assignedDevices to get more details like imei_number
+        const fullDevice = assignedDevices.find(d => d.serial_number === device.serial_number) || device;
+        
+        // For shared devices, use master_user_id; for assigned devices, use selectedUser.user_id
+        const userId = isMasterDevice ? selectedUser.user_id : (device.master_user_id || fullDevice.assigned_user_id);
+
         try {
             const storedUser = JSON.parse(sessionStorage.getItem('adminUser'));
             const token = storedUser?.token;
             const API_BASE = process.env.REACT_APP_SERVER_URL;
 
+            // Fetch device details first to pass to history page
             const response = await fetch(`${API_BASE}/app/userDeviceDetails`, {
                 method: 'POST',
                 headers: {
@@ -115,42 +122,44 @@ const ManageUsersView = ({ userInfo, handleLogout }) => {
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ 
-                    serial_number: device.serial_number, 
-                    imei_number: device.imei_number 
+                    serial_number: fullDevice.serial_number, 
+                    imei_number: fullDevice.imei_number 
                 }),
             });
 
+            let deviceDetails = null;
             if (response.ok) {
                 const data = await response.json();
-                navigate('/admin/device-details', { 
-                    state: { 
-                        deviceDetails: data.data 
-                    } 
-                });
-            } else {
-                const errorData = await response.json();
-                alert('Error fetching device details: ' + (errorData.message || 'Unknown error'));
+                deviceDetails = data.data;
             }
+            
+            navigate('/admin/device-history', { 
+                state: { 
+                    device: {
+                        serial_number: fullDevice.serial_number,
+                        imei_number: fullDevice.imei_number,
+                        device_nickname: fullDevice.device_nickname || fullDevice.device_name || device.shared_to_user_name
+                    }, 
+                    user_id: userId,
+                    from: 'manage-users',
+                    deviceDetails: deviceDetails // Pass the fetched details
+                } 
+            });
         } catch (error) {
-            console.error('Error fetching device details:', error);
-            alert('Error fetching device details');
+            console.error('Error preparing device history:', error);
+            // Fallback navigate without details if fetch fails
+            navigate('/admin/device-history', { 
+                state: { 
+                    device: {
+                        serial_number: fullDevice.serial_number,
+                        imei_number: fullDevice.imei_number,
+                        device_nickname: fullDevice.device_nickname || fullDevice.device_name || device.shared_to_user_name
+                    }, 
+                    user_id: userId,
+                    from: 'manage-users'
+                } 
+            });
         }
-    };
-
-    const handleViewDeviceHistory = (device, isMasterDevice = true) => {
-        // For shared devices, use master_user_id; for assigned devices, use selectedUser.user_id
-        const userId = isMasterDevice ? selectedUser.user_id : device.master_user_id;
-        
-        navigate('/admin/device-history', { 
-            state: { 
-                device: {
-                    serial_number: device.serial_number,
-                    imei_number: device.imei_number,
-                    device_nickname: device.device_nickname || device.shared_to_user_name
-                }, 
-                user_id: userId 
-            } 
-        });
     };
 
     const handleBackClick = () => {
@@ -324,23 +333,6 @@ const ManageUsersView = ({ userInfo, handleLogout }) => {
                                                                     </span>
                                                                 </td>
                                                                 <td className="text-center">
-                                                                    <button
-                                                                        className="btn btn-sm mb-0"
-                                                                        style={{ 
-                                                                            marginRight: '5px', 
-                                                                            padding: '6px 12px', 
-                                                                            fontSize: '11px',
-                                                                            backgroundColor: '#66c2ff',
-                                                                            color: 'white',
-                                                                            border: 'none',
-                                                                            borderRadius: '4px',
-                                                                            fontWeight: '500'
-                                                                        }}
-                                                                        onClick={() => handleViewDeviceDetails(device)}
-                                                                        title="View Device Details"
-                                                                    >
-                                                                        <i className="fas fa-eye"></i> Details
-                                                                    </button>
                                                                     <button
                                                                         className="btn btn-sm mb-0"
                                                                         style={{ 

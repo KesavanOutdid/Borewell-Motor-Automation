@@ -109,11 +109,19 @@ const DeviceDetails = ({ userInfo, handleLogout }) => {
                                             <div className="row">
                                                 <div className="col-md-3 col-6" style={{ marginBottom: '12px' }}>
                                                     <div style={{ fontSize: '11px', color: '#8f9297', marginBottom: '4px' }}>Started At</div>
-                                                    <div style={{ fontSize: '13px', fontWeight: '500', color: '#344767' }}>{deviceDetails.startedAt ? formatDateToIST(deviceDetails.startedAt) : '-'}</div>
+                                                    <div style={{ fontSize: '13px', fontWeight: '500', color: '#344767' }}>{deviceDetails.startAt ? formatDateToIST(deviceDetails.startAt) : '-'}</div>
+                                                </div>
+                                                <div className="col-md-3 col-6" style={{ marginBottom: '12px' }}>
+                                                    <div style={{ fontSize: '11px', color: '#8f9297', marginBottom: '4px' }}>Started By</div>
+                                                    <div style={{ fontSize: '13px', fontWeight: '500', color: '#344767' }}>{deviceDetails.last_started_by || '-'}</div>
                                                 </div>
                                                 <div className="col-md-3 col-6" style={{ marginBottom: '12px' }}>
                                                     <div style={{ fontSize: '11px', color: '#8f9297', marginBottom: '4px' }}>Stopped At</div>
-                                                    <div style={{ fontSize: '13px', fontWeight: '500', color: '#344767' }}>{deviceDetails.stoppedAt ? formatDateToIST(deviceDetails.stoppedAt) : '-'}</div>
+                                                    <div style={{ fontSize: '13px', fontWeight: '500', color: '#344767' }}>{deviceDetails.stopAt ? formatDateToIST(deviceDetails.stopAt) : '-'}</div>
+                                                </div>
+                                                <div className="col-md-3 col-6" style={{ marginBottom: '12px' }}>
+                                                    <div style={{ fontSize: '11px', color: '#8f9297', marginBottom: '4px' }}>Stopped By</div>
+                                                    <div style={{ fontSize: '13px', fontWeight: '500', color: '#344767' }}>{deviceDetails.last_stopped_by || '-'}</div>
                                                 </div>
                                                 <div className="col-md-3 col-6" style={{ marginBottom: '12px' }}>
                                                     <div style={{ fontSize: '11px', color: '#8f9297', marginBottom: '4px' }}>Created At</div>
