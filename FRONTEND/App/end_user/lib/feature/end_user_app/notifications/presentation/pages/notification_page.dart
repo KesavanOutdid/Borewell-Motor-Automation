@@ -30,22 +30,32 @@ class NotificationPage extends StatelessWidget {
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'clear_all') {
-                Get.defaultDialog(
-                  title: 'Clear All Notifications',
-                  middleText: 'Are you sure you want to clear all notifications?',
-                  textConfirm: 'Yes',
-                  textCancel: 'No',
-                  confirmTextColor: Colors.white,
-                  onConfirm: () {
-                    controller.clearAll();
-                    Get.back();
-                    Get.snackbar(
-                      'Success',
-                      'All notifications cleared',
-                      snackPosition: SnackPosition.BOTTOM,
-                      duration: const Duration(seconds: 2),
-                    );
-                  },
+                Get.dialog(
+                  Builder(
+                    builder: (context) => AlertDialog(
+                      title: const Text('Clear All Notifications'),
+                      content: const Text('Are you sure you want to clear all notifications?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('No'),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            Navigator.of(context).pop();
+                            await controller.clearAll();
+                            Get.snackbar(
+                              'Success',
+                              'All notifications cleared',
+                              snackPosition: SnackPosition.BOTTOM,
+                              duration: const Duration(seconds: 2),
+                            );
+                          },
+                          child: const Text('Yes', style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  ),
                 );
               }
             },

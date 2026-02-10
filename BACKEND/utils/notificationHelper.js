@@ -145,8 +145,11 @@ exports.notifyUser = async (db, userId, type, payload) => {
             body = `${payload.alert_type || 'Alert'}: ${payload.description || 'Device alert reported'}`;
         } else if (type === "STATUS") {
             const running = payload.motor_running === true;
+            const userName = device.last_started_by || device.last_stopped_by || "User";
+            const actionBy = running ? (device.last_started_by || "Manual") : (device.last_stopped_by || "Manual");
+            
             title = running ? "🟢 Motor Started" : "🔴 Motor Stopped";
-            body = `Device ${serial_number} is now ${running ? 'Running' : 'Stopped'}`;
+            body = `Device ${serial_number} was ${running ? 'started' : 'stopped'} by ${actionBy}`;
         } else {
             console.log(`[Notification] Skipping notification for type: ${type}`);
             return;

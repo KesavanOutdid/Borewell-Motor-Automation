@@ -153,8 +153,8 @@ class ProfileController extends GetxController {
     }
 
     final password = passwordEditingController.text;
-    if (password != oldPassword.value && (password.isEmpty || password.length != 6)) {
-      return "Password must be 6 digits";
+    if (password.isEmpty || password.length != 6) {
+      return "Password must be exactly 6 digits";
     }
 
     isUpdating.value = true;

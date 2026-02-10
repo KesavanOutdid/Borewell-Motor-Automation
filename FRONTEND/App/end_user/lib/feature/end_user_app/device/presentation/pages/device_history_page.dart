@@ -177,13 +177,13 @@ class DeviceHistoryView extends StatelessWidget {
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 1.6,
+              childAspectRatio: 2.0,
             ),
             itemCount: controller.summaryMetrics.length,
             itemBuilder: (context, index) {
               final metric = controller.summaryMetrics[index];
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: AppColors.primaryGreen.withValues(alpha: 0.04),
                   borderRadius: BorderRadius.circular(16),
@@ -199,7 +199,7 @@ class DeviceHistoryView extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       metric['value'] ?? '-',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.primaryGreen),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primaryGreen),
                     ),
                   ],
                 ),
@@ -212,14 +212,8 @@ class DeviceHistoryView extends StatelessWidget {
   }
 
   Widget _buildRecordCard(BuildContext context, DeviceHistoryController controller, Map<String, dynamic> record, int displayIndex, int actualIndex) {
-    final chips = [
-      _chipData('Energy', _formatNumber(record['energy_kwh'], 'kWh')),
-      _chipData('Duration', _formatDuration(record['duration_minutes'])),
-      _chipData('Current', _formatRange(record['minCurrent'], record['maxCurrent'], 'A')),
-      _chipData('Voltage', _formatRange(record['minVoltage'], record['maxVoltage'], 'V')),
-    ].where((chip) => chip['value'] != '-').toList();
-
     return Container(
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -241,11 +235,11 @@ class DeviceHistoryView extends StatelessWidget {
             onExpansionChanged: (expanded) {
               controller.toggleExpanded(actualIndex);
             },
-            tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             title: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: AppColors.primaryGreen.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -265,30 +259,25 @@ class DeviceHistoryView extends StatelessWidget {
               ],
             ),
             subtitle: Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.only(top: 10),
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      Icon(Icons.schedule_rounded, size: 14, color: Colors.grey.shade400),
-                      const SizedBox(width: 4),
-                      Text(
-                        _formatDuration(record['duration_minutes']),
-                        style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(width: 16),
-                      Icon(Icons.person_outline_rounded, size: 14, color: Colors.grey.shade400),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          'By ${record['started_by'] ?? '-'}',
-                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+                  Icon(Icons.schedule_rounded, size: 14, color: AppColors.primaryGreen.withValues(alpha: 0.6)),
+                  const SizedBox(width: 4),
+                  Text(
+                    _formatDuration(record['duration_minutes']),
+                    style: TextStyle(fontSize: 13, color: AppColors.primaryGreen, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(width: 16),
+                  Icon(Icons.person_outline_rounded, size: 14, color: Colors.grey.shade400),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      'By ${record['started_by'] ?? '-'}',
+                      style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
@@ -314,11 +303,25 @@ class DeviceHistoryView extends StatelessWidget {
                         Expanded(child: _infoTile('Stopped By', record['stopped_by'] ?? '-')),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: chips.map((chip) => _metricChip(chip['label']!, chip['value']!)).toList(),
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.grey.shade100),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(child: _metricTileSmall('Energy', _formatNumber(record['energy_kwh'], 'kWh'))),
+                          _divider(),
+                          Expanded(child: _metricTileSmall('Duration', _formatDuration(record['duration_minutes']))),
+                          _divider(),
+                          Expanded(child: _metricTileSmall('Current', _formatRange(record['minCurrent'], record['maxCurrent'], 'A'))),
+                          _divider(),
+                          Expanded(child: _metricTileSmall('Voltage', _formatRange(record['minVoltage'], record['maxVoltage'], 'V'))),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -330,13 +333,28 @@ class DeviceHistoryView extends StatelessWidget {
     );
   }
 
-  Map<String, String> _chipData(String label, String value) {
-    return {'label': label, 'value': value};
+  Widget _divider() => Container(width: 1, height: 24, color: Colors.grey.shade200, margin: const EdgeInsets.symmetric(horizontal: 8));
+
+  Widget _metricTileSmall(String label, String value) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(fontSize: 8, color: Colors.grey.shade500, fontWeight: FontWeight.w600, letterSpacing: 0.3)),
+        const SizedBox(height: 4),
+        Text(
+          value, 
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.primaryGreen),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
   }
 
-  Widget _metricChip(String label, String value) {
+  Widget _metricTile(String label, String value) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.primaryGreen.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(16),
@@ -347,7 +365,12 @@ class DeviceHistoryView extends StatelessWidget {
         children: [
           Text(label, style: TextStyle(fontSize: 9, color: Colors.grey.shade500, fontWeight: FontWeight.w600, letterSpacing: 0.3)),
           const SizedBox(height: 2),
-          Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.primaryGreen)),
+          Text(
+            value, 
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primaryGreen),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );

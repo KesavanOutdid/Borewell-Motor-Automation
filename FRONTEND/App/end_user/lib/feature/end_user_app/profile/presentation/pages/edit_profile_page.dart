@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../../core/config/env.dart';
@@ -244,14 +245,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
               keyboardType: TextInputType.phone,
               maxLength: 10,
               enabled: false,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             ),
             const SizedBox(height: 20),
             Obx(() => _buildTextField(
                   label: 'Password',
-                  hint: 'Update your password',
+                  hint: 'Update your 6-digit password',
                   icon: Icons.lock_outline,
                   controller: controller.passwordEditingController,
                   obscureText: !controller.isPasswordVisible.value,
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   suffixIcon: IconButton(
                     icon: Icon(
                       controller.isPasswordVisible.value
@@ -326,6 +331,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     Widget? suffixIcon,
     int? maxLength,
     bool enabled = true,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -347,6 +353,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           keyboardType: keyboardType,
           obscureText: obscureText,
           maxLength: maxLength,
+          inputFormatters: inputFormatters,
           style: TextStyle(
             color: enabled 
                 ? (isDark ? Colors.white : AppColors.textPrimary)

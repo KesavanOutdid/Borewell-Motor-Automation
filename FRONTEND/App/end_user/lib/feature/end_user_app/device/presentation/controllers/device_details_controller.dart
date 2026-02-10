@@ -29,6 +29,8 @@ class DeviceDetailsController extends GetxController {
   Timer? _heartbeatTimer;
   String? _socketSerial;
   bool? _previousMotorRunning;
+  DateTime? _lastCommandTime;
+  bool? _lastCommandStatus;
   static const Duration _istOffset = Duration(hours: 5, minutes: 30);
   static const Duration _heartbeatGrace = Duration(seconds: 120);
 
@@ -315,6 +317,9 @@ class DeviceDetailsController extends GetxController {
         final message = body['message']?.toString() ?? 'Device updated';
         _showMessage(message);
         
+        _lastCommandTime = DateTime.now();
+        _lastCommandStatus = start;
+        
         liveData['motorStatus'] = start ? 'Running' : 'Stopped';
         liveData['deviceStatus'] = start ? 'Running' : 'Ready';
         liveData.refresh();
@@ -487,6 +492,17 @@ class DeviceDetailsController extends GetxController {
   void _applyStatusPayload(Map<String, dynamic> payload) {
     _startHeartbeatTimer();
     final running = payload['motor_running'] == true;
+    
+    // Ignore updates that contradict a recent command (last 10 seconds)
+    if (_lastCommandTime != null && _lastCommandStatus != null) {
+      if (DateTime.now().difference(_lastCommandTime!) < const Duration(seconds: 10)) {
+        if (running != _lastCommandStatus) {
+          print('🔧 [DETAILS] Ignoring contradictory status update (command pending)');
+          return;
+        }
+      }
+    }
+
     final timestamp = _formatDate(payload['timestamp']) ?? liveData['lastUpdate'];
     liveData['motorStatus'] = running ? 'Running' : 'Stopped';
     liveData['deviceStatus'] = running ? 'Running' : 'Ready';
@@ -630,7 +646,6 @@ class DeviceDetailsController extends GetxController {
     }
 
     final isRunning = data['start_status'] == true;
-    final wasRunning = _previousMotorRunning == true;
 
     final alertValue = _formatMetric(data['alert'] ?? telemetry['alert']);
     final persistAlert = (alertValue == '-' || alertValue.isEmpty) 

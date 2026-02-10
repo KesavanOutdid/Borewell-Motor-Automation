@@ -316,10 +316,6 @@ class DeviceAnalyticsView extends StatelessWidget {
               const SizedBox(height: 16),
               _buildMetricsRow(chartData),
               const SizedBox(height: 16),
-              if (data.summary != null)
-                _buildPerformanceScoreCard(controller),
-              if (data.summary != null)
-                const SizedBox(height: 16),
               _buildDailyOverview(chartData),
               const SizedBox(height: 16),
               _buildDetailedStats(controller, chartData),
