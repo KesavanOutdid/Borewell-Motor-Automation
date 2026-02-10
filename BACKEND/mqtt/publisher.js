@@ -146,8 +146,8 @@ async function sendHeartbeat() {
             return;
         }
 
-        // Random Online/Offline when motor is off
-        const randomStatus = Math.random() > 0.5 ? "Online" : "Offline";
+        // Send Online status for heartbeat
+        const deviceStatus = "Online";
 
         publish(`borewell/${d.serial_number}/heartbeat`, {
             v: 1,
@@ -156,7 +156,7 @@ async function sendHeartbeat() {
             imei_number: d.imei_number,
             user_id: d.assigned_user_id,
             timestamp: new Date().toISOString(),
-            device_status: randomStatus,
+            device_status: deviceStatus,
             signal_strength: 10 + Math.floor(Math.random() * 10)
         });
     });

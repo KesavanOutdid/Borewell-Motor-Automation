@@ -422,7 +422,6 @@ class DeviceDetailsController extends GetxController {
 
   void _scheduleReconnect() {
     _disconnectSocket();
-    _resetHeartbeatState();
     _reconnectTimer?.cancel();
     if (serialNumber == null || serialNumber!.trim().isEmpty) {
       return;
@@ -486,6 +485,7 @@ class DeviceDetailsController extends GetxController {
   }
 
   void _applyStatusPayload(Map<String, dynamic> payload) {
+    _startHeartbeatTimer();
     final running = payload['motor_running'] == true;
     final timestamp = _formatDate(payload['timestamp']) ?? liveData['lastUpdate'];
     liveData['motorStatus'] = running ? 'Running' : 'Stopped';
@@ -509,6 +509,7 @@ class DeviceDetailsController extends GetxController {
   }
 
   void _applyTelemetryPayload(Map<String, dynamic> telemetry) {
+    _startHeartbeatTimer();
     if (telemetry['motor_frequency_hz'] != null) {
       liveData['motorFrequency'] = _formatMetric(telemetry['motor_frequency_hz'], suffix: ' Hz');
     }
@@ -544,6 +545,7 @@ class DeviceDetailsController extends GetxController {
   }
 
   void _applyAlertPayload(Map<String, dynamic> payload) {
+    _startHeartbeatTimer();
     final alertMessage = _extractAlertMessage(payload);
     if (alertMessage != '-' && alertMessage.isNotEmpty) {
       liveData['alert'] = alertMessage;
@@ -660,6 +662,22 @@ class DeviceDetailsController extends GetxController {
     });
 
     _previousMotorRunning = isRunning;
+
+    // Check if online based on last update
+    final lastUpdate = data['updatedAt'] ?? data['timestamp'];
+    if (lastUpdate != null) {
+      try {
+        final dateTime = DateTime.parse(lastUpdate.toString()).toUtc();
+        final now = DateTime.now().toUtc();
+        if (now.difference(dateTime).inSeconds < 120) {
+          _startHeartbeatTimer();
+        } else {
+          isConnected.value = false;
+        }
+      } catch (_) {
+        isConnected.value = false;
+      }
+    }
   }
 
   String _formatMetric(dynamic value, {String suffix = ''}) {

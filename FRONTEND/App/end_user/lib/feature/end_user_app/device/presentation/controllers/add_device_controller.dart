@@ -13,6 +13,7 @@ import '../pages/qr_scanner_page.dart';
 
 class ConfigureDeviceController extends GetxController {
   final imeiController = TextEditingController();
+  final nicknameController = TextEditingController();
   final locationController = TextEditingController();
   final motorHpController = TextEditingController();
   
@@ -51,6 +52,7 @@ class ConfigureDeviceController extends GetxController {
   @override
   void onClose() {
     imeiController.dispose();
+    nicknameController.dispose();
     locationController.dispose();
     motorHpController.dispose();
     super.onClose();
@@ -543,6 +545,16 @@ class ConfigureDeviceController extends GetxController {
       return false;
     }
 
+    if (nicknameController.text.trim().isEmpty) {
+      Get.snackbar(
+        'Validation Error',
+        'Please enter a device nickname',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red[100],
+      );
+      return false;
+    }
+
     if (!RegExp(r'^[0-9]{15}$').hasMatch(imeiController.text.trim())) {
       Get.snackbar(
         'Validation Error',
@@ -595,6 +607,7 @@ class ConfigureDeviceController extends GetxController {
         body: jsonEncode({
           "serial_number": serialNumber,
           "imei_number": imeiController.text.trim(),
+          "device_nickname": nicknameController.text.trim(),
           "user_email": userEmail,
           "timestamp": DateTime.now().toIso8601String(),
           "latitude": selectedLatitude?.toString() ?? "0",

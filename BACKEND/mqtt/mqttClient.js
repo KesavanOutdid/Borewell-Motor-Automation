@@ -105,8 +105,23 @@ client.on("message", async (topic, message) => {
 
         try {
             await db.collection(collection).insertOne(entry);
+            
+            // Update the device collection with latest timestamp and status
+            const deviceUpdate = {
+                updatedAt: new Date(item.timestamp || loggedAt),
+                device_status: (item.device_status || type).toLowerCase()
+            };
+
+            if (type === "STATUS" && item.motor_running !== undefined) {
+                deviceUpdate.start_status = item.motor_running;
+            }
+
+            await db.collection("devices").updateOne(
+                { serial_number: item.serial_number },
+                { $set: deviceUpdate }
+            );
         } catch (err) {
-            console.error(`DB insert error (${collection}):`, err.message);
+            console.error(`DB insert/update error (${collection}):`, err.message);
         }
 
         /* ------------------------------------------------------ */

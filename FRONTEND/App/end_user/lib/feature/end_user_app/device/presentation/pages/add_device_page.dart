@@ -80,6 +80,14 @@ class ConfigureDeviceView extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
                       _buildTextField(
+                        controller: controller.nicknameController,
+                        label: 'Device Nickname',
+                        hint: 'e.g., Main Borewell',
+                        icon: Icons.drive_file_rename_outline_rounded,
+                        isDark: isDark,
+                      ),
+                      const SizedBox(height: 20),
+                      _buildTextField(
                         controller: controller.locationController,
                         label: 'Device Location',
                         hint: 'e.g., Farm Sector A',
