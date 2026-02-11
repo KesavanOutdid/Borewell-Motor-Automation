@@ -99,11 +99,17 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
     };
 
     useEffect(() => {
-        if (isModalEdit && currentUserDetails) {
+        if (isModalEdit && currentUserDetails && !originalDetails) {
             setOriginalDetails(JSON.parse(JSON.stringify(currentUserDetails)));
             setIsFormDirty(false);
         }
-    }, [isModalEdit, currentUserDetails]); 
+        
+        // Reset original details when modal is closed
+        if (!isModalEdit) {
+            setOriginalDetails(null);
+            setIsFormDirty(false);
+        }
+    }, [isModalEdit, currentUserDetails, originalDetails]); 
 
     useEffect(() => {
         if (originalDetails && currentUserDetails) {

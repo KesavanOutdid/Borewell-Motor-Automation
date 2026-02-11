@@ -42,7 +42,7 @@ client.on('connect', () => {
     intervals.push(setInterval(sendHeartbeat, 10000)); 
     intervals.push(setInterval(sendStatusAck, 10000)); 
     intervals.push(setInterval(sendTelemetry, 10000));
-    intervals.push(setInterval(sendAlert, 60000)); 
+    intervals.push(setInterval(sendAlert, 10000)); 
 
     // intervals.push(setInterval(sendHeartbeat, 25 * 60 * 1000)); // 25 minutes
     // intervals.push(setInterval(sendStatusAck, 2 * 60 * 1000)); // 25 minutes
@@ -156,7 +156,6 @@ async function sendHeartbeat() {
         // When motor running → force Online heartbeat ONLY for this device
         if (d.start_status === true) {
             publish(`borewell/${d.serial_number}/heartbeat`, {
-                v: 1,
                 message_type: "HEARTBEAT",
                 serial_number: d.serial_number,
                 imei_number: d.imei_number,
@@ -172,7 +171,6 @@ async function sendHeartbeat() {
         const deviceStatus = "Online";
 
         publish(`borewell/${d.serial_number}/heartbeat`, {
-            v: 1,
             message_type: "HEARTBEAT",
             serial_number: d.serial_number,
             imei_number: d.imei_number,
@@ -196,7 +194,6 @@ async function sendStatusAck() {
 
     devices.forEach(d => {
         publish(`borewell/${d.serial_number}/status`, {
-            v: 1,
             message_type: "STATUS",
             serial_number: d.serial_number,
             imei_number: d.imei_number,
@@ -222,7 +219,6 @@ async function sendTelemetry() {
         if (!d.start_status) return; // motor OFF → do not send
 
         publish(`borewell/${d.serial_number}/telemetry`, {
-            version: 1,
             type: "TELEMETRY",
             serial_number: d.serial_number,
             imei_number: d.imei_number,
@@ -261,7 +257,6 @@ async function sendAlert() {
         const alert = alertTypes[Math.floor(Math.random() * alertTypes.length)];
 
         publish(`borewell/${d.serial_number}/alert`, {
-            v: 1,
             message_type: "ALERT",
             serial_number: d.serial_number,
             imei_number: d.imei_number,
