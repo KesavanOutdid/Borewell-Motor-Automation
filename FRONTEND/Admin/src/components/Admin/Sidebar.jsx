@@ -27,7 +27,7 @@ const Sidebar = () => {
     return (
         <aside className="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3 sidebar-topographic" id="sidenav-main">
             <div className="sidenav-header">
-                <i className="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
+                <i className="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-xl-none" aria-hidden="true" id="iconSidenav" onClick={toggleSidebar}></i>
                 <Link className="navbar-brand m-0" href="#">
                     <img src="../assets/img/logo-ct.png" className="navbar-brand-img h-100" alt="main_logo"/>
                     <span className="ms-2 font-weight-bold">AgriPulse</span>
@@ -139,13 +139,13 @@ const Sidebar = () => {
                         </Link>
                     </li> */}
                 </ul>
-                <div className="sidebar-bottom-image">
+                {/* <div className="sidebar-bottom-image">
                     <img 
                         src="../assets/img/farming-scene.jpeg" 
                         alt="Agricultural Scene" 
                         className="sidebar-farm-image"
                     />
-                </div>
+                </div> */}
             </div>
       </aside>
   );

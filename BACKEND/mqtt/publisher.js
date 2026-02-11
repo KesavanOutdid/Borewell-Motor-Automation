@@ -78,6 +78,32 @@ function publish(topic, payload) {
 /* --------------------------------------------------------------------- */
 /* BOOT – only when motor is OFF                                       */
 /* --------------------------------------------------------------------- */
+// async function sendBoot() {
+//     try {
+//         const devices = await getConfiguredDevices();
+
+//         devices.forEach(d => {
+//             if (d.start_status) return;  // motor ON → do NOT send BOOT
+
+//             publish(`borewell/${d.serial_number}/boot`, {
+//                 v: 1,
+//                 message_type: "BOOT",
+//                 serial_number: d.serial_number,
+//                 imei_number: d.imei_number,
+//                 user_id: d.assigned_user_id,
+//                 timestamp: new Date().toISOString(),
+//                 device_status: "Ready",
+//                 power_status: "ON",
+//                 network_status: "4G Connected",
+//                 signal_strength: Math.floor(Math.random() * 100),
+//                 voltage: 230 + Math.random() * 10
+//             });
+//         });
+//     } catch (error) {
+//         console.error('Error sending boot notifications:', error.message);
+//     }
+// }
+
 async function sendBoot() {
     try {
         const devices = await getConfiguredDevices();
@@ -86,17 +112,13 @@ async function sendBoot() {
             if (d.start_status) return;  // motor ON → do NOT send BOOT
 
             publish(`borewell/${d.serial_number}/boot`, {
-                v: 1,
                 message_type: "BOOT",
                 serial_number: d.serial_number,
                 imei_number: d.imei_number,
-                user_id: d.assigned_user_id,
                 timestamp: new Date().toISOString(),
-                device_status: "Ready",
                 power_status: "ON",
                 network_status: "4G Connected",
                 signal_strength: Math.floor(Math.random() * 100),
-                voltage: 230 + Math.random() * 10
             });
         });
     } catch (error) {
