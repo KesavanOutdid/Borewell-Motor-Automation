@@ -29,6 +29,11 @@ class DeviceController extends GetxController {
   }
 
   Future<void> updateDeviceStatus(String deviceId, String status) async {
+    // Prevent redundant status updates
+    if (deviceDetails['status'] == status) {
+      Get.snackbar("Info", "Device is already $status");
+      return;
+    }
     try {
       final url = Uri.parse(AppConfig.baseUrl + AppConfig.deviceEndpoint);
 

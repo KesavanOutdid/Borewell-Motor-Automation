@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:logger/logger.dart';
 import '../../../../../core/services/token_service.dart';
+import '../../../../../core/config/env.dart';
 import '../../data/models/order_model.dart';
 
 class OrdersController extends GetxController {
@@ -11,7 +12,7 @@ class OrdersController extends GetxController {
   var isLoading = false.obs;
   var selectedOrder = Rxn<OrderModel>();
   
-  final String baseUrl = 'http://192.168.0.29:3030';
+  final String baseUrl = AppConfig.baseUrl;
   
   late TokenService tokenService;
   final logger = Logger();

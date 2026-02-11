@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -33,11 +34,18 @@ class DeviceDetailsController extends GetxController {
   bool? _lastCommandStatus;
   static const Duration _istOffset = Duration(hours: 5, minutes: 30);
   static const Duration _heartbeatGrace = Duration(seconds: 120);
+  static const Duration _commandPendingWindow = Duration(seconds: 20);
 
   @override
   void onInit() {
     super.onInit();
     tokenService = Get.find<TokenService>();
+    
+    // Initialize with arguments if available
+    final args = Get.arguments;
+    if (args is Map<String, dynamic>) {
+      initialize(args);
+    }
   }
 
   @override
@@ -142,7 +150,7 @@ class DeviceDetailsController extends GetxController {
     return null;
   }
 
-  Future<void> fetchDeviceDetails() async {
+  Future<void> fetchDeviceDetails({bool silent = false}) async {
     print('🔧 [DETAILS] Fetching latest device details for $serialNumber');
     if (serialNumber == null || imeiNumber == null) {
       _showMessage('Missing device information');
@@ -155,7 +163,7 @@ class DeviceDetailsController extends GetxController {
       return;
     }
 
-    isLoading.value = true;
+    if (!silent) isLoading.value = true;
     final url = Uri.parse(AppConfig.baseUrl + AppConfig.userDeviceDetailsEndpoint);
     print('🔧 [DETAILS] API Request: POST $url');
 
@@ -189,21 +197,33 @@ class DeviceDetailsController extends GetxController {
         _showMessage(json['message'] ?? 'Failed to load device (${response.statusCode})');
       }
     } catch (e) {
-      _showMessage('Connection failed: $e');
+      if (e is SocketException || e.toString().contains('SocketException')) {
+        _showMessage('Network connection failed. Please check your internet.');
+      } else {
+        _showMessage('Connection failed: $e');
+      }
     } finally {
-      isLoading.value = false;
+      if (!silent) isLoading.value = false;
     }
   }
 
   Future<void> refreshData() async {
-    await fetchDeviceDetails();
+    await fetchDeviceDetails(silent: true);
   }
 
   Future<void> startMotor() async {
+    if (liveData['motorStatus'] == 'Running') {
+      _showMessage('Motor is already running');
+      return;
+    }
     await _sendStartStopCommand(true);
   }
 
   Future<void> stopMotor() async {
+    if (liveData['motorStatus'] == 'Stopped') {
+      _showMessage('Motor is already stopped');
+      return;
+    }
     await _sendStartStopCommand(false);
   }
 
@@ -323,6 +343,14 @@ class DeviceDetailsController extends GetxController {
         liveData['motorStatus'] = start ? 'Running' : 'Stopped';
         liveData['deviceStatus'] = start ? 'Running' : 'Ready';
         liveData.refresh();
+
+        // Sync with HomeController
+        try {
+          final homeController = Get.find<HomeController>();
+          homeController.fetchDevices(silent: true);
+        } catch (e) {
+          print('🔧 [DETAILS] Could not sync with HomeController: $e');
+        }
       } else if (response.statusCode == 401) {
         _handleUnauthorized();
       } else if (response.statusCode == 404) {
@@ -438,6 +466,9 @@ class DeviceDetailsController extends GetxController {
     if (serialNumber == null || serialNumber!.trim().isEmpty) return;
     
     if (data is Map) {
+      final incomingSerial = data['serial_number']?.toString();
+      if (incomingSerial != serialNumber) return;
+
       final payload = data['payload'];
       if (payload is Map) {
         _applyStatusPayload(Map<String, dynamic>.from(payload));
@@ -449,6 +480,9 @@ class DeviceDetailsController extends GetxController {
     if (serialNumber == null || serialNumber!.trim().isEmpty) return;
     
     if (data is Map) {
+      final incomingSerial = data['serial_number']?.toString();
+      if (incomingSerial != serialNumber) return;
+
       final telemetry = data['telemetry'];
       if (telemetry is Map) {
         _applyTelemetryPayload(Map<String, dynamic>.from(telemetry));
@@ -460,6 +494,9 @@ class DeviceDetailsController extends GetxController {
     if (serialNumber == null || serialNumber!.trim().isEmpty) return;
     
     if (data is Map) {
+      final incomingSerial = data['serial_number']?.toString();
+      if (incomingSerial != serialNumber) return;
+
       final payload = data['payload'];
       if (payload is Map) {
         _applyAlertPayload(Map<String, dynamic>.from(payload));
@@ -471,6 +508,9 @@ class DeviceDetailsController extends GetxController {
     if (serialNumber == null || serialNumber!.trim().isEmpty) return;
     
     if (data is Map) {
+      final incomingSerial = data['serial_number']?.toString();
+      if (incomingSerial != serialNumber) return;
+
       final payload = data['payload'];
       if (payload is Map) {
         _applyHeartbeatPayload(Map<String, dynamic>.from(payload));
@@ -482,6 +522,9 @@ class DeviceDetailsController extends GetxController {
     if (serialNumber == null || serialNumber!.trim().isEmpty) return;
     
     if (data is Map) {
+      final incomingSerial = data['serial_number']?.toString();
+      if (incomingSerial != serialNumber) return;
+
       final payload = data['payload'];
       if (payload is Map) {
         _applyBootPayload(Map<String, dynamic>.from(payload));
@@ -493,9 +536,9 @@ class DeviceDetailsController extends GetxController {
     _startHeartbeatTimer();
     final running = payload['motor_running'] == true;
     
-    // Ignore updates that contradict a recent command (last 10 seconds)
+    // Ignore updates that contradict a recent command (last window)
     if (_lastCommandTime != null && _lastCommandStatus != null) {
-      if (DateTime.now().difference(_lastCommandTime!) < const Duration(seconds: 10)) {
+      if (DateTime.now().difference(_lastCommandTime!) < _commandPendingWindow) {
         if (running != _lastCommandStatus) {
           print('🔧 [DETAILS] Ignoring contradictory status update (command pending)');
           return;
@@ -647,12 +690,23 @@ class DeviceDetailsController extends GetxController {
 
     final isRunning = data['start_status'] == true;
 
+    // Ignore status updates that contradict a recent command (last window)
+    bool shouldUpdateStatus = true;
+    if (_lastCommandTime != null && _lastCommandStatus != null) {
+      if (DateTime.now().difference(_lastCommandTime!) < _commandPendingWindow) {
+        if (isRunning != _lastCommandStatus) {
+          print('🔧 [DETAILS] Ignoring contradictory API status (command pending)');
+          shouldUpdateStatus = false;
+        }
+      }
+    }
+
     final alertValue = _formatMetric(data['alert'] ?? telemetry['alert']);
     final persistAlert = (alertValue == '-' || alertValue.isEmpty) 
         ? (liveData['alert'] ?? '-') 
         : alertValue;
 
-    liveData.assignAll({
+    final newLiveData = {
       'serialNumber': data['serial_number'] ?? serialNumber ?? '-',
       'nickname': data['device_nickname'] ?? liveData['nickname'] ?? '-',
       'imei': data['imei_number'] ?? imeiNumber ?? '-',
@@ -661,8 +715,8 @@ class DeviceDetailsController extends GetxController {
       'location': locationText ?? liveData['location'] ?? '-',
       'latitude': latitude ?? 28.6139,
       'longitude': longitude ?? 77.2090,
-      'motorStatus': isRunning ? 'Running' : 'Stopped',
-      'deviceStatus': isRunning ? 'Running' : 'Ready',
+      'motorStatus': shouldUpdateStatus ? (isRunning ? 'Running' : 'Stopped') : liveData['motorStatus'],
+      'deviceStatus': shouldUpdateStatus ? (isRunning ? 'Running' : 'Ready') : liveData['deviceStatus'],
       'lastStart': _formatDate(data['startAt']) ?? liveData['lastStart'] ?? '-',
       'lastStop': _formatDate(data['stopAt']) ?? liveData['lastStop'] ?? '-',
       'lastUpdate': _formatDate(data['updatedAt'] ?? data['timestamp']) ?? liveData['lastUpdate'] ?? '-',
@@ -674,9 +728,13 @@ class DeviceDetailsController extends GetxController {
       'flowRate': _formatMetric(telemetry['flow_lpm'], suffix: ' LPM'),
       'motorSpeed': _formatMetric(telemetry['motor_rpm'], suffix: ' RPM'),
       'signalStrength': _formatMetric(telemetry['signal_strength']),
-    });
+    };
 
-    _previousMotorRunning = isRunning;
+    liveData.assignAll(newLiveData);
+
+    if (shouldUpdateStatus) {
+      _previousMotorRunning = isRunning;
+    }
 
     // Check if online based on last update
     final lastUpdate = data['updatedAt'] ?? data['timestamp'];

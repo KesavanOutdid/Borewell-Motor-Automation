@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:math';
 import 'package:logger/logger.dart';
 import '../../../../../core/services/token_service.dart';
+import '../../../../../core/config/env.dart';
 
 class ShopController extends GetxController {
   var products = <Map<String, dynamic>>[].obs;
@@ -15,7 +17,7 @@ class ShopController extends GetxController {
   var hasNextPage = false.obs;
   var searchQuery = ''.obs;
   
-  final String baseUrl = 'http://192.168.0.29:3030';
+  final String baseUrl = AppConfig.baseUrl;
   final int limit = 10;
   
   late TokenService tokenService;
@@ -115,9 +117,15 @@ class ShopController extends GetxController {
     } catch (e, stackTrace) {
       logger.e('❌ Exception caught: $e');
       logger.e('Stack trace: $stackTrace');
+      
+      String errorMsg = "Failed to load products. Please try again.";
+      if (e is SocketException) {
+        errorMsg = "Network connection failed. Please check your internet.";
+      }
+
       Get.defaultDialog(
         title: 'Error',
-        middleText: 'Failed to load products: $e',
+        middleText: errorMsg,
         textConfirm: 'OK',
         confirmTextColor: Colors.white,
         onConfirm: () => Get.back(),

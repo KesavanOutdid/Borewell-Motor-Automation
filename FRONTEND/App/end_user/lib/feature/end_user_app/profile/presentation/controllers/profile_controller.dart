@@ -125,7 +125,11 @@ class ProfileController extends GetxController {
       }
     } catch (e) {
       isLoading.value = false;
-      errorMessage.value = "Connection failed: $e";
+      if (e is SocketException) {
+        errorMessage.value = "Network connection failed. Please check your internet.";
+      } else {
+        errorMessage.value = "An error occurred. Please try again.";
+      }
       return;
     }
   }
@@ -225,7 +229,10 @@ class ProfileController extends GetxController {
       }
     } catch (e) {
       isUpdating.value = false;
-      return "Connection failed: $e";
+      if (e is SocketException) {
+        return "Network connection failed. Please check your internet.";
+      }
+      return "An error occurred. Please try again.";
     }
   }
 
@@ -302,7 +309,11 @@ class ProfileController extends GetxController {
       }
     } catch (e) {
       isUpdating.value = false;
-      Get.rawSnackbar(title: "Error", message: "Connection failed: $e");
+      String msg = "An error occurred. Please try again.";
+      if (e is SocketException) {
+        msg = "Network connection failed. Please check your internet.";
+      }
+      Get.rawSnackbar(title: "Error", message: msg);
     }
   }
 
@@ -348,7 +359,11 @@ class ProfileController extends GetxController {
       }
     } catch (e) {
       isUpdating.value = false;
-      Get.rawSnackbar(title: "Error", message: "Connection failed: $e");
+      String msg = "An error occurred. Please try again.";
+      if (e is SocketException) {
+        msg = "Network connection failed. Please check your internet.";
+      }
+      Get.rawSnackbar(title: "Error", message: msg);
     }
   }
 
@@ -404,7 +419,10 @@ class ProfileController extends GetxController {
       }
     } catch (e) {
       isUpdating.value = false;
-      return "Connection failed: $e";
+      if (e is SocketException) {
+        return "Network connection failed. Please check your internet.";
+      }
+      return "An error occurred. Please try again.";
     }
   }
 }

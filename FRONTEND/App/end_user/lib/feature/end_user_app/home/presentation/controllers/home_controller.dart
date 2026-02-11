@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -20,6 +21,10 @@ class HomeController extends GetxController {
   final _storage = GetStorage();
   IO.Socket? _socket;
   Timer? _offlineCheckTimer;
+
+  // Track pending commands to avoid status mismatch during socket lag
+  final _pendingCommands = <String, _PendingCommand>{};
+  static const Duration _commandPendingWindow = Duration(seconds: 20);
 
   void setFilter(String filter) {
     selectedFilter.value = filter;
@@ -60,6 +65,24 @@ class HomeController extends GetxController {
           _updateDeviceLastSeen(serial);
           if (payload != null) {
             final newStatus = payload['motor_running'] == true;
+            
+            // Respect pending command window
+            if (_pendingCommands.containsKey(serial)) {
+              final pending = _pendingCommands[serial]!;
+              if (DateTime.now().difference(pending.time) < _commandPendingWindow) {
+                if (newStatus != pending.status) {
+                  print('🏠 [HOME] Ignoring contradictory status for $serial (command pending)');
+                  return;
+                } else {
+                  // Confirmed! Clear pending
+                  _pendingCommands.remove(serial);
+                }
+              } else {
+                // Window expired
+                _pendingCommands.remove(serial);
+              }
+            }
+
             print('🏠 [HOME] Updating device $serial status to: ${newStatus ? 'RUNNING' : 'STOPPED'}');
             _updateDeviceStatus(serial, newStatus);
           }
@@ -109,21 +132,26 @@ class HomeController extends GetxController {
     }
   }
 
+  void markCommandPending(String serial, bool status) {
+    _pendingCommands[serial] = _PendingCommand(status, DateTime.now());
+  }
+
   @override
   void onReady() {
     super.onReady();
     _initSocket();
     fetchDevices();
     
-    // Periodically refresh the UI to update Online/Offline status
-    _offlineCheckTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+    // Periodically refresh the UI to update Online/Offline status (last seen text)
+    _offlineCheckTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      // Just refresh the obs without re-fetching or re-assigning
       devices.refresh();
     });
   }
 
-  Future<void> fetchDevices() async {
-    print('🏠 [HOME] Fetching user assigned devices...');
-    isLoading.value = true;
+  Future<void> fetchDevices({bool silent = false}) async {
+    print('🏠 [HOME] Fetching user assigned devices (silent: $silent)...');
+    if (!silent) isLoading.value = true;
 
     final url = Uri.parse(AppConfig.baseUrl + AppConfig.userAssignedDevicesEndpoint);
     final token = tokenService.getToken();
@@ -176,18 +204,25 @@ class HomeController extends GetxController {
                   mapDevice['updatedAt'] = existingUpdate;
                   mapDevice['start_status'] = existingDevice['start_status'];
                 }
+
+                // ALSO respect pending command window during API fetch
+                if (_pendingCommands.containsKey(serial)) {
+                  final pending = _pendingCommands[serial]!;
+                  if (DateTime.now().difference(pending.time) < _commandPendingWindow) {
+                    mapDevice['start_status'] = pending.status;
+                  }
+                }
               }
             }
 
             final lat = _parseDouble(mapDevice['latitude']);
             final lng = _parseDouble(mapDevice['longitude']);
             
+            // Optimization: Don't await geocoding during main fetch to speed up loading
+            // Locations will be updated asynchronously if missing
             if (mapDevice['location'] == null || mapDevice['location'].toString().isEmpty || mapDevice['location'] == 'No Location') {
               if (lat != null && lng != null) {
-                final address = await _getAddressFromCoordinates(lat, lng);
-                if (address != null) {
-                  mapDevice['location'] = address;
-                }
+                _updateLocationAsync(serial, lat, lng);
               }
             }
             updatedDevices.add(mapDevice);
@@ -220,16 +255,58 @@ class HomeController extends GetxController {
     } catch (e) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
-          Get.snackbar("Error", "Connection failed: $e");
+          String errorMsg = "Connection failed: $e";
+          if (e is SocketException || e.toString().contains('SocketException')) {
+            errorMsg = "Network connection failed. Please check your internet.";
+          }
+          Get.snackbar("Error", errorMsg);
         }
       });
     } finally {
-      isLoading.value = false;
+      if (!silent) isLoading.value = false;
+    }
+  }
+
+  Future<void> _updateLocationAsync(String serial, double lat, double lng) async {
+    try {
+      final address = await _getAddressFromCoordinates(lat, lng);
+      if (address != null) {
+        int index = devices.indexWhere((d) => (d['serial_number'] ?? d['serialNumber']) == serial);
+        if (index != -1) {
+          var device = Map<String, dynamic>.from(devices[index]);
+          device['location'] = address;
+          devices[index] = device;
+          devices.refresh();
+        }
+      }
+    } catch (e) {
+      print('🏠 [HOME] Async location update failed: $e');
     }
   }
 
   Future<void> toggleDevice(String serialNumber, String imei, bool status) async {
     print('🏠 [HOME] Toggle device request: $serialNumber, Action: ${status ? 'START' : 'STOP'}');
+    
+    // Check current status before sending command
+    final deviceIndex = devices.indexWhere((d) => (d['serial_number'] ?? d['serialNumber']) == serialNumber);
+    if (deviceIndex != -1) {
+      final device = devices[deviceIndex];
+      final currentRunning = isDeviceRunning(device);
+      if (currentRunning == status) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (Get.overlayContext != null) {
+            Get.snackbar(
+              "Info", 
+              "Motor is already ${status ? 'running' : 'stopped'}",
+              snackPosition: SnackPosition.BOTTOM,
+              duration: const Duration(seconds: 2),
+            );
+          }
+        });
+        return;
+      }
+    }
+
     try {
       final url = Uri.parse(AppConfig.baseUrl + AppConfig.startStopDeviceEndpoint);
       final token = tokenService.getToken();
@@ -256,6 +333,9 @@ class HomeController extends GetxController {
       print('🏠 [HOME] Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
+        // Mark as pending locally to handle socket lag
+        markCommandPending(serialNumber, status);
+        
         // Update local state immediately for better UX and sorting
         _updateDeviceStatus(serialNumber, status);
         
@@ -739,4 +819,10 @@ class HomeController extends GetxController {
       return '${difference.inDays}d ago';
     }
   }
+}
+
+class _PendingCommand {
+  final bool status;
+  final DateTime time;
+  _PendingCommand(this.status, this.time);
 }

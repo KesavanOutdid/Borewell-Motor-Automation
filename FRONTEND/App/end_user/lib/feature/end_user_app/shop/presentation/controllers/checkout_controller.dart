@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:logger/logger.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../../../../../core/services/token_service.dart';
+import '../../../../../core/config/env.dart';
 import '../../data/models/order_model.dart';
 import '../../data/models/cart_model.dart';
 import '../controllers/cart_controller.dart';
@@ -13,7 +14,7 @@ import '../../../../../utils/theme/app_colors.dart';
 class CheckoutController extends GetxController {
   var isProcessing = false.obs;
   
-  final String baseUrl = 'http://192.168.0.29:3030';
+  final String baseUrl = AppConfig.baseUrl;
   final String razorpayKeyId = 'rzp_test_oHoZ3Q1fF6pYEI';
   
   late TokenService tokenService;
