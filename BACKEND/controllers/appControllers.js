@@ -1329,10 +1329,12 @@ exports.addCart = async (req, res, next) => {
         let cart = await Cart.findOne({ user_id });
 
         if (!cart) {
-            // Create new cart
-            const cartCount = await Cart.countDocuments();
+            // Create new cart with a reliable unique cart_id
+            const lastCart = await Cart.findOne().sort({ cart_id: -1 });
+            const nextId = lastCart && lastCart.cart_id ? lastCart.cart_id + 1 : 1;
+
             cart = new Cart({
-                cart_id: cartCount + 1,
+                cart_id: nextId,
                 user_id,
                 items: [],
                 createdBy: user.user_email
