@@ -500,7 +500,7 @@ cp .env.example .env
 **Edit `.env` file:**
 ```env
 # MongoDB
-MONGODB_URI=mongodb://localhost:27017/borewell_automation
+MONGODB_URI=mongodb://localhost:27017/agri_automation
 # or MongoDB Atlas: mongodb+srv://user:pass@cluster.mongodb.net/db
 
 # JWT Secret

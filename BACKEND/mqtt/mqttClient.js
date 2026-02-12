@@ -33,11 +33,11 @@ client.on('connect', () => {
     console.log(`MQTT Connected as ${clientId}`);
 
     const topics = [
-        'borewell/+/telemetry',
-        'borewell/+/alert',
-        'borewell/+/status',
-        'borewell/+/boot',
-        'borewell/+/heartbeat',
+        'agri/+/telemetry',
+        'agri/+/alert',
+        'agri/+/phase',
+        'agri/+/boot',
+        'agri/+/heartbeat',
     ];
 
     client.subscribe(topics, { qos: 0 }, (err, granted) => {
@@ -82,42 +82,54 @@ client.on("message", async (topic, message) => {
         return;
     }
 
+    const map = {
+        TELEMETRY: "agri_telemetry",
+        ALERT: "agri_alerts",
+        PHASE: "agri_status",
+        BOOT: "agri_boot",
+        HEARTBEAT: "agri_heartbeat"
+    };
+
     for (const item of data) {
+        // Normalize keys to support both old and new formats during transition
+        const serialNumber = item.SERIAL_NUMBER || item.serial_number;
+        const imeiNumber = item.IMEI_NUMBER || item.imei_number;
+        const timestamp = item.TIMESTAMP || item.timestamp;
+        const motorRunning = item.MOTOR_RUNNING !== undefined ? item.MOTOR_RUNNING : item.motor_running;
+
+        if (!serialNumber) continue;
+
+        // Fetch device to get assigned user if not in payload
+        const device = await db.collection("devices").findOne({ serial_number: serialNumber });
+        const userId = device ? device.assigned_user_id : (item.USER_ID || item.user_id);
 
         const entry = {
             ...item,
             receivedAt: loggedAt,
             topic,
-            type
+            type,
+            serial_number: serialNumber, 
+            imei_number: imeiNumber,
+            user_id: userId
         };
 
-        /* ------------------------------------------------------ */
-        /* Save RAW message                                       */
-        /* ------------------------------------------------------ */
-        const map = {
-            TELEMETRY: "borewell_telemetry",
-            ALERT: "borewell_alerts",
-            STATUS: "borewell_status",
-            BOOT: "borewell_boot",
-            HEARTBEAT: "borewell_heartbeat"
-        };
-        const collection = map[type] || "borewell_unknown";
+        const collection = map[type] || "agri_unknown";
 
         try {
             await db.collection(collection).insertOne(entry);
             
             // Update the device collection with latest timestamp and status
             const deviceUpdate = {
-                updatedAt: new Date(item.timestamp || loggedAt),
-                device_status: (item.device_status || type).toLowerCase()
+                updatedAt: new Date(timestamp || loggedAt),
+                device_status: (item.DEVICE_STATUS || item.device_status || type).toLowerCase()
             };
 
-            if (type === "STATUS" && item.motor_running !== undefined) {
-                deviceUpdate.start_status = item.motor_running;
+            if ((type === "PHASE" || type === "STATUS") && motorRunning !== undefined) {
+                deviceUpdate.start_status = motorRunning;
             }
 
             await db.collection("devices").updateOne(
-                { serial_number: item.serial_number },
+                { serial_number: serialNumber },
                 { $set: deviceUpdate }
             );
         } catch (err) {
@@ -128,7 +140,7 @@ client.on("message", async (topic, message) => {
         /* Daily Energy Log + Live Telemetry (TELEMETRY ONLY)     */
         /* ------------------------------------------------------ */
 
-        const energyValue = item.energy_kwh ?? 0;
+        const energyValue = item.ENERGY_KWH ?? item.energy_kwh ?? 0;
 
         if (type === "TELEMETRY") {
 
@@ -136,24 +148,24 @@ client.on("message", async (topic, message) => {
 
             try {
                 // 1) Save Daily Power Usage (per day)
-                await db.collection("borewell_daily_energy").updateOne(
+                await db.collection("agri_daily_energy").updateOne(
                     {
-                        serial_number: item.serial_number,
-                        imei_number: item.imei_number,
-                        user_id: item.user_id,
+                        serial_number: serialNumber,
+                        imei_number: imeiNumber,
+                        user_id: userId,
                         date: usageDate
                     },
                     {
                         $inc: { energy_kwh: energyValue },
 
                         $max: {
-                            maxCurrent: item.current_rms,
-                            maxVoltage: item.voltage_rms
+                            maxCurrent: item.CURRENT_RMS ?? item.current_rms,
+                            maxVoltage: item.VOLTAGE_RMS ?? item.voltage_rms
                         },
 
                         $min: {
-                            minCurrent: item.current_rms,
-                            minVoltage: item.voltage_rms
+                            minCurrent: item.CURRENT_RMS ?? item.current_rms,
+                            minVoltage: item.VOLTAGE_RMS ?? item.voltage_rms
                         },
 
                         $set: { updatedAt: new Date() }
@@ -169,27 +181,24 @@ client.on("message", async (topic, message) => {
         /* ------------------------------------------------------ */
         /* HISTORY LOGIC (START / STOP SESSION)                   */
         /* ------------------------------------------------------ */
-        if (type === "STATUS" && item.serial_number) {
-            const userId = Number(item.user_id);
-            // Fetch device details to know who started/stopped
-            const device = await db.collection("devices").findOne({ serial_number: item.serial_number });
-
-            if (item.motor_running === true) {
+        if ((type === "PHASE" || type === "STATUS") && serialNumber) {
+            
+            if (motorRunning === true) {
                 // CHECK if session already open
-                const openSession = await db.collection("borewell_history").findOne({
-                    serial_number: item.serial_number,
+                const openSession = await db.collection("agri_history").findOne({
+                    serial_number: serialNumber,
                     user_id: userId,
                     stopAt: null
                 });
 
                 if (!openSession) {
                     // Create new session
-                    await db.collection("borewell_history").insertOne({
-                        serial_number: item.serial_number,
-                        imei_number: item.imei_number,
+                    await db.collection("agri_history").insertOne({
+                        serial_number: serialNumber,
+                        imei_number: imeiNumber,
                         user_id: userId,
                         date: new Date().toISOString().split("T")[0],
-                        startAt: new Date(item.timestamp || Date.now()),
+                        startAt: new Date(timestamp || Date.now()),
                         stopAt: null,
                         started_by: device ? device.last_started_by : null,
                         started_by_email: device ? device.last_started_by_email : null,
@@ -204,24 +213,24 @@ client.on("message", async (topic, message) => {
                         createdAt: new Date(),
                         updatedAt: new Date()
                     });
-                    console.log(`HISTORY: Start session created for ${item.serial_number}`);
-                    notifyUser(db, userId, "STATUS", item);
+                    console.log(`HISTORY: Start session created for ${serialNumber}`);
+                    notifyUser(db, userId, "STATUS", entry);
                 }
 
-            } else if (item.motor_running === false) {
+            } else if (motorRunning === false) {
 
                 // CLOSE existing session
-                const session = await db.collection("borewell_history").findOne({
-                    serial_number: item.serial_number,
+                const session = await db.collection("agri_history").findOne({
+                    serial_number: serialNumber,
                     user_id: userId,
                     stopAt: null
                 });
 
                 if (session) {
-                    const stopTime = new Date(item.timestamp || Date.now());
+                    const stopTime = new Date(timestamp || Date.now());
                     const duration = (stopTime - new Date(session.startAt)) / 60000;
 
-                    await db.collection("borewell_history").updateOne(
+                    await db.collection("agri_history").updateOne(
                         { _id: session._id },
                         {
                             $set: {
@@ -233,8 +242,8 @@ client.on("message", async (topic, message) => {
                             }
                         }
                     );
-                    console.log(`HISTORY: Session closed for ${item.serial_number}`);
-                    notifyUser(db, userId, "STATUS", item);
+                    console.log(`HISTORY: Session closed for ${serialNumber}`);
+                    notifyUser(db, userId, "STATUS", entry);
                 }
             }
         }
@@ -243,17 +252,23 @@ client.on("message", async (topic, message) => {
         /* HISTORY LIVE ENERGY UPDATE (TELEMETRY)                 */
         /* ------------------------------------------------------ */
         if (type === "TELEMETRY") {
-            await db.collection("borewell_history").updateOne(
+            await db.collection("agri_history").updateOne(
                 {
-                    serial_number: item.serial_number,
-                    imei_number: item.imei_number,
-                    user_id: item.user_id,
+                    serial_number: serialNumber,
+                    imei_number: imeiNumber,
+                    user_id: userId,
                     stopAt: null   // only update open sessions
                 },
                 {
-                    $inc: { energy_kwh: item.energy_kwh ?? 0 },
-                    $max: { maxCurrent: item.current_rms, maxVoltage: item.voltage_rms },
-                    $min: { minCurrent: item.current_rms, minVoltage: item.voltage_rms },
+                    $inc: { energy_kwh: energyValue },
+                    $max: { 
+                        maxCurrent: item.CURRENT_RMS ?? item.current_rms, 
+                        maxVoltage: item.VOLTAGE_RMS ?? item.voltage_rms 
+                    },
+                    $min: { 
+                        minCurrent: item.CURRENT_RMS ?? item.current_rms, 
+                        minVoltage: item.VOLTAGE_RMS ?? item.voltage_rms 
+                    },
                     $set: { updatedAt: new Date() }
                 }
             );
@@ -263,48 +278,48 @@ client.on("message", async (topic, message) => {
         /* SEND LIVE UPDATES TO SOCKET.IO CLIENTS                 */
         /* ------------------------------------------------------ */
         if (type === "ALERT") {
-            notifyUser(db, item.user_id, type, item);
+            notifyUser(db, userId, type, entry);
         }
 
         if (global.io) {
             if (type === "BOOT") {
                 global.io.emit("LIVE_BOOT", {
-                    serial_number: item.serial_number,
-                    payload: item
+                    serial_number: serialNumber,
+                    payload: entry
                 });
-            } else if (type === "STATUS") {
+            } else if (type === "PHASE" || type === "STATUS") {
                 global.io.emit("LIVE_STATUS", {
-                    serial_number: item.serial_number,
-                    payload: item
+                    serial_number: serialNumber,
+                    payload: entry
                 });
             } else if (type === "ALERT") {
                 global.io.emit("LIVE_ALERT", {
-                    serial_number: item.serial_number,
-                    payload: item
+                    serial_number: serialNumber,
+                    payload: entry
                 });
             } else if (type === "HEARTBEAT") {
                 global.io.emit("LIVE_HEARTBEAT", {
-                    serial_number: item.serial_number,
-                    payload: item
+                    serial_number: serialNumber,
+                    payload: entry
                 });
             } else if (type === "TELEMETRY") {
                 global.io.emit("LIVE_TELEMETRY", {
-                    serial_number: item.serial_number,
-                    imei_number: item.imei_number,
-                    user_id: item.user_id,
+                    serial_number: serialNumber,
+                    imei_number: imeiNumber,
+                    user_id: userId,
                     telemetry: {
-                        voltage_rms: item.voltage_rms,
-                        current_rms: item.current_rms,
-                        motor_frequency_hz: item.motor_frequency_hz,
-                        motor_rpm: item.motor_rpm,
-                        power_kw: item.power_kw,
-                        energy_kwh: item.energy_kwh,
-                        device_temp_c: item.device_temp_c,
-                        flow_lpm: item.flow_lpm,
-                        fault_code: item.fault_code,
+                        voltage_rms: item.VOLTAGE_RMS ?? item.voltage_rms,
+                        current_rms: item.CURRENT_RMS ?? item.current_rms,
+                        motor_frequency_hz: item.FREQUENCY_HZ ?? item.motor_frequency_hz,
+                        motor_rpm: item.MOTOR_RPM ?? item.motor_rpm,
+                        power_kw: item.POWER_KW ?? item.power_kw,
+                        energy_kwh: item.ENERGY_KWH ?? item.energy_kwh,
+                        device_temp_c: item.DEVICE_TEMP_C ?? item.device_temp_c,
+                        flow_lpm: item.FLOW_LPM ?? item.flow_lpm,
+                        fault_code: item.FAULT_CODE ?? item.fault_code,
                         fault_percentage: item.fault_percentage,
-                        signal_strength: item.signal_strength,
-                        timestamp: item.timestamp
+                        signal_strength: item.SIGNAL_STRENGTH ?? item.signal_strength,
+                        timestamp: timestamp
                     }
                 });
             }

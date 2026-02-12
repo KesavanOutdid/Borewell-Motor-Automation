@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 
 async function connectDB() {
     const baseUrl = process.env.MONGODB_URL;
-    const dbName = process.env.DB_NAME || 'Borewell_Motor_Automation';
+    const dbName = process.env.DB_NAME || 'agri_Motor_Automation';
 
     if (!baseUrl) {
         console.error('MONGODB_URL missing in .env');

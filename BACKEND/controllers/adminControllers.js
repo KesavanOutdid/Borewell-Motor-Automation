@@ -335,7 +335,7 @@ exports.uploadProfileImage = async (req, res, next) => {
 
         const updatedUser = await User.findOneAndUpdate(
             { user_id: userId },
-            { 
+            {
                 profile_image: imageUrl,
                 updatedBy: req.body.updatedBy || 'admin',
                 updatedAt: new Date()
@@ -461,9 +461,9 @@ exports.getDevices = async (req, res) => {
         // Fetch DeviceShare data for each device
         const DeviceShare = require('../models/DeviceShare');
         const enrichedDevices = await Promise.all(devices.map(async (device) => {
-            const sharedUsers = await DeviceShare.find({ 
+            const sharedUsers = await DeviceShare.find({
                 serial_number: device.serial_number,
-                status: true 
+                status: true
             }).select('-__v').lean();
 
             return {
@@ -1270,7 +1270,7 @@ exports.getDeviceBorewellHistory = async (req, res) => {
         }
 
         const db = mongoose.connection.db;
-        const historyCollection = db.collection("borewell_history");
+        const historyCollection = db.collection("agri_history");
 
         const history = await historyCollection
             .find({ serial_number: serial_number })

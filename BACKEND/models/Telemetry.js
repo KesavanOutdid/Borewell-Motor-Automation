@@ -27,7 +27,7 @@ const telemetrySchema = new mongoose.Schema({
 
     topic: { type: String }
 }, {
-    collection: "borewell_telemetry",  // IMPORTANT: match your collection name
+    collection: "agri_telemetry",  // IMPORTANT: match your collection name
     timestamps: false                  // disable Mongoose auto timestamps
 });
 

@@ -147,9 +147,9 @@ exports.updateFcmToken = async (req, res, next) => {
 
         const user = await User.findOneAndUpdate(
             { user_email },
-            { 
+            {
                 $addToSet: { fcm_tokens: fcm_token },
-                updatedAt: new Date() 
+                updatedAt: new Date()
             },
             { new: true }
         );
@@ -174,9 +174,9 @@ exports.removeFcmToken = async (req, res, next) => {
 
         const user = await User.findOneAndUpdate(
             { user_email },
-            { 
+            {
                 $pull: { fcm_tokens: fcm_token },
-                updatedAt: new Date() 
+                updatedAt: new Date()
             },
             { new: true }
         );
@@ -203,7 +203,7 @@ exports.uploadProfileImage = async (req, res, next) => {
 
         const updatedUser = await User.findOneAndUpdate(
             { user_id: userId },
-            { 
+            {
                 profile_image: imageUrl,
                 updatedBy: req.user.user_email,
                 updatedAt: new Date()
@@ -362,9 +362,9 @@ exports.updateDeviceNickname = async (req, res, next) => {
 
         // Check if user has permission (must be master user)
         if (Number(device.assigned_user_id) !== Number(user.user_id))
-            return res.status(403).json({ 
-                success: false, 
-                message: "Only the device owner can update device nickname" 
+            return res.status(403).json({
+                success: false,
+                message: "Only the device owner can update device nickname"
             });
 
         // Update device nickname
@@ -450,10 +450,10 @@ exports.startStopDevice = async (req, res) => {
             { $set: updateData }
         );
 
-        // Save to borewell_history
+        // Save to agri_history
         try {
             const db = mongoose.connection.db;
-            const historyCollection = db.collection("borewell_history");
+            const historyCollection = db.collection("agri_history");
 
             if (start_status === true) {
                 await historyCollection.insertOne({
@@ -503,19 +503,19 @@ exports.startStopDevice = async (req, res) => {
                 }
             }
         } catch (historyError) {
-            console.error("[History Error] Failed to log to borewell_history:", historyError);
+            console.error("[History Error] Failed to log to agri_history:", historyError);
         }
 
         // Notify all users associated with this device via FCM
         try {
             // 1. Get Master User
             const masterUser = await User.findOne({ user_id: device.assigned_user_id });
-            
+
             // 2. Get Shared Users
-            const shares = await DeviceShare.find({ 
-                serial_number, 
-                status: true, 
-                acceptance_status: 'accepted' 
+            const shares = await DeviceShare.find({
+                serial_number,
+                status: true,
+                acceptance_status: 'accepted'
             });
             const sharedUserIds = shares.map(s => s.shared_to_user_id);
             const sharedUsers = await User.find({ user_id: { $in: sharedUserIds } });
@@ -535,7 +535,7 @@ exports.startStopDevice = async (req, res) => {
             if (tokensArray.length > 0) {
                 const title = start_status ? "🟢 Motor Started" : "🔴 Motor Stopped";
                 const body = `Device ${serial_number} was ${start_status ? 'started' : 'stopped'} by ${user.user_name}`;
-                
+
                 sendPushNotification(tokensArray, { title, body }, {
                     type: "STATUS",
                     serial_number,
@@ -623,11 +623,11 @@ exports.userAssignDevices = async (req, res) => {
         ]);
 
         const allDevices = [
-            ...masterDevices.map(d => ({ ...d, acceptance_status: 'accepted' })), 
+            ...masterDevices.map(d => ({ ...d, acceptance_status: 'accepted' })),
             ...sharedDevices.map(d => {
                 const share = shares.find(s => s.serial_number === d.serial_number);
-                return { 
-                    ...d, 
+                return {
+                    ...d,
                     acceptance_status: share ? share.acceptance_status : 'pending',
                     share_info: share ? {
                         master_user_id: share.master_user_id,
@@ -709,9 +709,9 @@ exports.userDeviceDetails = async (req, res) => {
                 role = 'master';
             } else {
                 // If shared, check acceptance status
-                const share = await DeviceShare.findOne({ 
-                    serial_number, 
-                    shared_to_user_id: req.user.user_id 
+                const share = await DeviceShare.findOne({
+                    serial_number,
+                    shared_to_user_id: req.user.user_id
                 });
                 if (share) {
                     acceptance_status = share.acceptance_status;
@@ -720,7 +720,7 @@ exports.userDeviceDetails = async (req, res) => {
         }
 
         // Fetch latest telemetry
-        const telemetryCollection = mongoose.connection.db.collection("borewell_telemetry");
+        const telemetryCollection = mongoose.connection.db.collection("agri_telemetry");
         const latestTelemetry = await telemetryCollection
             .find({ serial_number })
             .sort({ timestamp: -1 })
@@ -768,12 +768,12 @@ exports.userDeviceHistory = async (req, res) => {
 
         // 1. Get all serial numbers the user has access to
         const masterDevices = await Device.find({ assigned_user_id: user.user_id, status: true });
-        const sharedShares = await DeviceShare.find({ 
-            shared_to_user_id: user.user_id, 
+        const sharedShares = await DeviceShare.find({
+            shared_to_user_id: user.user_id,
             status: true,
             acceptance_status: 'accepted'
         });
-        
+
         const serialNumbers = [
             ...masterDevices.map(d => d.serial_number),
             ...sharedShares.map(s => s.serial_number)
@@ -790,7 +790,7 @@ exports.userDeviceHistory = async (req, res) => {
 
         // DB collection
         const db = mongoose.connection.db;
-        const historyCollection = db.collection("borewell_history");
+        const historyCollection = db.collection("agri_history");
 
         // 2. Fetch all history sessions for these serial numbers
         const history = await historyCollection
@@ -2016,13 +2016,13 @@ exports.respondToDeviceShare = async (req, res, next) => {
 
         // If rejected, we might want to delete the record or just keep it as rejected
         // The requirement says "accept or reject", usually it stays as record
-        
+
         await share.save();
 
-        res.status(200).json({ 
-            success: true, 
+        res.status(200).json({
+            success: true,
             message: `Sharing request ${action} successfully`,
-            data: share 
+            data: share
         });
 
     } catch (err) {
@@ -2059,7 +2059,7 @@ exports.getDeviceBorewellHistory = async (req, res) => {
         }
 
         const db = mongoose.connection.db;
-        const historyCollection = db.collection("borewell_history");
+        const historyCollection = db.collection("agri_history");
 
         const history = await historyCollection
             .find({ serial_number: serial_number })

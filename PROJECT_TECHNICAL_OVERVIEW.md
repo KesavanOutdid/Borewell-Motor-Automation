@@ -77,7 +77,7 @@ The core strength of the platform is its ability to handle high-frequency data f
 - The Node.js **MQTT Subscriber** is always listening. When a message arrives, it performs a "Safe JSON Parse" and validates the serial number.
 
 ### **2. Saving & Processing (MongoDB)**
-- **Raw Logs**: Every single message is saved to raw collections (`borewell_telemetry`, `borewell_alerts`, etc.) for auditing.
+- **Raw Logs**: Every single message is saved to raw collections (`agri_telemetry`, `agri_alerts`, etc.) for auditing.
 - **State Update**: The main `devices` collection is updated with the latest motor status and signal strength.
 - **Energy Aggregation**: Telemetry data is processed to update daily energy consumption records (kWh) and session history.
 
@@ -173,7 +173,7 @@ The system provides visual insights for both monitoring and business growth:
 
 The system maintains a comprehensive logging mechanism for accountability and energy tracking:
 
-- **Borewell History**: Every motor operation (Start to Stop) is logged as a "Session" in the `borewell_history` collection.
+- **Borewell History**: Every motor operation (Start to Stop) is logged as a "Session" in the `agri_history` collection.
     - **Capture Points**: Records `startAt`, `stopAt`, `duration_minutes`, and `energy_kwh`.
     - **Attribution**: Tracks exactly who started and who stopped the motor (Name & Email).
     - **Peak Monitoring**: Logs maximum/minimum voltage and current recorded during each session.

@@ -44,10 +44,6 @@ client.on('connect', () => {
     intervals.push(setInterval(sendTelemetry, 10000));
     intervals.push(setInterval(sendAlert, 10000)); 
 
-    // intervals.push(setInterval(sendHeartbeat, 25 * 60 * 1000)); // 25 minutes
-    // intervals.push(setInterval(sendStatusAck, 2 * 60 * 1000)); // 25 minutes
-    // intervals.push(setInterval(sendTelemetry, 10000));
-    // intervals.push(setInterval(sendAlert, 2 * 60 * 1000)); // 25 minutes
 });
 
 client.on('error', (err) => {
@@ -78,31 +74,6 @@ function publish(topic, payload) {
 /* --------------------------------------------------------------------- */
 /* BOOT – only when motor is OFF                                       */
 /* --------------------------------------------------------------------- */
-// async function sendBoot() {
-//     try {
-//         const devices = await getConfiguredDevices();
-
-//         devices.forEach(d => {
-//             if (d.start_status) return;  // motor ON → do NOT send BOOT
-
-//             publish(`borewell/${d.serial_number}/boot`, {
-//                 v: 1,
-//                 message_type: "BOOT",
-//                 serial_number: d.serial_number,
-//                 imei_number: d.imei_number,
-//                 user_id: d.assigned_user_id,
-//                 timestamp: new Date().toISOString(),
-//                 device_status: "Ready",
-//                 power_status: "ON",
-//                 network_status: "4G Connected",
-//                 signal_strength: Math.floor(Math.random() * 100),
-//                 voltage: 230 + Math.random() * 10
-//             });
-//         });
-//     } catch (error) {
-//         console.error('Error sending boot notifications:', error.message);
-//     }
-// }
 
 async function sendBoot() {
     try {
@@ -111,14 +82,15 @@ async function sendBoot() {
         devices.forEach(d => {
             if (d.start_status) return;  // motor ON → do NOT send BOOT
 
-            publish(`borewell/${d.serial_number}/boot`, {
-                message_type: "BOOT",
-                serial_number: d.serial_number,
-                imei_number: d.imei_number,
-                timestamp: new Date().toISOString(),
-                power_status: "ON",
-                network_status: "4G Connected",
-                signal_strength: Math.floor(Math.random() * 100),
+            publish(`agri/${d.serial_number}/boot`, {
+                MESSAGE_TYPE: "BOOTNOTIFICATION",
+                SERIAL_NUMBER: d.serial_number,
+                IMEI_NUMBER: d.imei_number,
+                FIRMWARE_VERSION: "1.0.3",
+                HARDWARE_VERSION: "HW1.0",
+                TIMESTAMP: new Date().toISOString(),
+                POWER_STATUS: "ON",
+                NETWORK_STATUS: "4G",
             });
         });
     } catch (error) {
@@ -129,57 +101,21 @@ async function sendBoot() {
 /* --------------------------------------------------------------------- */
 /* HEARTBEAT – only when motor is OFF                                   */
 /* --------------------------------------------------------------------- */
-// async function sendHeartbeat() {
-//     const devices = await getConfiguredDevices();
-
-//     devices.forEach(d => {
-//         if (d.start_status) return;  // motor ON → do not send HEARTBEAT
-
-//         publish(`borewell/${d.serial_number}/heartbeat`, {
-//             v: 1,
-//             message_type: "HEARTBEAT",
-//             serial_number: d.serial_number,
-//             imei_number: d.imei_number,
-//             user_id: d.assigned_user_id,
-//             timestamp: new Date().toISOString(),
-//             device_status: "Online",
-//             signal_strength: 30 + Math.floor(Math.random() * 20)
-//         });
-//     });
-// }
 
 async function sendHeartbeat() {
     try {
         const devices = await getConfiguredDevices();
 
-    devices.forEach(d => {
-        // When motor running → force Online heartbeat ONLY for this device
-        if (d.start_status === true) {
-            publish(`borewell/${d.serial_number}/heartbeat`, {
-                message_type: "HEARTBEAT",
-                serial_number: d.serial_number,
-                imei_number: d.imei_number,
-                user_id: d.assigned_user_id,
-                timestamp: new Date().toISOString(),
-                device_status: "Online",
-                signal_strength: 30 + Math.floor(Math.random() * 20)
+        devices.forEach(d => {
+            publish(`agri/${d.serial_number}/heartbeat`, {
+                MESSAGE_TYPE: "HEARTBEAT",
+                SERIAL_NUMBER: d.serial_number,
+                IMEI_NUMBER: d.imei_number,
+                SIGNAL_STRENGTH: 30 + Math.floor(Math.random() * 50),
+                TIMESTAMP: new Date().toISOString(),
+                MOTOR_RUNNING: !!d.start_status
             });
-            return;
-        }
-
-        // Send Online status for heartbeat
-        const deviceStatus = "Online";
-
-        publish(`borewell/${d.serial_number}/heartbeat`, {
-            message_type: "HEARTBEAT",
-            serial_number: d.serial_number,
-            imei_number: d.imei_number,
-            user_id: d.assigned_user_id,
-            timestamp: new Date().toISOString(),
-            device_status: deviceStatus,
-            signal_strength: 10 + Math.floor(Math.random() * 10)
         });
-    });
     } catch (error) {
         console.error('Error sending heartbeat:', error.message);
     }
@@ -192,17 +128,16 @@ async function sendStatusAck() {
     try {
         const devices = await getConfiguredDevices();
 
-    devices.forEach(d => {
-        publish(`borewell/${d.serial_number}/status`, {
-            message_type: "STATUS",
-            serial_number: d.serial_number,
-            imei_number: d.imei_number,
-            user_id: d.assigned_user_id,
-            timestamp: new Date().toISOString(),
-            acknowledged_command: d.start_status ? "START_MOTOR" : "STOP_MOTOR",
-            motor_running: d.start_status
+        devices.forEach(d => {
+            publish(`agri/${d.serial_number}/phase`, {
+                MESSAGE_TYPE: "STATUS",
+                SERIAL_NUMBER: d.serial_number,
+                IMEI_NUMBER: d.imei_number,
+                MOTOR_RUNNING: !!d.start_status,
+                MOTOR_POWER: "Single Phase",
+                TIMESTAMP: new Date().toISOString()
+            });
         });
-    });
     } catch (error) {
         console.error('Error sending status ack:', error.message);
     }
@@ -215,28 +150,27 @@ async function sendTelemetry() {
     try {
         const devices = await getConfiguredDevices();
 
-    devices.forEach(d => {
-        if (!d.start_status) return; // motor OFF → do not send
+        devices.forEach(d => {
+            if (!d.start_status) return; // motor OFF → do not send
 
-        publish(`borewell/${d.serial_number}/telemetry`, {
-            type: "TELEMETRY",
-            serial_number: d.serial_number,
-            imei_number: d.imei_number,
-            user_id: d.assigned_user_id,
-            timestamp: new Date().toISOString(),
-            voltage_rms: 230 + Math.random() * 10,
-            current_rms: 5 + Math.random() * 2,
-            motor_frequency_hz: 48 + Math.random() * 2,
-            motor_rpm: 2100 + Math.random() * 50,
-            power_kw: 1.2,
-            energy_kwh: Number((Math.random() * 0.3).toFixed(3)),
-            device_temp_c: 38 + Math.random() * 5,
-            flow_lpm: 250 + Math.random() * 10,
-            fault_code: 0,
-            fault_percentage: -2,
-            signal_strength: 20 + Math.random() * 20,
+            publish(`agri/${d.serial_number}/telemetry`, {
+                TYPE: "TELEMETRY",
+                SERIAL_NUMBER: d.serial_number,
+                IMEI_NUMBER: d.imei_number,
+                TIMESTAMP: new Date().toISOString(),
+                VOLTAGE_RMS: Number((230 + Math.random() * 10).toFixed(1)),
+                CURRENT_RMS: Number((5 + Math.random() * 2).toFixed(1)),
+                MOTOR_RPM: Math.floor(2100 + Math.random() * 50),
+                POWER_KW: 1.1,
+                ENERGY_KWH: Number((Math.random() * 0.3).toFixed(3)),
+                DEVICE_TEMP_C: Number((38 + Math.random() * 5).toFixed(1)),
+                FLOW_LPM: Math.floor(250 + Math.random() * 10),
+                FREQUENCY_HZ: 50,
+                POWER_FACTOR: 0.92,
+                SIGNAL_STRENGTH: 75,
+                FAULT_CODE: 0
+            });
         });
-    });
     } catch (error) {
         console.error('Error sending telemetry:', error.message);
     }
@@ -249,22 +183,21 @@ async function sendAlert() {
     try {
         const devices = await getConfiguredDevices();
 
-        const alertTypes = ["Dry run", "Overload", "Low Voltage"];
+        const alertTypes = ["DRY_RUN", "OVERLOAD", "LOW_VOLTAGE"];
 
     devices.forEach(d => {
         if (!d.start_status) return;  // motor OFF → don't send alerts
 
         const alert = alertTypes[Math.floor(Math.random() * alertTypes.length)];
 
-        publish(`borewell/${d.serial_number}/alert`, {
-            message_type: "ALERT",
-            serial_number: d.serial_number,
-            imei_number: d.imei_number,
-            user_id: d.assigned_user_id,
-            timestamp: new Date().toISOString(),
-            alert_type: alert,
-            device_status: alert === "Dry run" ? "Critical" : "Warning",
-            description: "Simulated alert"
+        publish(`agri/${d.serial_number}/alert`, {
+            MESSAGE_TYPE: "ALERT",
+            ALERT_TYPE: alert,
+            SERIAL_NUMBER: d.serial_number,
+            IMEI_NUMBER: d.imei_number,
+            DEVICE_STATUS: alert === "DRY_RUN" ? "CRITICAL" : "WARNING",
+            FAULT_CODE: 101,
+            TIMESTAMP: new Date().toISOString()
         });
     });
     } catch (error) {
