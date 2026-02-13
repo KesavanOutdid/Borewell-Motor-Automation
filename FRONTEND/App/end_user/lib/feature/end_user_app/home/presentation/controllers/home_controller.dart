@@ -18,6 +18,7 @@ class HomeController extends GetxController {
   var isLoading = false.obs;
   var errorMessage = "".obs;
   var selectedFilter = 'Recently'.obs;
+  var processingDevices = <String>{}.obs; // Track per-device processing state
   late TokenService tokenService;
   final _storage = GetStorage();
   IO.Socket? _socket;
@@ -29,6 +30,25 @@ class HomeController extends GetxController {
 
   void setFilter(String filter) {
     selectedFilter.value = filter;
+  }
+
+  bool _getMotorRunning(Map<String, dynamic> payload) {
+    // Check various key formats for motor status
+    final motorRunning = payload['motor_running'] ?? 
+                         payload['MOTOR_RUNNING'] ?? 
+                         payload['start_status'] ??
+                         payload['START_STATUS'];
+    
+    if (motorRunning == true) return true;
+
+    // RPM Heuristic: If motor is spinning > 10 RPM, it MUST be running
+    final rpmValue = payload['motor_rpm'] ?? payload['MOTOR_RPM'];
+    if (rpmValue != null) {
+      final rpm = _parseDouble(rpmValue) ?? 0;
+      if (rpm > 10) return true;
+    }
+
+    return false;
   }
 
   @override
@@ -51,6 +71,7 @@ class HomeController extends GetxController {
       _socket = IO.io(AppConfig.socketIOUrl, <String, dynamic>{
         'transports': ['websocket'],
         'autoConnect': true,
+        'forceNew': true,
         'query': {'token': token}
       });
 
@@ -59,13 +80,13 @@ class HomeController extends GetxController {
       _socket!.onConnectError((err) => print('🏠 [HOME] Socket Connection Error: $err'));
 
       _socket!.on('LIVE_STATUS', (data) {
-        print('🏠 [HOME] Socket LIVE_STATUS received: $data');
         if (data != null && data['serial_number'] != null) {
           final serial = data['serial_number'];
           final payload = data['payload'];
-          _updateDeviceLastSeen(serial);
+          _updateDeviceLastSeen(serial, silent: true);
           if (payload != null) {
-            final newStatus = payload['motor_running'] == true;
+            print('🏠 [HOME] Socket LIVE_STATUS received for $serial');
+            final newStatus = _getMotorRunning(Map<String, dynamic>.from(payload));
             
             // Respect pending command window
             if (_pendingCommands.containsKey(serial)) {
@@ -84,42 +105,37 @@ class HomeController extends GetxController {
               }
             }
 
-            print('🏠 [HOME] Updating device $serial status to: ${newStatus ? 'RUNNING' : 'STOPPED'}');
             _updateDeviceStatus(serial, newStatus);
           }
         }
       });
 
       _socket!.on('LIVE_TELEMETRY', (data) {
-        print('🏠 [HOME] Socket LIVE_TELEMETRY received for: ${data?['serial_number']}');
         if (data != null && data['serial_number'] != null) {
           final serial = data['serial_number'];
-          _updateDeviceLastSeen(serial);
+          _updateDeviceLastSeen(serial, silent: true);
         }
       });
 
       _socket!.on('LIVE_HEARTBEAT', (data) {
-        print('🏠 [HOME] Socket LIVE_HEARTBEAT received for: ${data?['serial_number']}');
         if (data != null && data['serial_number'] != null) {
           final serial = data['serial_number'];
-          _updateDeviceLastSeen(serial);
+          _updateDeviceLastSeen(serial, silent: true);
           
-          final motorRunning = data['motor_running'];
-          if (motorRunning != null) {
-            final newStatus = motorRunning == true;
-            
-            // Respect pending command window
-            if (_pendingCommands.containsKey(serial)) {
-              final pending = _pendingCommands[serial]!;
-              if (DateTime.now().difference(pending.time) < _commandPendingWindow) {
-                if (newStatus != pending.status) {
-                  print('🏠 [HOME] Ignoring contradictory heartbeat status for $serial (command pending)');
-                  return;
-                }
+          final Map<String, dynamic> payload = data is Map ? Map<String, dynamic>.from(data) : {};
+          final newStatus = _getMotorRunning(payload);
+          
+          // Respect pending command window
+          if (_pendingCommands.containsKey(serial)) {
+            final pending = _pendingCommands[serial]!;
+            if (DateTime.now().difference(pending.time) < _commandPendingWindow) {
+              if (newStatus != pending.status) {
+                print('🏠 [HOME] Ignoring contradictory heartbeat status for $serial (command pending)');
+                return;
               }
             }
-            _updateDeviceStatus(serial, newStatus);
           }
+          _updateDeviceStatus(serial, newStatus);
         }
       });
     } catch (e) {
@@ -127,13 +143,15 @@ class HomeController extends GetxController {
     }
   }
 
-  void _updateDeviceLastSeen(String serial) {
+  void _updateDeviceLastSeen(String serial, {bool silent = false}) {
     int index = devices.indexWhere((d) => (d['serial_number'] ?? d['serialNumber']) == serial);
     if (index != -1) {
       var device = Map<String, dynamic>.from(devices[index]);
-      device['updatedAt'] = DateTime.now().toIso8601String();
+      device['last_heartbeat'] = DateTime.now().toIso8601String();
       devices[index] = device;
-      devices.refresh();
+      if (!silent) {
+        devices.refresh();
+      }
     }
   }
 
@@ -201,15 +219,30 @@ class HomeController extends GetxController {
           final List<dynamic> data = jsonData['data'];
           print('🏠 [HOME] Received ${data.length} devices from server');
           final updatedDevices = <Map<String, dynamic>>[];
+          bool anyDataChanged = devices.length != data.length;
           
           for (var device in data) {
             final mapDevice = Map<String, dynamic>.from(device);
             final serial = mapDevice['serial_number'] ?? mapDevice['serialNumber'];
+
+            // Merge telemetry into mapDevice for _getMotorRunning to check RPM
+            if (mapDevice['telemetry'] is Map) {
+              mapDevice.addAll(Map<String, dynamic>.from(mapDevice['telemetry']));
+            }
+            
+            // Re-evaluate start_status based on heuristic
+            mapDevice['start_status'] = _getMotorRunning(mapDevice);
             
             // Check if we have this device already to preserve real-time status
             final existingIndex = devices.indexWhere((d) => (d['serial_number'] ?? d['serialNumber']) == serial);
             if (existingIndex != -1) {
               final existingDevice = devices[existingIndex];
+              
+              // Always preserve real-time heartbeat if we have it locally
+              if (existingDevice['last_heartbeat'] != null) {
+                mapDevice['last_heartbeat'] = existingDevice['last_heartbeat'];
+              }
+
               final existingUpdate = existingDevice['updatedAt'];
               final newUpdate = mapDevice['updatedAt'];
               
@@ -221,7 +254,7 @@ class HomeController extends GetxController {
                 try { newTime = newUpdate != null ? DateTime.parse(newUpdate.toString()) : null; } catch (_) {}
                 
                 // If local status is newer or from socket, preserve it
-                if (newTime == null || existingTime!.isAfter(newTime)) {
+                if (newTime == null || (existingTime != null && existingTime.isAfter(newTime))) {
                   mapDevice['updatedAt'] = existingUpdate;
                   mapDevice['start_status'] = existingDevice['start_status'];
                 }
@@ -234,13 +267,23 @@ class HomeController extends GetxController {
                   }
                 }
               }
+
+              // Compare with existing to see if we really need to refresh
+              if (!anyDataChanged) {
+                // Check if any visible field changed (nickname, status, etc)
+                if (existingDevice['device_nickname'] != mapDevice['device_nickname'] ||
+                    existingDevice['start_status'] != mapDevice['start_status'] ||
+                    existingDevice['location'] != mapDevice['location']) {
+                  anyDataChanged = true;
+                }
+              }
+            } else {
+              anyDataChanged = true;
             }
 
             final lat = _parseDouble(mapDevice['latitude']);
             final lng = _parseDouble(mapDevice['longitude']);
             
-            // Optimization: Don't await geocoding during main fetch to speed up loading
-            // Locations will be updated asynchronously if missing
             if (mapDevice['location'] == null || mapDevice['location'].toString().isEmpty || mapDevice['location'] == 'No Location') {
               if (lat != null && lng != null) {
                 _updateLocationAsync(serial, lat, lng);
@@ -249,8 +292,10 @@ class HomeController extends GetxController {
             updatedDevices.add(mapDevice);
           }
           
-          devices.value = updatedDevices;
-          await _storage.write('assigned_devices', devices);
+          if (anyDataChanged) {
+            devices.value = updatedDevices;
+            await _storage.write('assigned_devices', devices);
+          }
         } else {
           devices.value = [];
           await _storage.write('assigned_devices', []);
@@ -314,6 +359,8 @@ class HomeController extends GetxController {
   }
 
   Future<void> toggleDevice(String serialNumber, String imei, bool status) async {
+    if (processingDevices.contains(serialNumber)) return;
+    
     print('🏠 [HOME] Toggle device request: $serialNumber, Action: ${status ? 'START' : 'STOP'}');
     
     // Check current status before sending command
@@ -336,6 +383,7 @@ class HomeController extends GetxController {
       }
     }
 
+    processingDevices.add(serialNumber);
     try {
       final url = Uri.parse(AppConfig.baseUrl + AppConfig.startStopDeviceEndpoint);
       final token = tokenService.getToken();
@@ -380,6 +428,13 @@ class HomeController extends GetxController {
             );
           }
         });
+      } else if (response.statusCode == 429) {
+        final body = jsonDecode(response.body);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (Get.overlayContext != null) {
+            Get.snackbar("Error", body['message'] ?? "Please wait a moment");
+          }
+        });
       } else if (response.statusCode == 401) {
         Get.offAllNamed('/login');
         Future.delayed(Duration.zero, () {
@@ -401,6 +456,10 @@ class HomeController extends GetxController {
           Get.snackbar("Error", "Connection failed: $e");
         }
       });
+    } finally {
+      // Small delay to prevent rapid fire
+      await Future.delayed(const Duration(milliseconds: 500));
+      processingDevices.remove(serialNumber);
     }
   }
 
@@ -773,6 +832,17 @@ class HomeController extends GetxController {
     }
   }
 
+  DateTime _getLastHeartbeat(Map<String, dynamic> device) {
+    final heartbeat = device['last_heartbeat'];
+    if (heartbeat == null) return _getUpdatedAt(device); 
+    if (heartbeat is DateTime) return heartbeat;
+    try {
+      return DateTime.parse(heartbeat.toString());
+    } catch (e) {
+      return _getUpdatedAt(device);
+    }
+  }
+
   DateTime _getUpdatedAt(Map<String, dynamic> device) {
     final updated = device['updatedAt'] ?? 
                   device['updated_at'] ?? 
@@ -819,8 +889,8 @@ class HomeController extends GetxController {
   }
 
   bool isOnline(Map<String, dynamic> device) {
-    // Check real-time connectivity based on last update timestamp (2 minute threshold)
-    final lastUpdate = _getUpdatedAt(device);
+    // Check real-time connectivity based on last heartbeat (2 minute threshold)
+    final lastUpdate = _getLastHeartbeat(device);
     final now = DateTime.now();
     final difference = now.difference(lastUpdate).inSeconds;
     
@@ -832,7 +902,7 @@ class HomeController extends GetxController {
   }
 
   String getLastSeenText(Map<String, dynamic> device) {
-    final lastUpdate = _getUpdatedAt(device);
+    final lastUpdate = _getLastHeartbeat(device);
     final now = DateTime.now();
     final difference = now.difference(lastUpdate);
 

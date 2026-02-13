@@ -517,26 +517,47 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: statusColor,
-                            shape: BoxShape.circle,
+                        if (controller.isProcessing.value)
+                          const SizedBox(
+                            width: 10,
+                            height: 10,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryGreen),
+                          )
+                        else
+                          Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: statusColor,
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
                         const SizedBox(width: 8),
                         Text(
-                          isRunning ? 'MOTOR RUNNING' : 'MOTOR STOPPED',
+                          controller.isProcessing.value ? 'CONFIRMING...' : (isRunning ? 'MOTOR RUNNING' : 'MOTOR STOPPED'),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w800,
-                            color: statusColor,
+                            color: controller.isProcessing.value ? AppColors.primaryGreen : statusColor,
                             letterSpacing: 0.5,
                           ),
                         ),
                       ],
                     ),
+                    if (controller.isPoorSignal)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.warning_amber_rounded, size: 12, color: Colors.orange),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Poor Signal: Commands may be delayed',
+                              style: TextStyle(fontSize: 10, color: Colors.orange.shade800, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ],
@@ -550,10 +571,10 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                   controller.startMotor();
                 }
               },
-              label: isRunning ? 'Swipe Left to Stop' : 'Swipe to Start',
+              label: controller.isProcessing.value ? 'Waiting for confirmation...' : (isRunning ? 'Swipe Left to Stop' : 'Swipe to Start'),
               icon: isRunning ? Icons.arrow_back_rounded : Icons.play_arrow_rounded,
               activeColor: isRunning ? AppColors.error : AppColors.primaryGreen,
-              isEnabled: isConnected,
+              isEnabled: isConnected && !controller.isProcessing.value,
               direction: isRunning ? SwipeDirection.left : SwipeDirection.right,
             ),
             const SizedBox(height: 20),

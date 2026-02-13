@@ -481,23 +481,32 @@ class HomeView extends GetView<HomeController> {
                     ),
                     if (!isPending && isConfigured) ...[
                       const SizedBox(height: 8),
-                      GestureDetector(
-                        onTap: isOnline ? () => controller.toggleDevice(deviceId, imei, !isRunning) : null,
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: isOnline 
-                                ? (isRunning ? Colors.red : AppColors.primaryGreen)
-                                : Colors.grey.shade300,
-                            shape: BoxShape.circle,
+                      Obx(() {
+                        final isProcessing = controller.processingDevices.contains(deviceId);
+                        return GestureDetector(
+                          onTap: (isOnline && !isProcessing) ? () => controller.toggleDevice(deviceId, imei, !isRunning) : null,
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: isOnline 
+                                  ? (isProcessing ? Colors.grey.shade400 : (isRunning ? Colors.red : AppColors.primaryGreen))
+                                  : Colors.grey.shade300,
+                              shape: BoxShape.circle,
+                            ),
+                            child: isProcessing
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  )
+                                : Icon(
+                                    isRunning ? Icons.stop_rounded : Icons.play_arrow_rounded,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
                           ),
-                          child: Icon(
-                            isRunning ? Icons.stop_rounded : Icons.play_arrow_rounded,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
+                        );
+                      }),
                     ],
                   ],
                 ),

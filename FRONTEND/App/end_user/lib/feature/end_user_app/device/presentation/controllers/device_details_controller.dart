@@ -32,11 +32,23 @@ class DeviceDetailsController extends GetxController {
   Timer? _heartbeatTimer;
   String? _socketSerial;
   bool? _previousMotorRunning;
+  bool? _pendingCommandStatus;
+  Timer? _commandTimeoutTimer;
   DateTime? _lastCommandTime;
   bool? _lastCommandStatus;
+
+  bool get isPoorSignal {
+    final sig = liveData['signalStrength']?.toString() ?? '0';
+    // Remove non-numeric characters (like %)
+    final cleanSig = sig.replaceAll(RegExp(r'[^0-9.]'), '');
+    final value = double.tryParse(cleanSig) ?? 0;
+    return value > 0 && value < 30; // Assuming 0-100 percentage as per ICD
+  }
+
   static const Duration _istOffset = Duration(hours: 5, minutes: 30);
   static const Duration _heartbeatGrace = Duration(seconds: 120);
   static const Duration _commandPendingWindow = Duration(seconds: 20);
+  static const Duration _commandConfirmTimeout = Duration(seconds: 15);
 
   @override
   void onInit() {
@@ -344,15 +356,24 @@ class DeviceDetailsController extends GetxController {
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-        final message = body['message']?.toString() ?? 'Device updated';
+        final message = body['message']?.toString() ?? 'Command sent to device';
         _showMessage(message);
         
         _lastCommandTime = DateTime.now();
         _lastCommandStatus = start;
+        _pendingCommandStatus = start;
         
-        liveData['motorStatus'] = start ? 'Running' : 'Stopped';
-        liveData['deviceStatus'] = start ? 'Running' : 'Ready';
-        liveData.refresh();
+        // Start timeout timer for confirmation
+        _commandTimeoutTimer?.cancel();
+        _commandTimeoutTimer = Timer(_commandConfirmTimeout, () {
+          if (isProcessing.value && _pendingCommandStatus != null) {
+            print('🔧 [DETAILS] Command confirmation timed out');
+            isProcessing.value = false;
+            _pendingCommandStatus = null;
+            _showMessage('Command sent, waiting for device confirmation...');
+            fetchDeviceDetails(silent: true);
+          }
+        });
 
         // Sync with HomeController
         try {
@@ -377,7 +398,10 @@ class DeviceDetailsController extends GetxController {
     } finally {
       // Small delay before allowing next command to prevent UI rapid fire
       await Future.delayed(const Duration(milliseconds: 500));
-      isProcessing.value = false;
+      // Only reset isProcessing if we didn't start a pending confirmation
+      if (_pendingCommandStatus == null) {
+        isProcessing.value = false;
+      }
     }
   }
 
@@ -411,6 +435,7 @@ class DeviceDetailsController extends GetxController {
       _socket = IO.io(AppConfig.socketIOUrl, <String, dynamic>{
         'transports': ['websocket'],
         'autoConnect': false,
+        'forceNew': true,
         'query': {
           'token': token,
           'serial_number': serial,
@@ -431,24 +456,34 @@ class DeviceDetailsController extends GetxController {
       _socket!.on('connect_error', (err) => print('🔌 [DETAILS SOCKET] Connection Error: $err'));
 
       _socket!.on('LIVE_STATUS', (data) {
-        print('🔌 [DETAILS SOCKET] LIVE_STATUS: $data');
-        _handleLiveStatus(data);
+        if (data is Map && data['serial_number'] == serial) {
+          print('🔌 [DETAILS SOCKET] LIVE_STATUS: $data');
+          _handleLiveStatus(data);
+        }
       });
       _socket!.on('LIVE_TELEMETRY', (data) {
-        print('🔌 [DETAILS SOCKET] LIVE_TELEMETRY: $data');
-        _handleLiveTelemetry(data);
+        if (data is Map && data['serial_number'] == serial) {
+          print('🔌 [DETAILS SOCKET] LIVE_TELEMETRY: $data');
+          _handleLiveTelemetry(data);
+        }
       });
       _socket!.on('LIVE_ALERT', (data) {
-        print('🔌 [DETAILS SOCKET] LIVE_ALERT: $data');
-        _handleLiveAlert(data);
+        if (data is Map && data['serial_number'] == serial) {
+          print('🔌 [DETAILS SOCKET] LIVE_ALERT: $data');
+          _handleLiveAlert(data);
+        }
       });
       _socket!.on('LIVE_HEARTBEAT', (data) {
-        print('🔌 [DETAILS SOCKET] LIVE_HEARTBEAT: $data');
-        _handleLiveHeartbeat(data);
+        if (data is Map && data['serial_number'] == serial) {
+          print('🔌 [DETAILS SOCKET] LIVE_HEARTBEAT: $data');
+          _handleLiveHeartbeat(data);
+        }
       });
       _socket!.on('LIVE_BOOT', (data) {
-        print('🔌 [DETAILS SOCKET] LIVE_BOOT: $data');
-        _handleLiveBoot(data);
+        if (data is Map && data['serial_number'] == serial) {
+          print('🔌 [DETAILS SOCKET] LIVE_BOOT: $data');
+          _handleLiveBoot(data);
+        }
       });
 
       _socket!.connect();
@@ -481,12 +516,7 @@ class DeviceDetailsController extends GetxController {
   }
 
   void _handleLiveStatus(dynamic data) {
-    if (serialNumber == null || serialNumber!.trim().isEmpty) return;
-    
     if (data is Map) {
-      final incomingSerial = data['serial_number']?.toString();
-      if (incomingSerial != serialNumber) return;
-
       final payload = data['payload'];
       if (payload is Map) {
         _applyStatusPayload(Map<String, dynamic>.from(payload));
@@ -495,12 +525,7 @@ class DeviceDetailsController extends GetxController {
   }
 
   void _handleLiveTelemetry(dynamic data) {
-    if (serialNumber == null || serialNumber!.trim().isEmpty) return;
-    
     if (data is Map) {
-      final incomingSerial = data['serial_number']?.toString();
-      if (incomingSerial != serialNumber) return;
-
       final telemetry = data['telemetry'];
       if (telemetry is Map) {
         _applyTelemetryPayload(Map<String, dynamic>.from(telemetry));
@@ -509,12 +534,7 @@ class DeviceDetailsController extends GetxController {
   }
 
   void _handleLiveAlert(dynamic data) {
-    if (serialNumber == null || serialNumber!.trim().isEmpty) return;
-    
     if (data is Map) {
-      final incomingSerial = data['serial_number']?.toString();
-      if (incomingSerial != serialNumber) return;
-
       final payload = data['payload'];
       if (payload is Map) {
         _applyAlertPayload(Map<String, dynamic>.from(payload));
@@ -523,12 +543,7 @@ class DeviceDetailsController extends GetxController {
   }
 
   void _handleLiveHeartbeat(dynamic data) {
-    if (serialNumber == null || serialNumber!.trim().isEmpty) return;
-    
     if (data is Map) {
-      final incomingSerial = data['serial_number']?.toString();
-      if (incomingSerial != serialNumber) return;
-
       final payload = data['payload'];
       if (payload is Map) {
         _applyHeartbeatPayload(Map<String, dynamic>.from(payload));
@@ -537,12 +552,7 @@ class DeviceDetailsController extends GetxController {
   }
 
   void _handleLiveBoot(dynamic data) {
-    if (serialNumber == null || serialNumber!.trim().isEmpty) return;
-    
     if (data is Map) {
-      final incomingSerial = data['serial_number']?.toString();
-      if (incomingSerial != serialNumber) return;
-
       final payload = data['payload'];
       if (payload is Map) {
         _applyBootPayload(Map<String, dynamic>.from(payload));
@@ -550,9 +560,61 @@ class DeviceDetailsController extends GetxController {
     }
   }
 
+  bool _getMotorRunning(Map<String, dynamic> payload) {
+    // 1. Trust explicit status flags first if they exist
+    final motorRunning = payload['motor_running'] ?? 
+                         payload['MOTOR_RUNNING'] ?? 
+                         payload['start_status'] ??
+                         payload['START_STATUS'];
+    
+    if (motorRunning != null) {
+      return motorRunning == true || motorRunning.toString().toLowerCase() == 'true';
+    }
+
+    // 2. RPM Heuristic: Use only as a fallback if explicit status is missing
+    final rpmValue = payload['motor_rpm'] ?? payload['MOTOR_RPM'];
+    if (rpmValue != null) {
+      final rpm = _parseDouble(rpmValue) ?? 0;
+      if (rpm > 10) {
+        print('🔧 [DETAILS] Motor inferred RUNNING solely via RPM: $rpm (No status flag present)');
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   void _applyStatusPayload(Map<String, dynamic> payload) {
     _startHeartbeatTimer();
-    final running = payload['motor_running'] == true;
+    
+    final running = _getMotorRunning(payload);
+    
+    // Check for command confirmation
+    if (isProcessing.value && _pendingCommandStatus != null) {
+      bool confirmed = false;
+      
+      // Explicit check for acknowledged command if available in status
+      final ackCmd = payload['acknowledged_command']?.toString();
+      if (ackCmd != null) {
+        if (_pendingCommandStatus == true && ackCmd == 'START_MOTOR') confirmed = true;
+        if (_pendingCommandStatus == false && ackCmd == 'STOP_MOTOR') confirmed = true;
+      }
+      
+      // Fallback to state check
+      if (!confirmed && running == _pendingCommandStatus) {
+        confirmed = true;
+      }
+
+      if (confirmed) {
+        print('🔧 [DETAILS] Command confirmed via STATUS message');
+        _commandTimeoutTimer?.cancel();
+        _pendingCommandStatus = null;
+        isProcessing.value = false;
+      } else {
+        print('🔧 [DETAILS] Status update received while processing, but not confirming pending command');
+        return; // Ignore updates that don't match our pending command
+      }
+    }
     
     // Ignore updates that contradict a recent command (last window)
     if (_lastCommandTime != null && _lastCommandStatus != null) {
@@ -564,107 +626,171 @@ class DeviceDetailsController extends GetxController {
       }
     }
 
+    bool changed = false;
     final timestamp = _formatDate(payload['timestamp']) ?? liveData['lastUpdate'];
-    liveData['motorStatus'] = running ? 'Running' : 'Stopped';
-    liveData['deviceStatus'] = running ? 'Running' : 'Ready';
-    if (timestamp != null) {
+    
+    final newMotorStatus = running ? 'Running' : 'Stopped';
+    if (liveData['motorStatus'] != newMotorStatus) {
+      liveData['motorStatus'] = newMotorStatus;
+      changed = true;
+    }
+
+    final newDeviceStatus = running ? 'Running' : 'Ready';
+    if (liveData['deviceStatus'] != newDeviceStatus) {
+      liveData['deviceStatus'] = newDeviceStatus;
+      changed = true;
+    }
+
+    if (timestamp != null && liveData['lastUpdate'] != timestamp) {
       liveData['lastUpdate'] = timestamp;
+      changed = true;
     }
+
     if (payload['signal_strength'] != null) {
-      liveData['signalStrength'] = _formatMetric(payload['signal_strength']);
+      final newSignal = _formatMetric(payload['signal_strength']);
+      if (liveData['signalStrength'] != newSignal) {
+        liveData['signalStrength'] = newSignal;
+        changed = true;
+      }
     }
+
     if (running && (_previousMotorRunning == false || _previousMotorRunning == null)) {
       final startTime = _formatDate(payload['timestamp']) ?? _formattedNow();
-      liveData['lastStart'] = startTime;
+      if (liveData['lastStart'] != startTime) {
+        liveData['lastStart'] = startTime;
+        changed = true;
+      }
     }
     if (!running && _previousMotorRunning == true) {
       final stopTime = _formatDate(payload['timestamp']) ?? _formattedNow();
-      liveData['lastStop'] = stopTime;
+      if (liveData['lastStop'] != stopTime) {
+        liveData['lastStop'] = stopTime;
+        changed = true;
+      }
     }
+    
     _previousMotorRunning = running;
-    liveData.refresh();
+    
+    if (changed) {
+      liveData.refresh();
+    }
   }
 
   void _applyTelemetryPayload(Map<String, dynamic> telemetry) {
     _startHeartbeatTimer();
     
+    bool changed = false;
+
     // Support motor_running in telemetry as requested by user
-    if (telemetry.containsKey('motor_running')) {
-      final running = telemetry['motor_running'] == true;
+    final running = _getMotorRunning(telemetry);
+    
+    // Check for command confirmation
+    if (isProcessing.value && _pendingCommandStatus != null) {
+      if (running == _pendingCommandStatus) {
+        print('🔧 [DETAILS] Command confirmed via TELEMETRY message');
+        _commandTimeoutTimer?.cancel();
+        _pendingCommandStatus = null;
+        isProcessing.value = false;
+      } else {
+        print('🔧 [DETAILS] Telemetry received while processing, but not confirming pending command');
+        return; // Ignore updates that don't match our pending command
+      }
+    }
+    
+    // Ignore updates that contradict a recent command (last window)
+    bool shouldUpdateStatus = true;
+    if (_lastCommandTime != null && _lastCommandStatus != null) {
+      if (DateTime.now().difference(_lastCommandTime!) < _commandPendingWindow) {
+        if (running != _lastCommandStatus) {
+          print('🔧 [DETAILS] Ignoring contradictory telemetry status (command pending)');
+          shouldUpdateStatus = false;
+        }
+      }
+    }
+
+    if (shouldUpdateStatus) {
+      final newMotorStatus = running ? 'Running' : 'Stopped';
+      if (liveData['motorStatus'] != newMotorStatus) {
+        liveData['motorStatus'] = newMotorStatus;
+        changed = true;
+      }
+
+      final newDeviceStatus = running ? 'Running' : 'Ready';
+      if (liveData['deviceStatus'] != newDeviceStatus) {
+        liveData['deviceStatus'] = newDeviceStatus;
+        changed = true;
+      }
       
-      // Ignore updates that contradict a recent command (last window)
-      bool shouldUpdateStatus = true;
-      if (_lastCommandTime != null && _lastCommandStatus != null) {
-        if (DateTime.now().difference(_lastCommandTime!) < _commandPendingWindow) {
-          if (running != _lastCommandStatus) {
-            print('🔧 [DETAILS] Ignoring contradictory telemetry status (command pending)');
-            shouldUpdateStatus = false;
-          }
-        }
-      }
-
-      if (shouldUpdateStatus) {
-        liveData['motorStatus'] = running ? 'Running' : 'Stopped';
-        liveData['deviceStatus'] = running ? 'Running' : 'Ready';
-        
-        if (running && (_previousMotorRunning == false || _previousMotorRunning == null)) {
-          final startTime = _formatDate(telemetry['timestamp']) ?? _formattedNow();
+      if (running && (_previousMotorRunning == false || _previousMotorRunning == null)) {
+        final startTime = _formatDate(telemetry['timestamp']) ?? _formattedNow();
+        if (liveData['lastStart'] != startTime) {
           liveData['lastStart'] = startTime;
+          changed = true;
         }
-        if (!running && _previousMotorRunning == true) {
-          final stopTime = _formatDate(telemetry['timestamp']) ?? _formattedNow();
+      }
+      if (!running && _previousMotorRunning == true) {
+        final stopTime = _formatDate(telemetry['timestamp']) ?? _formattedNow();
+        if (liveData['lastStop'] != stopTime) {
           liveData['lastStop'] = stopTime;
+          changed = true;
         }
-        _previousMotorRunning = running;
+      }
+      _previousMotorRunning = running;
+    }
+
+    void updateIfChanged(String key, dynamic newValue) {
+      if (newValue != null && liveData[key] != newValue) {
+        liveData[key] = newValue;
+        changed = true;
       }
     }
 
-    if (telemetry['motor_frequency_hz'] != null) {
-      liveData['motorFrequency'] = _formatMetric(telemetry['motor_frequency_hz'], suffix: ' Hz');
-    }
-    if (telemetry['energy_kwh'] != null) {
-      liveData['motorEnergy'] = _formatMetric(telemetry['energy_kwh'], suffix: ' kWh');
-    }
-    if (telemetry['device_temp_c'] != null) {
-      liveData['deviceTemperature'] = _formatMetric(telemetry['device_temp_c'], suffix: '°C');
-    }
-    if (telemetry['power_kw'] != null) {
-      liveData['motorPower'] = _formatMetric(telemetry['power_kw'], suffix: ' kW');
-    }
-    if (telemetry['flow_lpm'] != null) {
-      liveData['flowRate'] = _formatMetric(telemetry['flow_lpm'], suffix: ' LPM');
-    }
-    if (telemetry['motor_rpm'] != null) {
-      liveData['motorSpeed'] = _formatMetric(telemetry['motor_rpm'], suffix: ' RPM');
-    }
-    if (telemetry['signal_strength'] != null) {
-      liveData['signalStrength'] = _formatMetric(telemetry['signal_strength']);
-    }
+    updateIfChanged('motorFrequency', _formatMetric(telemetry['motor_frequency_hz'], suffix: ' Hz'));
+    updateIfChanged('motorEnergy', _formatMetric(telemetry['energy_kwh'], suffix: ' kWh'));
+    updateIfChanged('deviceTemperature', _formatMetric(telemetry['device_temp_c'], suffix: '°C'));
+    updateIfChanged('motorPower', _formatMetric(telemetry['power_kw'], suffix: ' kW'));
+    updateIfChanged('flowRate', _formatMetric(telemetry['flow_lpm'], suffix: ' LPM'));
+    updateIfChanged('motorSpeed', _formatMetric(telemetry['motor_rpm'], suffix: ' RPM'));
+    updateIfChanged('signalStrength', _formatMetric(telemetry['signal_strength']));
+
     if (telemetry['fault_code'] != null) {
       final faultCode = _formatMetric(telemetry['fault_code']);
-      if (faultCode != '-' && faultCode.isNotEmpty) {
+      if (faultCode != '-' && faultCode.isNotEmpty && liveData['alert'] != faultCode) {
         liveData['alert'] = faultCode;
+        changed = true;
       }
     }
+
     final updated = _formatDate(telemetry['timestamp']);
-    if (updated != null) {
+    if (updated != null && liveData['lastUpdate'] != updated) {
       liveData['lastUpdate'] = updated;
+      changed = true;
     }
-    liveData.refresh();
+
+    if (changed) {
+      liveData.refresh();
+    }
   }
 
   void _applyAlertPayload(Map<String, dynamic> payload) {
+    if (isProcessing.value) return;
     _startHeartbeatTimer();
+    
+    bool changed = false;
     final alertMessage = _extractAlertMessage(payload);
-    if (alertMessage != '-' && alertMessage.isNotEmpty) {
+    if (alertMessage != '-' && alertMessage.isNotEmpty && liveData['alert'] != alertMessage) {
       liveData['alert'] = alertMessage;
+      changed = true;
     }
     final timestamp = _formatDate(payload['timestamp']);
-    if (timestamp != null) {
+    if (timestamp != null && liveData['lastUpdate'] != timestamp) {
       liveData['lastUpdate'] = timestamp;
+      changed = true;
     }
     
-    liveData.refresh();
+    if (changed) {
+      liveData.refresh();
+    }
   }
 
   String _extractAlertMessage(Map<String, dynamic> payload) {
@@ -686,40 +812,64 @@ class DeviceDetailsController extends GetxController {
 
   void _applyHeartbeatPayload(Map<String, dynamic> payload) {
     _startHeartbeatTimer();
+    
+    bool changed = false;
     final timestamp = _formatDate(payload['timestamp']);
-    if (timestamp != null) {
+    if (timestamp != null && liveData['lastUpdate'] != timestamp) {
       liveData['lastUpdate'] = timestamp;
-    }
-    if (payload['device_status'] != null) {
-      liveData['deviceStatus'] = payload['device_status'].toString();
+      changed = true;
     }
 
     // Update motor status from heartbeat if present
-    final motorRunning = payload['motor_running'] ?? payload['MOTOR_RUNNING'];
-    if (motorRunning != null) {
-      final running = motorRunning == true;
-      
-      // Ignore updates that contradict a recent command (last window)
-      bool shouldUpdateStatus = true;
-      if (_lastCommandTime != null && _lastCommandStatus != null) {
-        if (DateTime.now().difference(_lastCommandTime!) < _commandPendingWindow) {
-          if (running != _lastCommandStatus) {
-            print('🔧 [DETAILS] Ignoring contradictory heartbeat status (command pending)');
-            shouldUpdateStatus = false;
-          }
-        }
+    final running = _getMotorRunning(payload);
+    
+    // Check for command confirmation
+    if (isProcessing.value && _pendingCommandStatus != null) {
+      if (running == _pendingCommandStatus) {
+        print('🔧 [DETAILS] Command confirmed via HEARTBEAT message');
+        _commandTimeoutTimer?.cancel();
+        _pendingCommandStatus = null;
+        isProcessing.value = false;
+      } else {
+        print('🔧 [DETAILS] Heartbeat received while processing, but not confirming pending command');
+        return; // Ignore updates that don't match our pending command
       }
-
-      if (shouldUpdateStatus) {
-        liveData['motorStatus'] = running ? 'Running' : 'Stopped';
-        // Only update deviceStatus if it was Running/Ready
-        if (liveData['deviceStatus'] == 'Running' || liveData['deviceStatus'] == 'Ready') {
-          liveData['deviceStatus'] = running ? 'Running' : 'Ready';
+    }
+    
+    // Ignore updates that contradict a recent command (last window)
+    bool shouldUpdateStatus = true;
+    if (_lastCommandTime != null && _lastCommandStatus != null) {
+      if (DateTime.now().difference(_lastCommandTime!) < _commandPendingWindow) {
+        if (running != _lastCommandStatus) {
+          print('🔧 [DETAILS] Ignoring contradictory heartbeat status (command pending)');
+          shouldUpdateStatus = false;
         }
       }
     }
 
-    liveData.refresh();
+    if (shouldUpdateStatus) {
+      final newMotorStatus = running ? 'Running' : 'Stopped';
+      if (liveData['motorStatus'] != newMotorStatus) {
+        liveData['motorStatus'] = newMotorStatus;
+        changed = true;
+      }
+
+      final newDeviceStatus = running ? 'Running' : 'Ready';
+      if (liveData['deviceStatus'] != newDeviceStatus) {
+        liveData['deviceStatus'] = newDeviceStatus;
+        changed = true;
+      }
+    } else if (payload['device_status'] != null) {
+      final newStatus = payload['device_status'].toString();
+      if (liveData['deviceStatus'] != newStatus) {
+        liveData['deviceStatus'] = newStatus;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      liveData.refresh();
+    }
   }
 
   void _applyBootPayload(Map<String, dynamic> payload) {
@@ -764,11 +914,19 @@ class DeviceDetailsController extends GetxController {
       if (address != null) locationText = address;
     }
 
-    final isRunning = data['start_status'] == true;
+    // Merge telemetry into data for _getMotorRunning to check RPM if available
+    final combinedData = Map<String, dynamic>.from(data);
+    if (data['telemetry'] is Map) {
+      combinedData.addAll(Map<String, dynamic>.from(data['telemetry']));
+    }
+    final isRunning = _getMotorRunning(combinedData);
 
-    // Ignore status updates that contradict a recent command (last window)
+    // Ignore status updates that contradict a recent command (last window) OR while processing
     bool shouldUpdateStatus = true;
-    if (_lastCommandTime != null && _lastCommandStatus != null) {
+    if (isProcessing.value) {
+      print('🔧 [DETAILS] Ignoring API status update while processing command');
+      shouldUpdateStatus = false;
+    } else if (_lastCommandTime != null && _lastCommandStatus != null) {
       if (DateTime.now().difference(_lastCommandTime!) < _commandPendingWindow) {
         if (isRunning != _lastCommandStatus) {
           print('🔧 [DETAILS] Ignoring contradictory API status (command pending)');
@@ -806,7 +964,17 @@ class DeviceDetailsController extends GetxController {
       'signalStrength': _formatMetric(telemetry['signal_strength']),
     };
 
-    liveData.assignAll(newLiveData);
+    bool dataChanged = false;
+    newLiveData.forEach((key, value) {
+      if (liveData[key] != value) {
+        liveData[key] = value;
+        dataChanged = true;
+      }
+    });
+
+    if (dataChanged) {
+      liveData.refresh();
+    }
 
     if (shouldUpdateStatus) {
       _previousMotorRunning = isRunning;
