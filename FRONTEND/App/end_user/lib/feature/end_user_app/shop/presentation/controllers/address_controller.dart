@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:logger/logger.dart';
+import 'package:agri_plus/utils/ui_utils.dart';
 import '../../../../../core/services/token_service.dart';
 import '../../../../../core/config/env.dart';
 import '../../data/models/address_model.dart';
@@ -70,10 +71,9 @@ class AddressController extends GetxController {
       }
     } catch (e) {
       logger.e('❌ Exception: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to fetch addresses',
-        snackPosition: SnackPosition.BOTTOM,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to fetch addresses',
       );
     } finally {
       isLoading.value = false;
@@ -85,10 +85,9 @@ class AddressController extends GetxController {
     final token = tokenService.getToken();
     
     if (userId == null || token == null) {
-      Get.snackbar(
-        'Error',
-        'User not logged in',
-        snackPosition: SnackPosition.BOTTOM,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'User not logged in',
       );
       return false;
     }
@@ -120,22 +119,16 @@ class AddressController extends GetxController {
         }
       }
       
-      Get.snackbar(
-        'Error',
-        'Failed to create address',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to create address',
       );
       return false;
     } catch (e) {
       logger.e('❌ Exception: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to create address',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to create address',
       );
       return false;
     } finally {
@@ -148,10 +141,9 @@ class AddressController extends GetxController {
     final token = tokenService.getToken();
     
     if (userId == null || token == null) {
-      Get.snackbar(
-        'Error',
-        'User not logged in',
-        snackPosition: SnackPosition.BOTTOM,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'User not logged in',
       );
       return false;
     }
@@ -183,22 +175,16 @@ class AddressController extends GetxController {
         }
       }
       
-      Get.snackbar(
-        'Error',
-        'Failed to update address',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to update address',
       );
       return false;
     } catch (e) {
       logger.e('❌ Exception: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to update address',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to update address',
       );
       return false;
     } finally {
@@ -211,10 +197,9 @@ class AddressController extends GetxController {
     final token = tokenService.getToken();
     
     if (userId == null || token == null) {
-      Get.snackbar(
-        'Error',
-        'User not logged in',
-        snackPosition: SnackPosition.BOTTOM,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'User not logged in',
       );
       return false;
     }
@@ -244,12 +229,9 @@ class AddressController extends GetxController {
         
         if (responseData['success'] == true) {
           logger.i('✅ Address deleted successfully');
-          Get.snackbar(
-            'Success',
-            'Address deleted successfully',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
+          UIUtils.showSuccessSnackbar(
+            title: 'Success',
+            message: 'Address deleted successfully',
           );
           
           await fetchAddresses();
@@ -257,22 +239,16 @@ class AddressController extends GetxController {
         }
       }
       
-      Get.snackbar(
-        'Error',
-        'Failed to delete address',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to delete address',
       );
       return false;
     } catch (e) {
       logger.e('❌ Exception: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to delete address',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to delete address',
       );
       return false;
     } finally {
@@ -285,10 +261,9 @@ class AddressController extends GetxController {
     final token = tokenService.getToken();
     
     if (userId == null || token == null) {
-      Get.snackbar(
-        'Error',
-        'User not logged in',
-        snackPosition: SnackPosition.BOTTOM,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'User not logged in',
       );
       return false;
     }
@@ -323,22 +298,16 @@ class AddressController extends GetxController {
         }
       }
       
-      Get.snackbar(
-        'Error',
-        'Failed to set default address',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to set default address',
       );
       return false;
     } catch (e) {
       logger.e('❌ Exception: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to set default address',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to set default address',
       );
       return false;
     } finally {

@@ -18,24 +18,23 @@ class DashboardView extends GetView<DashboardController> {
   const DashboardView({super.key});
 
   Future<bool> _showExitDialog(BuildContext context) async {
-    return await showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Exit App'),
-            content: const Text('Are you sure you want to exit?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('No'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Yes'),
-              ),
-            ],
+    final result = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('Exit App'),
+        content: const Text('Are you sure you want to exit?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context, rootNavigator: true).pop(false),
+            child: const Text('No'),
           ),
-        ) ??
-        false;
+          TextButton(
+            onPressed: () => Navigator.of(context, rootNavigator: true).pop(true),
+            child: const Text('Yes'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
   }
 
   @override

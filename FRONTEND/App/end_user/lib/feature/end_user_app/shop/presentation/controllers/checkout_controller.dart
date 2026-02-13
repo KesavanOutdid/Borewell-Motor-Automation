@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:logger/logger.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:agri_plus/utils/ui_utils.dart';
+import '../../../dashboard/presentation/controllers/dashboard_controller.dart';
 import '../../../../../core/services/token_service.dart';
 import '../../../../../core/config/env.dart';
 import '../../data/models/order_model.dart';
@@ -48,13 +50,7 @@ class CheckoutController extends GetxController {
     final userEmail = tokenService.getUserEmail();
     
     if (userId == null || userEmail == null) {
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: 'User not logged in',
-        textConfirm: 'OK',
-        confirmTextColor: Colors.white,
-        onConfirm: () => Get.back(),
-      );
+      UIUtils.showErrorDialog(message: 'User not logged in');
       return;
     }
 
@@ -140,57 +136,39 @@ class CheckoutController extends GetxController {
             );
           } catch (e) {
             logger.e('❌ Razorpay data parsing error: $e');
-            Get.snackbar(
-              'Error',
-              'Failed to initialize payment: Invalid response from server',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.red,
-              colorText: Colors.white,
-              duration: const Duration(seconds: 4),
+            UIUtils.showErrorSnackbar(
+              title: 'Error',
+              message: 'Failed to initialize payment: Invalid response from server',
             );
           }
         } else {
           logger.w('⚠️ API returned success=false');
-          Get.snackbar(
-            'Error',
-            responseData['message'] ?? 'Order creation failed',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
+          UIUtils.showErrorSnackbar(
+            title: 'Error',
+            message: responseData['message'] ?? 'Order creation failed',
           );
         }
       } else {
         logger.e('❌ HTTP Error: ${response.statusCode}');
         try {
           final Map<String, dynamic> responseData = jsonDecode(response.body);
-          Get.snackbar(
-            'Error',
-            responseData['message'] ?? 'Failed to create order (${response.statusCode})',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-            duration: const Duration(seconds: 4),
+          UIUtils.showErrorSnackbar(
+            title: 'Error',
+            message: responseData['message'] ?? 'Failed to create order (${response.statusCode})',
           );
         } catch (e) {
-          Get.snackbar(
-            'Error',
-            'Failed to create order: HTTP ${response.statusCode}',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
+          UIUtils.showErrorSnackbar(
+            title: 'Error',
+            message: 'Failed to create order: HTTP ${response.statusCode}',
           );
         }
       }
     } catch (e, stackTrace) {
       logger.e('❌ Exception: $e');
       logger.e('Stack trace: $stackTrace');
-      Get.snackbar(
-        'Error',
-        'Failed to create order: ${e.toString()}',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 4),
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to create order: ${e.toString()}',
       );
     } finally {
       isProcessing.value = false;
@@ -230,12 +208,9 @@ class CheckoutController extends GetxController {
       _razorpay.open(options);
     } catch (e) {
       logger.e('❌ Razorpay Error: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to open payment gateway',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to open payment gateway',
       );
     }
   }
@@ -254,22 +229,17 @@ class CheckoutController extends GetxController {
 
   void _handlePaymentError(PaymentFailureResponse response) {
     logger.e('❌ Payment Error: ${response.code} - ${response.message}');
-    Get.snackbar(
-      'Payment Failed',
-      response.message ?? 'Payment was not successful',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red,
-      colorText: Colors.white,
-      duration: const Duration(seconds: 4),
+    UIUtils.showErrorSnackbar(
+      title: 'Payment Failed',
+      message: response.message ?? 'Payment was not successful',
     );
   }
 
   void _handleExternalWallet(ExternalWalletResponse response) {
     logger.i('🔗 External Wallet: ${response.walletName}');
-    Get.snackbar(
-      'External Wallet',
-      'Payment via ${response.walletName}',
-      snackPosition: SnackPosition.BOTTOM,
+    UIUtils.showSuccessSnackbar(
+      title: 'External Wallet',
+      message: 'Payment via ${response.walletName}',
     );
   }
 
@@ -282,13 +252,7 @@ class CheckoutController extends GetxController {
     final token = tokenService.getToken();
     
     if (userId == null || token == null) {
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: 'User not logged in',
-        textConfirm: 'OK',
-        confirmTextColor: Colors.white,
-        onConfirm: () => Get.back(),
-      );
+      UIUtils.showErrorDialog(message: 'User not logged in');
       return;
     }
 
@@ -333,31 +297,22 @@ class CheckoutController extends GetxController {
           
           _showOrderSuccessDialog();
         } else {
-          Get.snackbar(
-            'Verification Failed',
-            responseData['message'] ?? 'Payment verification failed',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
+          UIUtils.showErrorSnackbar(
+            title: 'Verification Failed',
+            message: responseData['message'] ?? 'Payment verification failed',
           );
         }
       } else {
-        Get.snackbar(
-          'Error',
-          'Payment verification failed',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
+        UIUtils.showErrorSnackbar(
+          title: 'Error',
+          message: 'Payment verification failed',
         );
       }
     } catch (e) {
       logger.e('❌ Exception: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to verify payment',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to verify payment',
       );
     } finally {
       isProcessing.value = false;
@@ -416,8 +371,15 @@ class CheckoutController extends GetxController {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
-                          Get.back();
-                          Get.offNamedUntil('/orders', (route) => route.settings.name == '/home');
+                          Navigator.of(context, rootNavigator: true).pop();
+                          Get.offAllNamed('/home', arguments: {'index': 2});
+                          try {
+                            if (Get.isRegistered<DashboardController>()) {
+                              Get.find<DashboardController>().changePage(2);
+                            }
+                          } catch (e) {
+                            logger.e('Error setting dashboard index: $e');
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryGreen,
@@ -441,8 +403,15 @@ class CheckoutController extends GetxController {
                       width: double.infinity,
                       child: OutlinedButton(
                         onPressed: () {
-                          Get.back();
-                          Get.offNamedUntil('/home', (route) => false);
+                          Navigator.of(context, rootNavigator: true).pop();
+                          Get.offAllNamed('/home', arguments: {'index': 1});
+                          try {
+                            if (Get.isRegistered<DashboardController>()) {
+                              Get.find<DashboardController>().changePage(1);
+                            }
+                          } catch (e) {
+                            logger.e('Error setting dashboard index: $e');
+                          }
                         },
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.primaryGreen,

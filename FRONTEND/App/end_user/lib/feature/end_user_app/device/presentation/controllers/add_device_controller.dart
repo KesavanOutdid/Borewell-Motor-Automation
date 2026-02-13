@@ -119,7 +119,7 @@ class ConfigureDeviceController extends GetxController {
                           Expanded(
                             child: ElevatedButton(
                               onPressed: () {
-                                Navigator.of(context).pop();
+                                Get.back();
                                 Geolocator.openLocationSettings();
                               },
                               style: ElevatedButton.styleFrom(
@@ -219,7 +219,7 @@ class ConfigureDeviceController extends GetxController {
                           Expanded(
                             child: ElevatedButton(
                               onPressed: () {
-                                Navigator.of(context).pop();
+                                Get.back();
                                 openAppSettings();
                               },
                               style: ElevatedButton.styleFrom(
@@ -467,7 +467,7 @@ class ConfigureDeviceController extends GetxController {
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () => Navigator.of(context).pop(),
+                          onPressed: () => Get.back(),
                           child: const Text('Cancel'),
                         ),
                       ),
@@ -671,7 +671,7 @@ class ConfigureDeviceController extends GetxController {
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.of(Get.overlayContext!).pop();
+                      Get.back();
                       Get.offAllNamed('/home');
                     },
                     style: ElevatedButton.styleFrom(

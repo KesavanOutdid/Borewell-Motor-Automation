@@ -10,6 +10,7 @@ const Telemetry = require("../models/Telemetry");
 const DeviceShare = require("../models/DeviceShare");
 const { sendPushNotification } = require('../utils/notificationHelper');
 const { cacheDeletePattern } = require('../middlewares/cacheMiddleware');
+const { redisClient, isRedisConnected } = require('../config/redis');
 const fs = require('fs');
 const path = require('path');
 
@@ -401,6 +402,20 @@ exports.startStopDevice = async (req, res) => {
     try {
         const { serial_number, imei_number, user_email, start_status } = req.body;
 
+        // 1. Redis Debounce / Lock to prevent rapid multiple clicks
+        if (isRedisConnected() && redisClient.isOpen) {
+            const lockKey = `lock:device:${serial_number}`;
+            const isLocked = await redisClient.get(lockKey);
+            if (isLocked) {
+                return res.status(429).json({
+                    success: false,
+                    message: "Please wait, another command is in progress for this device."
+                });
+            }
+            // Set a short lock (e.g., 3 seconds) to prevent immediate duplicate requests
+            await redisClient.setEx(lockKey, 3, "LOCKED");
+        }
+
         const user = await User.findOne({ user_email });
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
@@ -409,6 +424,15 @@ exports.startStopDevice = async (req, res) => {
         const device = await Device.findOne({ serial_number, imei_number });
         if (!device) {
             return res.status(404).json({ success: false, message: "Device not found" });
+        }
+
+        // 2. Prevent redundant state changes
+        if (device.start_status === start_status) {
+            return res.status(200).json({
+                success: true,
+                message: `Device is already ${start_status ? 'started' : 'stopped'}`,
+                data: { start_status: device.start_status }
+            });
         }
 
         // Permission Check: Must be master OR active shared user
@@ -456,31 +480,38 @@ exports.startStopDevice = async (req, res) => {
             const historyCollection = db.collection("agri_history");
 
             if (start_status === true) {
-                await historyCollection.insertOne({
+                // Check if a session is already open for this device to avoid duplicates
+                const openSession = await historyCollection.findOne({
                     serial_number,
-                    imei_number,
-                    user_id: user.user_id,
-                    date: new Date().toISOString().split("T")[0],
-                    startAt: updateData.startAt,
-                    stopAt: null,
-                    started_by: user.user_name,
-                    started_by_email: user.user_email,
-                    stopped_by: null,
-                    stopped_by_email: null,
-                    duration_minutes: 0,
-                    energy_kwh: 0,
-                    maxCurrent: 0,
-                    minCurrent: 9999,
-                    maxVoltage: 0,
-                    minVoltage: 9999,
-                    createdAt: new Date(),
-                    updatedAt: new Date()
+                    stopAt: null
                 });
+
+                if (!openSession) {
+                    await historyCollection.insertOne({
+                        serial_number,
+                        imei_number,
+                        user_id: user.user_id,
+                        date: new Date().toISOString().split("T")[0],
+                        startAt: updateData.startAt,
+                        stopAt: null,
+                        started_by: user.user_name,
+                        started_by_email: user.user_email,
+                        stopped_by: null,
+                        stopped_by_email: null,
+                        duration_minutes: 0,
+                        energy_kwh: 0,
+                        maxCurrent: 0,
+                        minCurrent: 9999,
+                        maxVoltage: 0,
+                        minVoltage: 9999,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    });
+                }
             } else {
-                // Find the latest open session for this device and user
+                // Find the latest open session for this device
                 const session = await historyCollection.findOne({
                     serial_number,
-                    user_id: user.user_id,
                     stopAt: null
                 });
 
@@ -535,6 +566,12 @@ exports.startStopDevice = async (req, res) => {
             if (tokensArray.length > 0) {
                 const title = start_status ? "🟢 Motor Started" : "🔴 Motor Stopped";
                 const body = `Device ${serial_number} was ${start_status ? 'started' : 'stopped'} by ${user.user_name}`;
+
+                // Set a Redis flag to prevent duplicate notifications from MQTT client for the next 30 seconds
+                if (isRedisConnected() && redisClient.isOpen) {
+                    const notifKey = `notif_sent:${serial_number}:${start_status ? 'START' : 'STOP'}`;
+                    await redisClient.setEx(notifKey, 30, "SENT");
+                }
 
                 sendPushNotification(tokensArray, { title, body }, {
                     type: "STATUS",

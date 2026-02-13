@@ -3,6 +3,7 @@ const mqtt = require('mqtt');
 const { logToFile } = require('./utils/fileLogger');
 const connectToDatabase = require('../config/db');
 const { notifyUser } = require('../utils/notificationHelper');
+const { redisClient, isRedisConnected } = require('../config/redis');
 
 const clientId = `receiver_${Math.random().toString(16).substr(2, 8)}`;
 
@@ -124,7 +125,7 @@ client.on("message", async (topic, message) => {
                 device_status: (item.DEVICE_STATUS || item.device_status || type).toLowerCase()
             };
 
-            if ((type === "PHASE" || type === "STATUS") && motorRunning !== undefined) {
+            if ((type === "PHASE" || type === "STATUS" || type === "HEARTBEAT") && motorRunning !== undefined) {
                 deviceUpdate.start_status = motorRunning;
             }
 
@@ -181,7 +182,7 @@ client.on("message", async (topic, message) => {
         /* ------------------------------------------------------ */
         /* HISTORY LOGIC (START / STOP SESSION)                   */
         /* ------------------------------------------------------ */
-        if ((type === "PHASE" || type === "STATUS") && serialNumber) {
+        if ((type === "PHASE" || type === "STATUS" || type === "HEARTBEAT") && serialNumber) {
             
             if (motorRunning === true) {
                 // CHECK if session already open
@@ -214,7 +215,18 @@ client.on("message", async (topic, message) => {
                         updatedAt: new Date()
                     });
                     console.log(`HISTORY: Start session created for ${serialNumber}`);
-                    notifyUser(db, userId, "STATUS", entry);
+                    
+                    // Check if notification was already sent by app controller recently
+                    let alreadyNotified = false;
+                    if (isRedisConnected() && redisClient.isOpen) {
+                        const notifKey = `notif_sent:${serialNumber}:START`;
+                        const exists = await redisClient.get(notifKey);
+                        if (exists) alreadyNotified = true;
+                    }
+
+                    if (!alreadyNotified) {
+                        notifyUser(db, userId, "STATUS", entry);
+                    }
                 }
 
             } else if (motorRunning === false) {
@@ -243,7 +255,18 @@ client.on("message", async (topic, message) => {
                         }
                     );
                     console.log(`HISTORY: Session closed for ${serialNumber}`);
-                    notifyUser(db, userId, "STATUS", entry);
+
+                    // Check if notification was already sent by app controller recently
+                    let alreadyNotified = false;
+                    if (isRedisConnected() && redisClient.isOpen) {
+                        const notifKey = `notif_sent:${serialNumber}:STOP`;
+                        const exists = await redisClient.get(notifKey);
+                        if (exists) alreadyNotified = true;
+                    }
+
+                    if (!alreadyNotified) {
+                        notifyUser(db, userId, "STATUS", entry);
+                    }
                 }
             }
         }
@@ -300,6 +323,7 @@ client.on("message", async (topic, message) => {
             } else if (type === "HEARTBEAT") {
                 global.io.emit("LIVE_HEARTBEAT", {
                     serial_number: serialNumber,
+                    motor_running: motorRunning,
                     payload: entry
                 });
             } else if (type === "TELEMETRY") {

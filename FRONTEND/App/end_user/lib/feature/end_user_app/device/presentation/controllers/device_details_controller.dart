@@ -17,6 +17,8 @@ class DeviceDetailsController extends GetxController {
   final liveData = <String, dynamic>{}.obs;
   final isConnected = false.obs;
   final isLoading = false.obs;
+  final isProcessing = false.obs;
+  final errorMessage = "".obs;
 
   late TokenService tokenService;
   // removed NotificationService as per user request to use only FCM
@@ -163,7 +165,10 @@ class DeviceDetailsController extends GetxController {
       return;
     }
 
-    if (!silent) isLoading.value = true;
+    if (!silent) {
+      isLoading.value = true;
+      errorMessage.value = "";
+    }
     final url = Uri.parse(AppConfig.baseUrl + AppConfig.userDeviceDetailsEndpoint);
     print('🔧 [DETAILS] API Request: POST $url');
 
@@ -197,10 +202,12 @@ class DeviceDetailsController extends GetxController {
         _showMessage(json['message'] ?? 'Failed to load device (${response.statusCode})');
       }
     } catch (e) {
-      if (e is SocketException || e.toString().contains('SocketException')) {
-        _showMessage('Network connection failed. Please check your internet.');
-      } else {
-        _showMessage('Connection failed: $e');
+      if (!silent) {
+        if (e is SocketException || e.toString().contains('SocketException')) {
+          errorMessage.value = "Network connection failed. Please check your internet.";
+        } else {
+          errorMessage.value = "Connection failed: $e";
+        }
       }
     } finally {
       if (!silent) isLoading.value = false;
@@ -292,29 +299,32 @@ class DeviceDetailsController extends GetxController {
   }
 
   Future<void> _sendStartStopCommand(bool start) async {
+    if (isProcessing.value) return;
+
     print('🔧 [DETAILS] Sending Start/Stop Command: ${start ? 'START' : 'STOP'} for $serialNumber');
     if (serialNumber == null || imeiNumber == null) {
       _showMessage('Missing device information');
       return;
     }
 
-    final token = tokenService.getToken();
-    if (token == null) {
-      _handleUnauthorized();
-      return;
-    }
-
-    final userEmail = tokenService.getUserEmail();
-    if (userEmail == null || userEmail.isEmpty) {
-      _showMessage('User email not available');
-      return;
-    }
-
-    final url = Uri.parse(AppConfig.baseUrl + AppConfig.startStopDeviceEndpoint);
-    print('🔧 [DETAILS] API Request: POST $url');
-    print('🔧 [DETAILS] Body: {serial: $serialNumber, status: $start, email: $userEmail}');
-
+    isProcessing.value = true;
     try {
+      final token = tokenService.getToken();
+      if (token == null) {
+        _handleUnauthorized();
+        return;
+      }
+
+      final userEmail = tokenService.getUserEmail();
+      if (userEmail == null || userEmail.isEmpty) {
+        _showMessage('User email not available');
+        return;
+      }
+
+      final url = Uri.parse(AppConfig.baseUrl + AppConfig.startStopDeviceEndpoint);
+      print('🔧 [DETAILS] API Request: POST $url');
+      print('🔧 [DETAILS] Body: {serial: $serialNumber, status: $start, email: $userEmail}');
+
       final response = await http.post(
         url,
         headers: {
@@ -351,6 +361,10 @@ class DeviceDetailsController extends GetxController {
         } catch (e) {
           print('🔧 [DETAILS] Could not sync with HomeController: $e');
         }
+      } else if (response.statusCode == 429) {
+        // Handle Redis rate limiting/locking
+        final body = jsonDecode(response.body);
+        _showMessage(body['message'] ?? 'Please wait a moment before sending another command');
       } else if (response.statusCode == 401) {
         _handleUnauthorized();
       } else if (response.statusCode == 404) {
@@ -360,6 +374,10 @@ class DeviceDetailsController extends GetxController {
       }
     } catch (e) {
       _showMessage('Command failed: $e');
+    } finally {
+      // Small delay before allowing next command to prevent UI rapid fire
+      await Future.delayed(const Duration(milliseconds: 500));
+      isProcessing.value = false;
     }
   }
 
@@ -569,6 +587,38 @@ class DeviceDetailsController extends GetxController {
 
   void _applyTelemetryPayload(Map<String, dynamic> telemetry) {
     _startHeartbeatTimer();
+    
+    // Support motor_running in telemetry as requested by user
+    if (telemetry.containsKey('motor_running')) {
+      final running = telemetry['motor_running'] == true;
+      
+      // Ignore updates that contradict a recent command (last window)
+      bool shouldUpdateStatus = true;
+      if (_lastCommandTime != null && _lastCommandStatus != null) {
+        if (DateTime.now().difference(_lastCommandTime!) < _commandPendingWindow) {
+          if (running != _lastCommandStatus) {
+            print('🔧 [DETAILS] Ignoring contradictory telemetry status (command pending)');
+            shouldUpdateStatus = false;
+          }
+        }
+      }
+
+      if (shouldUpdateStatus) {
+        liveData['motorStatus'] = running ? 'Running' : 'Stopped';
+        liveData['deviceStatus'] = running ? 'Running' : 'Ready';
+        
+        if (running && (_previousMotorRunning == false || _previousMotorRunning == null)) {
+          final startTime = _formatDate(telemetry['timestamp']) ?? _formattedNow();
+          liveData['lastStart'] = startTime;
+        }
+        if (!running && _previousMotorRunning == true) {
+          final stopTime = _formatDate(telemetry['timestamp']) ?? _formattedNow();
+          liveData['lastStop'] = stopTime;
+        }
+        _previousMotorRunning = running;
+      }
+    }
+
     if (telemetry['motor_frequency_hz'] != null) {
       liveData['motorFrequency'] = _formatMetric(telemetry['motor_frequency_hz'], suffix: ' Hz');
     }
@@ -643,6 +693,32 @@ class DeviceDetailsController extends GetxController {
     if (payload['device_status'] != null) {
       liveData['deviceStatus'] = payload['device_status'].toString();
     }
+
+    // Update motor status from heartbeat if present
+    final motorRunning = payload['motor_running'] ?? payload['MOTOR_RUNNING'];
+    if (motorRunning != null) {
+      final running = motorRunning == true;
+      
+      // Ignore updates that contradict a recent command (last window)
+      bool shouldUpdateStatus = true;
+      if (_lastCommandTime != null && _lastCommandStatus != null) {
+        if (DateTime.now().difference(_lastCommandTime!) < _commandPendingWindow) {
+          if (running != _lastCommandStatus) {
+            print('🔧 [DETAILS] Ignoring contradictory heartbeat status (command pending)');
+            shouldUpdateStatus = false;
+          }
+        }
+      }
+
+      if (shouldUpdateStatus) {
+        liveData['motorStatus'] = running ? 'Running' : 'Stopped';
+        // Only update deviceStatus if it was Running/Ready
+        if (liveData['deviceStatus'] == 'Running' || liveData['deviceStatus'] == 'Ready') {
+          liveData['deviceStatus'] = running ? 'Running' : 'Ready';
+        }
+      }
+    }
+
     liveData.refresh();
   }
 

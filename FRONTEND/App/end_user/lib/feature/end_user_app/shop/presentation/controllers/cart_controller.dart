@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:logger/logger.dart';
+import 'package:agri_plus/utils/ui_utils.dart';
 import '../../../../../core/services/token_service.dart';
 import '../../../../../core/config/env.dart';
 import '../../data/models/cart_model.dart';
@@ -10,6 +11,7 @@ import '../../data/models/cart_model.dart';
 class CartController extends GetxController {
   var cart = Rxn<CartModel>();
   var isLoading = false.obs;
+  var errorMessage = ''.obs;
   
   final String baseUrl = AppConfig.baseUrl;
   
@@ -30,13 +32,7 @@ class CartController extends GetxController {
     final userId = tokenService.getUserId();
     final token = tokenService.getToken();
     if (userId == null || token == null) {
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: 'User not logged in',
-        textConfirm: 'OK',
-        confirmTextColor: Colors.white,
-        onConfirm: () => Get.back(),
-      );
+      UIUtils.showErrorDialog(message: 'User not logged in');
       return false;
     }
 
@@ -71,23 +67,19 @@ class CartController extends GetxController {
       } else if (response.statusCode == 400) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         final message = responseData['message'] ?? 'Validation error';
-        Get.snackbar(
-          message.contains('Insufficient product quantity') ? 'Out of Stock' : 'Error',
-          message.contains('Insufficient product quantity') 
+        
+        UIUtils.showErrorDialog(
+          title: message.contains('Insufficient product quantity') ? 'Out of Stock' : 'Error',
+          message: message.contains('Insufficient product quantity') 
               ? 'This product is currently out of stock or has insufficient quantity available.'
               : message,
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 3),
         );
       }
     } catch (e) {
       logger.e('❌ Exception: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to add product to cart',
-        snackPosition: SnackPosition.BOTTOM,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to add product to cart',
       );
     }
     
@@ -103,6 +95,7 @@ class CartController extends GetxController {
     }
 
     isLoading.value = true;
+    errorMessage.value = '';
     final url = Uri.parse('$baseUrl/app/fetchCart');
     logger.i('📦 Fetching cart for user: $userId');
 
@@ -126,9 +119,12 @@ class CartController extends GetxController {
           cart.value = CartModel.fromJson(responseData['cart']);
           logger.i('✅ Cart fetched - Items: ${cart.value?.items.length}');
         }
+      } else {
+        errorMessage.value = 'Failed to fetch cart (${response.statusCode})';
       }
     } catch (e) {
       logger.e('❌ Exception: $e');
+      errorMessage.value = 'Network connection failed. Please check your internet.';
     } finally {
       isLoading.value = false;
     }
@@ -138,13 +134,7 @@ class CartController extends GetxController {
     final userId = tokenService.getUserId();
     final token = tokenService.getToken();
     if (userId == null || token == null) {
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: 'User not logged in',
-        textConfirm: 'OK',
-        confirmTextColor: Colors.white,
-        onConfirm: () => Get.back(),
-      );
+      UIUtils.showErrorDialog(message: 'User not logged in');
       return false;
     }
 
@@ -178,10 +168,8 @@ class CartController extends GetxController {
         }
       } else if (response.statusCode == 400) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
-        Get.snackbar(
-          'Error',
-          responseData['message'] ?? 'Insufficient product quantity',
-          snackPosition: SnackPosition.BOTTOM,
+        UIUtils.showErrorDialog(
+          message: responseData['message'] ?? 'Insufficient product quantity',
         );
       } else if (response.statusCode == 404) {
         logger.i('⚠️ Product or cart not found - refreshing cart');
@@ -190,10 +178,9 @@ class CartController extends GetxController {
       }
     } catch (e) {
       logger.e('❌ Exception: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to update cart',
-        snackPosition: SnackPosition.BOTTOM,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to update cart',
       );
     }
     
@@ -204,13 +191,7 @@ class CartController extends GetxController {
     final userId = tokenService.getUserId();
     final token = tokenService.getToken();
     if (userId == null || token == null) {
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: 'User not logged in',
-        textConfirm: 'OK',
-        confirmTextColor: Colors.white,
-        onConfirm: () => Get.back(),
-      );
+      UIUtils.showErrorDialog(message: 'User not logged in');
       return false;
     }
 
@@ -248,10 +229,9 @@ class CartController extends GetxController {
       }
     } catch (e) {
       logger.e('❌ Exception: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to remove product from cart',
-        snackPosition: SnackPosition.BOTTOM,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to remove product from cart',
       );
     }
     
@@ -262,13 +242,7 @@ class CartController extends GetxController {
     final userId = tokenService.getUserId();
     final token = tokenService.getToken();
     if (userId == null || token == null) {
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: 'User not logged in',
-        textConfirm: 'OK',
-        confirmTextColor: Colors.white,
-        onConfirm: () => Get.back(),
-      );
+      UIUtils.showErrorDialog(message: 'User not logged in');
       return false;
     }
 
@@ -304,10 +278,9 @@ class CartController extends GetxController {
       }
     } catch (e) {
       logger.e('❌ Exception: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to clear cart',
-        snackPosition: SnackPosition.BOTTOM,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to clear cart',
       );
     }
     

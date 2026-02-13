@@ -44,12 +44,19 @@ class DeviceSharingController extends GetxController {
         }
       }
     } catch (e) {
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: 'Failed to fetch shared users: $e',
-        textConfirm: 'OK',
-        confirmTextColor: Colors.white,
-        onConfirm: () => Get.back(),
+      Get.dialog(
+        Builder(
+          builder: (ctx) => AlertDialog(
+            title: const Text('Error'),
+            content: Text('Failed to fetch shared users: $e'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        ),
       );
     } finally {
       isLoading.value = false;
@@ -61,12 +68,19 @@ class DeviceSharingController extends GetxController {
     
     // Validate phone
     if (phone.length != 10) {
-      Get.defaultDialog(
-        title: 'Validation Error',
-        middleText: 'Phone number must be exactly 10 digits',
-        textConfirm: 'OK',
-        confirmTextColor: Colors.white,
-        onConfirm: () => Get.back(),
+      Get.dialog(
+        Builder(
+          builder: (ctx) => AlertDialog(
+            title: const Text('Validation Error'),
+            content: const Text('Phone number must be exactly 10 digits'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        ),
       );
       return;
     }
@@ -88,35 +102,58 @@ class DeviceSharingController extends GetxController {
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
-        Get.defaultDialog(
-          title: 'Success',
-          middleText: 'Device shared successfully',
-          textConfirm: 'OK',
-          confirmTextColor: Colors.white,
-          onConfirm: () => Get.back(),
+        Get.dialog(
+          Builder(
+            builder: (ctx) => AlertDialog(
+              title: const Text('Success'),
+              content: const Text('Device shared successfully'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(ctx, rootNavigator: true).pop();
+                    fetchSharedUsers();
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          ),
         );
-        fetchSharedUsers();
       } else {
         String errorMessage = data['message'] ?? 'Failed to share device';
         // Handle "not registered" case with custom message if needed
         if (response.statusCode == 404 && errorMessage.contains('not registered')) {
           errorMessage = 'User not registered. Please ask them to register first.';
         }
-        Get.defaultDialog(
-          title: 'Error',
-          middleText: errorMessage,
-          textConfirm: 'OK',
-          confirmTextColor: Colors.white,
-          onConfirm: () => Get.back(),
+        Get.dialog(
+          Builder(
+            builder: (ctx) => AlertDialog(
+              title: const Text('Error'),
+              content: Text(errorMessage),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          ),
         );
       }
     } catch (e) {
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: 'Failed to share device: $e',
-        textConfirm: 'OK',
-        confirmTextColor: Colors.white,
-        onConfirm: () => Get.back(),
+      Get.dialog(
+        Builder(
+          builder: (ctx) => AlertDialog(
+            title: const Text('Error'),
+            content: Text('Failed to share device: $e'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        ),
       );
     } finally {
       isLoading.value = false;
@@ -144,12 +181,19 @@ class DeviceSharingController extends GetxController {
         fetchSharedUsers();
       }
     } catch (e) {
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: 'Failed to update status: $e',
-        textConfirm: 'OK',
-        confirmTextColor: Colors.white,
-        onConfirm: () => Get.back(),
+      Get.dialog(
+        Builder(
+          builder: (ctx) => AlertDialog(
+            title: const Text('Error'),
+            content: Text('Failed to update status: $e'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        ),
       );
     } finally {
       isLoading.value = false;
@@ -174,21 +218,35 @@ class DeviceSharingController extends GetxController {
 
       if (response.statusCode == 200) {
         fetchSharedUsers();
-        Get.defaultDialog(
-          title: 'Success',
-          middleText: 'Share deleted successfully',
-          textConfirm: 'OK',
-          confirmTextColor: Colors.white,
-          onConfirm: () => Get.back(),
+        Get.dialog(
+          Builder(
+            builder: (ctx) => AlertDialog(
+              title: const Text('Success'),
+              content: const Text('Share deleted successfully'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          ),
         );
       }
     } catch (e) {
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: 'Failed to delete share: $e',
-        textConfirm: 'OK',
-        confirmTextColor: Colors.white,
-        onConfirm: () => Get.back(),
+      Get.dialog(
+        Builder(
+          builder: (ctx) => AlertDialog(
+            title: const Text('Error'),
+            content: Text('Failed to delete share: $e'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        ),
       );
     } finally {
       isLoading.value = false;
@@ -213,31 +271,52 @@ class DeviceSharingController extends GetxController {
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
-        Get.defaultDialog(
-          title: 'Success',
-          middleText: 'Request $action successfully',
-          textConfirm: 'OK',
-          confirmTextColor: Colors.white,
-          onConfirm: () => Get.back(),
+        Get.dialog(
+          Builder(
+            builder: (ctx) => AlertDialog(
+              title: const Text('Success'),
+              content: Text('Request $action successfully'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          ),
         );
         if (serialNumber != null) fetchSharedUsers();
         // If it's the current user accepting/rejecting from home, they might need a refresh
       } else {
-        Get.defaultDialog(
-          title: 'Error',
-          middleText: data['message'] ?? 'Failed to respond to request',
-          textConfirm: 'OK',
-          confirmTextColor: Colors.white,
-          onConfirm: () => Get.back(),
+        Get.dialog(
+          Builder(
+            builder: (ctx) => AlertDialog(
+              title: const Text('Error'),
+              content: Text(data['message'] ?? 'Failed to respond to request'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          ),
         );
       }
     } catch (e) {
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: 'Failed to respond to request: $e',
-        textConfirm: 'OK',
-        confirmTextColor: Colors.white,
-        onConfirm: () => Get.back(),
+      Get.dialog(
+        Builder(
+          builder: (ctx) => AlertDialog(
+            title: const Text('Error'),
+            content: Text('Failed to respond to request: $e'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        ),
       );
     } finally {
       isLoading.value = false;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:agri_plus/utils/ui_utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../../utils/theme/app_colors.dart';
@@ -51,7 +52,7 @@ class _ProductDetailsViewState extends State<ProductDetailsView> {
     final gstPercent = double.tryParse(productGstPercent) ?? 0;
     final shippingValue = double.tryParse(productShipping) ?? 0;
     final gstAmount = priceValue * (gstPercent / 100);
-    final totalPrice = priceValue + gstAmount + shippingValue;
+    final totalPrice = (priceValue + gstAmount + shippingValue) * _quantity;
 
     return Scaffold(
       appBar: AppBar(
@@ -200,12 +201,9 @@ class _ProductDetailsViewState extends State<ProductDetailsView> {
 
   Future<void> _openPdf(String pdfUrl) async {
     if (pdfUrl.isEmpty) {
-      Get.snackbar(
-        'Error',
-        'PDF not available',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'PDF not available',
       );
       return;
     }
@@ -218,21 +216,15 @@ class _ProductDetailsViewState extends State<ProductDetailsView> {
           mode: LaunchMode.externalApplication,
         );
       } else {
-        Get.snackbar(
-          'Error',
-          'Cannot open PDF',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
+        UIUtils.showErrorSnackbar(
+          title: 'Error',
+          message: 'Cannot open PDF',
         );
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to open PDF: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to open PDF: $e',
       );
     }
   }
@@ -253,12 +245,9 @@ Get yours now from our app!
         subject: productName,
       );
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to share product',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to share product',
       );
     }
   }
@@ -665,7 +654,7 @@ Get yours now from our app!
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.of(context).pop();
+                        Navigator.of(context, rootNavigator: true).pop();
                       },
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -690,7 +679,7 @@ Get yours now from our app!
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.of(context).pop();
+                        Navigator.of(context, rootNavigator: true).pop();
                         Get.to(() => const CartPage());
                       },
                       style: ElevatedButton.styleFrom(

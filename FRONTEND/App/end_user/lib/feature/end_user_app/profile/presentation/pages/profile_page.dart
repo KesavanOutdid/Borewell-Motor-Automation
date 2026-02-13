@@ -10,6 +10,7 @@ import '../../../home/presentation/controllers/home_controller.dart';
 import 'edit_profile_page.dart';
 import '../../../../../utils/theme/theme_controller.dart';
 import '../../../../../utils/theme/app_colors.dart';
+import '../../../../../utils/widgets/ui_components.dart';
 
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({super.key});
@@ -30,10 +31,9 @@ class ProfileView extends GetView<ProfileController> {
 
   void _showThemeDialog(BuildContext context) {
     final themeController = Get.find<ThemeController>();
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
+    Get.dialog(
+      Builder(
+        builder: (dialogContext) => AlertDialog(
           backgroundColor: Theme.of(context).dialogTheme.backgroundColor ?? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white),
           title: const Text('Choose Theme'),
           content: Column(
@@ -46,7 +46,7 @@ class ProfileView extends GetView<ProfileController> {
                 onChanged: (ThemeMode? value) {
                   if (value != null) {
                     themeController.setLight();
-                    Navigator.pop(context);
+                    Navigator.of(dialogContext, rootNavigator: true).pop();
                   }
                 },
               ),
@@ -57,7 +57,7 @@ class ProfileView extends GetView<ProfileController> {
                 onChanged: (ThemeMode? value) {
                   if (value != null) {
                     themeController.setDark();
-                    Navigator.pop(context);
+                    Navigator.of(dialogContext, rootNavigator: true).pop();
                   }
                 },
               ),
@@ -68,35 +68,34 @@ class ProfileView extends GetView<ProfileController> {
                 onChanged: (ThemeMode? value) {
                   if (value != null) {
                     themeController.setSystem();
-                    Navigator.pop(context);
+                    Navigator.of(dialogContext, rootNavigator: true).pop();
                   }
                 },
               ),
             ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
   void _showLogoutConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
+    Get.dialog(
+      Builder(
+        builder: (dialogContext) => AlertDialog(
           backgroundColor: Theme.of(context).dialogTheme.backgroundColor ?? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white),
           title: const Text('Logout'),
           content: const Text('Are you sure you want to logout?'),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.of(dialogContext, rootNavigator: true).pop();
               },
               child: const Text('No'),
             ),
             TextButton(
               onPressed: () async {
-                Navigator.pop(context);
+                Navigator.of(dialogContext, rootNavigator: true).pop();
                 try {
                   final authController = Get.find<AuthController>();
                   await authController.logout();
@@ -115,8 +114,8 @@ class ProfileView extends GetView<ProfileController> {
               ),
             ),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -158,7 +157,7 @@ class ProfileView extends GetView<ProfileController> {
                   icon: Icons.camera_alt_rounded,
                   label: 'Camera',
                   onTap: () {
-                    Navigator.pop(context);
+                    Navigator.of(context).pop();
                     controller.pickAndUploadImage(ImageSource.camera);
                   },
                 ),
@@ -167,7 +166,7 @@ class ProfileView extends GetView<ProfileController> {
                   icon: Icons.photo_library_rounded,
                   label: 'Gallery',
                   onTap: () {
-                    Navigator.pop(context);
+                    Navigator.of(context).pop();
                     controller.pickAndUploadImage(ImageSource.gallery);
                   },
                 ),
@@ -177,7 +176,7 @@ class ProfileView extends GetView<ProfileController> {
                     icon: Icons.delete_outline_rounded,
                     label: 'Remove',
                     onTap: () {
-                      Navigator.pop(context);
+                      Navigator.of(context).pop();
                       _showRemoveImageConfirmation(context);
                     },
                     color: Colors.red,
@@ -192,28 +191,29 @@ class ProfileView extends GetView<ProfileController> {
   }
 
   void _showRemoveImageConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).dialogTheme.backgroundColor ?? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white),
-        title: const Text('Remove Photo'),
-        content: const Text('Are you sure you want to remove your profile photo?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              controller.removeProfileImage();
-            },
-            child: const Text(
-              'Remove',
-              style: TextStyle(color: Colors.red),
+    Get.dialog(
+      Builder(
+        builder: (dialogContext) => AlertDialog(
+          backgroundColor: Theme.of(context).dialogTheme.backgroundColor ?? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white),
+          title: const Text('Remove Photo'),
+          content: const Text('Are you sure you want to remove your profile photo?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext, rootNavigator: true).pop(),
+              child: const Text('Cancel'),
             ),
-          ),
-        ],
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext, rootNavigator: true).pop();
+                controller.removeProfileImage();
+              },
+              child: const Text(
+                'Remove',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -263,24 +263,9 @@ class ProfileView extends GetView<ProfileController> {
       }
 
       if (controller.errorMessage.value.isNotEmpty) {
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.red),
-              const SizedBox(height: 16),
-              Text(
-                controller.errorMessage.value,
-                style: const TextStyle(fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => controller.fetchProfile(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        return NetworkErrorWidget(
+          message: controller.errorMessage.value,
+          onRetry: () => controller.fetchProfile(),
         );
       }
 

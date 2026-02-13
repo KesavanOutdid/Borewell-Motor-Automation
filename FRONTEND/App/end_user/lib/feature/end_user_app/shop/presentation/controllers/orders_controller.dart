@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:logger/logger.dart';
+import 'package:agri_plus/utils/ui_utils.dart';
 import '../../../../../core/services/token_service.dart';
 import '../../../../../core/config/env.dart';
 import '../../data/models/order_model.dart';
@@ -10,6 +11,7 @@ import '../../data/models/order_model.dart';
 class OrdersController extends GetxController {
   var orders = <OrderModel>[].obs;
   var isLoading = false.obs;
+  var errorMessage = ''.obs;
   var selectedOrder = Rxn<OrderModel>();
   
   final String baseUrl = AppConfig.baseUrl;
@@ -35,6 +37,7 @@ class OrdersController extends GetxController {
     }
 
     isLoading.value = true;
+    errorMessage.value = '';
     final url = Uri.parse('$baseUrl/app/order/getOrders');
     logger.i('📦 Fetching orders for user: $userId');
 
@@ -63,13 +66,14 @@ class OrdersController extends GetxController {
         }
       } else {
         logger.e('❌ HTTP Error: ${response.statusCode}');
+        errorMessage.value = 'Failed to fetch orders (${response.statusCode})';
       }
     } catch (e) {
       logger.e('❌ Exception: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to fetch orders',
-        snackPosition: SnackPosition.BOTTOM,
+      errorMessage.value = 'Network connection failed. Please check your internet.';
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to fetch orders',
       );
     } finally {
       isLoading.value = false;
@@ -81,10 +85,9 @@ class OrdersController extends GetxController {
     final token = tokenService.getToken();
     
     if (userId == null || token == null) {
-      Get.snackbar(
-        'Error',
-        'User not logged in',
-        snackPosition: SnackPosition.BOTTOM,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'User not logged in',
       );
       return;
     }
@@ -117,18 +120,16 @@ class OrdersController extends GetxController {
           logger.i('✅ Order fetched successfully');
         }
       } else {
-        Get.snackbar(
-          'Error',
-          'Failed to fetch order details',
-          snackPosition: SnackPosition.BOTTOM,
+        UIUtils.showErrorSnackbar(
+          title: 'Error',
+          message: 'Failed to fetch order details',
         );
       }
     } catch (e) {
       logger.e('❌ Exception: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to fetch order details',
-        snackPosition: SnackPosition.BOTTOM,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to fetch order details',
       );
     } finally {
       isLoading.value = false;
@@ -140,10 +141,9 @@ class OrdersController extends GetxController {
     final token = tokenService.getToken();
     
     if (userId == null || token == null) {
-      Get.snackbar(
-        'Error',
-        'User not logged in',
-        snackPosition: SnackPosition.BOTTOM,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'User not logged in',
       );
       return;
     }
@@ -175,12 +175,9 @@ class OrdersController extends GetxController {
         if (responseData['success'] == true) {
           logger.i('✅ Order cancelled successfully');
           
-          Get.snackbar(
-            'Success',
-            'Order cancelled successfully',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
+          UIUtils.showSuccessSnackbar(
+            title: 'Success',
+            message: 'Order cancelled successfully',
           );
           
           await fetchOrders();
@@ -188,32 +185,23 @@ class OrdersController extends GetxController {
             await fetchOrderById(orderId);
           }
         } else {
-          Get.snackbar(
-            'Error',
-            responseData['message'] ?? 'Failed to cancel order',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
+          UIUtils.showErrorSnackbar(
+            title: 'Error',
+            message: responseData['message'] ?? 'Failed to cancel order',
           );
         }
       } else {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
-        Get.snackbar(
-          'Error',
-          responseData['message'] ?? 'Failed to cancel order',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
+        UIUtils.showErrorSnackbar(
+          title: 'Error',
+          message: responseData['message'] ?? 'Failed to cancel order',
         );
       }
     } catch (e) {
       logger.e('❌ Exception: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to cancel order',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to cancel order',
       );
     } finally {
       isLoading.value = false;

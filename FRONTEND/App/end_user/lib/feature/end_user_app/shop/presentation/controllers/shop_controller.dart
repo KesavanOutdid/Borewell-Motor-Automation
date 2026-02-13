@@ -12,6 +12,7 @@ class ShopController extends GetxController {
   var products = <Map<String, dynamic>>[].obs;
   var isLoading = false.obs;
   var isLoadingMore = false.obs;
+  var errorMessage = "".obs;
   var currentPage = 1.obs;
   var totalPages = 1.obs;
   var hasNextPage = false.obs;
@@ -67,6 +68,7 @@ class ShopController extends GetxController {
     
     if (currentPage.value == 1) {
       isLoading.value = true;
+      errorMessage.value = "";
     } else {
       isLoadingMore.value = true;
     }
@@ -123,13 +125,7 @@ class ShopController extends GetxController {
         errorMsg = "Network connection failed. Please check your internet.";
       }
 
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: errorMsg,
-        textConfirm: 'OK',
-        confirmTextColor: Colors.white,
-        onConfirm: () => Get.back(),
-      );
+      errorMessage.value = errorMsg;
     } finally {
       isLoading.value = false;
       isLoadingMore.value = false;

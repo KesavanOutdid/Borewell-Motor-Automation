@@ -3,6 +3,14 @@ import 'package:get/get.dart';
 class DashboardController extends GetxController {
   var selectedIndex = 0.obs;
 
+  @override
+  void onInit() {
+    super.onInit();
+    if (Get.arguments != null && Get.arguments is Map && Get.arguments['index'] != null) {
+      selectedIndex.value = Get.arguments['index'];
+    }
+  }
+
   void changePage(int index) {
     selectedIndex.value = index;
   }

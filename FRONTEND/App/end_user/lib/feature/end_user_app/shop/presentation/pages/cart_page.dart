@@ -4,6 +4,8 @@ import '../../../../../utils/theme/app_colors.dart';
 import '../../../../../utils/widgets/gradient_widgets.dart';
 import '../controllers/cart_controller.dart';
 import '../controllers/voucher_controller.dart';
+import '../../../../../utils/widgets/ui_components.dart';
+import '../../../dashboard/presentation/controllers/dashboard_controller.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -56,8 +58,15 @@ class _CartPageState extends State<CartPage> {
         ],
       ),
       body: Obx(() {
-        if (controller.isLoading.value) {
+        if (controller.isLoading.value && controller.cart.value == null) {
           return const Center(child: CircularProgressIndicator());
+        }
+
+        if (controller.errorMessage.value.isNotEmpty) {
+          return NetworkErrorWidget(
+            message: controller.errorMessage.value,
+            onRetry: () => controller.fetchCart(),
+          );
         }
 
         final cart = controller.cart.value;
@@ -91,7 +100,15 @@ class _CartPageState extends State<CartPage> {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
-                  onPressed: () => Get.back(),
+                  onPressed: () {
+                    try {
+                      final dashboardController = Get.find<DashboardController>();
+                      dashboardController.changePage(1);
+                      Get.back(); // Always try to go back as CartPage is likely a separate route or pushed
+                    } catch (e) {
+                      Get.back();
+                    }
+                  },
                   icon: const Icon(Icons.shopping_bag_outlined),
                   label: const Text('Continue Shopping'),
                   style: ElevatedButton.styleFrom(
@@ -135,10 +152,13 @@ class _CartPageState extends State<CartPage> {
                   ),
                   const SizedBox(height: 12),
                   ...cart.items.map((item) => _buildCartItem(context, item, controller)).toList(),
+                  const SizedBox(height: 12),
+                  _buildPriceSummarySection(cart, controller),
+                  const SizedBox(height: 32),
                 ],
               ),
             ),
-            _buildCartSummary(cart, controller),
+            _buildCheckoutBottomBar(cart),
           ],
         );
       }),
@@ -287,163 +307,202 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  Widget _buildCartSummary(dynamic cart, CartController controller) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(color: Colors.grey.shade200, width: 1),
+  Widget _buildPriceSummarySection(dynamic cart, CartController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          child: Text(
+            'Price Summary',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+          ),
         ),
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(30),
-        ),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Price Summary',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade100),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: voucherCodeController,
-                      decoration: InputDecoration(
-                        hintText: 'Voucher Code',
-                        hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                        isDense: true,
-                      ),
-                      textCapitalization: TextCapitalization.characters,
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      final code = voucherCodeController.text.trim();
-                      if (code.isEmpty) return;
-                      
-                      final validatedVoucher = await voucherController.validateVoucher(code);
-                      if (validatedVoucher != null) {
-                        setState(() {
-                          appliedDiscountPercentage = validatedVoucher.discountPercentage;
-                          appliedVoucherCode = validatedVoucher.voucherCode;
-                        });
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryGreen,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text('Apply', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                ],
-              ),
-            ),
-            if (appliedVoucherCode != null) ...[
-              const SizedBox(height: 12),
+            ],
+          ),
+          child: Column(
+            children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.success.withOpacity(0.2)),
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade100),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.verified_rounded, color: AppColors.success, size: 18),
-                    const SizedBox(width: 10),
                     Expanded(
-                      child: Text(
-                        'Voucher "$appliedVoucherCode" applied!',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppColors.success,
-                          fontWeight: FontWeight.bold,
+                      child: TextField(
+                        controller: voucherCodeController,
+                        decoration: InputDecoration(
+                          hintText: 'Voucher Code',
+                          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                          isDense: true,
                         ),
+                        textCapitalization: TextCapitalization.characters,
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.success),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () {
-                        setState(() {
-                          appliedDiscountPercentage = null;
-                          appliedVoucherCode = null;
-                          voucherCodeController.clear();
-                        });
+                    ElevatedButton(
+                      onPressed: () async {
+                        final code = voucherCodeController.text.trim();
+                        if (code.isEmpty) return;
+                        
+                        final validatedVoucher = await voucherController.validateVoucher(code);
+                        if (validatedVoucher != null) {
+                          setState(() {
+                            appliedDiscountPercentage = validatedVoucher.discountPercentage;
+                            appliedVoucherCode = validatedVoucher.voucherCode;
+                          });
+                        }
                       },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryGreen,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Apply', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
               ),
-            ],
-            const SizedBox(height: 24),
-            _buildSummaryRow('Subtotal', '₹${cart.totalPrice.toStringAsFixed(2)}'),
-            const SizedBox(height: 12),
-            _buildSummaryRow('GST', '₹${cart.totalGst.toStringAsFixed(2)}'),
-            const SizedBox(height: 12),
-            _buildSummaryRow('Shipping', '₹${cart.totalShippingCost.toStringAsFixed(2)}'),
-            if (appliedDiscountPercentage != null) ...[
+              if (appliedVoucherCode != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.success.withOpacity(0.2)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.verified_rounded, color: AppColors.success, size: 18),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Voucher "$appliedVoucherCode" applied!',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.success,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.success),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () {
+                          setState(() {
+                            appliedDiscountPercentage = null;
+                            appliedVoucherCode = null;
+                            voucherCodeController.clear();
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 24),
+              _buildSummaryRow('Subtotal', '₹${cart.totalPrice.toStringAsFixed(2)}'),
               const SizedBox(height: 12),
+              _buildSummaryRow('GST', '₹${cart.totalGst.toStringAsFixed(2)}'),
+              const SizedBox(height: 12),
+              _buildSummaryRow('Shipping', '₹${cart.totalShippingCost.toStringAsFixed(2)}'),
+              if (appliedDiscountPercentage != null) ...[
+                const SizedBox(height: 12),
+                _buildSummaryRow(
+                  'Discount ($appliedDiscountPercentage%)',
+                  '-₹${(cart.grandTotal * appliedDiscountPercentage! / 100).toStringAsFixed(2)}',
+                  isDiscount: true,
+                ),
+              ],
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Divider(height: 1),
+              ),
               _buildSummaryRow(
-                'Discount ($appliedDiscountPercentage%)',
-                '-₹${(cart.grandTotal * appliedDiscountPercentage! / 100).toStringAsFixed(2)}',
-                isDiscount: true,
-              ),
-            ],
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-              decoration: BoxDecoration(
-                color: AppColors.primaryGreen.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: _buildSummaryRow(
                 'Grand Total',
                 '₹${_calculateFinalTotal(cart.grandTotal).toStringAsFixed(2)}',
                 isTotal: true,
               ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: () => Get.toNamed('/checkout'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGreen,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCheckoutBottomBar(dynamic cart) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Total Amount',
+                    style: TextStyle(fontSize: 14, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
                   ),
-                ),
-                child: const Text(
-                  'PROCEED TO CHECKOUT',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1,
+                  Text(
+                    '₹${_calculateFinalTotal(cart.grandTotal).toStringAsFixed(2)}',
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.primaryGreen),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 2,
+              child: SizedBox(
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () => Get.toNamed('/checkout'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryGreen,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    'CHECKOUT',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1),
                   ),
                 ),
               ),
@@ -486,24 +545,24 @@ class _CartPageState extends State<CartPage> {
   }
 
   void _showRemoveItemDialog(BuildContext context, CartController controller, int productId) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Remove Item'),
         content: const Text('Are you sure you want to remove this item from your cart?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
+            onPressed: () => Get.back(),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
-              Navigator.of(dialogContext).pop();
+              Get.back();
               controller.removeFromCart(productId);
             },
             child: const Text(
               'Remove',
-              style: TextStyle(color: Colors.red),
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -512,24 +571,24 @@ class _CartPageState extends State<CartPage> {
   }
 
   void _showClearCartDialog(BuildContext context, CartController controller) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Clear Cart'),
         content: const Text('Are you sure you want to remove all items from your cart?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
+            onPressed: () => Get.back(),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
-              Navigator.of(dialogContext).pop();
+              Get.back();
               controller.clearCart();
             },
             child: const Text(
               'Clear All',
-              style: TextStyle(color: Colors.red),
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
             ),
           ),
         ],

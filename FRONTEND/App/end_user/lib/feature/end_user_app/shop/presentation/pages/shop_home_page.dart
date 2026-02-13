@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
+import '../../../../../utils/widgets/ui_components.dart';
 import '../../../../../utils/theme/app_colors.dart';
 import '../../../../../utils/widgets/gradient_widgets.dart';
 import '../controllers/shop_controller.dart';
@@ -28,11 +29,11 @@ class _ShopHomeViewState extends State<ShopHomeView> {
   @override
   void initState() {
     super.initState();
-    print('🏗️ ShopHomeView initState - Initializing controller');
-    controller = Get.put(ShopController(), permanent: false);
-    cartController = Get.put(CartController(), permanent: true);
-    voucherController = Get.put(VoucherController(), permanent: true);
-    print('✅ Controller initialized - Products: ${controller.products.length}');
+    print('🏗️ ShopHomeView initState');
+    controller = Get.find<ShopController>();
+    cartController = Get.find<CartController>();
+    voucherController = Get.find<VoucherController>();
+    print('✅ Controllers found - Products: ${controller.products.length}');
     _startAutoScroll();
   }
 
@@ -41,7 +42,6 @@ class _ShopHomeViewState extends State<ShopHomeView> {
     print('🗑️ ShopHomeView dispose');
     _autoScrollTimer?.cancel();
     _voucherScrollController.dispose();
-    Get.delete<ShopController>();
     super.dispose();
   }
 
@@ -185,6 +185,15 @@ class _ShopHomeViewState extends State<ShopHomeView> {
           Obx(() {
             print('📊 Obx rebuild - isLoading: ${controller.isLoading.value}, products: ${controller.products.length}');
             
+            if (controller.errorMessage.value.isNotEmpty) {
+              return SliverFillRemaining(
+                child: NetworkErrorWidget(
+                  message: controller.errorMessage.value,
+                  onRetry: () => controller.fetchProducts(isRefresh: true),
+                ),
+              );
+            }
+
             if (controller.isLoading.value && controller.products.isEmpty) {
               return _buildShopHomeSkeleton();
             }

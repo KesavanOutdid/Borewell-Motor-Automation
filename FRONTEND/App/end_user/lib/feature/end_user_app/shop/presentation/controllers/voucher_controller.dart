@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:agri_plus/utils/ui_utils.dart';
 import '../../../../../core/config/env.dart';
 import '../../../../../core/services/token_service.dart';
 import '../../data/models/voucher_model.dart';
@@ -107,70 +108,29 @@ class VoucherController extends GetxController {
         
         if (jsonData['success'] == true && jsonData['data'] != null) {
           final validatedVoucher = ValidatedVoucher.fromJson(jsonData['data']);
-          Get.dialog(
-            Builder(
-              builder: (context) => AlertDialog(
-                title: const Text('Success'),
-                content: Text(jsonData['message'] ?? 'Voucher applied successfully'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('OK'),
-                  ),
-                ],
-              ),
-            ),
+          UIUtils.showSuccessSnackbar(
+            title: 'Success',
+            message: jsonData['message'] ?? 'Voucher applied successfully',
           );
           return validatedVoucher;
         }
       } else if (response.statusCode == 400) {
         final jsonData = jsonDecode(response.body);
-        Get.dialog(
-          Builder(
-            builder: (context) => AlertDialog(
-              title: const Text('Invalid Voucher'),
-              content: Text(jsonData['message'] ?? 'Voucher is invalid or expired'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
-          ),
+        UIUtils.showErrorDialog(
+          title: 'Invalid Voucher',
+          message: jsonData['message'] ?? 'Voucher is invalid or expired',
         );
       } else if (response.statusCode == 404) {
-        Get.dialog(
-          Builder(
-            builder: (context) => AlertDialog(
-              title: const Text('Not Found'),
-              content: const Text('Voucher not found'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
-          ),
+        UIUtils.showErrorDialog(
+          title: 'Not Found',
+          message: 'Voucher not found',
         );
       }
       return null;
     } catch (e) {
       await Future.delayed(const Duration(milliseconds: 300));
-      Get.dialog(
-        Builder(
-          builder: (context) => AlertDialog(
-            title: const Text('Error'),
-            content: Text('Failed to validate voucher: $e'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        ),
+      UIUtils.showErrorDialog(
+        message: 'Failed to validate voucher: $e',
       );
       return null;
     }

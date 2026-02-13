@@ -154,22 +154,24 @@ class DeviceSharingView extends GetView<DeviceSharingController> {
 
   void _confirmDelete(BuildContext context, Map<String, dynamic> user) {
     Get.dialog(
-      AlertDialog(
-        title: const Text('Delete Share'),
-        content: Text('Are you sure you want to remove sharing for ${user['shared_to_user_name']}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Get.back();
-              controller.deleteShare(user['shared_to_user_id']);
-            },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
+      Builder(
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Delete Share'),
+          content: Text('Are you sure you want to remove sharing for ${user['shared_to_user_name']}?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext, rootNavigator: true).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext, rootNavigator: true).pop();
+                controller.deleteShare(user['shared_to_user_id']);
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
       ),
     );
   }

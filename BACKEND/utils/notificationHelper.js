@@ -74,11 +74,38 @@ exports.sendPushNotification = async (tokens, notification, data = {}) => {
         
         // If some tokens failed, they might be invalid (uninstalled app etc.)
         if (response.failureCount > 0) {
+            const tokensToRemove = new Set();
             response.responses.forEach((resp, idx) => {
                 if (!resp.success) {
-                    console.log(`[Notification] Token at index ${idx} failed: ${resp.error.message}`);
+                    const errorCode = resp.error.code;
+                    const errorMessage = resp.error.message;
+                    console.log(`[Notification] Token at index ${idx} failed: ${errorMessage} (${errorCode})`);
+                    
+                    // Identify tokens to remove: NotRegistered or Invalid
+                    if (errorCode === 'messaging/registration-token-not-registered' || 
+                        errorCode === 'messaging/invalid-registration-token' ||
+                        errorMessage.includes('NotRegistered') ||
+                        errorMessage.includes('Requested entity was not found')) {
+                        tokensToRemove.add(targetTokens[idx]);
+                    }
                 }
             });
+
+            if (tokensToRemove.size > 0) {
+                const tokensArray = Array.from(tokensToRemove);
+                console.log(`[Notification] Cleaning up ${tokensArray.length} invalid tokens...`);
+                // Use the User model to remove these tokens from all users
+                const User = require("../models/User");
+                try {
+                    await User.updateMany(
+                        { fcm_tokens: { $in: tokensArray } },
+                        { $pull: { fcm_tokens: { $in: tokensArray } } }
+                    );
+                    console.log("[Notification] Token cleanup successful");
+                } catch (dbError) {
+                    console.error("[Notification] Error during token cleanup:", dbError.message);
+                }
+            }
         }
         return response;
     } catch (error) {

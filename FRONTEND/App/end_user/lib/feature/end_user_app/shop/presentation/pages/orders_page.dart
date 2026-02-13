@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../../utils/theme/app_colors.dart';
 import '../controllers/orders_controller.dart';
+import '../../../dashboard/presentation/controllers/dashboard_controller.dart';
+import '../../../../../utils/widgets/ui_components.dart';
 
 class OrdersPage extends StatelessWidget {
   const OrdersPage({super.key});
@@ -87,6 +89,13 @@ class OrdersPage extends StatelessWidget {
           return _buildSkeleton();
         }
 
+        if (controller.errorMessage.value.isNotEmpty) {
+          return NetworkErrorWidget(
+            message: controller.errorMessage.value,
+            onRetry: () => controller.fetchOrders(),
+          );
+        }
+
         if (controller.orders.isEmpty) {
           return Center(
             child: Column(
@@ -122,7 +131,19 @@ class OrdersPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
-                  onPressed: () => Get.back(),
+                  onPressed: () {
+                    try {
+                      final dashboardController = Get.find<DashboardController>();
+                      dashboardController.changePage(1);
+                      if (Get.currentRoute == '/orders') {
+                        Get.back();
+                      }
+                    } catch (e) {
+                      if (Get.currentRoute == '/orders') {
+                        Get.back();
+                      }
+                    }
+                  },
                   icon: const Icon(Icons.shopping_cart_outlined),
                   label: const Text('Continue Shopping'),
                   style: ElevatedButton.styleFrom(

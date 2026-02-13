@@ -16,6 +16,7 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 class HomeController extends GetxController {
   var devices = <Map<String, dynamic>>[].obs;
   var isLoading = false.obs;
+  var errorMessage = "".obs;
   var selectedFilter = 'Recently'.obs;
   late TokenService tokenService;
   final _storage = GetStorage();
@@ -102,6 +103,23 @@ class HomeController extends GetxController {
         if (data != null && data['serial_number'] != null) {
           final serial = data['serial_number'];
           _updateDeviceLastSeen(serial);
+          
+          final motorRunning = data['motor_running'];
+          if (motorRunning != null) {
+            final newStatus = motorRunning == true;
+            
+            // Respect pending command window
+            if (_pendingCommands.containsKey(serial)) {
+              final pending = _pendingCommands[serial]!;
+              if (DateTime.now().difference(pending.time) < _commandPendingWindow) {
+                if (newStatus != pending.status) {
+                  print('🏠 [HOME] Ignoring contradictory heartbeat status for $serial (command pending)');
+                  return;
+                }
+              }
+            }
+            _updateDeviceStatus(serial, newStatus);
+          }
         }
       });
     } catch (e) {
@@ -151,7 +169,10 @@ class HomeController extends GetxController {
 
   Future<void> fetchDevices({bool silent = false}) async {
     print('🏠 [HOME] Fetching user assigned devices (silent: $silent)...');
-    if (!silent) isLoading.value = true;
+    if (!silent) {
+      isLoading.value = true;
+      errorMessage.value = "";
+    }
 
     final url = Uri.parse(AppConfig.baseUrl + AppConfig.userAssignedDevicesEndpoint);
     final token = tokenService.getToken();
@@ -253,6 +274,14 @@ class HomeController extends GetxController {
         });
       }
     } catch (e) {
+      if (!silent) {
+        if (e is SocketException || e.toString().contains('SocketException')) {
+          errorMessage.value = "Network connection failed. Please check your internet.";
+        } else {
+          errorMessage.value = "An error occurred while fetching devices.";
+        }
+      }
+      
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
           String errorMsg = "Connection failed: $e";

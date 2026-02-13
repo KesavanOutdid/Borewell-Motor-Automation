@@ -533,3 +533,57 @@ class SearchBar extends StatelessWidget {
     );
   }
 }
+
+class NetworkErrorWidget extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const NetworkErrorWidget({
+    super.key,
+    required this.message,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.error_outline_rounded,
+                size: 80,
+                color: Colors.redAccent,
+              ),
+            ),
+            const SizedBox(height: 32),
+            Text(
+              message,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.black54,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            PrimaryButton(
+              text: 'Retry',
+              onPressed: onRetry,
+              width: 160,
+              height: 50,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

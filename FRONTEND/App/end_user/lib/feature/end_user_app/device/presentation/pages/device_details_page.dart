@@ -6,6 +6,7 @@ import '../../../../../utils/widgets/swipe_button.dart';
 import '../controllers/device_details_controller.dart';
 import '../../../../../utils/theme/app_colors.dart';
 import '../../../../../utils/widgets/gradient_widgets.dart';
+import '../../../../../utils/widgets/ui_components.dart';
 
 class DeviceDetailsView extends GetView<DeviceDetailsController> {
   const DeviceDetailsView({Key? key}) : super(key: key);
@@ -46,6 +47,13 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
         ],
       ),
       body: Obx(() {
+        if (controller.errorMessage.value.isNotEmpty) {
+          return NetworkErrorWidget(
+            message: controller.errorMessage.value,
+            onRetry: () => controller.fetchDeviceDetails(),
+          );
+        }
+        
         if (controller.isLoading.value) {
           return _buildSkeleton();
         }

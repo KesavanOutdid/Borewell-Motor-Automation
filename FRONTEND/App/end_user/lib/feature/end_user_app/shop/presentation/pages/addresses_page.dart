@@ -209,12 +209,12 @@ class _AddressesPageState extends State<AddressesPage> {
           content: const Text('Are you sure you want to delete this address?'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
               child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(context, rootNavigator: true).pop();
                 controller.deleteAddress(address.id!);
               },
               child: const Text(

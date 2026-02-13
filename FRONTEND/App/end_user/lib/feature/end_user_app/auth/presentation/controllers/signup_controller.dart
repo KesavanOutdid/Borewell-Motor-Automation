@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:agri_plus/utils/ui_utils.dart';
 import '../../../../../core/config/env.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -22,38 +23,28 @@ class SignupController extends GetxController {
   }
 
   void _showErrorDialog(String message) {
-    Get.dialog(
-      AlertDialog(
-        title: const Text("Error"),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () {
-              if (Get.isDialogOpen ?? false) {
-                Navigator.of(Get.overlayContext!).pop();
-              }
-            },
-            child: const Text("OK"),
-          ),
-        ],
-      ),
-    );
+    UIUtils.showErrorDialog(message: message);
   }
 
   void _showSuccessDialog(String email) {
     Get.dialog(
       AlertDialog(
-        title: const Text("Success"),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: Colors.green),
+            SizedBox(width: 8),
+            Text("Success"),
+          ],
+        ),
         content: const Text("Account created successfully"),
         actions: [
           TextButton(
             onPressed: () {
-              if (Get.isDialogOpen ?? false) {
-                Navigator.of(Get.overlayContext!).pop();
-              }
+              Get.back();
               Get.offNamed('/login', arguments: {'email': email});
             },
-            child: const Text("OK"),
+            child: const Text("OK", style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
