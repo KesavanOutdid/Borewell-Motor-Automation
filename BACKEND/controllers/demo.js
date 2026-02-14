@@ -1,4 +1,5 @@
 // BACKEND/controllers/adminControllers.js
+
 const { validationResult } = require('express-validator');
 const Role = require('../models/Role');
 const User = require('../models/User');
