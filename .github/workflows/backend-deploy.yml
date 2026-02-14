@@ -1,0 +1,58 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - testing
+    paths:
+      - 'BACKEND/**'
+  pull_request:
+    branches:
+      - main
+      - dev
+      - testing
+    paths:
+      - 'BACKEND/**'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./BACKEND
+          push: ${{ github.event_name == 'push' }}
+          tags: |
+            vivekdocker98/borewell-backend:${{ github.ref_name }}
+            ${{ github.ref_name == 'main' && 'vivekdocker98/borewell-backend:latest' || '' }}
+
+  deploy:
+    needs: build-and-push
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker pull vivekdocker98/borewell-backend:${{ github.ref_name }}
+            docker stop borewell-backend-${{ github.ref_name }} || true
+            docker rm borewell-backend-${{ github.ref_name }} || true
+            docker run -d --name borewell-backend-${{ github.ref_name }} -p ${{ github.ref_name == 'main' && '3030:3030' || github.ref_name == 'testing' && '3031:3030' || '3032:3030' }} \
+              --env-file /path/to/your/backend/.env.${{ github.ref_name }} \
+              vivekdocker98/borewell-backend:${{ github.ref_name }}
