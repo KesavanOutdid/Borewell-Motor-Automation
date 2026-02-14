@@ -122,6 +122,7 @@ client.on("message", async (topic, message) => {
             // Update the device collection with latest timestamp and status
             const deviceUpdate = {
                 updatedAt: new Date(timestamp || loggedAt),
+                last_heartbeat: new Date(),
                 device_status: (item.DEVICE_STATUS || item.device_status || type).toLowerCase()
             };
 

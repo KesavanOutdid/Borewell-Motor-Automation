@@ -16,9 +16,18 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 class HomeController extends GetxController {
   var devices = <Map<String, dynamic>>[].obs;
   var isLoading = false.obs;
+  var isLoadingMore = false.obs;
   var errorMessage = "".obs;
   var selectedFilter = 'Recently'.obs;
   var processingDevices = <String>{}.obs; // Track per-device processing state
+  
+  var currentPage = 1.obs;
+  var totalPages = 1.obs;
+  var hasMore = true.obs;
+  static const int limit = 10;
+  
+  final scrollController = ScrollController();
+
   late TokenService tokenService;
   final _storage = GetStorage();
   IO.Socket? _socket;
@@ -29,7 +38,12 @@ class HomeController extends GetxController {
   static const Duration _commandPendingWindow = Duration(seconds: 20);
 
   void setFilter(String filter) {
+    if (selectedFilter.value == filter) return;
     selectedFilter.value = filter;
+    currentPage.value = 1;
+    hasMore.value = true;
+    devices.clear();
+    fetchDevices();
   }
 
   bool _getMotorRunning(Map<String, dynamic> payload) {
@@ -55,10 +69,17 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     tokenService = Get.find<TokenService>();
+    
+    scrollController.addListener(() {
+      if (scrollController.position.pixels >= scrollController.position.maxScrollExtent - 200) {
+        fetchMoreDevices();
+      }
+    });
   }
 
   @override
   void onClose() {
+    scrollController.dispose();
     _socket?.dispose();
     _offlineCheckTimer?.cancel();
     super.onClose();
@@ -185,19 +206,23 @@ class HomeController extends GetxController {
     });
   }
 
-  Future<void> fetchDevices({bool silent = false}) async {
-    print('🏠 [HOME] Fetching user assigned devices (silent: $silent)...');
-    if (!silent) {
-      isLoading.value = true;
-      errorMessage.value = "";
+  Future<void> fetchDevices({bool silent = false, bool loadMore = false}) async {
+    if (loadMore) {
+      if (isLoadingMore.value || !hasMore.value) return;
+      isLoadingMore.value = true;
+    } else {
+      if (!silent) {
+        isLoading.value = true;
+        errorMessage.value = "";
+      }
+      currentPage.value = 1;
     }
 
+    print('🏠 [HOME] Fetching devices - Filter: ${selectedFilter.value}, Page: ${currentPage.value}');
+    
     final url = Uri.parse(AppConfig.baseUrl + AppConfig.userAssignedDevicesEndpoint);
     final token = tokenService.getToken();
     final userId = tokenService.getUserId();
-
-    print('🏠 [HOME] API Request: POST $url');
-    print('🏠 [HOME] User ID: $userId');
 
     try {
       final response = await http.post(
@@ -208,137 +233,84 @@ class HomeController extends GetxController {
         },
         body: jsonEncode({
           "user_id": userId,
+          "page": currentPage.value,
+          "limit": limit,
+          "filter": selectedFilter.value,
         }),
       );
-
-      print('🏠 [HOME] API Response: Status ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
         if (jsonData['success'] == true && jsonData['data'] != null) {
           final List<dynamic> data = jsonData['data'];
-          print('🏠 [HOME] Received ${data.length} devices from server');
-          final updatedDevices = <Map<String, dynamic>>[];
-          bool anyDataChanged = devices.length != data.length;
+          totalPages.value = jsonData['totalPages'] ?? 1;
           
+          final List<Map<String, dynamic>> processedData = [];
           for (var device in data) {
             final mapDevice = Map<String, dynamic>.from(device);
             final serial = mapDevice['serial_number'] ?? mapDevice['serialNumber'];
 
-            // Merge telemetry into mapDevice for _getMotorRunning to check RPM
             if (mapDevice['telemetry'] is Map) {
               mapDevice.addAll(Map<String, dynamic>.from(mapDevice['telemetry']));
             }
             
-            // Re-evaluate start_status based on heuristic
             mapDevice['start_status'] = _getMotorRunning(mapDevice);
             
-            // Check if we have this device already to preserve real-time status
             final existingIndex = devices.indexWhere((d) => (d['serial_number'] ?? d['serialNumber']) == serial);
             if (existingIndex != -1) {
               final existingDevice = devices[existingIndex];
-              
-              // Always preserve real-time heartbeat if we have it locally
               if (existingDevice['last_heartbeat'] != null) {
                 mapDevice['last_heartbeat'] = existingDevice['last_heartbeat'];
               }
-
-              final existingUpdate = existingDevice['updatedAt'];
-              final newUpdate = mapDevice['updatedAt'];
               
-              if (existingUpdate != null) {
-                DateTime? existingTime;
-                DateTime? newTime;
-                
-                try { existingTime = DateTime.parse(existingUpdate.toString()); } catch (_) {}
-                try { newTime = newUpdate != null ? DateTime.parse(newUpdate.toString()) : null; } catch (_) {}
-                
-                // If local status is newer or from socket, preserve it
-                if (newTime == null || (existingTime != null && existingTime.isAfter(newTime))) {
-                  mapDevice['updatedAt'] = existingUpdate;
-                  mapDevice['start_status'] = existingDevice['start_status'];
-                }
-
-                // ALSO respect pending command window during API fetch
-                if (_pendingCommands.containsKey(serial)) {
-                  final pending = _pendingCommands[serial]!;
-                  if (DateTime.now().difference(pending.time) < _commandPendingWindow) {
-                    mapDevice['start_status'] = pending.status;
-                  }
+              if (_pendingCommands.containsKey(serial)) {
+                final pending = _pendingCommands[serial]!;
+                if (DateTime.now().difference(pending.time) < _commandPendingWindow) {
+                  mapDevice['start_status'] = pending.status;
                 }
               }
-
-              // Compare with existing to see if we really need to refresh
-              if (!anyDataChanged) {
-                // Check if any visible field changed (nickname, status, etc)
-                if (existingDevice['device_nickname'] != mapDevice['device_nickname'] ||
-                    existingDevice['start_status'] != mapDevice['start_status'] ||
-                    existingDevice['location'] != mapDevice['location']) {
-                  anyDataChanged = true;
-                }
-              }
-            } else {
-              anyDataChanged = true;
             }
 
             final lat = _parseDouble(mapDevice['latitude']);
             final lng = _parseDouble(mapDevice['longitude']);
-            
             if (mapDevice['location'] == null || mapDevice['location'].toString().isEmpty || mapDevice['location'] == 'No Location') {
               if (lat != null && lng != null) {
                 _updateLocationAsync(serial, lat, lng);
               }
             }
-            updatedDevices.add(mapDevice);
+            processedData.add(mapDevice);
           }
-          
-          if (anyDataChanged) {
-            devices.value = updatedDevices;
-            await _storage.write('assigned_devices', devices);
+
+          if (loadMore) {
+            devices.addAll(processedData);
+          } else {
+            devices.assignAll(processedData);
+            if (!silent) {
+              await _storage.write('assigned_devices', devices);
+            }
           }
-        } else {
-          devices.value = [];
-          await _storage.write('assigned_devices', []);
+
+          hasMore.value = currentPage.value < totalPages.value;
+          if (hasMore.value) {
+            currentPage.value++;
+          }
         }
       } else if (response.statusCode == 401) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
-            Get.snackbar("Error", "Session expired. Please login again");
-          }
-        });
-        Future.delayed(const Duration(milliseconds: 500), () {
-          Get.offAllNamed('/login');
-        });
-      } else if (response.statusCode == 404) {
-        devices.value = [];
+        Get.offAllNamed('/login');
       } else {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
-            Get.snackbar("Error", "Failed to fetch devices");
-          }
-        });
+        if (!silent && !loadMore) errorMessage.value = "Failed to fetch devices";
       }
     } catch (e) {
-      if (!silent) {
-        if (e is SocketException || e.toString().contains('SocketException')) {
-          errorMessage.value = "Network connection failed. Please check your internet.";
-        } else {
-          errorMessage.value = "An error occurred while fetching devices.";
-        }
-      }
-      
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
-          String errorMsg = "Connection failed: $e";
-          if (e is SocketException || e.toString().contains('SocketException')) {
-            errorMsg = "Network connection failed. Please check your internet.";
-          }
-          Get.snackbar("Error", errorMsg);
-        }
-      });
+      print('🏠 [HOME] Error fetching devices: $e');
+      if (!silent && !loadMore) errorMessage.value = "Connection failed";
     } finally {
-      if (!silent) isLoading.value = false;
+      isLoading.value = false;
+      isLoadingMore.value = false;
     }
+  }
+
+  Future<void> fetchMoreDevices() async {
+    await fetchDevices(loadMore: true);
   }
 
   Future<void> _updateLocationAsync(String serial, double lat, double lng) async {
@@ -890,15 +862,25 @@ class HomeController extends GetxController {
 
   bool isOnline(Map<String, dynamic> device) {
     // Check real-time connectivity based on last heartbeat (2 minute threshold)
-    final lastUpdate = _getLastHeartbeat(device);
+    final heartbeat = device['last_heartbeat'];
+    if (heartbeat == null) return false;
+    
+    DateTime lastUpdate;
+    if (heartbeat is DateTime) {
+      lastUpdate = heartbeat;
+    } else {
+      try {
+        lastUpdate = DateTime.parse(heartbeat.toString());
+      } catch (e) {
+        return false;
+      }
+    }
+    
     final now = DateTime.now();
+    // Use UTC for comparison if the server sends UTC, but here we assume local time alignment
     final difference = now.difference(lastUpdate).inSeconds;
     
-    // Also check static status as a fallback
-    final staticStatus = device['device_status']?.toString().toLowerCase() ?? 
-                        device['status']?.toString().toLowerCase() ?? '';
-    
-    return difference < 120 && staticStatus != 'offline';
+    return difference >= 0 && difference < 120;
   }
 
   String getLastSeenText(Map<String, dynamic> device) {

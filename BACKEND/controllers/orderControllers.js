@@ -3,6 +3,7 @@ const Order = require('../models/Order');
 const User = require('../models/User');
 const Product = require('../models/Product');
 const Cart = require('../models/Cart');
+const Voucher = require('../models/Voucher');
 const crypto = require('crypto');
 
 const Razorpay = require('razorpay');
@@ -30,6 +31,18 @@ const reduceProductQuantity = async (cartItems) => {
     } catch (err) {
         console.error("Error reducing product quantity:", err);
         throw err;
+    }
+};
+
+const incrementVoucherUsage = async (voucherCode) => {
+    if (!voucherCode) return;
+    try {
+        await Voucher.findOneAndUpdate(
+            { voucher_code: voucherCode.toUpperCase() },
+            { $inc: { used_count: 1 } }
+        );
+    } catch (err) {
+        console.error("Error incrementing voucher usage:", err);
     }
 };
 
@@ -83,6 +96,11 @@ exports.createOrder = async (req, res, next) => {
         if (payment_method === 'cod' || payment_method === undefined) {
             try {
                 await reduceProductQuantity(cart_items);
+                
+                // Increment voucher usage if applicable
+                if (order_summary.voucher_code) {
+                    await incrementVoucherUsage(order_summary.voucher_code);
+                }
                 
                 // Clear user's cart
                 await Cart.deleteOne({ user_id });
@@ -183,6 +201,11 @@ exports.verifyPayment = async (req, res, next) => {
             try {
                 // Reduce product quantities
                 await reduceProductQuantity(order.cart_items);
+
+                // Increment voucher usage if applicable
+                if (order.order_summary && order.order_summary.voucher_code) {
+                    await incrementVoucherUsage(order.order_summary.voucher_code);
+                }
 
                 // Update order with payment details
                 order.razorpay_payment_id = razorpay_payment_id;

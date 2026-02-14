@@ -605,7 +605,7 @@ exports.startStopDevice = async (req, res) => {
 
 exports.userAssignDevices = async (req, res) => {
     try {
-        const { user_id } = req.body;
+        const { user_id, page = 1, limit = 10, filter = 'All' } = req.body;
 
         if (!user_id) {
             return res.status(400).json({
@@ -615,33 +615,58 @@ exports.userAssignDevices = async (req, res) => {
         }
 
         const userIdNum = parseInt(user_id);
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const skip = (pageNum - 1) * limitNum;
 
-        // 1. Find all devices where this user is the Master
-        const masterDevices = await Device.aggregate([
-            { $match: { assigned_user_id: userIdNum, assign_status: true, status: true } },
-            {
-                $lookup: {
-                    from: "users",
-                    localField: "assigned_user_id",
-                    foreignField: "user_id",
-                    as: "user_details"
-                }
-            },
-            {
-                $unwind: {
-                    path: "$user_details",
-                    preserveNullAndEmptyArrays: true
-                }
-            },
-            { $addFields: { role: 'master' } }
-        ]);
+        // Threshold for online status (2 minutes)
+        const onlineThreshold = new Date(Date.now() - 2 * 60 * 1000);
 
-        // 2. Find all devices shared with this user
+        // Define base query for devices where user is master or shared
+        // First get shared serials
         const shares = await DeviceShare.find({ shared_to_user_id: userIdNum, status: true });
         const sharedSerials = shares.map(s => s.serial_number);
 
-        const sharedDevices = await Device.aggregate([
-            { $match: { serial_number: { $in: sharedSerials }, status: true } },
+        // Base match criteria
+        const baseMatch = {
+            $or: [
+                { assigned_user_id: userIdNum, assign_status: true, status: true },
+                { serial_number: { $in: sharedSerials }, status: true }
+            ]
+        };
+
+        // Add filter specific criteria
+        if (filter === 'Running') {
+            baseMatch.start_status = true;
+        } else if (filter === 'Stopped') {
+            baseMatch.start_status = false;
+            baseMatch.imei_number = { $ne: null, $not: /^\s*$/ }; // Configured
+        } else if (filter === 'Online') {
+            baseMatch.last_heartbeat = { $gte: onlineThreshold };
+        } else if (filter === 'Offline') {
+            baseMatch.$and = [
+                {
+                    $or: [
+                        { last_heartbeat: { $lt: onlineThreshold } },
+                        { last_heartbeat: { $exists: false } }
+                    ]
+                }
+            ];
+        } else if (filter === 'Not Configured') {
+            baseMatch.assigned_user_id = userIdNum; // Only show MY devices
+            baseMatch.$or = [
+                { imei_number: null },
+                { imei_number: "" }
+            ];
+        } else if (filter === 'Shared') {
+            baseMatch.assigned_user_id = { $ne: userIdNum };
+        }
+
+        const sortCriteria = { updatedAt: -1 };
+
+        // Aggregate with pagination
+        const devices = await Device.aggregate([
+            { $match: baseMatch },
             {
                 $lookup: {
                     from: "users",
@@ -656,38 +681,42 @@ exports.userAssignDevices = async (req, res) => {
                     preserveNullAndEmptyArrays: true
                 }
             },
-            { $addFields: { role: 'shared' } }
+            {
+                $addFields: {
+                    role: {
+                        $cond: { if: { $eq: ["$assigned_user_id", userIdNum] }, then: 'master', else: 'shared' }
+                    }
+                }
+            },
+            { $sort: sortCriteria },
+            { $skip: skip },
+            { $limit: filter === 'Recently' ? 5 : limitNum }
         ]);
 
-        const allDevices = [
-            ...masterDevices.map(d => ({ ...d, acceptance_status: 'accepted' })),
-            ...sharedDevices.map(d => {
-                const share = shares.find(s => s.serial_number === d.serial_number);
-                return {
-                    ...d,
-                    acceptance_status: share ? share.acceptance_status : 'pending',
-                    share_info: share ? {
-                        master_user_id: share.master_user_id,
-                        master_user_name: share.master_user_name,
-                        master_user_email: share.master_user_email,
-                        shared_to_user_id: share.shared_to_user_id,
-                        shared_to_user_name: share.shared_to_user_name,
-                        shared_to_user_phone: share.shared_to_user_phone,
-                        shared_to_user_email: share.shared_to_user_email,
-                        assignedAt: share.assignedAt
-                    } : null
-                };
-            })
-        ];
+        const totalDevices = await Device.countDocuments(baseMatch);
 
-        const enrichedDevices = allDevices.map(device => ({
-            ...device,
-            user_details: device.user_details ? {
-                user_name: device.user_details.user_name,
-                user_email: device.user_details.user_email,
-                user_phone: device.user_details.user_phone
-            } : null
-        }));
+        const enrichedDevices = devices.map(device => {
+            const share = shares.find(s => s.serial_number === device.serial_number);
+            return {
+                ...device,
+                acceptance_status: device.role === 'master' ? 'accepted' : (share ? share.acceptance_status : 'pending'),
+                share_info: device.role === 'shared' && share ? {
+                    master_user_id: share.master_user_id,
+                    master_user_name: share.master_user_name,
+                    master_user_email: share.master_user_email,
+                    shared_to_user_id: share.shared_to_user_id,
+                    shared_to_user_name: share.shared_to_user_name,
+                    shared_to_user_phone: share.shared_to_user_phone,
+                    shared_to_user_email: share.shared_to_user_email,
+                    assignedAt: share.assignedAt
+                } : null,
+                user_details: device.user_details ? {
+                    user_name: device.user_details.user_name,
+                    user_email: device.user_details.user_email,
+                    user_phone: device.user_details.user_phone
+                } : null
+            };
+        });
 
         // 3. Find all device share relationships where this user is involved (as master or shared_to)
         const sharedDeviceRelationships = await DeviceShare.find({
@@ -701,6 +730,9 @@ exports.userAssignDevices = async (req, res) => {
         const response = {
             success: true,
             count: enrichedDevices.length,
+            total: totalDevices,
+            currentPage: pageNum,
+            totalPages: Math.ceil(totalDevices / limitNum),
             data: enrichedDevices,
             shared_devices: sharedDeviceRelationships
         };
