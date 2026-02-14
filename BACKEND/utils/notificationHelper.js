@@ -127,7 +127,7 @@ exports.notifyUser = async (db, userId, type, payload) => {
         if (!serial_number) return;
 
         // 1. Find the device to get the master user
-        const device = await db.collection("devices").findOne({ serial_number });
+        const device = await db.collection("devices").findOne({ serial_number: String(serial_number) });
         if (!device) {
             console.log(`[Notification] Device ${serial_number} not found in DB`);
             return;
@@ -137,8 +137,8 @@ exports.notifyUser = async (db, userId, type, payload) => {
         const userIds = new Set();
         userIds.add(Number(device.assigned_user_id));
 
-        const shares = await db.collection("device_shares").find({
-            serial_number,
+        const shares = await db.collection("deviceshares").find({
+            serial_number: String(serial_number),
             status: true,
             acceptance_status: 'accepted'
         }).toArray();
@@ -168,8 +168,10 @@ exports.notifyUser = async (db, userId, type, payload) => {
         let body = "";
 
         if (type === "ALERT") {
+            const alertType = payload.alert_type || payload.ALERT_TYPE || 'Alert';
+            const description = payload.description || payload.DESCRIPTION || 'Device alert reported';
             title = `⚠️ Device Alert: ${serial_number}`;
-            body = `${payload.alert_type || 'Alert'}: ${payload.description || 'Device alert reported'}`;
+            body = `${alertType}: ${description}`;
         } else if (type === "STATUS") {
             const running = payload.motor_running === true;
             const userName = device.last_started_by || device.last_stopped_by || "User";

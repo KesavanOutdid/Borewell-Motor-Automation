@@ -29,11 +29,6 @@ class AuthController extends GetxController {
     final arguments = Get.arguments as Map<String, dynamic>?;
     if (arguments != null && arguments['email'] != null) {
       email.value = arguments['email'];
-    } else {
-      final lastEmail = tokenService.getLastEmail();
-      if (lastEmail != null && lastEmail.isNotEmpty) {
-        email.value = lastEmail;
-      }
     }
   }
 
@@ -41,7 +36,6 @@ class AuthController extends GetxController {
     authToken.value = tokenService.getToken() ?? "";
     userId.value = tokenService.getUserId() ?? 0;
     userName.value = tokenService.getUserName() ?? "";
-    email.value = tokenService.getUserEmail() ?? "";
   }
 
   Future<void> logout() async {
@@ -161,7 +155,6 @@ class AuthController extends GetxController {
             userName.value,
             userEmail: userData['user_email'] ?? email.value,
           );
-          await tokenService.saveLastEmail(email.value);
           
           // Update FCM Token on successful login
           await updateFcmToken();
