@@ -46,23 +46,25 @@ class HomeController extends GetxController {
     fetchDevices();
   }
 
-  bool _getMotorRunning(Map<String, dynamic> payload) {
-    // Check various key formats for motor status
+  bool? _getMotorRunning(Map<String, dynamic> payload) {
     final motorRunning = payload['motor_running'] ?? 
                          payload['MOTOR_RUNNING'] ?? 
                          payload['start_status'] ??
                          payload['START_STATUS'];
-    
-    if (motorRunning == true) return true;
 
-    // RPM Heuristic: If motor is spinning > 10 RPM, it MUST be running
+    // 1. If we have an explicit status, use it immediately
+    if (motorRunning == true) return true;
+    if (motorRunning == false) return false;
+
+    // 2. If status is missing, use RPM as a fallback (Heuristic)
     final rpmValue = payload['motor_rpm'] ?? payload['MOTOR_RPM'];
     if (rpmValue != null) {
       final rpm = _parseDouble(rpmValue) ?? 0;
-      if (rpm > 10) return true;
+      return rpm > 10;
     }
 
-    return false;
+    // 3. If neither status nor RPM is in this payload, return null (Keep current UI state)
+    return null;
   }
 
   @override
@@ -109,6 +111,8 @@ class HomeController extends GetxController {
             print('🏠 [HOME] Socket LIVE_STATUS received for $serial');
             final newStatus = _getMotorRunning(Map<String, dynamic>.from(payload));
             
+            if (newStatus == null) return; // Ignore payloads without status info
+
             // Respect pending command window
             if (_pendingCommands.containsKey(serial)) {
               final pending = _pendingCommands[serial]!;
@@ -146,6 +150,8 @@ class HomeController extends GetxController {
           final Map<String, dynamic> payload = data is Map ? Map<String, dynamic>.from(data) : {};
           final newStatus = _getMotorRunning(payload);
           
+          if (newStatus == null) return; // Ignore payloads without status info
+
           // Respect pending command window
           if (_pendingCommands.containsKey(serial)) {
             final pending = _pendingCommands[serial]!;
