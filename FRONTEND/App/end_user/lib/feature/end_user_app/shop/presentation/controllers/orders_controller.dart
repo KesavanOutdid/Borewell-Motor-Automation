@@ -1,0 +1,284 @@
+import 'package:get/get.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:logger/logger.dart';
+import 'package:agri_plus/utils/ui_utils.dart';
+import '../../../../../core/services/token_service.dart';
+import '../../../../../core/config/env.dart';
+import '../../data/models/order_model.dart';
+
+class OrdersController extends GetxController {
+  var orders = <OrderModel>[].obs;
+  var isLoading = false.obs;
+  var errorMessage = ''.obs;
+  var selectedOrder = Rxn<OrderModel>();
+  
+  final String baseUrl = AppConfig.baseUrl;
+  
+  late TokenService tokenService;
+  final logger = Logger();
+
+  @override
+  void onInit() {
+    super.onInit();
+    logger.i('OrdersController initialized');
+    tokenService = Get.find<TokenService>();
+    fetchOrders();
+  }
+
+  Future<void> fetchOrders() async {
+    final userId = tokenService.getUserId();
+    final token = tokenService.getToken();
+    
+    if (userId == null || token == null) {
+      logger.w('⚠️ User not logged in');
+      return;
+    }
+
+    isLoading.value = true;
+    errorMessage.value = '';
+    final url = Uri.parse('$baseUrl/app/order/getOrders');
+    logger.i('📦 Fetching orders for user: $userId');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'user_id': userId}),
+      );
+
+      logger.i('📡 Response Status Code: ${response.statusCode}');
+      logger.d('📄 Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        
+        if (responseData['success'] == true) {
+          final List<dynamic> ordersData = responseData['data']['orders'] ?? [];
+          orders.value = ordersData
+              .map((orderJson) => OrderModel.fromJson(orderJson))
+              .toList();
+          logger.i('✅ Orders fetched - Count: ${orders.length}');
+        }
+      } else {
+        logger.e('❌ HTTP Error: ${response.statusCode}');
+        errorMessage.value = 'Failed to fetch orders (${response.statusCode})';
+      }
+    } catch (e) {
+      logger.e('❌ Exception: $e');
+      errorMessage.value = 'Network connection failed. Please check your internet.';
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to fetch orders',
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> fetchOrderById(String orderId) async {
+    final userId = tokenService.getUserId();
+    final token = tokenService.getToken();
+    
+    if (userId == null || token == null) {
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'User not logged in',
+      );
+      return;
+    }
+
+    isLoading.value = true;
+    final url = Uri.parse('$baseUrl/app/order/getOrderById');
+    logger.i('📦 Fetching order: $orderId');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'user_id': userId,
+          'order_id': orderId,
+        }),
+      );
+
+      logger.i('📡 Response Status Code: ${response.statusCode}');
+      logger.d('📄 Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        
+        if (responseData['success'] == true) {
+          selectedOrder.value = OrderModel.fromJson(responseData['data']['order']);
+          logger.i('✅ Order fetched successfully');
+        }
+      } else {
+        UIUtils.showErrorSnackbar(
+          title: 'Error',
+          message: 'Failed to fetch order details',
+        );
+      }
+    } catch (e) {
+      logger.e('❌ Exception: $e');
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to fetch order details',
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> cancelOrder(String orderId, String reason) async {
+    final userId = tokenService.getUserId();
+    final token = tokenService.getToken();
+    
+    if (userId == null || token == null) {
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'User not logged in',
+      );
+      return;
+    }
+
+    isLoading.value = true;
+    final url = Uri.parse('$baseUrl/app/order/cancelOrder');
+    logger.i('🚫 Cancelling order: $orderId');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'user_id': userId,
+          'order_id': orderId,
+          'cancellation_reason': reason,
+        }),
+      );
+
+      logger.i('📡 Response Status Code: ${response.statusCode}');
+      logger.d('📄 Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        
+        if (responseData['success'] == true) {
+          logger.i('✅ Order cancelled successfully');
+          
+          UIUtils.showSuccessSnackbar(
+            title: 'Success',
+            message: 'Order cancelled successfully',
+          );
+          
+          await fetchOrders();
+          if (selectedOrder.value?.orderId == orderId) {
+            await fetchOrderById(orderId);
+          }
+        } else {
+          UIUtils.showErrorSnackbar(
+            title: 'Error',
+            message: responseData['message'] ?? 'Failed to cancel order',
+          );
+        }
+      } else {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        UIUtils.showErrorSnackbar(
+          title: 'Error',
+          message: responseData['message'] ?? 'Failed to cancel order',
+        );
+      }
+    } catch (e) {
+      logger.e('❌ Exception: $e');
+      UIUtils.showErrorSnackbar(
+        title: 'Error',
+        message: 'Failed to cancel order',
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  String getImageUrl(String? imagePath) {
+    if (imagePath == null || imagePath.isEmpty) return '';
+    if (imagePath.startsWith('http')) return imagePath;
+    return '$baseUrl$imagePath';
+  }
+
+  String getOrderStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'Pending';
+      case 'confirmed':
+        return 'Confirmed';
+      case 'processing':
+        return 'Processing';
+      case 'shipped':
+        return 'Shipped';
+      case 'delivered':
+        return 'Delivered';
+      case 'cancelled':
+        return 'Cancelled';
+      default:
+        return status;
+    }
+  }
+
+  Color getOrderStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return Colors.orange;
+      case 'confirmed':
+        return Colors.blue;
+      case 'processing':
+        return Colors.purple;
+      case 'shipped':
+        return Colors.teal;
+      case 'delivered':
+        return Colors.green;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String getPaymentStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'Pending';
+      case 'completed':
+        return 'Completed';
+      case 'failed':
+        return 'Failed';
+      case 'refunded':
+        return 'Refunded';
+      default:
+        return status;
+    }
+  }
+
+  Color getPaymentStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return Colors.orange;
+      case 'completed':
+        return Colors.green;
+      case 'failed':
+        return Colors.red;
+      case 'refunded':
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
+  }
+}

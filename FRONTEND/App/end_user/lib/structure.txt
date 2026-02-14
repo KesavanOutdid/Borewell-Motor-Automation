@@ -1,0 +1,119 @@
+Folder PATH listing for volume New Volume
+Volume serial number is AAF5-E648
+D:.
+|   main.dart
+|   structure.txt
+|   
++---core
+|   |   splash_screen.dart
+|   |   
+|   +---components
+|   +---config
+|   |       env.dart
+|   |       
+|   +---controllers
+|   +---routes
+|   |       app_routes.dart
+|   |       
+|   +---services
+|   |       api_client.dart
+|   |       token_service.dart
+|   |       
+|   \---View
++---feature
+|   \---end_user_app
+|       +---auth
+|       |   +---data
+|       |   +---domain
+|       |   |   +---models
+|       |   |   \---repositories
+|       |   \---presentation
+|       |       +---controllers
+|       |       |       auth_controller.dart
+|       |       |       signup_controller.dart
+|       |       |       
+|       |       \---pages
+|       |               login_binding.dart
+|       |               login_page.dart
+|       |               signup_binding.dart
+|       |               signup_page.dart
+|       |               
+|       +---contact
+|       |   \---presentation
+|       |       \---pages
+|       |               contact_page.dart
+|       |               
+|       +---dashboard
+|       |   +---data
+|       |   +---domain
+|       |   |   +---models
+|       |   |   \---repositories
+|       |   \---presentation
+|       |       +---controllers
+|       |       |       dashboard_controller.dart
+|       |       |       
+|       |       \---pages
+|       |               dashboard_binding.dart
+|       |               dashboard_page.dart
+|       |               
+|       +---device
+|       |   +---data
+|       |   +---domain
+|       |   |   +---models
+|       |   |   \---repositories
+|       |   \---presentation
+|       |       +---controllers
+|       |       |       add_device_controller.dart
+|       |       |       device_controller.dart
+|       |       |       device_details_controller.dart
+|       |       |       device_history_controller.dart
+|       |       |       
+|       |       \---pages
+|       |               add_device_page.dart
+|       |               device_binding.dart
+|       |               device_details_page.dart
+|       |               device_history_page.dart
+|       |               device_live_data_page.dart
+|       |               device_page.dart
+|       |               map_picker_page.dart
+|       |               
+|       +---home
+|       |   +---data
+|       |   +---domain
+|       |   |   +---models
+|       |   |   \---repositories
+|       |   \---presentation
+|       |       +---controllers
+|       |       \---pages
+|       +---profile
+|       |   +---data
+|       |   +---domain
+|       |   |   +---models
+|       |   |   \---repositories
+|       |   \---presentation
+|       |       +---controllers
+|       |       |       profile_controller.dart
+|       |       |       
+|       |       \---pages
+|       |               edit_profile_page.dart
+|       |               privacy_policy_page.dart
+|       |               profile_binding.dart
+|       |               profile_page.dart
+|       |               
+|       \---settings
+|           +---data
+|           +---domain
+|           |   +---models
+|           |   \---repositories
+|           \---presentation
+|               +---controllers
+|               \---pages
+|                       settings_binding.dart
+|                       settings_page.dart
+|                       
+\---utils
+    +---responsive
+    +---theme
+    |       theme_controller.dart
+    |       
+    \---widgets
