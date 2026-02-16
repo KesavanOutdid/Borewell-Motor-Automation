@@ -432,7 +432,7 @@ class _CartPageState extends State<CartPage> {
                 const SizedBox(height: 12),
                 _buildSummaryRow(
                   'Discount ($appliedDiscountPercentage%)',
-                  '-₹${(cart.grandTotal * appliedDiscountPercentage! / 100).toStringAsFixed(2)}',
+                  '-₹${(cart.totalPrice * appliedDiscountPercentage! / 100).toStringAsFixed(2)}',
                   isDiscount: true,
                 ),
               ],
@@ -442,7 +442,7 @@ class _CartPageState extends State<CartPage> {
               ),
               _buildSummaryRow(
                 'Grand Total',
-                '₹${_calculateFinalTotal(cart.grandTotal).toStringAsFixed(2)}',
+                '₹${_calculateFinalTotal(cart.grandTotal, cart.totalPrice).toStringAsFixed(2)}',
                 isTotal: true,
               ),
             ],
@@ -479,7 +479,7 @@ class _CartPageState extends State<CartPage> {
                     style: TextStyle(fontSize: 14, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
                   ),
                   Text(
-                    '₹${_calculateFinalTotal(cart.grandTotal).toStringAsFixed(2)}',
+                    '₹${_calculateFinalTotal(cart.grandTotal, cart.totalPrice).toStringAsFixed(2)}',
                     style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.primaryGreen),
                   ),
                 ],
@@ -491,7 +491,10 @@ class _CartPageState extends State<CartPage> {
               child: SizedBox(
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () => Get.toNamed('/checkout'),
+                  onPressed: () => Get.toNamed('/checkout', arguments: {
+                    'appliedDiscountPercentage': appliedDiscountPercentage,
+                    'appliedVoucherCode': appliedVoucherCode,
+                  }),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryGreen,
                     foregroundColor: Colors.white,
@@ -513,9 +516,9 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  double _calculateFinalTotal(double grandTotal) {
+  double _calculateFinalTotal(double grandTotal, double totalPrice) {
     if (appliedDiscountPercentage != null) {
-      return grandTotal - (grandTotal * appliedDiscountPercentage! / 100);
+      return grandTotal - (totalPrice * appliedDiscountPercentage! / 100);
     }
     return grandTotal;
   }

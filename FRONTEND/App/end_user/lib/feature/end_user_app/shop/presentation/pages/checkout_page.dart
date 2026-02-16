@@ -36,10 +36,17 @@ class _CheckoutPageState extends State<CheckoutPage> {
   bool isLoadingPincode = false;
   AddressModel? selectedAddress;
   bool hasModifiedAddress = false;
+  
+  int? appliedDiscountPercentage;
+  String? appliedVoucherCode;
 
   @override
   void initState() {
     super.initState();
+    
+    appliedDiscountPercentage = Get.arguments?['appliedDiscountPercentage'];
+    appliedVoucherCode = Get.arguments?['appliedVoucherCode'];
+
     addressController = Get.put(AddressController());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       addressController.fetchAddresses();
@@ -594,15 +601,29 @@ class _CheckoutPageState extends State<CheckoutPage> {
           _buildSummaryRow('GST', '₹${cart.totalGst.toStringAsFixed(2)}'),
           const SizedBox(height: 8),
           _buildSummaryRow('Shipping', '₹${cart.totalShippingCost.toStringAsFixed(2)}'),
+          if (appliedDiscountPercentage != null) ...[
+            const SizedBox(height: 8),
+            _buildSummaryRow(
+              'Discount ($appliedDiscountPercentage%)',
+              '-₹${(cart.totalPrice * appliedDiscountPercentage! / 100).toStringAsFixed(2)}',
+            ),
+          ],
           const Divider(height: 24),
           _buildSummaryRow(
             'Total',
-            '₹${cart.grandTotal.toStringAsFixed(2)}',
+            '₹${_calculateFinalTotal(cart.grandTotal, cart.totalPrice).toStringAsFixed(2)}',
             isTotal: true,
           ),
         ],
       ),
     );
+  }
+
+  double _calculateFinalTotal(double grandTotal, double totalPrice) {
+    if (appliedDiscountPercentage != null) {
+      return grandTotal - (totalPrice * appliedDiscountPercentage! / 100);
+    }
+    return grandTotal;
   }
 
   Widget _buildSummaryRow(String label, String value, {bool isTotal = false}) {
@@ -742,6 +763,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
         cart: cart,
         shippingAddress: shippingAddress,
         paymentMethod: selectedPaymentMethod,
+        appliedVoucherCode: appliedVoucherCode,
+        appliedDiscountPercentage: appliedDiscountPercentage,
       );
     }
   }

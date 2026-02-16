@@ -1,3 +1,4 @@
+
 name: Backend CI/CD
 
 on:
@@ -34,9 +35,7 @@ jobs:
         with:
           context: ./BACKEND
           push: ${{ github.event_name == 'push' }}
-          tags: |
-            vivekdocker98/borewell-backend:${{ github.ref_name }}
-            ${{ github.ref_name == 'main' && 'vivekdocker98/borewell-backend:latest' || '' }}
+          tags: vivekdocker98/borewell-backend:${{ github.ref_name }}
 
   deploy:
     needs: build-and-push

@@ -195,6 +195,23 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
     });
   }
 
+  void _openSchedule(DeviceDetailsController controller) {
+    final serial = controller.liveData['serialNumber']?.toString();
+    final imei = controller.liveData['imei']?.toString();
+
+    if (serial == null || serial.trim().isEmpty || imei == null || imei.trim().isEmpty) {
+      if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
+        Get.snackbar('Error', 'Device information unavailable');
+      }
+      return;
+    }
+
+    Get.toNamed('/device/schedule', arguments: {
+      'serial_number': serial,
+      'imei_number': imei,
+    });
+  }
+
   void _showEditNicknameDialog(BuildContext context, DeviceDetailsController controller) {
     print('DEBUG: _showEditNicknameDialog called');
     final nickname = controller.liveData['nickname']?.toString() ?? '';
@@ -348,6 +365,14 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
               label: 'Share',
               gradient: AppColors.primaryGradient,
               onTap: () => _openSharing(controller),
+            ),
+          ),
+          Expanded(
+            child: _QuickActionCard(
+              icon: Icons.timer_rounded,
+              label: 'Schedule',
+              gradient: AppColors.primaryGradient,
+              onTap: () => _openSchedule(controller),
             ),
           ),
         ],

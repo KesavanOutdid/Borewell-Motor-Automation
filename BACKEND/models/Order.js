@@ -62,6 +62,8 @@ const OrderSchema = new mongoose.Schema({
         total_price: { type: Number, required: true },
         total_gst: { type: Number, required: true },
         total_shipping_cost: { type: Number, required: true },
+        discount_amount: { type: Number, default: 0 },
+        voucher_code: { type: String, default: null },
         grand_total: { type: Number, required: true }
     },
 

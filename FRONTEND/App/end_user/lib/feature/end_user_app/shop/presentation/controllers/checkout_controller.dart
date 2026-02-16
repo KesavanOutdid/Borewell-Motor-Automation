@@ -45,6 +45,8 @@ class CheckoutController extends GetxController {
     required CartModel cart,
     required ShippingAddress shippingAddress,
     required String paymentMethod,
+    String? appliedVoucherCode,
+    int? appliedDiscountPercentage,
   }) async {
     final userId = tokenService.getUserId();
     final userEmail = tokenService.getUserEmail();
@@ -77,6 +79,11 @@ class CheckoutController extends GetxController {
         };
       }).toList();
 
+      double discountAmount = 0;
+      if (appliedDiscountPercentage != null) {
+        discountAmount = cart.totalPrice * appliedDiscountPercentage / 100;
+      }
+
       final requestBody = {
         'user_id': userId,
         'cart_items': orderItems,
@@ -85,7 +92,9 @@ class CheckoutController extends GetxController {
           'total_price': cart.totalPrice,
           'total_gst': cart.totalGst,
           'total_shipping_cost': cart.totalShippingCost,
-          'grand_total': cart.grandTotal,
+          'discount_amount': discountAmount,
+          'voucher_code': appliedVoucherCode,
+          'grand_total': cart.grandTotal - discountAmount,
         },
         'payment_method': paymentMethod,
       };

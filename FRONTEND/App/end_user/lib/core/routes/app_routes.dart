@@ -10,6 +10,7 @@ import '../../feature/end_user_app/device/presentation/pages/device_page.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_binding.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_details_page.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_history_page.dart';
+import '../../feature/end_user_app/device/presentation/pages/device_schedule_page.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_analytics_page.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_sharing_page.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_sharing_binding.dart';
@@ -39,6 +40,7 @@ class AppRoutes {
   static const device = '/device';
   static const deviceDetails = '/device/details';
   static const deviceHistory = '/device/history';
+  static const deviceSchedule = '/device/schedule';
   static const deviceAnalytics = '/device/analytics';
   static const deviceSharing = '/device/sharing';
   static const configureDevice = '/device/configure';
@@ -88,6 +90,10 @@ class AppRoutes {
     GetPage(
       name: deviceHistory,
       page: () => const DeviceHistoryView(),
+    ),
+    GetPage(
+      name: deviceSchedule,
+      page: () => const DeviceSchedulePage(),
     ),
     GetPage(
       name: deviceAnalytics,

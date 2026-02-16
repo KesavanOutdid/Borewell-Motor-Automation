@@ -159,6 +159,10 @@ class HomeView extends GetView<HomeController> {
                     _buildFilterChip('Online'),
                     const SizedBox(width: 8),
                     _buildFilterChip('Offline'),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('Shared'),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('Not Configured'),
                   ],
                 ),
               )),
@@ -250,13 +254,26 @@ class HomeView extends GetView<HomeController> {
                 return RefreshIndicator(
                   onRefresh: () => controller.fetchDevices(),
                   child: ListView.builder(
+                    controller: controller.scrollController,
                     padding: EdgeInsets.zero,
-                    itemCount: displayDevices.length,
+                    itemCount: displayDevices.length + (controller.isLoadingMore.value ? 1 : 0),
                     itemBuilder: (context, index) {
-                      final device = displayDevices[index];
-                      final isConfigured = controller.isDeviceConfigured(device);
-                      final isRunning = controller.isDeviceRunning(device);
-                      return _buildDeviceListCard(device, isConfigured, isRunning);
+                      if (index < displayDevices.length) {
+                        final device = displayDevices[index];
+                        final isConfigured = controller.isDeviceConfigured(device);
+                        final isRunning = controller.isDeviceRunning(device);
+                        return _buildDeviceListCard(device, isConfigured, isRunning);
+                      } else {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 32),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primaryGreen,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        );
+                      }
                     },
                   ),
                 );
@@ -479,6 +496,17 @@ class HomeView extends GetView<HomeController> {
                         ),
                       ),
                     ),
+                    if (isConfigured) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        controller.getLastSeenText(device),
+                        style: TextStyle(
+                          fontSize: 8,
+                          color: Colors.grey.shade500,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                     if (!isPending && isConfigured) ...[
                       const SizedBox(height: 8),
                       Obx(() {

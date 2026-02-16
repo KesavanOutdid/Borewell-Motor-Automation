@@ -8,6 +8,7 @@ import '../../../../../core/services/token_service.dart';
 
 class DeviceHistoryController extends GetxController {
   final isLoading = false.obs;
+  final isMoreLoading = false.obs;
   final records = <Map<String, dynamic>>[].obs;
   final summaryMetrics = <Map<String, String>>[].obs;
 
@@ -16,6 +17,11 @@ class DeviceHistoryController extends GetxController {
   final lastUpdated = '-'.obs;
   final recordCount = 0.obs;
   final expandedIndex = Rxn<int>();
+
+  final currentPage = 1.obs;
+  final totalPages = 1.obs;
+  final hasMore = true.obs;
+  final int limit = 10;
 
   late TokenService tokenService;
 
@@ -45,7 +51,7 @@ class DeviceHistoryController extends GetxController {
     }
   }
 
-  Future<void> fetchHistory() async {
+  Future<void> fetchHistory({bool refresh = false}) async {
     final userId = tokenService.getUserId();
     final token = tokenService.getToken();
 
@@ -54,7 +60,14 @@ class DeviceHistoryController extends GetxController {
       return;
     }
 
-    isLoading.value = true;
+    if (refresh) {
+      currentPage.value = 1;
+      hasMore.value = true;
+      isLoading.value = true;
+    } else {
+      if (!hasMore.value || isMoreLoading.value) return;
+      isMoreLoading.value = true;
+    }
 
     try {
       final response = await http.post(
@@ -63,15 +76,20 @@ class DeviceHistoryController extends GetxController {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({'user_id': userId}),
+        body: jsonEncode({
+          'user_id': userId,
+          'page': currentPage.value,
+          'limit': limit,
+          'serial_number': _serialNumber,
+        }),
       );
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
         if (json['success'] == true) {
-          _applyHistoryData(json);
+          _applyHistoryData(json, refresh);
         } else {
-          _clearHistory();
+          if (refresh) _clearHistory();
         }
       } else if (response.statusCode == 401) {
         _handleUnauthorized();
@@ -82,11 +100,12 @@ class DeviceHistoryController extends GetxController {
       _showMessage('Connection failed: $e');
     } finally {
       isLoading.value = false;
+      isMoreLoading.value = false;
     }
   }
 
   Future<void> refreshHistory() async {
-    await fetchHistory();
+    await fetchHistory(refresh: true);
   }
 
   void toggleExpanded(int index) {
@@ -97,64 +116,32 @@ class DeviceHistoryController extends GetxController {
     }
   }
 
-  void _applyHistoryData(Map<String, dynamic> json) {
-    final rawDevices = json['data'];
-    if (rawDevices is! List || rawDevices.isEmpty) {
-      _clearHistory();
+  void _applyHistoryData(Map<String, dynamic> json, bool refresh) {
+    // History data structure might vary depending on whether it's returning all devices or session records
+    // Based on appControllers.js userDeviceHistory returns { data: sessions[], total, totalPages, currentPage }
+    
+    final rawSessions = json['data'];
+    if (rawSessions is! List) {
+      if (refresh) _clearHistory();
       return;
     }
 
-    final devices = <Map<String, dynamic>>[];
-    for (final item in rawDevices) {
-      if (item is Map) {
-        devices.add(Map<String, dynamic>.from(item as Map));
-      }
+    final parsedSessions = rawSessions.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+
+    if (refresh) {
+      records.assignAll(parsedSessions);
+    } else {
+      records.addAll(parsedSessions);
     }
 
-    if (devices.isEmpty) {
-      _clearHistory();
-      return;
-    }
+    totalPages.value = json['totalPages'] ?? 1;
+    currentPage.value = (json['currentPage'] ?? currentPage.value) + 1;
+    hasMore.value = currentPage.value <= totalPages.value;
+    
+    recordCount.value = json['total'] ?? records.length;
 
-    Map<String, dynamic>? target;
-    if (_serialNumber != null && _serialNumber!.isNotEmpty) {
-      for (final device in devices) {
-        final serial = device['serial_number']?.toString();
-        if (serial != null && serial == _serialNumber) {
-          target = device;
-          break;
-        }
-      }
-    }
-
-    target ??= devices.first;
-
-    serialNumber.value = target['serial_number']?.toString() ?? serialNumber.value;
-    lastUpdated.value = _formatDate(target['last_updated']) ?? '-';
-
-    final rawRecords = target['records'];
-    if (rawRecords is! List || rawRecords.isEmpty) {
-      _clearHistory();
-      return;
-    }
-
-    final parsedRecords = <Map<String, dynamic>>[];
-    for (final item in rawRecords) {
-      if (item is Map) {
-        parsedRecords.add(Map<String, dynamic>.from(item as Map));
-      }
-    }
-
-    if (parsedRecords.isEmpty) {
-      _clearHistory();
-      return;
-    }
-
-    records.assignAll(parsedRecords);
-    recordCount.value = target['count'] is int ? target['count'] : parsedRecords.length;
-    imeiNumber.value = parsedRecords.first['imei_number']?.toString() ?? imeiNumber.value;
-
-    summaryMetrics.assignAll(_buildSummary(parsedRecords));
+    // Optional: update metrics if needed
+    summaryMetrics.assignAll(_buildSummary(records));
   }
 
   void _clearHistory() {

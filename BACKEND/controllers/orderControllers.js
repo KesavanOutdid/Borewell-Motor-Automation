@@ -3,6 +3,7 @@ const Order = require('../models/Order');
 const User = require('../models/User');
 const Product = require('../models/Product');
 const Cart = require('../models/Cart');
+const Voucher = require('../models/Voucher');
 const crypto = require('crypto');
 
 const Razorpay = require('razorpay');
@@ -30,6 +31,18 @@ const reduceProductQuantity = async (cartItems) => {
     } catch (err) {
         console.error("Error reducing product quantity:", err);
         throw err;
+    }
+};
+
+const incrementVoucherUsage = async (voucherCode) => {
+    if (!voucherCode) return;
+    try {
+        await Voucher.findOneAndUpdate(
+            { voucher_code: voucherCode.toUpperCase() },
+            { $inc: { used_count: 1 } }
+        );
+    } catch (err) {
+        console.error("Error incrementing voucher usage:", err);
     }
 };
 
@@ -83,6 +96,11 @@ exports.createOrder = async (req, res, next) => {
         if (payment_method === 'cod' || payment_method === undefined) {
             try {
                 await reduceProductQuantity(cart_items);
+                
+                // Increment voucher usage if applicable
+                if (order_summary.voucher_code) {
+                    await incrementVoucherUsage(order_summary.voucher_code);
+                }
                 
                 // Clear user's cart
                 await Cart.deleteOne({ user_id });
@@ -183,6 +201,11 @@ exports.verifyPayment = async (req, res, next) => {
             try {
                 // Reduce product quantities
                 await reduceProductQuantity(order.cart_items);
+
+                // Increment voucher usage if applicable
+                if (order.order_summary && order.order_summary.voucher_code) {
+                    await incrementVoucherUsage(order.order_summary.voucher_code);
+                }
 
                 // Update order with payment details
                 order.razorpay_payment_id = razorpay_payment_id;
@@ -373,22 +396,34 @@ exports.getOrders = async (req, res, next) => {
         if (!errors.isEmpty())
             return res.status(400).json({ success: false, errors: errors.array() });
 
-        const { user_id } = req.body;
+        const { user_id, page = 1, limit = 10 } = req.body;
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const skip = (pageNum - 1) * limitNum;
 
         // Verify user exists
         const user = await User.findOne({ user_id });
         if (!user)
-            return res.status(404).json({ success: false, message: "User not found" });
+            return res.status(404).json({ success: false, message: "User found" });
 
-        // Find all orders
-        const orders = await Order.find({ user_id })
-            .sort({ createdAt: -1 });
+        const query = { user_id };
+
+        // Find all orders with pagination
+        const orders = await Order.find(query)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limitNum);
+
+        const totalOrders = await Order.countDocuments(query);
 
         const response = {
             success: true,
             message: "Orders fetched successfully",
             data: {
                 count: orders.length,
+                total: totalOrders,
+                currentPage: pageNum,
+                totalPages: Math.ceil(totalOrders / limitNum),
                 orders
             }
         };

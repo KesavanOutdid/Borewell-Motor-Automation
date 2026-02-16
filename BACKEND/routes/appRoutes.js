@@ -1533,6 +1533,11 @@ router.post(
     appCtrl.respondToDeviceShare
 );
 
-module.exports = router;
-
 router.get("/getDeviceBorewellHistory", appCtrl.getDeviceBorewellHistory);
+
+// Device Scheduling
+router.post('/createSchedule', authMiddleware(), appCtrl.createSchedule);
+router.get('/getSchedules', authMiddleware(), appCtrl.getSchedules);
+router.post('/cancelSchedule/:schedule_id', authMiddleware(), appCtrl.cancelSchedule);
+
+module.exports = router;

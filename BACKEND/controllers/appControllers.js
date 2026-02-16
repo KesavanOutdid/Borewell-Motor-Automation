@@ -8,9 +8,11 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const Telemetry = require("../models/Telemetry");
 const DeviceShare = require("../models/DeviceShare");
+const DeviceSchedule = require("../models/DeviceSchedule");
 const { sendPushNotification } = require('../utils/notificationHelper');
 const { cacheDeletePattern } = require('../middlewares/cacheMiddleware');
 const { redisClient, isRedisConnected } = require('../config/redis');
+const { client: mqttPublisher } = require('../mqtt/publisher');
 const fs = require('fs');
 const path = require('path');
 
@@ -585,6 +587,34 @@ exports.startStopDevice = async (req, res) => {
             // Don't fail the request if notification fails
         }
 
+        // 4. Send MQTT Command to the Motor
+        const topic = `agri/${serial_number}/command`;
+        const payload = {
+            MESSAGE_TYPE: "COMMAND",
+            SERIAL_NUMBER: serial_number,
+            IMEI_NUMBER: imei_number,
+            COMMAND: start_status ? "START" : "STOP",
+            TIMESTAMP: new Date().toISOString()
+        };
+
+        if (mqttPublisher && mqttPublisher.connected) {
+            mqttPublisher.publish(topic, JSON.stringify(payload), { qos: 1 });
+            console.log(`[MQTT] Published command to ${topic}:`, payload.COMMAND);
+        } else {
+            console.warn(`[MQTT] Failed to publish - Publisher not connected`);
+        }
+
+        // 5. Immediate Socket.IO reflection for real-time UI updates across all users
+        if (global.io) {
+            global.io.emit("LIVE_STATUS", {
+                serial_number: serial_number,
+                payload: {
+                    motor_running: start_status,
+                    updatedAt: new Date().toISOString()
+                }
+            });
+        }
+
         await cacheDeletePattern('*devices*');
         await cacheDeletePattern('*analytics*');
 
@@ -605,7 +635,7 @@ exports.startStopDevice = async (req, res) => {
 
 exports.userAssignDevices = async (req, res) => {
     try {
-        const { user_id } = req.body;
+        const { user_id, page = 1, limit = 10, filter = 'All' } = req.body;
 
         if (!user_id) {
             return res.status(400).json({
@@ -615,33 +645,58 @@ exports.userAssignDevices = async (req, res) => {
         }
 
         const userIdNum = parseInt(user_id);
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const skip = (pageNum - 1) * limitNum;
 
-        // 1. Find all devices where this user is the Master
-        const masterDevices = await Device.aggregate([
-            { $match: { assigned_user_id: userIdNum, assign_status: true, status: true } },
-            {
-                $lookup: {
-                    from: "users",
-                    localField: "assigned_user_id",
-                    foreignField: "user_id",
-                    as: "user_details"
-                }
-            },
-            {
-                $unwind: {
-                    path: "$user_details",
-                    preserveNullAndEmptyArrays: true
-                }
-            },
-            { $addFields: { role: 'master' } }
-        ]);
+        // Threshold for online status (2 minutes)
+        const onlineThreshold = new Date(Date.now() - 2 * 60 * 1000);
 
-        // 2. Find all devices shared with this user
+        // Define base query for devices where user is master or shared
+        // First get shared serials
         const shares = await DeviceShare.find({ shared_to_user_id: userIdNum, status: true });
         const sharedSerials = shares.map(s => s.serial_number);
 
-        const sharedDevices = await Device.aggregate([
-            { $match: { serial_number: { $in: sharedSerials }, status: true } },
+        // Base match criteria
+        const baseMatch = {
+            $or: [
+                { assigned_user_id: userIdNum, assign_status: true, status: true },
+                { serial_number: { $in: sharedSerials }, status: true }
+            ]
+        };
+
+        // Add filter specific criteria
+        if (filter === 'Running') {
+            baseMatch.start_status = true;
+        } else if (filter === 'Stopped') {
+            baseMatch.start_status = false;
+            baseMatch.imei_number = { $ne: null, $not: /^\s*$/ }; // Configured
+        } else if (filter === 'Online') {
+            baseMatch.last_heartbeat = { $gte: onlineThreshold };
+        } else if (filter === 'Offline') {
+            baseMatch.$and = [
+                {
+                    $or: [
+                        { last_heartbeat: { $lt: onlineThreshold } },
+                        { last_heartbeat: { $exists: false } }
+                    ]
+                }
+            ];
+        } else if (filter === 'Not Configured') {
+            baseMatch.assigned_user_id = userIdNum; // Only show MY devices
+            baseMatch.$or = [
+                { imei_number: null },
+                { imei_number: "" }
+            ];
+        } else if (filter === 'Shared') {
+            baseMatch.assigned_user_id = { $ne: userIdNum };
+        }
+
+        const sortCriteria = { updatedAt: -1 };
+
+        // Aggregate with pagination
+        const devices = await Device.aggregate([
+            { $match: baseMatch },
             {
                 $lookup: {
                     from: "users",
@@ -656,38 +711,42 @@ exports.userAssignDevices = async (req, res) => {
                     preserveNullAndEmptyArrays: true
                 }
             },
-            { $addFields: { role: 'shared' } }
+            {
+                $addFields: {
+                    role: {
+                        $cond: { if: { $eq: ["$assigned_user_id", userIdNum] }, then: 'master', else: 'shared' }
+                    }
+                }
+            },
+            { $sort: sortCriteria },
+            { $skip: skip },
+            { $limit: filter === 'Recently' ? 5 : limitNum }
         ]);
 
-        const allDevices = [
-            ...masterDevices.map(d => ({ ...d, acceptance_status: 'accepted' })),
-            ...sharedDevices.map(d => {
-                const share = shares.find(s => s.serial_number === d.serial_number);
-                return {
-                    ...d,
-                    acceptance_status: share ? share.acceptance_status : 'pending',
-                    share_info: share ? {
-                        master_user_id: share.master_user_id,
-                        master_user_name: share.master_user_name,
-                        master_user_email: share.master_user_email,
-                        shared_to_user_id: share.shared_to_user_id,
-                        shared_to_user_name: share.shared_to_user_name,
-                        shared_to_user_phone: share.shared_to_user_phone,
-                        shared_to_user_email: share.shared_to_user_email,
-                        assignedAt: share.assignedAt
-                    } : null
-                };
-            })
-        ];
+        const totalDevices = await Device.countDocuments(baseMatch);
 
-        const enrichedDevices = allDevices.map(device => ({
-            ...device,
-            user_details: device.user_details ? {
-                user_name: device.user_details.user_name,
-                user_email: device.user_details.user_email,
-                user_phone: device.user_details.user_phone
-            } : null
-        }));
+        const enrichedDevices = devices.map(device => {
+            const share = shares.find(s => s.serial_number === device.serial_number);
+            return {
+                ...device,
+                acceptance_status: device.role === 'master' ? 'accepted' : (share ? share.acceptance_status : 'pending'),
+                share_info: device.role === 'shared' && share ? {
+                    master_user_id: share.master_user_id,
+                    master_user_name: share.master_user_name,
+                    master_user_email: share.master_user_email,
+                    shared_to_user_id: share.shared_to_user_id,
+                    shared_to_user_name: share.shared_to_user_name,
+                    shared_to_user_phone: share.shared_to_user_phone,
+                    shared_to_user_email: share.shared_to_user_email,
+                    assignedAt: share.assignedAt
+                } : null,
+                user_details: device.user_details ? {
+                    user_name: device.user_details.user_name,
+                    user_email: device.user_details.user_email,
+                    user_phone: device.user_details.user_phone
+                } : null
+            };
+        });
 
         // 3. Find all device share relationships where this user is involved (as master or shared_to)
         const sharedDeviceRelationships = await DeviceShare.find({
@@ -701,6 +760,9 @@ exports.userAssignDevices = async (req, res) => {
         const response = {
             success: true,
             count: enrichedDevices.length,
+            total: totalDevices,
+            currentPage: pageNum,
+            totalPages: Math.ceil(totalDevices / limitNum),
             data: enrichedDevices,
             shared_devices: sharedDeviceRelationships
         };
@@ -792,35 +854,51 @@ exports.userDeviceHistory = async (req, res) => {
             return res.status(400).json({ success: false, errors: errors.array() });
         }
 
-        const { user_id } = req.body;
+        const { user_id, page = 1, limit = 10, serial_number } = req.body;
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const skip = (pageNum - 1) * limitNum;
 
         // Validate user exists
         const user = await User.findOne({ user_id: parseInt(user_id) });
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: "User not found"
+                message: "User found"
             });
         }
 
-        // 1. Get all serial numbers the user has access to
-        const masterDevices = await Device.find({ assigned_user_id: user.user_id, status: true });
-        const sharedShares = await DeviceShare.find({
-            shared_to_user_id: user.user_id,
-            status: true,
-            acceptance_status: 'accepted'
-        });
+        let serialNumbers = [];
+        if (serial_number) {
+            // Verify if user has access to this serial
+            const hasAccess = await Device.findOne({ serial_number, assigned_user_id: user.user_id, status: true }) ||
+                              await DeviceShare.findOne({ serial_number, shared_to_user_id: user.user_id, status: true, acceptance_status: 'accepted' });
+            
+            if (!hasAccess) {
+                return res.status(403).json({ success: false, message: "No access to this device" });
+            }
+            serialNumbers = [serial_number];
+        } else {
+            // 1. Get all serial numbers the user has access to
+            const masterDevices = await Device.find({ assigned_user_id: user.user_id, status: true });
+            const sharedShares = await DeviceShare.find({
+                shared_to_user_id: user.user_id,
+                status: true,
+                acceptance_status: 'accepted'
+            });
 
-        const serialNumbers = [
-            ...masterDevices.map(d => d.serial_number),
-            ...sharedShares.map(s => s.serial_number)
-        ];
+            serialNumbers = [
+                ...masterDevices.map(d => d.serial_number),
+                ...sharedShares.map(s => s.serial_number)
+            ];
+        }
 
         if (serialNumbers.length === 0) {
             return res.status(200).json({
                 success: true,
                 user_id,
                 count: 0,
+                total: 0,
                 data: []
             });
         }
@@ -829,64 +907,42 @@ exports.userDeviceHistory = async (req, res) => {
         const db = mongoose.connection.db;
         const historyCollection = db.collection("agri_history");
 
-        // 2. Fetch all history sessions for these serial numbers
+        const query = { serial_number: { $in: serialNumbers } };
+
+        // 2. Fetch history sessions with pagination
         const history = await historyCollection
-            .find({ serial_number: { $in: serialNumbers } })
+            .find(query)
             .sort({ startAt: -1 })    // latest first
+            .skip(skip)
+            .limit(limitNum)
             .toArray();
+
+        const totalRecords = await historyCollection.countDocuments(query);
 
         if (!history.length) {
             const response = {
                 success: true,
                 user_id,
                 count: 0,
+                total: totalRecords,
+                currentPage: pageNum,
+                totalPages: Math.ceil(totalRecords / limitNum),
                 data: []
             };
             return res.status(200).json(response);
         }
 
-        // Group by serial number
-        const grouped = {};
-
-        history.forEach(h => {
-            if (!grouped[h.serial_number]) {
-                grouped[h.serial_number] = [];
-            }
-
-            grouped[h.serial_number].push({
-                serial_number: h.serial_number,
-                imei_number: h.imei_number,
-                date: h.date,
-                startAt: h.startAt,
-                stopAt: h.stopAt,
-                duration_minutes: h.duration_minutes,
-                energy_kwh: h.energy_kwh,
-                maxCurrent: h.maxCurrent,
-                minCurrent: h.minCurrent,
-                maxVoltage: h.maxVoltage,
-                minVoltage: h.minVoltage,
-                started_by: h.started_by || "-",
-                stopped_by: h.stopped_by || "-",
-                createdAt: h.createdAt,
-                updatedAt: h.updatedAt
-            });
-        });
-
-        const response = Object.keys(grouped).map(serial_number => ({
-            serial_number,
-            count: grouped[serial_number].length,
-            last_updated: grouped[serial_number][0]?.updatedAt,
-            records: grouped[serial_number]
-        }));
-
-        const finalResponse = {
+        const response = {
             success: true,
             user_id,
-            count: response.length,
-            data: response
+            count: history.length,
+            total: totalRecords,
+            currentPage: pageNum,
+            totalPages: Math.ceil(totalRecords / limitNum),
+            data: history
         };
 
-        return res.status(200).json(finalResponse);
+        return res.status(200).json(response);
 
     } catch (error) {
         console.error("userDeviceHistory Error:", error);
@@ -1732,6 +1788,18 @@ exports.validateVoucher = async (req, res, next) => {
         if (voucher.max_usage && voucher.used_count >= voucher.max_usage)
             return res.status(400).json({ success: false, message: "Voucher usage limit exceeded" });
 
+        // Check if user has already used this voucher
+        const Order = require('../models/Order');
+        const userOrderWithVoucher = await Order.findOne({
+            user_id,
+            'order_summary.voucher_code': voucher_code.toUpperCase(),
+            payment_status: 'completed'
+        });
+
+        if (userOrderWithVoucher) {
+            return res.status(400).json({ success: false, message: "You have already used this voucher" });
+        }
+
         res.status(200).json({
             success: true,
             message: "Voucher is valid",
@@ -2088,7 +2156,7 @@ exports.deleteShare = async (req, res, next) => {
 
 exports.getDeviceBorewellHistory = async (req, res) => {
     try {
-        const { serial_number } = req.query;
+        const { serial_number, page = 1, limit = 10 } = req.query;
 
         if (!serial_number) {
             return res.status(400).json({
@@ -2097,18 +2165,31 @@ exports.getDeviceBorewellHistory = async (req, res) => {
             });
         }
 
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const skip = (pageNum - 1) * limitNum;
+
         const db = mongoose.connection.db;
         const historyCollection = db.collection("agri_history");
 
+        const query = { serial_number: serial_number };
+
         const history = await historyCollection
-            .find({ serial_number: serial_number })
+            .find(query)
             .sort({ startAt: -1 })
+            .skip(skip)
+            .limit(limitNum)
             .toArray();
+
+        const totalRecords = await historyCollection.countDocuments(query);
 
         return res.status(200).json({
             success: true,
             serial_number,
             count: history.length,
+            total: totalRecords,
+            currentPage: pageNum,
+            totalPages: Math.ceil(totalRecords / limitNum),
             data: history
         });
 
@@ -2118,5 +2199,129 @@ exports.getDeviceBorewellHistory = async (req, res) => {
             success: false,
             message: "Server error"
         });
+    }
+};
+
+exports.createSchedule = async (req, res) => {
+    try {
+        const { serial_number, imei_number, user_id, start_time, stop_time } = req.body;
+
+        if (!serial_number || !imei_number || !user_id || !start_time || !stop_time) {
+            return res.status(400).json({ success: false, message: "All fields are required" });
+        }
+
+        const start = new Date(start_time);
+        const stop = new Date(stop_time);
+        const now = new Date();
+
+        // 1. Start time must be at least 1 hour after current time
+        const minStartTime = new Date(now.getTime() + 60 * 60 * 1000);
+        if (start < minStartTime) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Start time must be at least 1 hour after current time" 
+            });
+        }
+
+        // 2. Start date must be up to 7 days from now
+        const maxStartTime = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        if (start > maxStartTime) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Start date can only be up to 7 days in the future" 
+            });
+        }
+
+        // 3. Stop time must be after start time
+        if (stop <= start) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Stop time must be after start time" 
+            });
+        }
+
+        // Check if there is already a pending schedule for this device
+        const existingSchedule = await DeviceSchedule.findOne({ 
+            serial_number, 
+            status: 'pending' 
+        });
+
+        if (existingSchedule) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "A pending schedule already exists for this device. Please cancel it before creating a new one." 
+            });
+        }
+
+        const newSchedule = new DeviceSchedule({
+            serial_number,
+            imei_number,
+            user_id,
+            start_time: start,
+            stop_time: stop,
+            status: 'pending'
+        });
+
+        await newSchedule.save();
+
+        res.status(201).json({
+            success: true,
+            message: "Schedule created successfully",
+            data: newSchedule
+        });
+
+    } catch (error) {
+        console.error("createSchedule Error:", error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+exports.getSchedules = async (req, res) => {
+    try {
+        const { serial_number, user_id } = req.query;
+        const query = {};
+        if (serial_number) query.serial_number = serial_number;
+        if (user_id) query.user_id = user_id;
+
+        const schedules = await DeviceSchedule.find(query).sort({ created_at: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: schedules
+        });
+    } catch (error) {
+        console.error("getSchedules Error:", error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+exports.cancelSchedule = async (req, res) => {
+    try {
+        const { schedule_id } = req.params;
+        const schedule = await DeviceSchedule.findById(schedule_id);
+
+        if (!schedule) {
+            return res.status(404).json({ success: false, message: "Schedule not found" });
+        }
+
+        if (schedule.status !== 'pending') {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Only pending schedules can be cancelled" 
+            });
+        }
+
+        schedule.status = 'cancelled';
+        schedule.updated_at = new Date();
+        await schedule.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Schedule cancelled successfully",
+            data: schedule
+        });
+    } catch (error) {
+        console.error("cancelSchedule Error:", error);
+        res.status(500).json({ success: false, message: "Server error" });
     }
 };

@@ -6,13 +6,38 @@ import '../controllers/orders_controller.dart';
 import '../../../dashboard/presentation/controllers/dashboard_controller.dart';
 import '../../../../../utils/widgets/ui_components.dart';
 
-class OrdersPage extends StatelessWidget {
+class OrdersPage extends StatefulWidget {
   const OrdersPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = Get.put(OrdersController());
+  State<OrdersPage> createState() => _OrdersPageState();
+}
 
+class _OrdersPageState extends State<OrdersPage> {
+  final controller = Get.put(OrdersController());
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      controller.fetchOrders();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Material(
       color: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
@@ -92,7 +117,7 @@ class OrdersPage extends StatelessWidget {
         if (controller.errorMessage.value.isNotEmpty) {
           return NetworkErrorWidget(
             message: controller.errorMessage.value,
-            onRetry: () => controller.fetchOrders(),
+            onRetry: () => controller.fetchOrders(refresh: true),
           );
         }
 
@@ -164,13 +189,26 @@ class OrdersPage extends StatelessWidget {
         }
 
         return RefreshIndicator(
-          onRefresh: controller.fetchOrders,
+          onRefresh: () => controller.fetchOrders(refresh: true),
           child: ListView.builder(
+            controller: _scrollController,
             padding: EdgeInsets.zero,
-            itemCount: controller.orders.length,
+            itemCount: controller.orders.length + (controller.isMoreLoading.value ? 1 : 0),
             itemBuilder: (context, index) {
-              final order = controller.orders[index];
-              return _buildOrderCard(context, order, controller);
+              if (index < controller.orders.length) {
+                final order = controller.orders[index];
+                return _buildOrderCard(context, order, controller);
+              } else {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primaryGreen,
+                      strokeWidth: 2,
+                    ),
+                  ),
+                );
+              }
             },
           ),
         );
