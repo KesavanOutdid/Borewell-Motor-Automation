@@ -17,8 +17,12 @@ class UIUtils {
         content: Text(message),
         actions: [
           TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('OK', style: TextStyle(fontWeight: FontWeight.bold)),
+            onPressed: () {
+              if (Get.isDialogOpen ?? false) {
+                Navigator.of(Get.context!, rootNavigator: true).pop();
+              }
+            },
+            child: const Text('OK', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryGreen)),
           ),
         ],
       ),

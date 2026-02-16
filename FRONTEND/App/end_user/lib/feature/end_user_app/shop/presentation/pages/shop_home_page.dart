@@ -172,8 +172,15 @@ class _ShopHomeViewState extends State<ShopHomeView> {
             ),
           ),
           Expanded(
-            child: CustomScrollView(
-              slivers: [
+            child: RefreshIndicator(
+              color: AppColors.primaryGreen,
+              onRefresh: () async {
+                await controller.fetchProducts(isRefresh: true);
+                await voucherController.fetchVouchers();
+              },
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
           SliverToBoxAdapter(
             child: Obx(() {
               if (voucherController.vouchers.isEmpty) {
@@ -187,9 +194,15 @@ class _ShopHomeViewState extends State<ShopHomeView> {
             
             if (controller.errorMessage.value.isNotEmpty) {
               return SliverFillRemaining(
-                child: NetworkErrorWidget(
-                  message: controller.errorMessage.value,
-                  onRetry: () => controller.fetchProducts(isRefresh: true),
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.6,
+                    child: NetworkErrorWidget(
+                      message: controller.errorMessage.value,
+                      onRetry: () => controller.fetchProducts(isRefresh: true),
+                    ),
+                  ),
                 ),
               );
             }
@@ -200,9 +213,15 @@ class _ShopHomeViewState extends State<ShopHomeView> {
 
             if (controller.products.isEmpty) {
               print('❌ No products - showing empty state');
-              return const SliverFillRemaining(
-                child: Center(
-                  child: Text('No products available'),
+              return SliverFillRemaining(
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.6,
+                    child: const Center(
+                      child: Text('No products available'),
+                    ),
+                  ),
                 ),
               );
             }
@@ -242,11 +261,12 @@ class _ShopHomeViewState extends State<ShopHomeView> {
           const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
         ],
       ),
-            ),
-          ],
-        ),
-    );
-  }
+    ),
+  ),
+],
+),
+);
+}
 
   void _showSearchBottomSheet(BuildContext context) {
     controller.clearSearch();

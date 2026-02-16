@@ -43,67 +43,78 @@ class _AddressesPageState extends State<AddressesPage> {
           ),
         ],
       ),
-      body: Obx(() {
-        if (controller.isLoading.value && controller.addresses.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
-        }
+      body: RefreshIndicator(
+        color: AppColors.primaryGreen,
+        onRefresh: () => controller.fetchAddresses(),
+        child: Obx(() {
+          if (controller.isLoading.value && controller.addresses.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        if (controller.addresses.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.location_off,
-                  size: 100,
-                  color: Colors.grey.shade300,
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'No addresses found',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade600,
+          if (controller.addresses.isEmpty) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.8,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.location_off,
+                        size: 100,
+                        color: Colors.grey.shade300,
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'No addresses found',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Add your first delivery address',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          await Get.toNamed('/add-address');
+                          controller.fetchAddresses();
+                        },
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Address'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 16,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Add your first delivery address',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade500,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    await Get.toNamed('/add-address');
-                    controller.fetchAddresses();
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Address'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            );
+          }
+
+          return ListView.builder(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            itemCount: controller.addresses.length,
+            itemBuilder: (context, index) {
+              final address = controller.addresses[index];
+              return _buildAddressCard(address, controller);
+            },
           );
-        }
-
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: controller.addresses.length,
-          itemBuilder: (context, index) {
-            final address = controller.addresses[index];
-            return _buildAddressCard(address, controller);
-          },
-        );
-      }),
+        }),
+      ),
     );
   }
 

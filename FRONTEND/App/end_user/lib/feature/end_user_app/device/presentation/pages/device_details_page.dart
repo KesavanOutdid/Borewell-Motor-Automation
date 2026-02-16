@@ -46,20 +46,27 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
           }),
         ],
       ),
-      body: Obx(() {
-        if (controller.errorMessage.value.isNotEmpty) {
-          return NetworkErrorWidget(
-            message: controller.errorMessage.value,
-            onRetry: () => controller.fetchDeviceDetails(),
-          );
-        }
-        
-        if (controller.isLoading.value) {
-          return _buildSkeleton();
-        }
-        return RefreshIndicator(
-          onRefresh: controller.refreshData,
-          child: SingleChildScrollView(
+      body: RefreshIndicator(
+        color: AppColors.primaryGreen,
+        onRefresh: controller.refreshData,
+        child: Obx(() {
+          if (controller.errorMessage.value.isNotEmpty) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.8,
+                child: NetworkErrorWidget(
+                  message: controller.errorMessage.value,
+                  onRetry: () => controller.fetchDeviceDetails(),
+                ),
+              ),
+            );
+          }
+          
+          if (controller.isLoading.value && controller.liveData.isEmpty) {
+            return _buildSkeleton();
+          }
+          return SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -85,9 +92,9 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                 _buildStatusControlCard(controller),
               ],
             ),
-          ),
-        );
-      }),
+          );
+        }),
+      ),
     );
   }
 
@@ -96,6 +103,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
       baseColor: Colors.grey[300]!,
       highlightColor: Colors.grey[100]!,
       child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [

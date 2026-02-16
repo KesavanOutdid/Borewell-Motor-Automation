@@ -29,7 +29,7 @@ class NotificationController extends GetxController {
     });
   }
 
-  void loadNotifications() {
+  Future<void> loadNotifications() async {
     isLoading.value = true;
     notifications.value = _storageService.getAllNotifications();
     isLoading.value = false;

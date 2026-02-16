@@ -74,47 +74,55 @@ class NotificationPage extends StatelessWidget {
           ),
         ],
       ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return _buildSkeleton();
-        }
+      body: RefreshIndicator(
+        color: Colors.green,
+        onRefresh: () async {
+          await controller.loadNotifications();
+        },
+        child: Obx(() {
+          if (controller.isLoading.value && controller.notifications.isEmpty) {
+            return _buildSkeleton();
+          }
 
-        if (controller.notifications.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.notifications_off,
-                  size: 80,
-                  color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700] : Colors.grey[400],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'No notifications',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[600],
+          if (controller.notifications.isEmpty) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.8,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.notifications_off,
+                        size: 80,
+                        color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700] : Colors.grey[400],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No notifications',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Notifications older than 7 days are auto-deleted',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[500] : Colors.grey[500],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Notifications older than 7 days are auto-deleted',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[500] : Colors.grey[500],
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
+              ),
+            );
+          }
 
-        return RefreshIndicator(
-          onRefresh: () async {
-            controller.loadNotifications();
-          },
-          child: ListView.builder(
+          return ListView.builder(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(8),
             itemCount: controller.notifications.length,
             itemBuilder: (context, index) {
@@ -228,9 +236,9 @@ class NotificationPage extends StatelessWidget {
                 ),
               );
             },
-          ),
-        );
-      }),
+          );
+        }),
+      ),
     );
   }
 

@@ -109,110 +109,124 @@ class _OrdersPageState extends State<OrdersPage> {
             ),
           ),
           Expanded(
-            child: Obx(() {
-        if (controller.isLoading.value && controller.orders.isEmpty) {
-          return _buildSkeleton();
-        }
+            child: RefreshIndicator(
+              color: AppColors.primaryGreen,
+              onRefresh: () => controller.fetchOrders(refresh: true),
+              child: Obx(() {
+                if (controller.isLoading.value && controller.orders.isEmpty) {
+                  return _buildSkeleton();
+                }
 
-        if (controller.errorMessage.value.isNotEmpty) {
-          return NetworkErrorWidget(
-            message: controller.errorMessage.value,
-            onRetry: () => controller.fetchOrders(refresh: true),
-          );
-        }
+                if (controller.errorMessage.value.isNotEmpty) {
+                  return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.6,
+                      child: NetworkErrorWidget(
+                        message: controller.errorMessage.value,
+                        onRetry: () => controller.fetchOrders(refresh: true),
+                      ),
+                    ),
+                  );
+                }
 
-        if (controller.orders.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.shopping_bag_outlined,
-                  size: 100,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.grey.shade700
-                      : Colors.grey.shade400,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'No orders yet',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey.shade400
-                        : Colors.grey.shade600,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Start shopping to see your orders here',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey.shade500
-                        : Colors.grey.shade500,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    try {
-                      final dashboardController = Get.find<DashboardController>();
-                      dashboardController.changePage(1);
-                      if (Get.currentRoute == '/orders') {
-                        Get.back();
-                      }
-                    } catch (e) {
-                      if (Get.currentRoute == '/orders') {
-                        Get.back();
-                      }
+                if (controller.orders.isEmpty) {
+                  return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.6,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.shopping_bag_outlined,
+                              size: 100,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.grey.shade700
+                                  : Colors.grey.shade400,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No orders yet',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey.shade400
+                                    : Colors.grey.shade600,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Start shopping to see your orders here',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey.shade500
+                                    : Colors.grey.shade500,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                try {
+                                  final dashboardController = Get.find<DashboardController>();
+                                  dashboardController.changePage(1);
+                                  if (Get.currentRoute == '/orders') {
+                                    Get.back();
+                                  }
+                                } catch (e) {
+                                  if (Get.currentRoute == '/orders') {
+                                    Get.back();
+                                  }
+                                }
+                              },
+                              icon: const Icon(Icons.shopping_cart_outlined),
+                              label: const Text('Continue Shopping'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryGreen,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.zero,
+                  itemCount: controller.orders.length + (controller.isMoreLoading.value ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index < controller.orders.length) {
+                      final order = controller.orders[index];
+                      return _buildOrderCard(context, order, controller);
+                    } else {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primaryGreen,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      );
                     }
                   },
-                  icon: const Icon(Icons.shopping_cart_outlined),
-                  label: const Text('Continue Shopping'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () => controller.fetchOrders(refresh: true),
-          child: ListView.builder(
-            controller: _scrollController,
-            padding: EdgeInsets.zero,
-            itemCount: controller.orders.length + (controller.isMoreLoading.value ? 1 : 0),
-            itemBuilder: (context, index) {
-              if (index < controller.orders.length) {
-                final order = controller.orders[index];
-                return _buildOrderCard(context, order, controller);
-              } else {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primaryGreen,
-                      strokeWidth: 2,
-                    ),
-                  ),
                 );
-              }
-            },
-          ),
-        );
-      }),
+              }),
+            ),
           ),
         ],
       ),

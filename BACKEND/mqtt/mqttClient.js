@@ -217,19 +217,16 @@ client.on("message", async (topic, message) => {
                     });
                     console.log(`HISTORY: Start session created for ${serialNumber}`);
                     
-                    // Check if notification was already sent by app controller recently
-                    let alreadyNotified = false;
+                    // Check if notification was already sent recently
                     if (isRedisConnected() && redisClient.isOpen) {
                         const notifKey = `notif_sent:${serialNumber}:START`;
-                        const exists = await redisClient.get(notifKey);
-                        if (exists) alreadyNotified = true;
-                    }
-
-                    if (!alreadyNotified) {
-                        if (isRedisConnected() && redisClient.isOpen) {
-                            const notifKey = `notif_sent:${serialNumber}:START`;
-                            await redisClient.setEx(notifKey, 30, "SENT");
+                        const alreadySent = await redisClient.set(notifKey, "SENT", { NX: true, EX: 30 });
+                        if (alreadySent) {
+                            notifyUser(db, userId, "STATUS", entry);
+                        } else {
+                            console.log(`[MQTT] Duplicate START notification blocked for ${serialNumber}`);
                         }
+                    } else {
                         notifyUser(db, userId, "STATUS", entry);
                     }
                 }
@@ -247,8 +244,8 @@ client.on("message", async (topic, message) => {
                     const stopTime = new Date(timestamp || Date.now());
                     const duration = (stopTime - new Date(session.startAt)) / 60000;
 
-                    await db.collection("agri_history").updateOne(
-                        { _id: session._id },
+                    const updateResult = await db.collection("agri_history").updateOne(
+                        { _id: session._id, stopAt: null }, // Atomic check to ensure only one process closes this
                         {
                             $set: {
                                 stopAt: stopTime,
@@ -259,22 +256,22 @@ client.on("message", async (topic, message) => {
                             }
                         }
                     );
-                    console.log(`HISTORY: Session closed for ${serialNumber}`);
 
-                    // Check if notification was already sent by app controller recently
-                    let alreadyNotified = false;
-                    if (isRedisConnected() && redisClient.isOpen) {
-                        const notifKey = `notif_sent:${serialNumber}:STOP`;
-                        const exists = await redisClient.get(notifKey);
-                        if (exists) alreadyNotified = true;
-                    }
+                    if (updateResult.modifiedCount > 0) {
+                        console.log(`HISTORY: Session closed for ${serialNumber}`);
 
-                    if (!alreadyNotified) {
+                        // Check if notification was already sent recently
                         if (isRedisConnected() && redisClient.isOpen) {
                             const notifKey = `notif_sent:${serialNumber}:STOP`;
-                            await redisClient.setEx(notifKey, 30, "SENT");
+                            const alreadySent = await redisClient.set(notifKey, "SENT", { NX: true, EX: 30 });
+                            if (alreadySent) {
+                                notifyUser(db, userId, "STATUS", entry);
+                            } else {
+                                console.log(`[MQTT] Duplicate STOP notification blocked for ${serialNumber}`);
+                            }
+                        } else {
+                            notifyUser(db, userId, "STATUS", entry);
                         }
-                        notifyUser(db, userId, "STATUS", entry);
                     }
                 }
             }
@@ -310,18 +307,24 @@ client.on("message", async (topic, message) => {
         /* SEND LIVE UPDATES TO SOCKET.IO CLIENTS                 */
         /* ------------------------------------------------------ */
         if (type === "ALERT") {
-            // Check for duplicate alerts within a 1-minute window
-            let alertNotified = false;
-            const alertType = item.ALERT_TYPE || item.alert_type || "UNKNOWN";
-            if (isRedisConnected() && redisClient.isOpen) {
-                const alertKey = `alert_sent:${serialNumber}:${alertType}`;
-                const exists = await redisClient.get(alertKey);
-                if (exists) alertNotified = true;
-                else await redisClient.setEx(alertKey, 60, "SENT");
-            }
-
-            if (!alertNotified) {
-                notifyUser(db, userId, type, entry);
+            // Check if motor is actually running before sending alert notifications
+            // If the motor was just stopped by the user, we skip any pending alerts
+            if (device && device.start_status === false) {
+                console.log(`[MQTT] Skipping alert ${item.ALERT_TYPE || item.alert_type} for ${serialNumber} as motor is OFF`);
+            } else {
+                // Check for duplicate alerts within a 1-minute window using atomic SET NX
+                if (isRedisConnected() && redisClient.isOpen) {
+                    const alertType = item.ALERT_TYPE || item.alert_type || "UNKNOWN";
+                    const alertKey = `alert_sent:${serialNumber}:${alertType}`;
+                    const alreadySent = await redisClient.set(alertKey, "SENT", { NX: true, EX: 60 });
+                    if (alreadySent) {
+                        notifyUser(db, userId, type, entry);
+                    } else {
+                        console.log(`[MQTT] Duplicate alert ${alertType} blocked for ${serialNumber}`);
+                    }
+                } else {
+                    notifyUser(db, userId, type, entry);
+                }
             }
         }
 

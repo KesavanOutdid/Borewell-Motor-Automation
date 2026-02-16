@@ -257,20 +257,30 @@ class ProfileView extends GetView<ProfileController> {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      if (controller.isLoading.value) {
-        return _buildSkeleton(context);
-      }
+    return RefreshIndicator(
+      color: AppColors.primaryGreen,
+      onRefresh: () => controller.fetchProfile(),
+      child: Obx(() {
+        if (controller.isLoading.value && controller.userName.value.isEmpty) {
+          return _buildSkeleton(context);
+        }
 
-      if (controller.errorMessage.value.isNotEmpty) {
-        return NetworkErrorWidget(
-          message: controller.errorMessage.value,
-          onRetry: () => controller.fetchProfile(),
-        );
-      }
+        if (controller.errorMessage.value.isNotEmpty) {
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.8,
+              child: NetworkErrorWidget(
+                message: controller.errorMessage.value,
+                onRetry: () => controller.fetchProfile(),
+              ),
+            ),
+          );
+        }
 
-      return SingleChildScrollView(
-        child: Column(
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
@@ -558,7 +568,8 @@ class ProfileView extends GetView<ProfileController> {
             ],
           ),
         );
-      });
+      }),
+    );
   }
 
   Widget _buildMenuSection(BuildContext context, List<_MenuItemData> items) {
@@ -575,6 +586,7 @@ class ProfileView extends GetView<ProfileController> {
       baseColor: Colors.grey[300]!,
       highlightColor: Colors.grey[100]!,
       child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           children: [
             Container(

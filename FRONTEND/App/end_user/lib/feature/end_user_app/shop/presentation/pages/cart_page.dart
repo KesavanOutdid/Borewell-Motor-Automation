@@ -57,111 +57,128 @@ class _CartPageState extends State<CartPage> {
           }),
         ],
       ),
-      body: Obx(() {
-        if (controller.isLoading.value && controller.cart.value == null) {
-          return const Center(child: CircularProgressIndicator());
-        }
+      body: RefreshIndicator(
+        color: AppColors.primaryGreen,
+        onRefresh: () => controller.fetchCart(),
+        child: Obx(() {
+          if (controller.isLoading.value && controller.cart.value == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        if (controller.errorMessage.value.isNotEmpty) {
-          return NetworkErrorWidget(
-            message: controller.errorMessage.value,
-            onRetry: () => controller.fetchCart(),
-          );
-        }
-
-        final cart = controller.cart.value;
-
-        if (cart == null || cart.items.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.shopping_cart_outlined,
-                  size: 100,
-                  color: Colors.grey.shade400,
+          if (controller.errorMessage.value.isNotEmpty) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.8,
+                child: NetworkErrorWidget(
+                  message: controller.errorMessage.value,
+                  onRetry: () => controller.fetchCart(),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'Your cart is empty',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey.shade600,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Add items to get started',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade500,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    try {
-                      final dashboardController = Get.find<DashboardController>();
-                      dashboardController.changePage(1);
-                      Get.back(); // Always try to go back as CartPage is likely a separate route or pushed
-                    } catch (e) {
-                      Get.back();
-                    }
-                  },
-                  icon: const Icon(Icons.shopping_bag_outlined),
-                  label: const Text('Continue Shopping'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return Column(
-          children: [
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Items',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                        ),
-                        Text(
-                          '${cart.items.length} ${cart.items.length == 1 ? 'Item' : 'Items'}',
-                          style: TextStyle(fontSize: 16, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ...cart.items.map((item) => _buildCartItem(context, item, controller)).toList(),
-                  const SizedBox(height: 12),
-                  _buildPriceSummarySection(cart, controller),
-                  const SizedBox(height: 32),
-                ],
               ),
-            ),
-            _buildCheckoutBottomBar(cart),
-          ],
-        );
-      }),
+            );
+          }
+
+          final cart = controller.cart.value;
+
+          if (cart == null || cart.items.isEmpty) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.8,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.shopping_cart_outlined,
+                        size: 100,
+                        color: Colors.grey.shade400,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Your cart is empty',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Add items to get started',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          try {
+                            final dashboardController = Get.find<DashboardController>();
+                            dashboardController.changePage(1);
+                            Get.back(); // Always try to go back as CartPage is likely a separate route or pushed
+                          } catch (e) {
+                            Get.back();
+                          }
+                        },
+                        icon: const Icon(Icons.shopping_bag_outlined),
+                        label: const Text('Continue Shopping'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryGreen,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return Column(
+            children: [
+              Expanded(
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Items',
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                          ),
+                          Text(
+                            '${cart.items.length} ${cart.items.length == 1 ? 'Item' : 'Items'}',
+                            style: TextStyle(fontSize: 16, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ...cart.items.map((item) => _buildCartItem(context, item, controller)).toList(),
+                    const SizedBox(height: 12),
+                    _buildPriceSummarySection(cart, controller),
+                    const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+              _buildCheckoutBottomBar(cart),
+            ],
+          );
+        }),
+      ),
     );
   }
 
@@ -356,19 +373,21 @@ class _CartPageState extends State<CartPage> {
                         textCapitalization: TextCapitalization.characters,
                       ),
                     ),
-                    ElevatedButton(
-                      onPressed: () async {
-                        final code = voucherCodeController.text.trim();
-                        if (code.isEmpty) return;
-                        
-                        final validatedVoucher = await voucherController.validateVoucher(code);
-                        if (validatedVoucher != null) {
-                          setState(() {
-                            appliedDiscountPercentage = validatedVoucher.discountPercentage;
-                            appliedVoucherCode = validatedVoucher.voucherCode;
-                          });
-                        }
-                      },
+                    Obx(() => ElevatedButton(
+                      onPressed: voucherController.isLoading.value 
+                        ? null 
+                        : () async {
+                            final code = voucherCodeController.text.trim();
+                            if (code.isEmpty) return;
+                            
+                            final validatedVoucher = await voucherController.validateVoucher(code);
+                            if (validatedVoucher != null) {
+                              setState(() {
+                                appliedDiscountPercentage = validatedVoucher.discountPercentage;
+                                appliedVoucherCode = validatedVoucher.voucherCode;
+                              });
+                            }
+                          },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryGreen,
                         foregroundColor: Colors.white,
@@ -378,8 +397,14 @@ class _CartPageState extends State<CartPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text('Apply', style: TextStyle(fontWeight: FontWeight.bold)),
-                    ),
+                      child: voucherController.isLoading.value
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
+                        : const Text('Apply', style: TextStyle(fontWeight: FontWeight.bold)),
+                    )),
                   ],
                 ),
               ),

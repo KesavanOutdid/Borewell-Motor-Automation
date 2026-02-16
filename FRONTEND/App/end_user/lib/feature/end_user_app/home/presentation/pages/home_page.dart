@@ -168,25 +168,32 @@ class HomeView extends GetView<HomeController> {
               )),
             ),
             Expanded(
-              child: Obx(() {
-                if (controller.isLoading.value) {
-                  return _buildSkeletonList();
-                }
+              child: RefreshIndicator(
+                color: AppColors.primaryGreen,
+                onRefresh: () async => await controller.fetchDevices(),
+                child: Obx(() {
+                  if (controller.isLoading.value && controller.devices.isEmpty) {
+                    return _buildSkeletonList();
+                  }
 
-                if (controller.errorMessage.value.isNotEmpty) {
-                  return NetworkErrorWidget(
-                    message: controller.errorMessage.value,
-                    onRetry: () => controller.fetchDevices(),
-                  );
-                }
-
-                if (controller.devices.isEmpty) {
-                  return RefreshIndicator(
-                    onRefresh: () => controller.fetchDevices(),
-                    child: SingleChildScrollView(
+                  if (controller.errorMessage.value.isNotEmpty) {
+                    return SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       child: SizedBox(
-                        height: MediaQuery.of(context).size.height - 200,
+                        height: MediaQuery.of(context).size.height * 0.6,
+                        child: NetworkErrorWidget(
+                          message: controller.errorMessage.value,
+                          onRetry: () => controller.fetchDevices(),
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (controller.devices.isEmpty) {
+                    return SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.6,
                         child: Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -230,31 +237,37 @@ class HomeView extends GetView<HomeController> {
                           ),
                         ),
                       ),
-                    ),
-                  );
-                }
+                    );
+                  }
 
-                List<Map<String, dynamic>> displayDevices = controller.displayDevices;
-                
-                if (displayDevices.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        'No devices found',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey.shade600,
+                  List<Map<String, dynamic>> displayDevices = controller.displayDevices;
+                  
+                  if (displayDevices.isEmpty) {
+                    return ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.6,
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Text(
+                                'No devices found',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  );
-                }
+                      ],
+                    );
+                  }
 
-                return RefreshIndicator(
-                  onRefresh: () => controller.fetchDevices(),
-                  child: ListView.builder(
+                  return ListView.builder(
                     controller: controller.scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
                     padding: EdgeInsets.zero,
                     itemCount: displayDevices.length + (controller.isLoadingMore.value ? 1 : 0),
                     itemBuilder: (context, index) {
@@ -275,10 +288,10 @@ class HomeView extends GetView<HomeController> {
                         );
                       }
                     },
-                  ),
-                );
+                  );
                 }),
               ),
+            ),
           ],
         ),
         Positioned(
@@ -584,6 +597,7 @@ class HomeView extends GetView<HomeController> {
 
   Widget _buildSkeletonList() {
     return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.zero,
       itemCount: 5,
       itemBuilder: (context, index) => _buildSkeletonCard(),
