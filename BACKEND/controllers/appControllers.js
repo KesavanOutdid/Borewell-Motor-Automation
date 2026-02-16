@@ -407,7 +407,6 @@ exports.startStopDevice = async (req, res) => {
         // 1. Redis Debounce / Lock to prevent rapid multiple clicks
         if (isRedisConnected() && redisClient.isOpen) {
             const lockKey = `lock:device:${serial_number}`;
-            // Use atomic SET NX to prevent race conditions
             const setRes = await redisClient.set(lockKey, "LOCKED", { NX: true, EX: 3 });
             if (!setRes) {
                 return res.status(429).json({
@@ -1402,6 +1401,68 @@ exports.getTelemetryAnalytics = async (req, res) => {
 };
 
 
+// Helper to get cart with product images
+const getPopulatedCart = async (user_id) => {
+    const cartData = await Cart.aggregate([
+        { $match: { user_id: Number(user_id) } },
+        {
+            $lookup: {
+                from: "products",
+                localField: "items.product_id",
+                foreignField: "product_id",
+                as: "productDetails"
+            }
+        },
+        {
+            $project: {
+                cart_id: 1,
+                user_id: 1,
+                items: {
+                    $map: {
+                        input: "$items",
+                        as: "item",
+                        in: {
+                            product_id: "$$item.product_id",
+                            product_name: "$$item.product_name",
+                            product_price: "$$item.product_price",
+                            product_gst: "$$item.product_gst",
+                            product_shipping_cost: "$$item.product_shipping_cost",
+                            quantity: "$$item.quantity",
+                            added_at: "$$item.added_at",
+                            product_main_image: {
+                                $arrayElemAt: [
+                                    {
+                                        $map: {
+                                            input: {
+                                                $filter: {
+                                                    input: "$productDetails",
+                                                    as: "prod",
+                                                    cond: { $eq: ["$$prod.product_id", "$$item.product_id"] }
+                                                }
+                                            },
+                                            as: "prod",
+                                            in: "$$prod.product_main_image"
+                                        }
+                                    },
+                                    0
+                                ]
+                            }
+                        }
+                    }
+                },
+                total_price: 1,
+                total_gst: 1,
+                total_shipping_cost: 1,
+                grand_total: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                status: 1
+            }
+        }
+    ]);
+    return cartData && cartData.length > 0 ? cartData[0] : null;
+};
+
 exports.addCart = async (req, res, next) => {
     try {
         const errors = validationResult(req);
@@ -1481,10 +1542,12 @@ exports.addCart = async (req, res, next) => {
 
         await cacheDeletePattern('*cart*');
 
+        const populatedCart = await getPopulatedCart(user_id);
+
         res.status(201).json({
             success: true,
             message: "Product added to cart successfully",
-            cart
+            cart: populatedCart || cart
         });
 
     } catch (err) {
@@ -1652,10 +1715,12 @@ exports.updatedCart = async (req, res, next) => {
 
         await cacheDeletePattern('*cart*');
 
+        const populatedCart = await getPopulatedCart(user_id);
+
         res.status(200).json({
             success: true,
             message: "Cart updated successfully",
-            cart
+            cart: populatedCart || cart
         });
 
     } catch (err) {
@@ -1711,10 +1776,12 @@ exports.productDelete = async (req, res, next) => {
 
         await cacheDeletePattern('*cart*');
 
+        const populatedCart = await getPopulatedCart(user_id);
+
         res.status(200).json({
             success: true,
             message: "Product removed from cart successfully",
-            cart
+            cart: populatedCart || cart
         });
 
     } catch (err) {

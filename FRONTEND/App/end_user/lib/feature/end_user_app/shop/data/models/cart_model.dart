@@ -103,4 +103,26 @@ class CartItem {
       'shipping_cost': shippingCost,
     };
   }
+
+  CartItem copyWith({
+    int? productId,
+    String? productName,
+    String? productImage,
+    double? price,
+    int? quantity,
+    double? subtotal,
+    double? gst,
+    double? shippingCost,
+  }) {
+    return CartItem(
+      productId: productId ?? this.productId,
+      productName: productName ?? this.productName,
+      productImage: productImage ?? this.productImage,
+      price: price ?? this.price,
+      quantity: quantity ?? this.quantity,
+      subtotal: subtotal ?? this.subtotal,
+      gst: gst ?? this.gst,
+      shippingCost: shippingCost ?? this.shippingCost,
+    );
+  }
 }

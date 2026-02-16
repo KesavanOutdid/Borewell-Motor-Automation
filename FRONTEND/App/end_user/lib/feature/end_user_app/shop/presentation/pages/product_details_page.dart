@@ -7,6 +7,7 @@ import '../../../../../utils/theme/app_colors.dart';
 import '../../../../../utils/widgets/gradient_widgets.dart';
 import '../controllers/shop_controller.dart';
 import '../controllers/cart_controller.dart';
+import '../../data/models/cart_model.dart';
 import 'cart_page.dart';
 
 class ProductDetailsView extends StatefulWidget {
@@ -29,6 +30,13 @@ class _ProductDetailsViewState extends State<ProductDetailsView> {
     product = Get.arguments as Map<String, dynamic>;
     controller = Get.find<ShopController>();
     cartController = Get.find<CartController>();
+    
+    // Initialize quantity from cart if product is already there
+    final productId = product['product_id'];
+    final cartItem = cartController.cart.value?.items.firstWhereOrNull((item) => item.productId == productId);
+    if (cartItem != null) {
+      _quantity = cartItem.quantity;
+    }
   }
   
   @override
@@ -396,72 +404,109 @@ Get yours now from our app!
   }
 
   Widget _buildQuantitySelector() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          const Text(
-            'Quantity',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: AppColors.primaryGreen),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+    final int availableStock = product['product_quantity'] ?? 0;
+    final productId = product['product_id'];
+
+    return Obx(() {
+      // Sync UI if cart changes while we are on this page
+      final cartItem = cartController.cart.value?.items.firstWhereOrNull((item) => item.productId == productId);
+      final cartQuantity = cartItem?.quantity ?? 0;
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                IconButton(
-                  icon: const Icon(Icons.remove, size: 20),
-                  onPressed: () {
-                    if (_quantity > 1) {
-                      setState(() {
-                        _quantity--;
-                      });
-                    }
-                  },
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 40,
-                    minHeight: 40,
+                const Text(
+                  'Quantity',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
                   ),
                 ),
+                const SizedBox(width: 16),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    '$_quantity',
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.primaryGreen),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.remove, size: 20),
+                        onPressed: () {
+                          if (_quantity > 1) {
+                            setState(() {
+                              _quantity--;
+                            });
+                          }
+                        },
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 40,
+                          minHeight: 40,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          '$_quantity',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add, size: 20),
+                        onPressed: (_quantity < availableStock && _quantity < 3)
+                          ? () {
+                                  setState(() {
+                                    _quantity++;
+                                  });
+                                }
+                          : null,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 40,
+                          minHeight: 40,
+                        ),
+                        color: (_quantity < availableStock && _quantity < 3) ? AppColors.primaryGreen : Colors.grey,
+                      ),
+                    ],
+                  ),
+                ),
+                if (cartQuantity > 0) ...[
+                  const SizedBox(width: 12),
+                  Text(
+                    '($cartQuantity in cart)',
                     style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      fontSize: 12,
+                      color: AppColors.primaryGreen,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add, size: 20),
-                  onPressed: () {
-                    setState(() {
-                      _quantity++;
-                    });
-                  },
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 40,
-                    minHeight: 40,
-                  ),
-                ),
+                ],
               ],
             ),
-          ),
-        ],
-      ),
-    );
+            const SizedBox(height: 8),
+            Text(
+              'Available Stock: $availableStock units',
+              style: TextStyle(
+                fontSize: 13,
+                color: availableStock < 5 ? Colors.red : Colors.grey.shade600,
+                fontWeight: availableStock < 5 ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildOutOfStockBanner() {
@@ -582,23 +627,46 @@ Get yours now from our app!
                         ),
                       ),
                     )
-                  : GradientButton(
-                      text: 'Add to Cart',
-                      icon: Icons.shopping_cart,
-                      onPressed: () async {
-                        final productId = product['product_id'];
-                        if (productId != null) {
-                          final success = await cartController.addToCart(productId, _quantity);
-                          if (success) {
-                            setState(() {
-                              _quantity = 1;
-                            });
-                            _showAddToCartSuccess();
+                  : Obx(() {
+                      final productId = product['product_id'];
+                      final cartItem = cartController.cart.value?.items.firstWhereOrNull((item) => item.productId == productId);
+                      final bool isInCart = cartItem != null;
+                      final bool isNoChange = isInCart && cartItem.quantity == _quantity;
+                      
+                      return GradientButton(
+                        text: isInCart ? (isNoChange ? 'View Cart' : 'Update Cart') : 'Add to Cart',
+                        icon: isInCart ? Icons.shopping_cart_checkout : Icons.shopping_cart,
+                        onPressed: () async {
+                          if (isNoChange) {
+                            Get.to(() => const CartPage());
+                            return;
                           }
-                        }
-                      },
-                      height: 50,
-                    ),
+                          if (productId != null) {
+                            bool success;
+                            if (isInCart) {
+                              success = await cartController.updateCartItem(productId, _quantity);
+                            } else {
+                              final productData = CartItem(
+                                productId: productId,
+                                productName: product['product_name'] ?? '',
+                                productImage: product['product_main_image'] ?? '',
+                                price: double.tryParse(product['product_price']?.toString() ?? '0') ?? 0,
+                                quantity: _quantity,
+                                subtotal: (double.tryParse(product['product_price']?.toString() ?? '0') ?? 0) * _quantity,
+                                gst: double.tryParse(product['product_gst']?.toString() ?? '0') ?? 0,
+                                shippingCost: double.tryParse(product['product_shipping_cost']?.toString() ?? '0') ?? 0,
+                              );
+                              success = await cartController.addToCart(productId, _quantity, productData: productData);
+                            }
+                            
+                            if (success) {
+                              _showAddToCartSuccess(isUpdate: isInCart);
+                            }
+                          }
+                        },
+                        height: 50,
+                      );
+                    }),
             ),
           ],
         ),
@@ -606,7 +674,7 @@ Get yours now from our app!
     );
   }
 
-  void _showAddToCartSuccess() {
+  void _showAddToCartSuccess({bool isUpdate = false}) {
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.all(20),
@@ -631,9 +699,9 @@ Get yours now from our app!
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Added to Cart!',
-                style: TextStyle(
+              Text(
+                isUpdate ? 'Cart Updated!' : 'Added to Cart!',
+                style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
@@ -641,7 +709,7 @@ Get yours now from our app!
               ),
               const SizedBox(height: 8),
               Text(
-                'Product successfully added',
+                isUpdate ? 'Product quantity updated in cart' : 'Product successfully added',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,

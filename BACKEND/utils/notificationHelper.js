@@ -1,5 +1,6 @@
 const admin = require("firebase-admin");
 const path = require("path");
+const { redisClient, isRedisConnected } = require("../config/redis");
 
 // Initialize Firebase Admin    
 try { 
@@ -125,6 +126,24 @@ exports.notifyUser = async (db, userId, type, payload) => {
     try {
         const serial_number = payload.serial_number;
         if (!serial_number) return;
+
+        // Internal de-duplication to prevent multiple MQTT messages (PHASE, STATUS, HEARTBEAT) 
+        // from triggering the same notification within a short window.
+        if (isRedisConnected() && redisClient.isOpen) {
+            let actionSuffix = "";
+            if (type === "STATUS") {
+                actionSuffix = payload.motor_running === true ? ":START" : ":STOP";
+            } else if (type === "ALERT") {
+                actionSuffix = ":" + (payload.alert_type || payload.ALERT_TYPE || "UNKNOWN");
+            }
+            
+            const internalKey = `internal_notif_block:${serial_number.trim()}:${type}${actionSuffix}`;
+            const alreadyBlocked = await redisClient.set(internalKey, "BLOCKED", { NX: true, EX: 10 });
+            if (!alreadyBlocked) {
+                console.log(`[Notification] Internal duplicate block for ${serial_number} (${type}${actionSuffix})`);
+                return;
+            }
+        }
 
         // 1. Find the device to get the master user
         const device = await db.collection("devices").findOne({ serial_number: String(serial_number) });

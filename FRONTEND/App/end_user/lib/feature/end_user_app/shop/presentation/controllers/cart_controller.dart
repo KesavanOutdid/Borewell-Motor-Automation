@@ -12,6 +12,7 @@ class CartController extends GetxController {
   var cart = Rxn<CartModel>();
   var isLoading = false.obs;
   var errorMessage = ''.obs;
+  var updatingProductIds = <int>{}.obs;
   
   final String baseUrl = AppConfig.baseUrl;
   
@@ -28,12 +29,56 @@ class CartController extends GetxController {
     fetchCart();
   }
 
-  Future<bool> addToCart(int productId, int quantity) async {
+  Future<bool> addToCart(int productId, int quantity, {CartItem? productData}) async {
+    // Check total quantity including existing cart items
+    final existingItem = cart.value?.items.firstWhereOrNull((item) => item.productId == productId);
+    final existingQuantity = existingItem?.quantity ?? 0;
+    
+    if (existingQuantity + quantity > 3) {
+      UIUtils.showErrorDialog(
+        title: 'Limit Exceeded',
+        message: 'You already have $existingQuantity in cart. Total limit is 3 units per product.',
+      );
+      return false;
+    }
+
     final userId = tokenService.getUserId();
     final token = tokenService.getToken();
     if (userId == null || token == null) {
       UIUtils.showErrorDialog(message: 'User not logged in');
       return false;
+    }
+
+    // Optimistic Update if we have product data or it's already in cart
+    final previousCart = cart.value;
+    if (cart.value != null && (existingItem != null || productData != null)) {
+      List<CartItem> updatedItems = List.from(cart.value!.items);
+      if (existingItem != null) {
+        final index = updatedItems.indexWhere((item) => item.productId == productId);
+        final newItem = CartItem(
+          productId: existingItem.productId,
+          productName: existingItem.productName,
+          productImage: existingItem.productImage,
+          price: existingItem.price,
+          quantity: existingItem.quantity + quantity,
+          subtotal: existingItem.price * (existingItem.quantity + quantity),
+          gst: existingItem.gst,
+          shippingCost: existingItem.shippingCost,
+        );
+        updatedItems[index] = newItem;
+      } else if (productData != null) {
+        updatedItems.add(productData.copyWith(quantity: quantity, subtotal: productData.price * quantity));
+      }
+
+      double newTotalPrice = updatedItems.fold(0, (sum, item) => sum + item.subtotal);
+      cart.value = CartModel(
+        userId: userId,
+        items: updatedItems,
+        totalPrice: newTotalPrice,
+        totalGst: cart.value!.totalGst,
+        totalShippingCost: cart.value!.totalShippingCost,
+        grandTotal: newTotalPrice + cart.value!.totalGst + cart.value!.totalShippingCost,
+      );
     }
 
     final url = Uri.parse('$baseUrl/app/addCart');
@@ -53,34 +98,21 @@ class CartController extends GetxController {
         }),
       );
 
-      logger.i('📡 Response Status Code: ${response.statusCode}');
-      logger.d('📄 Response Body: ${response.body}');
-
       if (response.statusCode == 201) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
-        
         if (responseData['success'] == true) {
-          logger.i('✅ Product added to cart successfully');
-          await fetchCart();
+          cart.value = CartModel.fromJson(responseData['cart']);
           return true;
         }
-      } else if (response.statusCode == 400) {
+      } else {
+        cart.value = previousCart;
         final Map<String, dynamic> responseData = jsonDecode(response.body);
-        final message = responseData['message'] ?? 'Validation error';
-        
-        UIUtils.showErrorDialog(
-          title: message.contains('Insufficient product quantity') ? 'Out of Stock' : 'Error',
-          message: message.contains('Insufficient product quantity') 
-              ? 'This product is currently out of stock or has insufficient quantity available.'
-              : message,
-        );
+        UIUtils.showErrorDialog(message: responseData['message'] ?? 'Failed to add to cart');
       }
     } catch (e) {
+      cart.value = previousCart;
       logger.e('❌ Exception: $e');
-      UIUtils.showErrorSnackbar(
-        title: 'Error',
-        message: 'Failed to add product to cart',
-      );
+      UIUtils.showErrorSnackbar(title: 'Error', message: 'Failed to add product to cart');
     }
     
     return false;
@@ -131,6 +163,16 @@ class CartController extends GetxController {
   }
 
   Future<bool> updateCartItem(int productId, int quantity) async {
+    if (quantity > 3) {
+      UIUtils.showErrorDialog(
+        title: 'Limit Exceeded',
+        message: 'You can only order a maximum of 3 units of this product.',
+      );
+      return false;
+    }
+    
+    if (updatingProductIds.contains(productId)) return false;
+    
     final userId = tokenService.getUserId();
     final token = tokenService.getToken();
     if (userId == null || token == null) {
@@ -138,6 +180,42 @@ class CartController extends GetxController {
       return false;
     }
 
+    // Optimistic Update: Update UI immediately
+    final previousCart = cart.value;
+    if (cart.value != null) {
+      final updatedItems = cart.value!.items.map((item) {
+        if (item.productId == productId) {
+          final newSubtotal = item.price * quantity;
+          return CartItem(
+            productId: item.productId,
+            productName: item.productName,
+            productImage: item.productImage,
+            price: item.price,
+            quantity: quantity,
+            subtotal: newSubtotal,
+            gst: item.gst, // Approximation for UI
+            shippingCost: item.shippingCost,
+          );
+        }
+        return item;
+      }).toList();
+
+      double newTotalPrice = 0;
+      for (var item in updatedItems) {
+        newTotalPrice += item.subtotal;
+      }
+
+      cart.value = CartModel(
+        userId: userId,
+        items: updatedItems,
+        totalPrice: newTotalPrice,
+        totalGst: cart.value!.totalGst,
+        totalShippingCost: cart.value!.totalShippingCost,
+        grandTotal: newTotalPrice + cart.value!.totalGst + cart.value!.totalShippingCost,
+      );
+    }
+
+    updatingProductIds.add(productId);
     final url = Uri.parse('$baseUrl/app/updatedCart');
     logger.i('🔄 Updating cart - Product: $productId, Quantity: $quantity');
 
@@ -155,39 +233,37 @@ class CartController extends GetxController {
         }),
       );
 
-      logger.i('📡 Response Status Code: ${response.statusCode}');
-      logger.d('📄 Response Body: ${response.body}');
-
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
-        
         if (responseData['success'] == true) {
-          logger.i('✅ Cart updated successfully');
-          await fetchCart();
+          cart.value = CartModel.fromJson(responseData['cart']);
           return true;
         }
-      } else if (response.statusCode == 400) {
+      } else {
+        // Rollback on error
+        cart.value = previousCart;
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         UIUtils.showErrorDialog(
-          message: responseData['message'] ?? 'Insufficient product quantity',
+          message: responseData['message'] ?? 'Failed to update cart',
         );
-      } else if (response.statusCode == 404) {
-        logger.i('⚠️ Product or cart not found - refreshing cart');
-        await fetchCart();
-        return true;
       }
     } catch (e) {
+      cart.value = previousCart;
       logger.e('❌ Exception: $e');
       UIUtils.showErrorSnackbar(
         title: 'Error',
         message: 'Failed to update cart',
       );
+    } finally {
+      updatingProductIds.remove(productId);
     }
     
     return false;
   }
 
   Future<bool> removeFromCart(int productId) async {
+    if (updatingProductIds.contains(productId)) return false;
+
     final userId = tokenService.getUserId();
     final token = tokenService.getToken();
     if (userId == null || token == null) {
@@ -195,6 +271,26 @@ class CartController extends GetxController {
       return false;
     }
 
+    // Optimistic Update
+    final previousCart = cart.value;
+    if (cart.value != null) {
+      final updatedItems = cart.value!.items.where((item) => item.productId != productId).toList();
+      double newTotalPrice = 0;
+      for (var item in updatedItems) {
+        newTotalPrice += item.subtotal;
+      }
+      
+      cart.value = CartModel(
+        userId: userId,
+        items: updatedItems,
+        totalPrice: newTotalPrice,
+        totalGst: cart.value!.totalGst,
+        totalShippingCost: cart.value!.totalShippingCost,
+        grandTotal: newTotalPrice + cart.value!.totalGst + cart.value!.totalShippingCost,
+      );
+    }
+
+    updatingProductIds.add(productId);
     final url = Uri.parse('$baseUrl/app/productDelete');
     logger.i('🗑️ Removing product from cart - Product: $productId');
 
@@ -211,34 +307,32 @@ class CartController extends GetxController {
         }),
       );
 
-      logger.i('📡 Response Status Code: ${response.statusCode}');
-      logger.d('📄 Response Body: ${response.body}');
-
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
-        
         if (responseData['success'] == true) {
-          logger.i('✅ Product removed from cart');
-          await fetchCart();
+          cart.value = CartModel.fromJson(responseData['cart']);
           return true;
         }
-      } else if (response.statusCode == 404) {
-        logger.i('⚠️ Product or cart not found - refreshing cart');
-        await fetchCart();
-        return true;
+      } else {
+        cart.value = previousCart;
       }
     } catch (e) {
+      cart.value = previousCart;
       logger.e('❌ Exception: $e');
       UIUtils.showErrorSnackbar(
         title: 'Error',
         message: 'Failed to remove product from cart',
       );
+    } finally {
+      updatingProductIds.remove(productId);
     }
     
     return false;
   }
 
   Future<bool> clearCart() async {
+    if (isLoading.value) return false;
+
     final userId = tokenService.getUserId();
     final token = tokenService.getToken();
     if (userId == null || token == null) {
@@ -246,6 +340,11 @@ class CartController extends GetxController {
       return false;
     }
 
+    // Optimistic Update
+    final previousCart = cart.value;
+    cart.value = null;
+
+    isLoading.value = true;
     final url = Uri.parse('$baseUrl/app/allProductDelete');
     logger.i('🗑️ Clearing entire cart');
 
@@ -259,29 +358,21 @@ class CartController extends GetxController {
         body: jsonEncode({'user_id': userId}),
       );
 
-      logger.i('📡 Response Status Code: ${response.statusCode}');
-      logger.d('📄 Response Body: ${response.body}');
-
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = jsonDecode(response.body);
-        
-        if (responseData['success'] == true) {
-          logger.i('✅ Cart cleared successfully');
-          cart.value = null;
-          await fetchCart();
-          return true;
-        }
-      } else if (response.statusCode == 404) {
-        logger.i('⚠️ Cart not found on backend - clearing local cart');
-        cart.value = null;
         return true;
+      } else {
+        cart.value = previousCart;
+        return false;
       }
     } catch (e) {
+      cart.value = previousCart;
       logger.e('❌ Exception: $e');
       UIUtils.showErrorSnackbar(
         title: 'Error',
         message: 'Failed to clear cart',
       );
+    } finally {
+      isLoading.value = false;
     }
     
     return false;

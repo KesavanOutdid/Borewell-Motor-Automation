@@ -109,7 +109,7 @@ class VoucherController extends GetxController {
         
         if (jsonData['success'] == true && jsonData['data'] != null) {
           final validatedVoucher = ValidatedVoucher.fromJson(jsonData['data']);
-          UIUtils.showSuccessSnackbar(
+          UIUtils.showSuccessDialog(
             title: 'Success',
             message: jsonData['message'] ?? 'Voucher applied successfully',
           );

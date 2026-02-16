@@ -170,17 +170,7 @@ class _OrdersPageState extends State<OrdersPage> {
                             const SizedBox(height: 24),
                             ElevatedButton.icon(
                               onPressed: () {
-                                try {
-                                  final dashboardController = Get.find<DashboardController>();
-                                  dashboardController.changePage(1);
-                                  if (Get.currentRoute == '/orders') {
-                                    Get.back();
-                                  }
-                                } catch (e) {
-                                  if (Get.currentRoute == '/orders') {
-                                    Get.back();
-                                  }
-                                }
+                                Get.offAllNamed('/home', arguments: {'index': 1});
                               },
                               icon: const Icon(Icons.shopping_cart_outlined),
                               label: const Text('Continue Shopping'),

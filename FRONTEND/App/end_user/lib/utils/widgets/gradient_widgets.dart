@@ -3,7 +3,7 @@ import '../theme/app_colors.dart';
 
 class GradientButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final bool isLoading;
   final double? width;
   final double height;
@@ -13,7 +13,7 @@ class GradientButton extends StatelessWidget {
   const GradientButton({
     Key? key,
     required this.text,
-    required this.onPressed,
+    this.onPressed,
     this.isLoading = false,
     this.width,
     this.height = 56,

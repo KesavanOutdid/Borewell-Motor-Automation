@@ -189,7 +189,6 @@ client.on("message", async (topic, message) => {
                 // CHECK if session already open
                 const openSession = await db.collection("agri_history").findOne({
                     serial_number: serialNumber,
-                    user_id: userId,
                     stopAt: null
                 });
 
@@ -219,7 +218,7 @@ client.on("message", async (topic, message) => {
                     
                     // Check if notification was already sent recently
                     if (isRedisConnected() && redisClient.isOpen) {
-                        const notifKey = `notif_sent:${serialNumber}:START`;
+                        const notifKey = `notif_sent:${serialNumber.trim()}:START`;
                         const alreadySent = await redisClient.set(notifKey, "SENT", { NX: true, EX: 30 });
                         if (alreadySent) {
                             notifyUser(db, userId, "STATUS", entry);
@@ -236,7 +235,6 @@ client.on("message", async (topic, message) => {
                 // CLOSE existing session
                 const session = await db.collection("agri_history").findOne({
                     serial_number: serialNumber,
-                    user_id: userId,
                     stopAt: null
                 });
 
@@ -262,7 +260,7 @@ client.on("message", async (topic, message) => {
 
                         // Check if notification was already sent recently
                         if (isRedisConnected() && redisClient.isOpen) {
-                            const notifKey = `notif_sent:${serialNumber}:STOP`;
+                            const notifKey = `notif_sent:${serialNumber.trim()}:STOP`;
                             const alreadySent = await redisClient.set(notifKey, "SENT", { NX: true, EX: 30 });
                             if (alreadySent) {
                                 notifyUser(db, userId, "STATUS", entry);
@@ -315,7 +313,7 @@ client.on("message", async (topic, message) => {
                 // Check for duplicate alerts within a 1-minute window using atomic SET NX
                 if (isRedisConnected() && redisClient.isOpen) {
                     const alertType = item.ALERT_TYPE || item.alert_type || "UNKNOWN";
-                    const alertKey = `alert_sent:${serialNumber}:${alertType}`;
+                    const alertKey = `alert_sent:${serialNumber.trim()}:${alertType}`;
                     const alreadySent = await redisClient.set(alertKey, "SENT", { NX: true, EX: 60 });
                     if (alreadySent) {
                         notifyUser(db, userId, type, entry);
