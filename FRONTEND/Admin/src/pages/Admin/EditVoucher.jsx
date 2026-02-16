@@ -263,7 +263,6 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                                                     min="1"
                                                     required
                                                 />
-                                                <small className="text-muted">Leave empty for unlimited usage</small>
                                             </div>
 
                                             <div className="col-md-6 col-12">
@@ -272,9 +271,10 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                                                     type="number"
                                                     className="form-control"
                                                     name="used_count"
-                                                    value={currentVoucherDetails.used_count}
+                                                    value={currentVoucherDetails.used_count === 0 ? '0' : (currentVoucherDetails.used_count || '')}
                                                     onChange={handleChange}
                                                     onFocus={handleFocus}
+                                                    required
                                                 />
                                                 <small className="text-muted">Usage count of the voucher</small>
                                             </div>

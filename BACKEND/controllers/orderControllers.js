@@ -609,6 +609,14 @@ exports.updateOrderStatus = async (req, res, next) => {
             return res.status(404).json({ success: false, message: "Order not found" });
         }
 
+        // Restrict status change if payment is not completed
+        if (order.payment_status !== 'completed' && ['processing', 'shipped', 'out_for_delivery', 'delivered'].includes(order_status)) {
+            return res.status(400).json({
+                success: false,
+                message: "Order status can only be updated to Processing or further after payment is completed"
+            });
+        }
+
         // Status flow
         const statusFlow = ['confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'];
 

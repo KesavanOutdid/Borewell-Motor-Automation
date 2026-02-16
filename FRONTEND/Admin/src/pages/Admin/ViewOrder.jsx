@@ -39,6 +39,12 @@ const ViewOrder = ({ userInfo, handleLogout }) => {
             return;
         }
 
+        // Restrict status change if payment is not completed
+        if (order.payment_status !== 'completed' && ['processing', 'shipped', 'out_for_delivery', 'delivered'].includes(selectedStatus)) {
+            showAlertError('Status can only be updated to Processing/Shipped after payment is completed');
+            return;
+        }
+
         const result = await updateOrderStatus(
             order.order_id,
             selectedStatus,
@@ -110,13 +116,15 @@ const ViewOrder = ({ userInfo, handleLogout }) => {
     };
 
     const isStatusCompleted = (status) => {
-        const currentIndex = statusFlow.indexOf(order.order_status);
+        const orderStatus = order.order_status === 'created' ? 'confirmed' : order.order_status;
+        const currentIndex = statusFlow.indexOf(orderStatus);
         const statusIndex = statusFlow.indexOf(status);
         return statusIndex < currentIndex;
     };
 
     const isStatusCurrent = (status) => {
-        return order.order_status === status;
+        const orderStatus = order.order_status === 'created' ? 'confirmed' : order.order_status;
+        return orderStatus === status;
     };
 
     const formatDateIndian = (date) => {
@@ -147,98 +155,100 @@ const ViewOrder = ({ userInfo, handleLogout }) => {
                                 <i className="fas fa-arrow-left"></i> Back
                             </button>
 
-                            <div className="card mb-4">
-                                <div className="card-body" style={{ padding: '20px' }}>
-                                    <h6 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '20px', color: '#333' }}>Order Progress</h6>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
-                                        {statusFlow.map((status, index) => {
-                                            const completed = isStatusCompleted(status);
-                                            const current = isStatusCurrent(status);
-                                            const statusColor = getStatusColor(status);
+                            {order.payment_status === 'completed' && (
+                                <div className="card mb-4">
+                                    <div className="card-body" style={{ padding: '20px' }}>
+                                        <h6 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '20px', color: '#333' }}>Order Progress</h6>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
+                                            {statusFlow.map((status, index) => {
+                                                const completed = isStatusCompleted(status);
+                                                const current = isStatusCurrent(status);
+                                                const statusColor = getStatusColor(status);
 
-                                            return (
-                                                <div key={status} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, position: 'relative' }}>
-                                                    {index > 0 && (
+                                                return (
+                                                    <div key={status} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, position: 'relative' }}>
+                                                        {index > 0 && (
+                                                            <div style={{
+                                                                position: 'absolute',
+                                                                top: '20px',
+                                                                left: '-50%',
+                                                                width: '100%',
+                                                                height: '3px',
+                                                                backgroundColor: isStatusCompleted(statusFlow[index - 1]) ? statusColor : '#e9ecef'
+                                                            }}></div>
+                                                        )}
                                                         <div style={{
-                                                            position: 'absolute',
-                                                            top: '20px',
-                                                            left: '-50%',
-                                                            width: '100%',
-                                                            height: '3px',
-                                                            backgroundColor: isStatusCompleted(statusFlow[index - 1]) ? statusColor : '#e9ecef'
-                                                        }}></div>
-                                                    )}
-                                                    <div style={{
-                                                        width: '40px',
-                                                        height: '40px',
-                                                        borderRadius: '50%',
-                                                        backgroundColor: completed || current ? statusColor : '#e9ecef',
-                                                        border: current ? `3px solid ${statusColor}` : `2px solid ${statusColor}`,
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        color: '#fff',
-                                                        fontWeight: 'bold',
-                                                        fontSize: '18px',
-                                                        zIndex: 1,
-                                                        boxShadow: current ? `0 0 0 4px rgba(${parseInt(statusColor.slice(1, 3), 16)}, ${parseInt(statusColor.slice(3, 5), 16)}, ${parseInt(statusColor.slice(5, 7), 16)}, 0.2)` : 'none'
-                                                    }}>
-                                                        {completed ? '✓' : (current ? '●' : '')}
+                                                            width: '40px',
+                                                            height: '40px',
+                                                            borderRadius: '50%',
+                                                            backgroundColor: completed || current ? statusColor : '#e9ecef',
+                                                            border: current ? `3px solid ${statusColor}` : `2px solid ${statusColor}`,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            color: '#fff',
+                                                            fontWeight: 'bold',
+                                                            fontSize: '18px',
+                                                            zIndex: 1,
+                                                            boxShadow: current ? `0 0 0 4px rgba(${parseInt(statusColor.slice(1, 3), 16)}, ${parseInt(statusColor.slice(3, 5), 16)}, ${parseInt(statusColor.slice(5, 7), 16)}, 0.2)` : 'none'
+                                                        }}>
+                                                            {completed ? '✓' : (current ? '●' : '')}
+                                                        </div>
+                                                        
+                                                        {/* <small style={{ marginTop: '8px', fontSize: '11px', fontWeight: '600', color: current ? statusColor : '#666', textAlign: 'center' }}>
+                                                            {getStatusLabel(status)}
+                                                        </small> */}
+
+                                                        <small style={{ marginTop: '8px', fontSize: '11px', fontWeight: '600', color: current ? statusColor : '#666', textAlign: 'center' }}>
+                                                            {getStatusLabel(status)}
+
+                                                            {/* Show message + timestamp */}
+                                                            {(() => {
+                                                                let event = order?.order_timeline?.find(e => e.status === status);
+                                                                
+                                                                // For 'confirmed' status, always use order creation time
+                                                                if (status === 'confirmed') {
+                                                                    const displayEvent = event || {
+                                                                        message: 'Order status: confirmed'
+                                                                    };
+                                                                    return (
+                                                                        <>
+                                                                            <br />
+                                                                            <span style={{ fontSize: '10px', color: '#444', fontWeight: '400' }}>
+                                                                                {displayEvent.message}
+                                                                            </span>
+                                                                            <br />
+                                                                            <span style={{ fontSize: '10px', color: '#777', fontWeight: '400' }}>
+                                                                                {formatDateIndian(order.createdAt)}
+                                                                            </span>
+                                                                        </>
+                                                                    );
+                                                                }
+
+                                                                if (event) {
+                                                                    return (
+                                                                        <>
+                                                                            <br />
+                                                                            <span style={{ fontSize: '10px', color: '#444', fontWeight: '400' }}>
+                                                                                {event.message}
+                                                                            </span>
+                                                                            <br />
+                                                                            <span style={{ fontSize: '10px', color: '#777', fontWeight: '400' }}>
+                                                                                {formatDateIndian(event.timestamp)}
+                                                                            </span>
+                                                                        </>
+                                                                    );
+                                                                }
+                                                                return null;
+                                                            })()}
+                                                        </small>
                                                     </div>
-                                                    
-                                                    {/* <small style={{ marginTop: '8px', fontSize: '11px', fontWeight: '600', color: current ? statusColor : '#666', textAlign: 'center' }}>
-                                                        {getStatusLabel(status)}
-                                                    </small> */}
-
-                                                    <small style={{ marginTop: '8px', fontSize: '11px', fontWeight: '600', color: current ? statusColor : '#666', textAlign: 'center' }}>
-                                                        {getStatusLabel(status)}
-
-                                                        {/* Show message + timestamp */}
-                                                        {(() => {
-                                                            let event = order?.order_timeline?.find(e => e.status === status);
-                                                            
-                                                            // For 'confirmed' status, always use order creation time
-                                                            if (status === 'confirmed') {
-                                                                const displayEvent = event || {
-                                                                    message: 'Order status: confirmed'
-                                                                };
-                                                                return (
-                                                                    <>
-                                                                        <br />
-                                                                        <span style={{ fontSize: '10px', color: '#444', fontWeight: '400' }}>
-                                                                            {displayEvent.message}
-                                                                        </span>
-                                                                        <br />
-                                                                        <span style={{ fontSize: '10px', color: '#777', fontWeight: '400' }}>
-                                                                            {formatDateIndian(order.createdAt)}
-                                                                        </span>
-                                                                    </>
-                                                                );
-                                                            }
-
-                                                            if (event) {
-                                                                return (
-                                                                    <>
-                                                                        <br />
-                                                                        <span style={{ fontSize: '10px', color: '#444', fontWeight: '400' }}>
-                                                                            {event.message}
-                                                                        </span>
-                                                                        <br />
-                                                                        <span style={{ fontSize: '10px', color: '#777', fontWeight: '400' }}>
-                                                                            {formatDateIndian(event.timestamp)}
-                                                                        </span>
-                                                                    </>
-                                                                );
-                                                            }
-                                                            return null;
-                                                        })()}
-                                                    </small>
-                                                </div>
-                                            );
-                                        })}
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
 
                             <div className="row">
                                 <div className="col-lg-8">
@@ -373,17 +383,19 @@ const ViewOrder = ({ userInfo, handleLogout }) => {
                                             </div>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', fontSize: '14px', fontWeight: '700' }}>
                                                 <span>Grand Total:</span>
-                                                <span style={{ color: '#0d6efd' }}>₹{order.order_summary.grand_total}</span>
+                                                <span style={{ color: '#0d6efd' }}>₹{Number(order.order_summary.grand_total || 0).toFixed(2)}</span>
                                             </div>
 
-                                            <button
-                                                className="btn btn-primary w-100 mb-2"
-                                                style={{ fontSize: '12px' }}
-                                                onClick={() => setShowStatusModal(true)}
-                                                disabled={updatingStatus || availableStatuses.length === 0}
-                                            >
-                                                <i className="fas fa-edit"></i> Update Status
-                                            </button>
+                                            {order.payment_status === 'completed' && (
+                                                <button
+                                                    className="btn btn-primary w-100 mb-2"
+                                                    style={{ fontSize: '12px' }}
+                                                    onClick={() => setShowStatusModal(true)}
+                                                    disabled={updatingStatus || availableStatuses.length === 0}
+                                                >
+                                                    <i className="fas fa-edit"></i> Update Status
+                                                </button>
+                                            )}
 
                                             {availableStatuses.length === 0 && (
                                                 <div style={{ backgroundColor: '#d1ecf1', padding: '10px', borderRadius: '6px', borderLeft: '4px solid #17a2b8', marginTop: '10px' }}>

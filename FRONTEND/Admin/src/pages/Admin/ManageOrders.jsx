@@ -208,7 +208,7 @@ const ManageOrders = ({ userInfo, handleLogout }) => {
                                                                     <small style={{ color: '#999' }}>{order.user_email}</small>
                                                                 </td>
                                                                 <td style={{ padding: '12px', fontSize: '12px', fontWeight: '600' }}>
-                                                                    ₹{order.order_summary?.grand_total || 0}
+                                                                    ₹{Number(order.order_summary?.grand_total || 0).toFixed(2)}
                                                                 </td>
                                                                 <td style={{ padding: '12px', textAlign: 'center' }}>
                                                                     <span style={{

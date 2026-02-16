@@ -87,6 +87,9 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
                                                             setDiscountPercentage(isNaN(parsed) ? '' : parsed);
                                                         }
                                                     }}
+                                                    onFocus={(e) => {
+                                                        if (e.target.value === '0') setDiscountPercentage('');
+                                                    }}
                                                     min="0"
                                                     max="100"
                                                     required
@@ -138,10 +141,12 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
                                                             setMaxUsage(isNaN(parsed) ? '' : parsed);
                                                         }
                                                     }}
+                                                    onFocus={(e) => {
+                                                        if (e.target.value === '0') setMaxUsage('');
+                                                    }}
                                                     min="1"
                                                     required
                                                 />
-                                                <small className="text-muted">Leave empty for unlimited usage</small>
                                             </div>
                                         </div>
 

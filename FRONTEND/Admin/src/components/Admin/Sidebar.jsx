@@ -26,11 +26,11 @@ const Sidebar = () => {
     };
     return (
         <aside className="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3 sidebar-topographic" id="sidenav-main">
-            <div className="sidenav-header">
+            <div className="sidenav-header" style={{ height: 'auto', minHeight: '80px', display: 'flex', alignItems: 'center' }}>
                 <i className="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-xl-none" aria-hidden="true" id="iconSidenav" onClick={toggleSidebar}></i>
-                <a className="navbar-brand m-0" href="/dashboard" onClick={(e) => { e.preventDefault(); window.location.href = '/dashboard'; }}>
-                    <img src={logo} className="navbar-brand-img h-100" alt="main_logo"/>
-                    <span className="ms-2 font-weight-bold">Smart</span>
+                <a className="navbar-brand m-0 d-flex align-items-center" href="/dashboard" onClick={(e) => { e.preventDefault(); window.location.href = '/dashboard'; }}>
+                    <img src={logo} className="navbar-brand-img" alt="main_logo" style={{ maxHeight: '40px', width: 'auto' }}/>
+                    <span className="ms-2 font-weight-bold" style={{ whiteSpace: 'normal', lineHeight: '1.2' }}>Smart Motor Automation</span>
                 </a>
             </div>
             <hr className="horizontal dark mt-0"/>

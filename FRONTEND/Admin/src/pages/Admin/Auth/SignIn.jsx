@@ -67,7 +67,7 @@ const SignIn = ({ handleSignIn, userInfo }) => {
                                 </div>
                                 <div className="col-md-6">
                                     <div className="oblique position-absolute top-0 h-100 d-md-block d-none me-n8">
-                                        <div className="oblique-image bg-cover position-absolute fixed-top ms-auto h-100 z-index-0 ms-n6" style={{ backgroundImage: "url('../assets/img/farming-scene1.jpeg')" }}></div>
+                                        <div className="oblique-image bg-cover position-absolute fixed-top ms-auto h-100 z-index-0 ms-n6" style={{ backgroundImage: "url('/assets/img/farming-scene1.jpeg')" }}></div>
                                     </div>
                                 </div>
                             </div>
