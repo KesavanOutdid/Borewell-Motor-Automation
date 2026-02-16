@@ -5,16 +5,22 @@ on:
     branches:
       - main
       - dev
+      - Dev
       - testing
+      - Production
     paths:
       - 'BACKEND/**'
+      - '.github/workflows/backend-deploy.yml'
   pull_request:
     branches:
       - main
       - dev
+      - Dev
       - testing
+      - Production
     paths:
       - 'BACKEND/**'
+      - '.github/workflows/backend-deploy.yml'
   workflow_dispatch:
 
 jobs:
@@ -39,7 +45,7 @@ jobs:
 
   deploy:
     needs: build-and-push
-    if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'dev' || github.ref_name == 'testing')
+    if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'dev' || github.ref_name == 'Dev' || github.ref_name == 'testing' || github.ref_name == 'Production')
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to Server via SSH
@@ -50,7 +56,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             # Set port based on branch
-            if [ "${{ github.ref_name }}" == "main" ]; then
+            if [ "${{ github.ref_name }}" == "main" ] || [ "${{ github.ref_name }}" == "Production" ]; then
               PORT="3030"
             elif [ "${{ github.ref_name }}" == "testing" ]; then
               PORT="3031"
