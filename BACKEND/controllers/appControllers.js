@@ -11,6 +11,7 @@ const DeviceShare = require("../models/DeviceShare");
 const { sendPushNotification } = require('../utils/notificationHelper');
 const { cacheDeletePattern } = require('../middlewares/cacheMiddleware');
 const { redisClient, isRedisConnected } = require('../config/redis');
+const { client: mqttPublisher } = require('../mqtt/publisher');
 const fs = require('fs');
 const path = require('path');
 
@@ -585,6 +586,34 @@ exports.startStopDevice = async (req, res) => {
             // Don't fail the request if notification fails
         }
 
+        // 4. Send MQTT Command to the Motor
+        const topic = `agri/${serial_number}/command`;
+        const payload = {
+            MESSAGE_TYPE: "COMMAND",
+            SERIAL_NUMBER: serial_number,
+            IMEI_NUMBER: imei_number,
+            COMMAND: start_status ? "START" : "STOP",
+            TIMESTAMP: new Date().toISOString()
+        };
+
+        if (mqttPublisher && mqttPublisher.connected) {
+            mqttPublisher.publish(topic, JSON.stringify(payload), { qos: 1 });
+            console.log(`[MQTT] Published command to ${topic}:`, payload.COMMAND);
+        } else {
+            console.warn(`[MQTT] Failed to publish - Publisher not connected`);
+        }
+
+        // 5. Immediate Socket.IO reflection for real-time UI updates across all users
+        if (global.io) {
+            global.io.emit("LIVE_STATUS", {
+                serial_number: serial_number,
+                payload: {
+                    motor_running: start_status,
+                    updatedAt: new Date().toISOString()
+                }
+            });
+        }
+
         await cacheDeletePattern('*devices*');
         await cacheDeletePattern('*analytics*');
 
@@ -824,35 +853,51 @@ exports.userDeviceHistory = async (req, res) => {
             return res.status(400).json({ success: false, errors: errors.array() });
         }
 
-        const { user_id } = req.body;
+        const { user_id, page = 1, limit = 10, serial_number } = req.body;
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const skip = (pageNum - 1) * limitNum;
 
         // Validate user exists
         const user = await User.findOne({ user_id: parseInt(user_id) });
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: "User not found"
+                message: "User found"
             });
         }
 
-        // 1. Get all serial numbers the user has access to
-        const masterDevices = await Device.find({ assigned_user_id: user.user_id, status: true });
-        const sharedShares = await DeviceShare.find({
-            shared_to_user_id: user.user_id,
-            status: true,
-            acceptance_status: 'accepted'
-        });
+        let serialNumbers = [];
+        if (serial_number) {
+            // Verify if user has access to this serial
+            const hasAccess = await Device.findOne({ serial_number, assigned_user_id: user.user_id, status: true }) ||
+                              await DeviceShare.findOne({ serial_number, shared_to_user_id: user.user_id, status: true, acceptance_status: 'accepted' });
+            
+            if (!hasAccess) {
+                return res.status(403).json({ success: false, message: "No access to this device" });
+            }
+            serialNumbers = [serial_number];
+        } else {
+            // 1. Get all serial numbers the user has access to
+            const masterDevices = await Device.find({ assigned_user_id: user.user_id, status: true });
+            const sharedShares = await DeviceShare.find({
+                shared_to_user_id: user.user_id,
+                status: true,
+                acceptance_status: 'accepted'
+            });
 
-        const serialNumbers = [
-            ...masterDevices.map(d => d.serial_number),
-            ...sharedShares.map(s => s.serial_number)
-        ];
+            serialNumbers = [
+                ...masterDevices.map(d => d.serial_number),
+                ...sharedShares.map(s => s.serial_number)
+            ];
+        }
 
         if (serialNumbers.length === 0) {
             return res.status(200).json({
                 success: true,
                 user_id,
                 count: 0,
+                total: 0,
                 data: []
             });
         }
@@ -861,64 +906,42 @@ exports.userDeviceHistory = async (req, res) => {
         const db = mongoose.connection.db;
         const historyCollection = db.collection("agri_history");
 
-        // 2. Fetch all history sessions for these serial numbers
+        const query = { serial_number: { $in: serialNumbers } };
+
+        // 2. Fetch history sessions with pagination
         const history = await historyCollection
-            .find({ serial_number: { $in: serialNumbers } })
+            .find(query)
             .sort({ startAt: -1 })    // latest first
+            .skip(skip)
+            .limit(limitNum)
             .toArray();
+
+        const totalRecords = await historyCollection.countDocuments(query);
 
         if (!history.length) {
             const response = {
                 success: true,
                 user_id,
                 count: 0,
+                total: totalRecords,
+                currentPage: pageNum,
+                totalPages: Math.ceil(totalRecords / limitNum),
                 data: []
             };
             return res.status(200).json(response);
         }
 
-        // Group by serial number
-        const grouped = {};
-
-        history.forEach(h => {
-            if (!grouped[h.serial_number]) {
-                grouped[h.serial_number] = [];
-            }
-
-            grouped[h.serial_number].push({
-                serial_number: h.serial_number,
-                imei_number: h.imei_number,
-                date: h.date,
-                startAt: h.startAt,
-                stopAt: h.stopAt,
-                duration_minutes: h.duration_minutes,
-                energy_kwh: h.energy_kwh,
-                maxCurrent: h.maxCurrent,
-                minCurrent: h.minCurrent,
-                maxVoltage: h.maxVoltage,
-                minVoltage: h.minVoltage,
-                started_by: h.started_by || "-",
-                stopped_by: h.stopped_by || "-",
-                createdAt: h.createdAt,
-                updatedAt: h.updatedAt
-            });
-        });
-
-        const response = Object.keys(grouped).map(serial_number => ({
-            serial_number,
-            count: grouped[serial_number].length,
-            last_updated: grouped[serial_number][0]?.updatedAt,
-            records: grouped[serial_number]
-        }));
-
-        const finalResponse = {
+        const response = {
             success: true,
             user_id,
-            count: response.length,
-            data: response
+            count: history.length,
+            total: totalRecords,
+            currentPage: pageNum,
+            totalPages: Math.ceil(totalRecords / limitNum),
+            data: history
         };
 
-        return res.status(200).json(finalResponse);
+        return res.status(200).json(response);
 
     } catch (error) {
         console.error("userDeviceHistory Error:", error);
@@ -1764,6 +1787,18 @@ exports.validateVoucher = async (req, res, next) => {
         if (voucher.max_usage && voucher.used_count >= voucher.max_usage)
             return res.status(400).json({ success: false, message: "Voucher usage limit exceeded" });
 
+        // Check if user has already used this voucher
+        const Order = require('../models/Order');
+        const userOrderWithVoucher = await Order.findOne({
+            user_id,
+            'order_summary.voucher_code': voucher_code.toUpperCase(),
+            payment_status: 'completed'
+        });
+
+        if (userOrderWithVoucher) {
+            return res.status(400).json({ success: false, message: "You have already used this voucher" });
+        }
+
         res.status(200).json({
             success: true,
             message: "Voucher is valid",
@@ -2120,7 +2155,7 @@ exports.deleteShare = async (req, res, next) => {
 
 exports.getDeviceBorewellHistory = async (req, res) => {
     try {
-        const { serial_number } = req.query;
+        const { serial_number, page = 1, limit = 10 } = req.query;
 
         if (!serial_number) {
             return res.status(400).json({
@@ -2129,18 +2164,31 @@ exports.getDeviceBorewellHistory = async (req, res) => {
             });
         }
 
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const skip = (pageNum - 1) * limitNum;
+
         const db = mongoose.connection.db;
         const historyCollection = db.collection("agri_history");
 
+        const query = { serial_number: serial_number };
+
         const history = await historyCollection
-            .find({ serial_number: serial_number })
+            .find(query)
             .sort({ startAt: -1 })
+            .skip(skip)
+            .limit(limitNum)
             .toArray();
+
+        const totalRecords = await historyCollection.countDocuments(query);
 
         return res.status(200).json({
             success: true,
             serial_number,
             count: history.length,
+            total: totalRecords,
+            currentPage: pageNum,
+            totalPages: Math.ceil(totalRecords / limitNum),
             data: history
         });
 

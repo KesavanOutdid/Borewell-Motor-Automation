@@ -4,17 +4,41 @@ import 'package:get/get.dart';
 import '../controllers/device_history_controller.dart';
 import '../../../../../utils/theme/app_colors.dart';
 
-class DeviceHistoryView extends StatelessWidget {
+class DeviceHistoryView extends StatefulWidget {
   const DeviceHistoryView({super.key});
 
-  static const Duration _istOffset = Duration(hours: 5, minutes: 30);
+  @override
+  State<DeviceHistoryView> createState() => _DeviceHistoryViewState();
+}
+
+class _DeviceHistoryViewState extends State<DeviceHistoryView> {
+  static const _istOffset = Duration(hours: 5, minutes: 30);
+  final controller = Get.put(DeviceHistoryController());
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    final rawArgs = Get.arguments;
+    controller.initialize(rawArgs is Map<String, dynamic> ? rawArgs : <String, dynamic>{});
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      controller.fetchHistory();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(DeviceHistoryController());
-    final rawArgs = Get.arguments;
-    controller.initialize(rawArgs is Map<String, dynamic> ? rawArgs : <String, dynamic>{});
-
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
@@ -24,13 +48,14 @@ class DeviceHistoryView extends StatelessWidget {
         foregroundColor: AppColors.textPrimary,
       ),
       body: Obx(() {
-        if (controller.isLoading.value) {
+        if (controller.isLoading.value && controller.records.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }
 
         return RefreshIndicator(
           onRefresh: controller.refreshHistory,
           child: CustomScrollView(
+            controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(
@@ -68,18 +93,30 @@ class DeviceHistoryView extends StatelessWidget {
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _buildRecordCard(
-                            context,
-                            controller,
-                            controller.records[index],
-                            index + 1,
-                            index,
-                          ),
-                        );
+                        if (index < controller.records.length) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _buildRecordCard(
+                              context,
+                              controller,
+                              controller.records[index],
+                              index + 1,
+                              index,
+                            ),
+                          );
+                        } else {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 20),
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.primaryGreen,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                          );
+                        }
                       },
-                      childCount: controller.records.length,
+                      childCount: controller.records.length + (controller.isMoreLoading.value ? 1 : 0),
                     ),
                   ),
                 ),

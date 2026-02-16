@@ -11,8 +11,14 @@ import '../../data/models/order_model.dart';
 class OrdersController extends GetxController {
   var orders = <OrderModel>[].obs;
   var isLoading = false.obs;
+  var isMoreLoading = false.obs;
   var errorMessage = ''.obs;
   var selectedOrder = Rxn<OrderModel>();
+  
+  var currentPage = 1.obs;
+  var totalPages = 1.obs;
+  var hasMore = true.obs;
+  final int limit = 10;
   
   final String baseUrl = AppConfig.baseUrl;
   
@@ -24,10 +30,10 @@ class OrdersController extends GetxController {
     super.onInit();
     logger.i('OrdersController initialized');
     tokenService = Get.find<TokenService>();
-    fetchOrders();
+    fetchOrders(refresh: true);
   }
 
-  Future<void> fetchOrders() async {
+  Future<void> fetchOrders({bool refresh = false}) async {
     final userId = tokenService.getUserId();
     final token = tokenService.getToken();
     
@@ -36,10 +42,18 @@ class OrdersController extends GetxController {
       return;
     }
 
-    isLoading.value = true;
+    if (refresh) {
+      currentPage.value = 1;
+      hasMore.value = true;
+      isLoading.value = true;
+    } else {
+      if (!hasMore.value || isMoreLoading.value) return;
+      isMoreLoading.value = true;
+    }
+
     errorMessage.value = '';
     final url = Uri.parse('$baseUrl/app/order/getOrders');
-    logger.i('📦 Fetching orders for user: $userId');
+    logger.i('📦 Fetching orders for user: $userId, page: ${currentPage.value}');
 
     try {
       final response = await http.post(
@@ -48,21 +62,43 @@ class OrdersController extends GetxController {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({'user_id': userId}),
+        body: jsonEncode({
+          'user_id': userId,
+          'page': currentPage.value,
+          'limit': limit,
+        }),
       );
 
       logger.i('📡 Response Status Code: ${response.statusCode}');
-      logger.d('📄 Response Body: ${response.body}');
+      // logger.d('📄 Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         
         if (responseData['success'] == true) {
           final List<dynamic> ordersData = responseData['data']['orders'] ?? [];
-          orders.value = ordersData
+          final int totalFetched = responseData['data']['total'] ?? 0;
+          final int pages = responseData['data']['totalPages'] ?? 1;
+          
+          totalPages.value = pages;
+          
+          final List<OrderModel> newOrders = ordersData
               .map((orderJson) => OrderModel.fromJson(orderJson))
               .toList();
-          logger.i('✅ Orders fetched - Count: ${orders.length}');
+
+          if (refresh) {
+            orders.assignAll(newOrders);
+          } else {
+            orders.addAll(newOrders);
+          }
+
+          if (currentPage.value >= totalPages.value) {
+            hasMore.value = false;
+          } else {
+            currentPage.value++;
+          }
+          
+          logger.i('✅ Orders fetched - Current: ${orders.length}, Total: $totalFetched');
         }
       } else {
         logger.e('❌ HTTP Error: ${response.statusCode}');
@@ -77,6 +113,7 @@ class OrdersController extends GetxController {
       );
     } finally {
       isLoading.value = false;
+      isMoreLoading.value = false;
     }
   }
 
