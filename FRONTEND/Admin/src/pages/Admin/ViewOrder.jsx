@@ -195,7 +195,27 @@ const ViewOrder = ({ userInfo, handleLogout }) => {
 
                                                         {/* Show message + timestamp */}
                                                         {(() => {
-                                                            const event = order?.order_timeline?.find(e => e.status === status);
+                                                            let event = order?.order_timeline?.find(e => e.status === status);
+                                                            
+                                                            // For 'confirmed' status, always use order creation time
+                                                            if (status === 'confirmed') {
+                                                                const displayEvent = event || {
+                                                                    message: 'Order status: confirmed'
+                                                                };
+                                                                return (
+                                                                    <>
+                                                                        <br />
+                                                                        <span style={{ fontSize: '10px', color: '#444', fontWeight: '400' }}>
+                                                                            {displayEvent.message}
+                                                                        </span>
+                                                                        <br />
+                                                                        <span style={{ fontSize: '10px', color: '#777', fontWeight: '400' }}>
+                                                                            {formatDateIndian(order.createdAt)}
+                                                                        </span>
+                                                                    </>
+                                                                );
+                                                            }
+
                                                             if (event) {
                                                                 return (
                                                                     <>

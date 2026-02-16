@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import { Link, useLocation, useNavigate  } from 'react-router-dom';
 import './Sidebar.css';
+import logo from '../../assets/img/AgriPlus.png';
 
 const Sidebar = () => {
     const [isSidebarPinned, setSidebarPinned] = useState(true);
@@ -18,26 +19,25 @@ const Sidebar = () => {
         setSidebarPinned(!isSidebarPinned);
     };
 
-    const handleNavClick = (e, path) => {
-        e.preventDefault(); // Prevent default behavior
-
-        toggleSidebar(); // Toggle sidebar pinning
-        navigate(path); // Perform the redirection
+    const handleNavClick = (path) => {
+        if (window.innerWidth < 1200) {
+            toggleSidebar(); // Toggle sidebar pinning only on mobile/smaller screens
+        }
     };
     return (
         <aside className="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3 sidebar-topographic" id="sidenav-main">
             <div className="sidenav-header">
                 <i className="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-xl-none" aria-hidden="true" id="iconSidenav" onClick={toggleSidebar}></i>
-                <div className="navbar-brand m-0">
-                    <img src="../assets/img/logo-ct.png" className="navbar-brand-img h-100" alt="main_logo"/>
-                    <span className="ms-2 font-weight-bold">AgriPulse</span>
-                </div>
+                <a className="navbar-brand m-0" href="/dashboard" onClick={(e) => { e.preventDefault(); window.location.href = '/dashboard'; }}>
+                    <img src={logo} className="navbar-brand-img h-100" alt="main_logo"/>
+                    <span className="ms-2 font-weight-bold">Smart</span>
+                </a>
             </div>
             <hr className="horizontal dark mt-0"/>
             <div className="collapse navbar-collapse w-auto" id="sidenav-collapse-main">
                 <ul className="navbar-nav sidebar-nav-content">
                     <li className="nav-item">
-                        <Link className={location.pathname === '/admin/dashboard' ? 'nav-link  active' : 'nav-link'} to="/admin/dashboard" onClick={(e) => handleNavClick(e, '/admin/dashboard')}>
+                        <Link className={location.pathname === '/dashboard' ? 'nav-link  active' : 'nav-link'} to="/dashboard" onClick={() => handleNavClick('/dashboard')}>
                             <div className="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                                 <i className="fas fa-home" style={{fontSize: '12px', color: '#344767', lineHeight: '12px'}}></i>
                             </div>
@@ -45,7 +45,7 @@ const Sidebar = () => {
                         </Link>
                     </li>
                     <li className="nav-item">
-                        <Link className={location.pathname === '/admin/manage-devices' || location.pathname === '/admin/manage-devices-view' || location.pathname === '/admin/device-history' ? 'nav-link  active' : 'nav-link'} to="/admin/manage-devices" onClick={(e) => handleNavClick(e, '/admin/manage-devices')}>
+                        <Link className={location.pathname === '/manage-devices' || location.pathname === '/manage-devices-view' || location.pathname === '/device-history' ? 'nav-link  active' : 'nav-link'} to="/manage-devices" onClick={() => handleNavClick('/manage-devices')}>
                             <div className="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                                 <i className="fas fa-laptop" style={{ fontSize: '12px', color: '#344767', lineHeight: '12px' }}></i>
                             </div>
@@ -53,7 +53,7 @@ const Sidebar = () => {
                         </Link>
                     </li>
                     <li className="nav-item">
-                        <Link className={location.pathname === '/admin/manage-user-roles' ? 'nav-link  active' : 'nav-link'} to="/admin/manage-user-roles" onClick={(e) => handleNavClick(e, '/admin/manage-user-roles')}>
+                        <Link className={location.pathname === '/manage-user-roles' ? 'nav-link  active' : 'nav-link'} to="/manage-user-roles" onClick={() => handleNavClick('/manage-user-roles')}>
                             <div className="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                                 <i className="fas fa-user-shield" style={{ fontSize: '12px', color: '#344767', lineHeight: '12px' }}></i>
                             </div>
@@ -61,7 +61,7 @@ const Sidebar = () => {
                         </Link>
                     </li>
                     <li className="nav-item">
-                        <Link className={location.pathname === '/admin/manage-users' || location.pathname === '/admin/manage-users-view' || (location.pathname === '/admin/device-details' && location.state?.from === 'manage-users') || (location.pathname === '/admin/device-history' && location.state?.from === 'manage-users') ? 'nav-link  active' : 'nav-link'} to="/admin/manage-users" onClick={(e) => handleNavClick(e, '/admin/manage-users')}>
+                        <Link className={location.pathname === '/manage-users' || location.pathname === '/manage-users-view' || (location.pathname === '/device-details' && location.state?.from === 'manage-users') || (location.pathname === '/device-history' && location.state?.from === 'manage-users') ? 'nav-link  active' : 'nav-link'} to="/manage-users" onClick={() => handleNavClick('/manage-users')}>
                             <div className="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                                 <i className="fas fa-user" style={{ fontSize: '12px', color: '#344767', lineHeight: '12px' }}></i>
                             </div>
@@ -69,7 +69,7 @@ const Sidebar = () => {
                         </Link>
                     </li>
                     <li className="nav-item">
-                        <Link className={location.pathname === '/admin/manage-products' || location.pathname === '/admin/create-product' || location.pathname === '/admin/view-product' || location.pathname === '/admin/edit-product' ? 'nav-link  active' : 'nav-link'} to="/admin/manage-products" onClick={(e) => handleNavClick(e, '/admin/manage-products')}>
+                        <Link className={location.pathname === '/manage-products' || location.pathname === '/create-product' || location.pathname === '/view-product' || location.pathname === '/edit-product' ? 'nav-link  active' : 'nav-link'} to="/manage-products" onClick={() => handleNavClick('/manage-products')}>
                             <div className="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                                 <i className="fas fa-box" style={{ fontSize: '12px', color: '#344767', lineHeight: '12px' }}></i>
                             </div>
@@ -77,7 +77,7 @@ const Sidebar = () => {
                         </Link>
                     </li>
                     <li className="nav-item">
-                        <Link className={location.pathname === '/admin/manage-orders' || location.pathname === '/admin/view-order' ? 'nav-link  active' : 'nav-link'} to="/admin/manage-orders" onClick={(e) => handleNavClick(e, '/admin/manage-orders')}>
+                        <Link className={location.pathname === '/manage-orders' || location.pathname === '/view-order' ? 'nav-link  active' : 'nav-link'} to="/manage-orders" onClick={() => handleNavClick('/manage-orders')}>
                             <div className="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                                 <i className="fas fa-shopping-cart" style={{ fontSize: '12px', color: '#344767', lineHeight: '12px' }}></i>
                             </div>
@@ -85,7 +85,7 @@ const Sidebar = () => {
                         </Link>
                     </li>
                     <li className="nav-item">
-                        <Link className={location.pathname === '/admin/manage-vouchers' || location.pathname === '/admin/add-voucher' || location.pathname === '/admin/edit-voucher' ? 'nav-link  active' : 'nav-link'} to="/admin/manage-vouchers" onClick={(e) => handleNavClick(e, '/admin/manage-vouchers')}>
+                        <Link className={location.pathname === '/manage-vouchers' || location.pathname === '/add-voucher' || location.pathname === '/edit-voucher' ? 'nav-link  active' : 'nav-link'} to="/manage-vouchers" onClick={() => handleNavClick('/manage-vouchers')}>
                             <div className="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                                 <i className="fas fa-ticket-alt" style={{ fontSize: '12px', color: '#344767', lineHeight: '12px' }}></i>
                             </div>
@@ -96,7 +96,7 @@ const Sidebar = () => {
                         <h6 className="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Account pages</h6>
                     </li>
                     <li className="nav-item">
-                        <Link className={location.pathname === '/admin/profile' ? 'nav-link  active' : 'nav-link'} to="/admin/profile"  onClick={(e) => handleNavClick(e, '/admin/profile')}>
+                        <Link className={location.pathname === '/profile' ? 'nav-link  active' : 'nav-link'} to="/profile"  onClick={() => handleNavClick('/profile')}>
                             <div className="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                                 <svg width="12px" height="12px" viewBox="0 0 46 42" version="1.1" >
                                     <title>customer-support</title>

@@ -68,7 +68,7 @@ const ManageUserRoles = ({ userInfo, handleLogout }) => {
         setLoadingUpdate(true);
 
         try {
-            const response = await fetch(`${API_BASE}/admin/editRole`, {
+            const response = await fetch(`${API_BASE}/editRole`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

@@ -45,11 +45,11 @@ const ManageProducts = ({ userInfo, handleLogout }) => {
     };
 
     const handleViewProduct = (product) => {
-        navigate('/admin/view-product', { state: { product } });
+        navigate('/view-product', { state: { product } });
     };
 
     const handleEditProduct = (product) => {
-        navigate('/admin/edit-product', { state: { product } });
+        navigate('/edit-product', { state: { product } });
     };
 
     const handleDeleteProduct = async (id, productName) => {
@@ -72,7 +72,7 @@ const ManageProducts = ({ userInfo, handleLogout }) => {
                                     <div className="row g-2 align-items-center mb-3">
                                         <div className="row g-2 align-items-center">
                                             <div className="col-md-2 col-6 d-flex align-items-center">
-                                                <button className="btn btn-primary mb-0" style={{ padding: '10px', width: '50%' }} onClick={() => navigate('/admin/create-product')}>
+                                                <button className="btn btn-primary mb-0" style={{ padding: '10px', width: '50%' }} onClick={() => navigate('/create-product')}>
                                                     <i className="fas fa-file" aria-hidden="true" style={{ color: 'white' }}></i> Create
                                                 </button>
                                             </div>

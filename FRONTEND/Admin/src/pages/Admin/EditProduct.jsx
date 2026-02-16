@@ -63,7 +63,7 @@ const EditProduct = ({ userInfo, handleLogout }) => {
                 sub_images: product.product_sub_images
             });
         } else {
-            navigate('/admin/manage-products');
+            navigate('/manage-products');
         }
     }, [location, navigate]);
 
@@ -135,7 +135,7 @@ const EditProduct = ({ userInfo, handleLogout }) => {
         formData.append('file', file);
 
         try {
-            const response = await fetch(`${API_BASE}/admin/${endpoint}`, {
+            const response = await fetch(`${API_BASE}/${endpoint}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${userInfo.token}`
@@ -186,7 +186,7 @@ const EditProduct = ({ userInfo, handleLogout }) => {
                 }
             }
 
-            const response = await fetch(`${API_BASE}/admin/updateProduct`, {
+            const response = await fetch(`${API_BASE}/updateProduct`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -221,7 +221,7 @@ const EditProduct = ({ userInfo, handleLogout }) => {
             }
 
             showAlertSuccess('Product updated successfully!');
-            navigate('/admin/manage-products');
+            navigate('/manage-products');
         } catch (err) {
             console.log('Update Product Error:', err);
             setErrorMessage(err.message || 'Error updating product');
@@ -246,7 +246,7 @@ const EditProduct = ({ userInfo, handleLogout }) => {
                                         <button
                                             type="button"
                                             className="btn btn-secondary mb-0"
-                                            onClick={() => navigate('/admin/manage-products')}
+                                            onClick={() => navigate('/manage-products')}
                                         >
                                             Back
                                         </button>
@@ -514,7 +514,7 @@ const EditProduct = ({ userInfo, handleLogout }) => {
                                             <button
                                                 type="button"
                                                 className="btn btn-secondary mb-0"
-                                                onClick={() => navigate('/admin/manage-products')}
+                                                onClick={() => navigate('/manage-products')}
                                                 disabled={loading}
                                             >
                                                 Cancel

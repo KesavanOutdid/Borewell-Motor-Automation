@@ -1533,7 +1533,7 @@ router.post(
     appCtrl.respondToDeviceShare
 );
 
-router.get("/getDeviceBorewellHistory", appCtrl.getDeviceBorewellHistory);
+router.get("/getDeviceSmartHistory", appCtrl.getDeviceSmartHistory);
 
 // Device Scheduling
 router.post('/createSchedule', authMiddleware(), appCtrl.createSchedule);

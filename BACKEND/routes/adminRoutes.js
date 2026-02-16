@@ -8,9 +8,9 @@ const router = express.Router();
 
 /**
  * @swagger
- * /admin/getDeviceBorewellHistory:
+ * /admin/getDeviceSmartHistory:
  *   get:
- *     summary: Get borewell history for a specific device
+ *     summary: Get smart history for a specific device
  *     tags: [Admin]
  *     parameters:
  *       - in: query
@@ -27,7 +27,7 @@ const router = express.Router();
  *       500:
  *         description: Server error
  */
-router.get("/getDeviceBorewellHistory", adminCtrl.getDeviceBorewellHistory);
+router.get("/getDeviceSmartHistory", adminCtrl.getDeviceSmartHistory);
 
 /**
  * @swagger

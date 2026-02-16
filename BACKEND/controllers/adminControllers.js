@@ -1258,7 +1258,7 @@ exports.uploadMultipleImages = async (req, res, next) => {
 //     }
 // };
 
-exports.getDeviceBorewellHistory = async (req, res) => {
+exports.getDeviceSmartHistory = async (req, res) => {
     try {
         const { serial_number } = req.query;
 
@@ -1285,7 +1285,7 @@ exports.getDeviceBorewellHistory = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("getDeviceBorewellHistory Error:", error);
+        console.error("getDeviceSmartHistory Error:", error);
         return res.status(500).json({
             success: false,
             message: "Server error"

@@ -27,6 +27,14 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
 
     const today = new Date().toISOString().split('T')[0];
 
+    const isFormValid = 
+        voucherCode.trim() && 
+        discountPercentage !== '' && 
+        startDate && 
+        endDate && 
+        description.trim() &&
+        maxUsage !== '';
+
     return (
         <div style={{ paddingTop: '15px' }}>
             <Sidebar />
@@ -70,7 +78,15 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
                                                     className="form-control"
                                                     placeholder="e.g., 20"
                                                     value={discountPercentage}
-                                                    onChange={(e) => setDiscountPercentage(e.target.value)}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        if (val === '') {
+                                                            setDiscountPercentage('');
+                                                        } else {
+                                                            const parsed = parseInt(val, 10);
+                                                            setDiscountPercentage(isNaN(parsed) ? '' : parsed);
+                                                        }
+                                                    }}
                                                     min="0"
                                                     max="100"
                                                     required
@@ -107,14 +123,23 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
 
                                         <div className="row mt-3">
                                             <div className="col-md-6 col-12">
-                                                <label className="form-label">Max Usage (Optional)</label>
+                                                <label className="form-label">Max Usage</label>
                                                 <input
                                                     type="number"
                                                     className="form-control"
                                                     placeholder="e.g., 100"
                                                     value={maxUsage}
-                                                    onChange={(e) => setMaxUsage(e.target.value)}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        if (val === '') {
+                                                            setMaxUsage('');
+                                                        } else {
+                                                            const parsed = parseInt(val, 10);
+                                                            setMaxUsage(isNaN(parsed) ? '' : parsed);
+                                                        }
+                                                    }}
                                                     min="1"
+                                                    required
                                                 />
                                                 <small className="text-muted">Leave empty for unlimited usage</small>
                                             </div>
@@ -122,13 +147,14 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
 
                                         <div className="row mt-3">
                                             <div className="col-12">
-                                                <label className="form-label">Description (Optional)</label>
+                                                <label className="form-label">Description</label>
                                                 <textarea
                                                     className="form-control"
                                                     rows="3"
                                                     placeholder="e.g., 20% discount on all products"
                                                     value={description}
                                                     onChange={(e) => setDescription(e.target.value)}
+                                                    required
                                                 ></textarea>
                                             </div>
                                         </div>
@@ -138,14 +164,14 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
                                                 <button
                                                     type="submit"
                                                     className="btn btn-primary me-2"
-                                                    disabled={loadingSubmit}
+                                                    disabled={loadingSubmit || !isFormValid}
                                                 >
                                                     {loadingSubmit ? 'Creating...' : 'Create Voucher'}
                                                 </button>
                                                 <button
                                                     type="button"
                                                     className="btn btn-secondary"
-                                                    onClick={() => navigate('/admin/manage-vouchers')}
+                                                    onClick={() => navigate('/manage-vouchers')}
                                                 >
                                                     Cancel
                                                 </button>

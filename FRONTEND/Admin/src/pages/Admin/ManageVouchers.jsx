@@ -45,7 +45,7 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
     };
 
     const handleEditVoucher = (voucher) => {
-        navigate('/admin/edit-voucher', { state: { voucher } });
+        navigate('/edit-voucher', { state: { voucher } });
     };
 
     const handleDeleteVoucher = async (id, code) => {
@@ -84,7 +84,7 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                     <div className="row g-2 align-items-center mb-3">
                                         <div className="row g-2 align-items-center">
                                             <div className="col-md-2 col-6 d-flex align-items-center">
-                                                <button className="btn btn-primary mb-0" style={{ padding: '10px', width: '50%' }} onClick={() => navigate('/admin/add-voucher')}>
+                                                <button className="btn btn-primary mb-0" style={{ padding: '10px', width: '50%' }} onClick={() => navigate('/add-voucher')}>
                                                     <i className="fas fa-plus" aria-hidden="true" style={{ color: 'white' }}></i> Create
                                                 </button>
                                             </div>

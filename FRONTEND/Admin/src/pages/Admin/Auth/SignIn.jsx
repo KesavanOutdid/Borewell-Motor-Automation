@@ -9,7 +9,7 @@ const SignIn = ({ handleSignIn, userInfo }) => {
 
     useEffect(() => {
         if (userInfo?.token) {
-            navigate("/admin/dashboard", { replace: true });
+            navigate("/dashboard", { replace: true });
         }
     }, [userInfo?.token, navigate]);
 
@@ -21,7 +21,7 @@ const SignIn = ({ handleSignIn, userInfo }) => {
             <div className="container position-sticky z-index-sticky top-0">
                 {/* Navbar  */}
                 <nav className="navbar navbar-expand-lg blur blur-rounded top-0 z-index-3 position-absolute my-3 py-2 start-0 end-0" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-                    <h2 style={{ margin: 0 }}>Borewell Motor Automation</h2>
+                    <h2 style={{ margin: 0 }}>Smart Motor Automation</h2>
                 </nav>
                 {/* End Navbar  */}
             </div>
@@ -67,7 +67,7 @@ const SignIn = ({ handleSignIn, userInfo }) => {
                                 </div>
                                 <div className="col-md-6">
                                     <div className="oblique position-absolute top-0 h-100 d-md-block d-none me-n8">
-                                        <div className="oblique-image bg-cover position-absolute fixed-top ms-auto h-100 z-index-0 ms-n6" style={{ backgroundImage: "url('../assets/img/curved-images/curved6.jpg')" }}></div>
+                                        <div className="oblique-image bg-cover position-absolute fixed-top ms-auto h-100 z-index-0 ms-n6" style={{ backgroundImage: "url('../assets/img/farming-scene1.jpeg')" }}></div>
                                     </div>
                                 </div>
                             </div>

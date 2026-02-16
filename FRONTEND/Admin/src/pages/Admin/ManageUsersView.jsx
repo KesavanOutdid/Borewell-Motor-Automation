@@ -27,7 +27,7 @@ const ManageUsersView = ({ userInfo, handleLogout }) => {
 
     useEffect(() => {
         if (!selectedUser) {
-            navigate('/admin/manage-users');
+            navigate('/manage-users');
             return;
         }
 
@@ -133,7 +133,7 @@ const ManageUsersView = ({ userInfo, handleLogout }) => {
                 deviceDetails = data.data;
             }
             
-            navigate('/admin/device-history', { 
+            navigate('/device-history', { 
                 state: { 
                     device: {
                         serial_number: fullDevice.serial_number,
@@ -148,7 +148,7 @@ const ManageUsersView = ({ userInfo, handleLogout }) => {
         } catch (error) {
             console.error('Error preparing device history:', error);
             // Fallback navigate without details if fetch fails
-            navigate('/admin/device-history', { 
+            navigate('/device-history', { 
                 state: { 
                     device: {
                         serial_number: fullDevice.serial_number,
@@ -163,7 +163,7 @@ const ManageUsersView = ({ userInfo, handleLogout }) => {
     };
 
     const handleBackClick = () => {
-        navigate('/admin/manage-users');
+        navigate('/manage-users');
     };
 
     return (

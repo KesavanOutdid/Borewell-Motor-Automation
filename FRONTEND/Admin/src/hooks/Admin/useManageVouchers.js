@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { showAlertSuccess } from '../../utils/alert';
 
 const useManageVouchers = (userInfo) => {
@@ -36,7 +36,7 @@ const useManageVouchers = (userInfo) => {
     const [loadingUpdate, setLoadingUpdate] = useState(false);
     const [currentVoucherDetails, setCurrentVoucherDetails] = useState(null);
 
-    const fetchVoucherData = async (page = 1, limit = 10, search = '') => {
+    const fetchVoucherData = useCallback(async (page = 1, limit = 10, search = '') => {
         try {
             setLoadingVouchers(true);
             const params = new URLSearchParams({ page, limit });
@@ -66,9 +66,9 @@ const useManageVouchers = (userInfo) => {
             setErrorVouchers('An error occurred while fetching vouchers.');
             setLoadingVouchers(false);
         }
-    };
+    }, [API_BASE, userInfo.token]);
 
-    const fetchVoucherById = async (id) => {
+    const fetchVoucherById = useCallback(async (id) => {
         try {
             const response = await fetch(`${API_BASE}/app/getVoucherById?id=${id}`, {
                 headers: {
@@ -89,9 +89,9 @@ const useManageVouchers = (userInfo) => {
             setErrorMessageEdit('An error occurred while fetching voucher.');
             return null;
         }
-    };
+    }, [API_BASE, userInfo.token]);
 
-    const closeModal = () => {
+    const closeModal = useCallback(() => {
         setIsModalCreate(false);
         setIsModalEdit(false);
         setIsModalView(false);
@@ -106,15 +106,17 @@ const useManageVouchers = (userInfo) => {
         setLoadingSubmit(false);
         setLoadingUpdate(false);
         setCurrentVoucherDetails(null);
-    };
+    }, []);
 
-    const handleVoucherCreate = async (e) => {
+    const handleVoucherCreate = useCallback(async (e) => {
         e.preventDefault();
 
         if (!voucherCode.trim()) return setErrorMessage('Voucher code is required');
         if (!discountPercentage) return setErrorMessage('Discount percentage is required');
         if (!startDate) return setErrorMessage('Start date is required');
         if (!endDate) return setErrorMessage('End date is required');
+        if (!description.trim()) return setErrorMessage('Description is required');
+        if (maxUsage === '' || maxUsage === null) return setErrorMessage('Max usage is required');
 
         if (new Date(startDate) >= new Date(endDate))
             return setErrorMessage('Start date must be before end date');
@@ -160,9 +162,9 @@ const useManageVouchers = (userInfo) => {
         }
 
         setLoadingSubmit(false);
-    };
+    }, [API_BASE, userInfo, voucherCode, discountPercentage, startDate, endDate, maxUsage, description, loadingSubmit, fetchVoucherData, closeModal]);
 
-    const handleVoucherUpdate = async (e) => {
+    const handleVoucherUpdate = useCallback(async (e) => {
         e.preventDefault();
 
         if (!currentVoucherDetails._id) {
@@ -172,6 +174,26 @@ const useManageVouchers = (userInfo) => {
 
         if (!currentVoucherDetails.voucher_code?.trim()) {
             return setErrorMessageEdit('Voucher code is required');
+        }
+
+        if (currentVoucherDetails.discount_percentage === '' || currentVoucherDetails.discount_percentage === null) {
+            return setErrorMessageEdit('Discount percentage is required');
+        }
+
+        if (!currentVoucherDetails.start_date) {
+            return setErrorMessageEdit('Start date is required');
+        }
+
+        if (!currentVoucherDetails.end_date) {
+            return setErrorMessageEdit('End date is required');
+        }
+
+        if (!currentVoucherDetails.description?.trim()) {
+            return setErrorMessageEdit('Description is required');
+        }
+
+        if (currentVoucherDetails.max_usage === '' || currentVoucherDetails.max_usage === null) {
+            return setErrorMessageEdit('Max usage is required');
         }
 
         if (new Date(currentVoucherDetails.start_date) >= new Date(currentVoucherDetails.end_date))
@@ -194,6 +216,7 @@ const useManageVouchers = (userInfo) => {
                     start_date: currentVoucherDetails.start_date,
                     end_date: currentVoucherDetails.end_date,
                     max_usage: currentVoucherDetails.max_usage,
+                    used_count: currentVoucherDetails.used_count,
                     description: currentVoucherDetails.description,
                     status: currentVoucherDetails.status,
                     updatedBy: userInfo?.user?.user_email
@@ -205,21 +228,24 @@ const useManageVouchers = (userInfo) => {
             if (!response.ok) {
                 setErrorMessageEdit(res.message || 'Error updating voucher');
                 setLoadingUpdate(false);
-                return;
+                return false;
             }
 
             showAlertSuccess('Voucher updated successfully!');
             fetchVoucherData(pagination.currentPage, pagination.limit);
-            closeModal();
+            // Don't call closeModal() here if we want to stay on the edit page with data
+            // closeModal();
+            setLoadingUpdate(false);
+            return true;
         } catch (err) {
             console.log('Update Voucher Error:', err);
             setErrorMessageEdit('Error updating voucher.');
+            setLoadingUpdate(false);
+            return false;
         }
+    }, [API_BASE, userInfo, currentVoucherDetails, loadingUpdate, fetchVoucherData, pagination.currentPage, pagination.limit, closeModal]);
 
-        setLoadingUpdate(false);
-    };
-
-    const handleVoucherDelete = async (id) => {
+    const handleVoucherDelete = useCallback(async (id) => {
         if (!window.confirm('Are you sure you want to delete this voucher?')) return;
 
         try {
@@ -245,17 +271,17 @@ const useManageVouchers = (userInfo) => {
             console.log('Delete Voucher Error:', err);
             alert('Error deleting voucher');
         }
-    };
+    }, [API_BASE, userInfo.token, fetchVoucherData, pagination.currentPage, pagination.limit]);
 
-    const handlePageChange = (newPage, searchQuery = '') => {
+    const handlePageChange = useCallback((newPage, searchQuery = '') => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
             fetchVoucherData(newPage, pagination.limit, searchQuery);
         }
-    };
+    }, [pagination.totalPages, pagination.limit, fetchVoucherData]);
 
-    const handleLimitChange = (newLimit, searchQuery = '') => {
+    const handleLimitChange = useCallback((newLimit, searchQuery = '') => {
         fetchVoucherData(1, newLimit, searchQuery);
-    };
+    }, [fetchVoucherData]);
 
     return {
         isModalCreate,

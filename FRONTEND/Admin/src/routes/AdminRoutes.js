@@ -43,7 +43,7 @@ const AdminRoutes = () => {
             setUserInfo(storeData);
             setLoggedIn(true);
             sessionStorage.setItem("adminUser", JSON.stringify(storeData));
-            navigate("/admin/dashboard");
+            navigate("/dashboard");
         } else {
             console.error("SignIn response does not contain valid data");
         }
@@ -53,32 +53,28 @@ const AdminRoutes = () => {
         setLoggedIn(false);
         setUserInfo({});
         sessionStorage.removeItem('adminUser');
-        navigate('/admin/signin'); // Redirect to SignIn page on logout
+        navigate('/'); // Redirect to SignIn page on logout
     };
 
     return (
         <Suspense fallback={<PageSkeleton />}>
             <Routes>
                 <Route
-                    path="signin"
+                    path="/"
                     element={
                         loggedIn ? (
-                            <Navigate to="/admin/dashboard" replace />
+                            <Navigate to="/dashboard" replace />
                         ) : (
                             <SignIn userInfo={userInfo} handleSignIn={handleSignIn} />
                         )
                     }
                 />
                 <Route
-                    path="signin"
-                    element={<SignIn userInfo={userInfo} handleSignIn={handleSignIn} />}
-                />
-                <Route
                     path="dashboard"
                     element={loggedIn ? (
                         <Dashboard userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
-                        <Navigate to="/admin/signin" />
+                        <Navigate to="/" />
                     )}
                 />
                 <Route
@@ -86,7 +82,7 @@ const AdminRoutes = () => {
                     element={loggedIn ? (
                         <ManageDevices userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
-                        <Navigate to="/admin/signin" />
+                        <Navigate to="/" />
                     )}
                 />
                 <Route
@@ -94,7 +90,7 @@ const AdminRoutes = () => {
                     element={loggedIn ? (
                         <ManageDevicesView userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
-                        <Navigate to="/admin/signin" />
+                        <Navigate to="/" />
                     )}
                 />
                 <Route
@@ -102,7 +98,7 @@ const AdminRoutes = () => {
                     element={loggedIn ? (
                         <DeviceHistory userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
-                        <Navigate to="/admin/signin" />
+                        <Navigate to="/" />
                     )}
                 />
                 <Route
@@ -110,7 +106,7 @@ const AdminRoutes = () => {
                     element={loggedIn ? (
                         <DeviceDetails userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
-                        <Navigate to="/admin/signin" />
+                        <Navigate to="/" />
                     )}
                 />
                 <Route
@@ -118,7 +114,7 @@ const AdminRoutes = () => {
                     element={loggedIn ? (
                         <ManageUserRoles userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
-                        <Navigate to="/admin/signin" />
+                        <Navigate to="/" />
                     )}
                 />
                 <Route
@@ -126,7 +122,7 @@ const AdminRoutes = () => {
                     element={loggedIn ? (
                         <ManageUsers userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
-                        <Navigate to="/admin/signin" />
+                        <Navigate to="/" />
                     )}
                 />
                 <Route
@@ -134,7 +130,7 @@ const AdminRoutes = () => {
                     element={loggedIn ? (
                         <ManageUsersView userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
-                        <Navigate to="/admin/signin" />
+                        <Navigate to="/" />
                     )}
                 />
                 <Route
@@ -142,7 +138,7 @@ const AdminRoutes = () => {
                     element={loggedIn ? (
                         <ChannelHistory userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
-                        <Navigate to="/admin/signin" />
+                        <Navigate to="/" />
                     )}
                 />
                 <Route
@@ -150,7 +146,7 @@ const AdminRoutes = () => {
                     element={loggedIn ? (
                         <Profile userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
-                        <Navigate to="/admin/signin" />
+                        <Navigate to="/" />
                     )}
                 />
                 <Route
@@ -158,7 +154,7 @@ const AdminRoutes = () => {
                     element={loggedIn ? (
                         <ManageProducts userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
-                        <Navigate to="/admin/signin" />
+                        <Navigate to="/" />
                     )}
                 />
                 <Route
@@ -166,7 +162,7 @@ const AdminRoutes = () => {
                     element={loggedIn ? (
                         <CreateProduct userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
-                        <Navigate to="/admin/signin" />
+                        <Navigate to="/" />
                     )}
                 />
                 <Route
@@ -174,7 +170,7 @@ const AdminRoutes = () => {
                     element={loggedIn ? (
                         <EditProduct userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
-                        <Navigate to="/admin/signin" />
+                        <Navigate to="/" />
                     )}
                 />
                 <Route
@@ -182,7 +178,7 @@ const AdminRoutes = () => {
                     element={loggedIn ? (
                         <ViewProduct userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
-                        <Navigate to="/admin/signin" />
+                        <Navigate to="/" />
                     )}
                 />
                 <Route
@@ -190,7 +186,7 @@ const AdminRoutes = () => {
                     element={loggedIn ? (
                         <SignUp userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
-                        <Navigate to="/admin/signin" />
+                        <Navigate to="/" />
                     )}
                 />
                 <Route
@@ -198,7 +194,7 @@ const AdminRoutes = () => {
                     element={loggedIn ? (
                         <ManageOrders userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
-                        <Navigate to="/admin/signin" />
+                        <Navigate to="/" />
                     )}
                 />
                 <Route
@@ -206,7 +202,7 @@ const AdminRoutes = () => {
                     element={loggedIn ? (
                         <ViewOrder userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
-                        <Navigate to="/admin/signin" />
+                        <Navigate to="/" />
                     )}
                 />
                 <Route
@@ -214,7 +210,7 @@ const AdminRoutes = () => {
                     element={loggedIn ? (
                         <ManageVouchers userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
-                        <Navigate to="/admin/signin" />
+                        <Navigate to="/" />
                     )}
                 />
                 <Route
@@ -222,7 +218,7 @@ const AdminRoutes = () => {
                     element={loggedIn ? (
                         <AddVoucher userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
-                        <Navigate to="/admin/signin" />
+                        <Navigate to="/" />
                     )}
                 />
                 <Route
@@ -230,7 +226,7 @@ const AdminRoutes = () => {
                     element={loggedIn ? (
                         <EditVoucher userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
-                        <Navigate to="/admin/signin" />
+                        <Navigate to="/" />
                     )}
                 />
             </Routes>

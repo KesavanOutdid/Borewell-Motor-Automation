@@ -103,7 +103,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
         setLoadingUpdate(true);
 
         try {
-            const response = await fetch(`${API_BASE}/admin/updatedDevice`, {
+            const response = await fetch(`${API_BASE}/updatedDevice`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -511,7 +511,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                                         <i className="fas fa-pen" aria-hidden="true" style={{ color: 'white' }}></i> Edit
                                                                     </button>
                                                                     <button className="btn btn-success mb-0" style={{ padding: '10px' }} onClick={() => {
-                                                                        navigate('/admin/manage-devices-view', { state: { device } });
+                                                                        navigate('/manage-devices-view', { state: { device } });
                                                                     }}>
                                                                         <i className="fas fa-eye" aria-hidden="true" style={{ color: 'white' }}></i> View
                                                                     </button>

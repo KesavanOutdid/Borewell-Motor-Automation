@@ -149,7 +149,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
         setLoadingUpdate(true); // Disable button
 
         try {
-            const response = await fetch(`${API_BASE}/admin/manageUserUpdated`, {
+            const response = await fetch(`${API_BASE}/manageUserUpdated`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -491,7 +491,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                                     </button>
                                                                     <button className="btn btn-success mb-0" style={{ padding: '10px', fontSize: '12px' }}
                                                                         onClick={() => {
-                                                                            navigate('/admin/manage-users-view', { state: { user } });
+                                                                            navigate('/manage-users-view', { state: { user } });
                                                                         }}
                                                                     >
                                                                         <i className="fas fa-eye" aria-hidden="true" style={{ color: 'white' }}></i> View

@@ -273,7 +273,7 @@ const Dashboard = ({ userInfo, handleLogout }) => {
                 <Header userInfo={userInfo} handleLogout={handleLogout} />
                 <div className="container-fluid py-4">
                     {/* User details start */}
-                    <h4>AgriPulse Live Data</h4>
+                    <h4>Smart Motor Automation Live Data</h4>
                     <div className="row">
                         <div className="col-lg-12">
                             <div className="row">

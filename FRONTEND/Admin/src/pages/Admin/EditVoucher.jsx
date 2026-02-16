@@ -10,6 +10,7 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
     const location = useLocation();
     const { voucher } = location.state || {};
     const [isLoading, setIsLoading] = useState(!voucher);
+    const [initialVoucherDetails, setInitialVoucherDetails] = useState(null);
 
     const {
         errorMessageEdit,
@@ -22,7 +23,7 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
 
     const loadVoucherData = useCallback(async () => {
         if (voucher) {
-            setCurrentVoucherDetails({
+            const data = {
                 _id: voucher._id,
                 voucher_code: voucher.voucher_code,
                 discount_percentage: voucher.discount_percentage,
@@ -32,12 +33,14 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                 description: voucher.description,
                 status: voucher.status,
                 used_count: voucher.used_count
-            });
+            };
+            setCurrentVoucherDetails(data);
+            setInitialVoucherDetails(data);
             setIsLoading(false);
         } else if (location.state?.id) {
             const data = await fetchVoucherById(location.state.id);
             if (data) {
-                setCurrentVoucherDetails({
+                const voucherData = {
                     _id: data._id,
                     voucher_code: data.voucher_code,
                     discount_percentage: data.discount_percentage,
@@ -47,11 +50,13 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                     description: data.description,
                     status: data.status,
                     used_count: data.used_count
-                });
+                };
+                setCurrentVoucherDetails(voucherData);
+                setInitialVoucherDetails(voucherData);
             }
             setIsLoading(false);
         } else {
-            navigate('/admin/manage-vouchers');
+            navigate('/manage-vouchers');
         }
     }, [voucher, location.state?.id, fetchVoucherById, setCurrentVoucherDetails, navigate]);
 
@@ -61,10 +66,32 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
+        let finalValue = type === 'checkbox' ? checked : value;
+
+        if (name === 'discount_percentage' || name === 'max_usage' || name === 'used_count') {
+            if (value === '') {
+                finalValue = '';
+            } else {
+                // Parse to integer to remove leading zeros
+                finalValue = parseInt(value, 10);
+                if (isNaN(finalValue)) finalValue = '';
+            }
+        }
+
         setCurrentVoucherDetails(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : (name === 'discount_percentage' || name === 'max_usage' ? (value ? parseInt(value) : '') : value)
+            [name]: finalValue
         }));
+    };
+
+    const handleFocus = (e) => {
+        const { name, value } = e.target;
+        if (value === '0' && (name === 'discount_percentage' || name === 'max_usage' || name === 'used_count')) {
+            setCurrentVoucherDetails(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
     };
 
     const formatDateForInput = (dateString) => {
@@ -76,6 +103,33 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
         const hours = String(date.getHours()).padStart(2, '0');
         const minutes = String(date.getMinutes()).padStart(2, '0');
         return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
+    const isModified = initialVoucherDetails && currentVoucherDetails && (
+        currentVoucherDetails.voucher_code !== initialVoucherDetails.voucher_code ||
+        currentVoucherDetails.discount_percentage !== initialVoucherDetails.discount_percentage ||
+        formatDateForInput(currentVoucherDetails.start_date) !== formatDateForInput(initialVoucherDetails.start_date) ||
+        formatDateForInput(currentVoucherDetails.end_date) !== formatDateForInput(initialVoucherDetails.end_date) ||
+        (currentVoucherDetails.max_usage || '') !== (initialVoucherDetails.max_usage || '') ||
+        (currentVoucherDetails.used_count || 0) !== (initialVoucherDetails.used_count || 0) ||
+        (currentVoucherDetails.description || '') !== (initialVoucherDetails.description || '') ||
+        currentVoucherDetails.status !== initialVoucherDetails.status
+    );
+
+    const isRequiredFieldsFilled = 
+        currentVoucherDetails?.voucher_code?.trim() && 
+        currentVoucherDetails?.discount_percentage !== '' && 
+        currentVoucherDetails?.start_date && 
+        currentVoucherDetails?.end_date &&
+        currentVoucherDetails?.description?.trim() &&
+        currentVoucherDetails?.max_usage !== '' &&
+        currentVoucherDetails?.used_count !== '';
+
+    const onUpdate = async (e) => {
+        const success = await handleVoucherUpdate(e);
+        if (success) {
+            setInitialVoucherDetails({ ...currentVoucherDetails });
+        }
     };
 
     if (isLoading) {
@@ -125,7 +179,7 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                                             padding: '8px 16px',
                                             fontSize: '13px'
                                         }}
-                                        onClick={() => navigate('/admin/manage-vouchers')}
+                                        onClick={() => navigate('/manage-vouchers')}
                                     >
                                         <i className="fas fa-arrow-left me-2"></i>Back
                                     </button>
@@ -139,7 +193,7 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                                         </div>
                                     )}
 
-                                    <form onSubmit={handleVoucherUpdate}>
+                                    <form onSubmit={onUpdate}>
                                         <div className="row">
                                             <div className="col-md-6 col-12">
                                                 <label className="form-label">Voucher Code</label>
@@ -150,6 +204,7 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                                                     value={currentVoucherDetails.voucher_code}
                                                     onChange={handleChange}
                                                     required
+                                                    readOnly
                                                 />
                                             </div>
 
@@ -161,6 +216,7 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                                                     name="discount_percentage"
                                                     value={currentVoucherDetails.discount_percentage}
                                                     onChange={handleChange}
+                                                    onFocus={handleFocus}
                                                     min="0"
                                                     max="100"
                                                     required
@@ -203,7 +259,9 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                                                     name="max_usage"
                                                     value={currentVoucherDetails.max_usage || ''}
                                                     onChange={handleChange}
+                                                    onFocus={handleFocus}
                                                     min="1"
+                                                    required
                                                 />
                                                 <small className="text-muted">Leave empty for unlimited usage</small>
                                             </div>
@@ -213,10 +271,12 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                                                 <input
                                                     type="number"
                                                     className="form-control"
-                                                    value={currentVoucherDetails.used_count || 0}
-                                                    disabled
+                                                    name="used_count"
+                                                    value={currentVoucherDetails.used_count}
+                                                    onChange={handleChange}
+                                                    onFocus={handleFocus}
                                                 />
-                                                <small className="text-muted">Read-only field</small>
+                                                <small className="text-muted">Usage count of the voucher</small>
                                             </div>
                                         </div>
 
@@ -229,6 +289,7 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                                                     name="description"
                                                     value={currentVoucherDetails.description || ''}
                                                     onChange={handleChange}
+                                                    required
                                                 ></textarea>
                                             </div>
                                         </div>
@@ -259,14 +320,14 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                                                 <button
                                                     type="submit"
                                                     className="btn btn-primary me-2"
-                                                    disabled={loadingUpdate}
+                                                    disabled={loadingUpdate || !isModified || !isRequiredFieldsFilled}
                                                 >
                                                     {loadingUpdate ? 'Updating...' : 'Update Voucher'}
                                                 </button>
                                                 <button
                                                     type="button"
                                                     className="btn btn-secondary"
-                                                    onClick={() => navigate('/admin/manage-vouchers')}
+                                                    onClick={() => navigate('/manage-vouchers')}
                                                 >
                                                     Cancel
                                                 </button>

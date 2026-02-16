@@ -406,16 +406,15 @@ exports.startStopDevice = async (req, res) => {
 
         // 1. Redis Debounce / Lock to prevent rapid multiple clicks
         if (isRedisConnected() && redisClient.isOpen) {
-            const lockKey = `lock:device:${serial_number}`;
-            const isLocked = await redisClient.get(lockKey);
-            if (isLocked) {
+            const lockKey = lock: device: ${ serial_number };
+            // Use atomic SET NX to prevent race conditions
+            const setRes = await redisClient.set(lockKey, "LOCKED", { NX: true, EX: 3 });
+            if (!setRes) {
                 return res.status(429).json({
                     success: false,
                     message: "Please wait, another command is in progress for this device."
                 });
             }
-            // Set a short lock (e.g., 3 seconds) to prevent immediate duplicate requests
-            await redisClient.setEx(lockKey, 3, "LOCKED");
         }
 
         const user = await User.findOne({ user_email });
@@ -432,205 +431,212 @@ exports.startStopDevice = async (req, res) => {
         if (device.start_status === start_status) {
             return res.status(200).json({
                 success: true,
-                message: `Device is already ${start_status ? 'started' : 'stopped'}`,
+                message: Device is already ${ start_status? 'started': 'stopped' },
                 data: { start_status: device.start_status }
             });
-        }
+    }
 
         // Permission Check: Must be master OR active shared user
         let hasPermission = false;
-        if (Number(device.assigned_user_id) === Number(user.user_id)) {
-            hasPermission = true;
-        } else {
-            const share = await DeviceShare.findOne({
-                serial_number,
-                shared_to_user_id: user.user_id,
-                status: true,
-                acceptance_status: 'accepted'
-            });
-            if (share) hasPermission = true;
-        }
+    if (Number(device.assigned_user_id) === Number(user.user_id)) {
+        hasPermission = true;
+    } else {
+        const share = await DeviceShare.findOne({
+            serial_number,
+            shared_to_user_id: user.user_id,
+            status: true,
+            acceptance_status: 'accepted'
+        });
+        if (share) hasPermission = true;
+    }
 
-        if (!hasPermission) {
-            return res.status(403).json({ success: false, message: "You don't have permission to operate this device" });
-        }
+    if (!hasPermission) {
+        return res.status(403).json({ success: false, message: "You don't have permission to operate this device" });
+    }
 
-        let updateData = {
-            start_status,
-            updatedBy: user_email,
-            updatedAt: new Date()
-        };
+    let updateData = {
+        start_status,
+        updatedBy: user_email,
+        updatedAt: new Date()
+    };
+
+    if (start_status === true) {
+        updateData.startAt = new Date();
+        updateData.last_started_by = user.user_name;
+        updateData.last_started_by_email = user.user_email;
+    } else {
+        updateData.stopAt = new Date();
+        updateData.last_stopped_by = user.user_name;
+        updateData.last_stopped_by_email = user.user_email;
+    }
+
+    await Device.updateOne(
+        { serial_number, imei_number },
+        { $set: updateData }
+    );
+
+    // Save to agri_history
+    try {
+        const db = mongoose.connection.db;
+        const historyCollection = db.collection("agri_history");
 
         if (start_status === true) {
-            updateData.startAt = new Date();
-            updateData.last_started_by = user.user_name;
-            updateData.last_started_by_email = user.user_email;
-        } else {
-            updateData.stopAt = new Date();
-            updateData.last_stopped_by = user.user_name;
-            updateData.last_stopped_by_email = user.user_email;
-        }
-
-        await Device.updateOne(
-            { serial_number, imei_number },
-            { $set: updateData }
-        );
-
-        // Save to agri_history
-        try {
-            const db = mongoose.connection.db;
-            const historyCollection = db.collection("agri_history");
-
-            if (start_status === true) {
-                // Check if a session is already open for this device to avoid duplicates
-                const openSession = await historyCollection.findOne({
-                    serial_number,
-                    stopAt: null
-                });
-
-                if (!openSession) {
-                    await historyCollection.insertOne({
-                        serial_number,
-                        imei_number,
-                        user_id: user.user_id,
-                        date: new Date().toISOString().split("T")[0],
-                        startAt: updateData.startAt,
-                        stopAt: null,
-                        started_by: user.user_name,
-                        started_by_email: user.user_email,
-                        stopped_by: null,
-                        stopped_by_email: null,
-                        duration_minutes: 0,
-                        energy_kwh: 0,
-                        maxCurrent: 0,
-                        minCurrent: 9999,
-                        maxVoltage: 0,
-                        minVoltage: 9999,
-                        createdAt: new Date(),
-                        updatedAt: new Date()
-                    });
-                }
-            } else {
-                // Find the latest open session for this device
-                const session = await historyCollection.findOne({
-                    serial_number,
-                    stopAt: null
-                });
-
-                if (session) {
-                    const stopTime = updateData.stopAt;
-                    const duration = (stopTime - new Date(session.startAt)) / 60000;
-
-                    await historyCollection.updateOne(
-                        { _id: session._id },
-                        {
-                            $set: {
-                                stopAt: stopTime,
-                                stopped_by: user.user_name,
-                                stopped_by_email: user.user_email,
-                                duration_minutes: Math.round(duration),
-                                updatedAt: new Date()
-                            }
-                        }
-                    );
-                }
-            }
-        } catch (historyError) {
-            console.error("[History Error] Failed to log to agri_history:", historyError);
-        }
-
-        // Notify all users associated with this device via FCM
-        try {
-            // 1. Get Master User
-            const masterUser = await User.findOne({ user_id: device.assigned_user_id });
-
-            // 2. Get Shared Users
-            const shares = await DeviceShare.find({
+            // Check if a session is already open for this device to avoid duplicates
+            const openSession = await historyCollection.findOne({
                 serial_number,
-                status: true,
-                acceptance_status: 'accepted'
-            });
-            const sharedUserIds = shares.map(s => s.shared_to_user_id);
-            const sharedUsers = await User.find({ user_id: { $in: sharedUserIds } });
-
-            // 3. Collect all unique tokens
-            const allUsers = [masterUser, ...sharedUsers].filter(u => u != null);
-            const uniqueTokens = new Set();
-            allUsers.forEach(u => {
-                if (u.fcm_tokens && Array.isArray(u.fcm_tokens)) {
-                    u.fcm_tokens.forEach(t => uniqueTokens.add(t));
-                } else if (u.fcm_token) {
-                    uniqueTokens.add(u.fcm_token);
-                }
+                stopAt: null
             });
 
-            const tokensArray = Array.from(uniqueTokens);
-            if (tokensArray.length > 0) {
-                const title = start_status ? "🟢 Motor Started" : "🔴 Motor Stopped";
-                const body = `Device ${serial_number} was ${start_status ? 'started' : 'stopped'} by ${user.user_name}`;
-
-                // Set a Redis flag to prevent duplicate notifications from MQTT client for the next 30 seconds
-                if (isRedisConnected() && redisClient.isOpen) {
-                    const notifKey = `notif_sent:${serial_number}:${start_status ? 'START' : 'STOP'}`;
-                    await redisClient.setEx(notifKey, 30, "SENT");
-                }
-
-                sendPushNotification(tokensArray, { title, body }, {
-                    type: "STATUS",
+            if (!openSession) {
+                await historyCollection.insertOne({
                     serial_number,
-                    action: start_status ? "START" : "STOP",
-                    timestamp: String(Date.now())
+                    imei_number,
+                    user_id: user.user_id,
+                    date: new Date().toISOString().split("T")[0],
+                    startAt: updateData.startAt,
+                    stopAt: null,
+                    started_by: user.user_name,
+                    started_by_email: user.user_email,
+                    stopped_by: null,
+                    stopped_by_email: null,
+                    duration_minutes: 0,
+                    energy_kwh: 0,
+                    maxCurrent: 0,
+                    minCurrent: 9999,
+                    maxVoltage: 0,
+                    minVoltage: 9999,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
                 });
             }
-        } catch (notifyError) {
-            console.error("[Notification Error] Failed to send start/stop FCM:", notifyError);
-            // Don't fail the request if notification fails
-        }
-
-        // 4. Send MQTT Command to the Motor
-        const topic = `agri/${serial_number}/command`;
-        const payload = {
-            MESSAGE_TYPE: "COMMAND",
-            SERIAL_NUMBER: serial_number,
-            IMEI_NUMBER: imei_number,
-            COMMAND: start_status ? "START" : "STOP",
-            TIMESTAMP: new Date().toISOString()
-        };
-
-        if (mqttPublisher && mqttPublisher.connected) {
-            mqttPublisher.publish(topic, JSON.stringify(payload), { qos: 1 });
-            console.log(`[MQTT] Published command to ${topic}:`, payload.COMMAND);
         } else {
-            console.warn(`[MQTT] Failed to publish - Publisher not connected`);
-        }
-
-        // 5. Immediate Socket.IO reflection for real-time UI updates across all users
-        if (global.io) {
-            global.io.emit("LIVE_STATUS", {
-                serial_number: serial_number,
-                payload: {
-                    motor_running: start_status,
-                    updatedAt: new Date().toISOString()
-                }
+            // Find the latest open session for this device
+            const session = await historyCollection.findOne({
+                serial_number,
+                stopAt: null
             });
+
+            if (session) {
+                const stopTime = updateData.stopAt;
+                const duration = (stopTime - new Date(session.startAt)) / 60000;
+
+                await historyCollection.updateOne(
+                    { _id: session._id, stopAt: null }, // Atomic check
+                    {
+                        $set: {
+                            stopAt: stopTime,
+                            stopped_by: user.user_name,
+                            stopped_by_email: user.user_email,
+                            duration_minutes: Math.round(duration),
+                            updatedAt: new Date()
+                        }
+                    }
+                );
+            }
+        }
+    } catch (historyError) {
+        console.error("[History Error] Failed to log to agri_history:", historyError);
+    }
+
+    // Notify all users associated with this device via FCM
+    try {
+        // Check for duplicate notifications within a 30-second window
+        if (isRedisConnected() && redisClient.isOpen) {
+            const notifKey = notif_sent: ${ serial_number }: ${ start_status ?'START': 'STOP'};
+            const alreadySent = await redisClient.set(notifKey, "SENT", { NX: true, EX: 30 });
+            if (!alreadySent) {
+                console.log([Notification] Duplicate ${ start_status? 'START': 'STOP' } notification blocked for ${ serial_number });
+                return res.status(200).json({
+                    success: true,
+                    message: Device command sent.Notification already handled.
+                    });
+            }
         }
 
-        await cacheDeletePattern('*devices*');
-        await cacheDeletePattern('*analytics*');
+        // 1. Get Master User
+        const masterUser = await User.findOne({ user_id: device.assigned_user_id });
 
-        return res.status(200).json({
-            success: true,
-            message: start_status ? "Device started" : "Device stopped",
-            data: updateData
+        // 2. Get Shared Users
+        const shares = await DeviceShare.find({
+            serial_number,
+            status: true,
+            acceptance_status: 'accepted'
+        });
+        const sharedUserIds = shares.map(s => s.shared_to_user_id);
+        const sharedUsers = await User.find({ user_id: { $in: sharedUserIds } });
+
+        // 3. Collect all unique tokens
+        const allUsers = [masterUser, ...sharedUsers].filter(u => u != null);
+        const uniqueTokens = new Set();
+        allUsers.forEach(u => {
+            if (u.fcm_tokens && Array.isArray(u.fcm_tokens)) {
+                u.fcm_tokens.forEach(t => uniqueTokens.add(t));
+            } else if (u.fcm_token) {
+                uniqueTokens.add(u.fcm_token);
+            }
         });
 
-    } catch (error) {
-        console.error("Start/Stop Device Error:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Server error, please try again later"
+        const tokensArray = Array.from(uniqueTokens);
+        if (tokensArray.length > 0) {
+            const title = start_status ? "🟢 Motor Started" : "🔴 Motor Stopped";
+            const body = Device ${ serial_number } was ${ start_status ?'started': 'stopped'} by ${ user.user_name };
+
+            sendPushNotification(tokensArray, { title, body }, {
+                type: "STATUS",
+                serial_number,
+                action: start_status ? "START" : "STOP",
+                timestamp: String(Date.now())
+            });
+        }
+    } catch (notifyError) {
+        console.error("[Notification Error] Failed to send start/stop FCM:", notifyError);
+        // Don't fail the request if notification fails
+    }
+
+    // 4. Send MQTT Command to the Motor
+    const topic = agri / ${ serial_number }/command;
+    const payload = {
+        MESSAGE_TYPE: "COMMAND",
+        SERIAL_NUMBER: serial_number,
+        IMEI_NUMBER: imei_number,
+        COMMAND: start_status ? "START" : "STOP",
+        TIMESTAMP: new Date().toISOString()
+    };
+
+    if (mqttPublisher && mqttPublisher.connected) {
+        mqttPublisher.publish(topic, JSON.stringify(payload), { qos: 1 });
+        console.log([MQTT] Published command to ${ topic }:, payload.COMMAND);
+    } else {
+        console.warn([MQTT] Failed to publish - Publisher not connected);
+    }
+
+    // 5. Immediate Socket.IO reflection for real-time UI updates across all users
+    if (global.io) {
+        global.io.emit("LIVE_STATUS", {
+            serial_number: serial_number,
+            payload: {
+                motor_running: start_status,
+                updatedAt: new Date().toISOString()
+            }
         });
     }
+
+    await cacheDeletePattern('devices');
+    await cacheDeletePattern('analytics');
+
+    return res.status(200).json({
+        success: true,
+        message: start_status ? "Device started" : "Device stopped",
+        data: updateData
+    });
+
+} catch (error) {
+    console.error("Start/Stop Device Error:", error);
+    return res.status(500).json({
+        success: false,
+        message: "Server error, please try again later"
+    });
+}
 };
 
 exports.userAssignDevices = async (req, res) => {
@@ -1796,9 +1802,9 @@ exports.validateVoucher = async (req, res, next) => {
             payment_status: 'completed'
         });
 
-        if (userOrderWithVoucher) {
-            return res.status(400).json({ success: false, message: "You have already used this voucher" });
-        }
+        // if (userOrderWithVoucher) {
+        //     return res.status(400).json({ success: false, message: "You have already used this voucher" });
+        // }
 
         res.status(200).json({
             success: true,
@@ -1926,7 +1932,7 @@ exports.updateVoucher = async (req, res, next) => {
         if (!errors.isEmpty())
             return res.status(400).json({ success: false, errors: errors.array() });
 
-        const { id, voucher_code, discount_percentage, start_date, end_date, max_usage, description, status, updatedBy } = req.body;
+        const { id, voucher_code, discount_percentage, start_date, end_date, max_usage, used_count, description, status, updatedBy } = req.body;
 
         if (!id)
             return res.status(400).json({ success: false, message: "Voucher ID is required" });
@@ -1947,6 +1953,7 @@ exports.updateVoucher = async (req, res, next) => {
         if (start_date) updateData.start_date = new Date(start_date);
         if (end_date) updateData.end_date = new Date(end_date);
         if (max_usage !== undefined) updateData.max_usage = max_usage || null;
+        if (used_count !== undefined) updateData.used_count = used_count;
         if (description !== undefined) updateData.description = description || null;
         if (typeof status === 'boolean') updateData.status = status;
 
@@ -2154,7 +2161,7 @@ exports.deleteShare = async (req, res, next) => {
 
 
 
-exports.getDeviceBorewellHistory = async (req, res) => {
+exports.getDeviceSmartHistory = async (req, res) => {
     try {
         const { serial_number, page = 1, limit = 10 } = req.query;
 
@@ -2194,7 +2201,7 @@ exports.getDeviceBorewellHistory = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("getDeviceBorewellHistory Error:", error);
+        console.error("getDeviceSmartHistory Error:", error);
         return res.status(500).json({
             success: false,
             message: "Server error"

@@ -265,7 +265,7 @@ const Profile = ({ userInfo, handleLogout }) => {
                                                         autoComplete="off" />
                                                 </div>
                                                 <div className="text-center">
-                                                    <button className="btn btn-primary" id="Update" disabled={!userModified || loadingUpdate}>{loadingUpdate ? "Updating..." : "Update"}</button>
+                                                    <button className="btn btn-primary" id="Update" disabled={!userModified || loadingUpdate || !user_name.trim() || (password && password.toString().length !== 6)}>{loadingUpdate ? "Updating..." : "Update"}</button>
                                                 </div>
                                             </form>
                                         </div>

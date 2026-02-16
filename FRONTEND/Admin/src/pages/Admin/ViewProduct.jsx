@@ -19,7 +19,7 @@ const ViewProduct = ({ userInfo, handleLogout }) => {
             setProduct(location.state.product);
             setLoading(false);
         } else {
-            navigate('/admin/manage-products');
+            navigate('/manage-products');
         }
     }, [location, navigate]);
 
@@ -73,14 +73,14 @@ const ViewProduct = ({ userInfo, handleLogout }) => {
                                             <button
                                                 type="button"
                                                 className="btn btn-primary mb-0"
-                                                onClick={() => navigate('/admin/edit-product', { state: { product } })}
+                                                onClick={() => navigate('/edit-product', { state: { product } })}
                                             >
                                                 <i className="fas fa-pen" style={{ marginRight: '5px' }}></i>Edit
                                             </button>
                                             <button
                                                 type="button"
                                                 className="btn btn-secondary mb-0"
-                                                onClick={() => navigate('/admin/manage-products')}
+                                                onClick={() => navigate('/manage-products')}
                                             >
                                                 Back
                                             </button>

@@ -19,7 +19,7 @@ const ManageDevicesView = ({ userInfo, handleLogout }) => {
             if (deviceDetails?.serial_number) {
                 setLoadingHistory(true);
                 try {
-                    const response = await fetch(`${API_BASE}/admin/getDeviceBorewellHistory?serial_number=${deviceDetails.serial_number}`);
+                    const response = await fetch(`${API_BASE}/getDeviceSmartHistory?serial_number=${deviceDetails.serial_number}`);
                     if (response.ok) {
                         const data = await response.json();
                         setHistory(data.data || []);
@@ -36,11 +36,11 @@ const ManageDevicesView = ({ userInfo, handleLogout }) => {
     }, [deviceDetails, API_BASE]);
 
     const handleBackClick = () => {
-        navigate('/admin/manage-devices');
+        navigate('/manage-devices');
     };
 
     if (!deviceDetails) {
-        navigate('/admin/manage-devices');
+        navigate('/manage-devices');
         return null;
     }
 

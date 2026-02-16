@@ -77,7 +77,7 @@ const CreateProduct = ({ userInfo, handleLogout }) => {
         formData.append('file', file);
 
         try {
-            const response = await fetch(`${API_BASE}/admin/${endpoint}`, {
+            const response = await fetch(`${API_BASE}/${endpoint}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${userInfo.token}`
@@ -140,7 +140,7 @@ const CreateProduct = ({ userInfo, handleLogout }) => {
                 }
             }
 
-            const response = await fetch(`${API_BASE}/admin/createProduct`, {
+            const response = await fetch(`${API_BASE}/createProduct`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -173,7 +173,7 @@ const CreateProduct = ({ userInfo, handleLogout }) => {
             }
 
             showAlertSuccess('Product created successfully!');
-            navigate('/admin/manage-products');
+            navigate('/manage-products');
         } catch (err) {
             console.log('Create Product Error:', err);
             setErrorMessage(err.message || 'Error creating product');
@@ -198,7 +198,7 @@ const CreateProduct = ({ userInfo, handleLogout }) => {
                                         <button
                                             type="button"
                                             className="btn btn-secondary mb-0"
-                                            onClick={() => navigate('/admin/manage-products')}
+                                            onClick={() => navigate('/manage-products')}
                                         >
                                             Back
                                         </button>
@@ -447,7 +447,7 @@ const CreateProduct = ({ userInfo, handleLogout }) => {
                                             <button
                                                 type="button"
                                                 className="btn btn-secondary mb-0"
-                                                onClick={() => navigate('/admin/manage-products')}
+                                                onClick={() => navigate('/manage-products')}
                                                 disabled={loading}
                                             >
                                                 Cancel

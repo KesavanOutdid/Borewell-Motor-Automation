@@ -51,7 +51,7 @@ const ManageOrders = ({ userInfo, handleLogout }) => {
     }, [searchQuery, pagination.limit, fetchOrders]);
 
     const handleViewOrder = (order) => {
-        navigate('/admin/view-order', { state: { order } });
+        navigate('/view-order', { state: { order } });
     };
 
     const getStatusBadgeColor = (status) => {
