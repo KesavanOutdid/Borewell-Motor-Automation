@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const Telemetry = require("../models/Telemetry");
 const DeviceShare = require("../models/DeviceShare");
+const DeviceSchedule = require("../models/DeviceSchedule");
 const { sendPushNotification } = require('../utils/notificationHelper');
 const { cacheDeletePattern } = require('../middlewares/cacheMiddleware');
 const { redisClient, isRedisConnected } = require('../config/redis');
@@ -2198,5 +2199,129 @@ exports.getDeviceBorewellHistory = async (req, res) => {
             success: false,
             message: "Server error"
         });
+    }
+};
+
+exports.createSchedule = async (req, res) => {
+    try {
+        const { serial_number, imei_number, user_id, start_time, stop_time } = req.body;
+
+        if (!serial_number || !imei_number || !user_id || !start_time || !stop_time) {
+            return res.status(400).json({ success: false, message: "All fields are required" });
+        }
+
+        const start = new Date(start_time);
+        const stop = new Date(stop_time);
+        const now = new Date();
+
+        // 1. Start time must be at least 1 hour after current time
+        const minStartTime = new Date(now.getTime() + 60 * 60 * 1000);
+        if (start < minStartTime) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Start time must be at least 1 hour after current time" 
+            });
+        }
+
+        // 2. Start date must be up to 7 days from now
+        const maxStartTime = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        if (start > maxStartTime) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Start date can only be up to 7 days in the future" 
+            });
+        }
+
+        // 3. Stop time must be after start time
+        if (stop <= start) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Stop time must be after start time" 
+            });
+        }
+
+        // Check if there is already a pending schedule for this device
+        const existingSchedule = await DeviceSchedule.findOne({ 
+            serial_number, 
+            status: 'pending' 
+        });
+
+        if (existingSchedule) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "A pending schedule already exists for this device. Please cancel it before creating a new one." 
+            });
+        }
+
+        const newSchedule = new DeviceSchedule({
+            serial_number,
+            imei_number,
+            user_id,
+            start_time: start,
+            stop_time: stop,
+            status: 'pending'
+        });
+
+        await newSchedule.save();
+
+        res.status(201).json({
+            success: true,
+            message: "Schedule created successfully",
+            data: newSchedule
+        });
+
+    } catch (error) {
+        console.error("createSchedule Error:", error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+exports.getSchedules = async (req, res) => {
+    try {
+        const { serial_number, user_id } = req.query;
+        const query = {};
+        if (serial_number) query.serial_number = serial_number;
+        if (user_id) query.user_id = user_id;
+
+        const schedules = await DeviceSchedule.find(query).sort({ created_at: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: schedules
+        });
+    } catch (error) {
+        console.error("getSchedules Error:", error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+exports.cancelSchedule = async (req, res) => {
+    try {
+        const { schedule_id } = req.params;
+        const schedule = await DeviceSchedule.findById(schedule_id);
+
+        if (!schedule) {
+            return res.status(404).json({ success: false, message: "Schedule not found" });
+        }
+
+        if (schedule.status !== 'pending') {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Only pending schedules can be cancelled" 
+            });
+        }
+
+        schedule.status = 'cancelled';
+        schedule.updated_at = new Date();
+        await schedule.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Schedule cancelled successfully",
+            data: schedule
+        });
+    } catch (error) {
+        console.error("cancelSchedule Error:", error);
+        res.status(500).json({ success: false, message: "Server error" });
     }
 };

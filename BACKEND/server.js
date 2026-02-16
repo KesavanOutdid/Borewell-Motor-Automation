@@ -18,6 +18,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const addressRoutes = require('./routes/addressRoutes');
 const logsRoutes = require('./mqtt/routes/logs');
 const { sendBootNotificationsOnStartup, client: publisherClient } = require('./mqtt/publisher');
+const { initScheduler } = require('./utils/scheduler');
 // Import MQTT client to start the subscriber
 const mqttClient = require('./mqtt/mqttClient');
 
@@ -39,6 +40,7 @@ app.get('/', (req, res) => {
 // Connect DB
 connectDB().then(() => {
     console.log('Database connected successfully.');
+    initScheduler(); // Start the auto start/stop scheduler
 }).catch(err => {
     console.error('Database connection failed:', err);
 });

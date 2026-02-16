@@ -226,6 +226,10 @@ client.on("message", async (topic, message) => {
                     }
 
                     if (!alreadyNotified) {
+                        if (isRedisConnected() && redisClient.isOpen) {
+                            const notifKey = `notif_sent:${serialNumber}:START`;
+                            await redisClient.setEx(notifKey, 30, "SENT");
+                        }
                         notifyUser(db, userId, "STATUS", entry);
                     }
                 }
@@ -266,6 +270,10 @@ client.on("message", async (topic, message) => {
                     }
 
                     if (!alreadyNotified) {
+                        if (isRedisConnected() && redisClient.isOpen) {
+                            const notifKey = `notif_sent:${serialNumber}:STOP`;
+                            await redisClient.setEx(notifKey, 30, "SENT");
+                        }
                         notifyUser(db, userId, "STATUS", entry);
                     }
                 }
@@ -302,7 +310,19 @@ client.on("message", async (topic, message) => {
         /* SEND LIVE UPDATES TO SOCKET.IO CLIENTS                 */
         /* ------------------------------------------------------ */
         if (type === "ALERT") {
-            notifyUser(db, userId, type, entry);
+            // Check for duplicate alerts within a 1-minute window
+            let alertNotified = false;
+            const alertType = item.ALERT_TYPE || item.alert_type || "UNKNOWN";
+            if (isRedisConnected() && redisClient.isOpen) {
+                const alertKey = `alert_sent:${serialNumber}:${alertType}`;
+                const exists = await redisClient.get(alertKey);
+                if (exists) alertNotified = true;
+                else await redisClient.setEx(alertKey, 60, "SENT");
+            }
+
+            if (!alertNotified) {
+                notifyUser(db, userId, type, entry);
+            }
         }
 
         if (global.io) {
