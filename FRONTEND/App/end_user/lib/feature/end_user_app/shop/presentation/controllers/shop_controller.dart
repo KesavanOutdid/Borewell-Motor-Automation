@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:math';
@@ -23,6 +24,7 @@ class ShopController extends GetxController {
   
   late TokenService tokenService;
   final logger = Logger();
+  final _storage = GetStorage();
 
   List<Map<String, dynamic>> get filteredProducts {
     if (searchQuery.value.isEmpty) {
@@ -54,7 +56,25 @@ class ShopController extends GetxController {
     super.onInit();
     logger.i('ShopController initialized');
     tokenService = Get.find<TokenService>();
+    _loadCachedProducts();
     fetchProducts();
+  }
+
+  void _loadCachedProducts() {
+    try {
+      final cached = _storage.read('shop_products');
+      if (cached != null) {
+        final List<Map<String, dynamic>> list = List<Map<String, dynamic>>.from(
+          (cached as List).map((i) => Map<String, dynamic>.from(i))
+        );
+        if (list.isNotEmpty) {
+          logger.i('📦 [SHOP] Loaded ${list.length} products from cache');
+          products.assignAll(list);
+        }
+      }
+    } catch (e) {
+      logger.e('📦 [SHOP] Error loading cached products: $e');
+    }
   }
 
   Future<void> fetchProducts({bool isRefresh = false}) async {
@@ -103,6 +123,10 @@ class ShopController extends GetxController {
             products.value = shuffledProducts;
           } else {
             products.addAll(shuffledProducts);
+          }
+
+          if (currentPage.value == 1) {
+            await _storage.write('shop_products', products);
           }
           
           totalPages.value = pagination['totalPages'] ?? 1;

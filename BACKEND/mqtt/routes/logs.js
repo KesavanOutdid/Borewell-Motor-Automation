@@ -68,7 +68,18 @@ router.get('/logs', (req, res) => {
 
         for (const file of files) {
             const filePath = path.join(logDir, file);
-            let logs = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            const content = fs.readFileSync(filePath, 'utf8');
+            let logs = content
+                .split('\n')
+                .filter(line => line.trim())
+                .map(line => {
+                    try {
+                        return JSON.parse(line);
+                    } catch (e) {
+                        return null;
+                    }
+                })
+                .filter(log => log !== null);
 
             if (direction && direction !== 'ALL')
                 logs = logs.filter(l => l.direction === direction);

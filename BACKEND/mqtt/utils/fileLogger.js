@@ -25,24 +25,12 @@ function logToFile(entry) {
 
     const logPath = getLogFilePath(entry);
 
-    console.log("Logging to file:", logPath);
-
-    let logs = [];
-    if (fs.existsSync(logPath)) {
-        try {
-            const existing = fs.readFileSync(logPath, 'utf8').trim();
-            logs = existing ? JSON.parse(existing) : [];
-        } catch (err) {
-            console.error("Error reading log file:", err);
-            logs = [];
-        }
-    }
-
-    logs.push(logEntry);
+    // console.log("Logging to file:", logPath);
 
     try {
-        fs.writeFileSync(logPath, JSON.stringify(logs, null, 2), 'utf8');
-        console.log(`Logged → ${path.basename(logPath)}`);
+        // Append as a single line (NDJSON format) for performance
+        fs.appendFileSync(logPath, JSON.stringify(logEntry) + "\n", 'utf8');
+        // console.log(`Logged → ${path.basename(logPath)}`);
     } catch (err) {
         console.error("Error writing log file:", err);
     }

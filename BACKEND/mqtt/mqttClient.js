@@ -69,12 +69,12 @@ client.on("message", async (topic, message) => {
     const type = topic.split("/").pop().toUpperCase();
     const data = safeParseMessage(message);
 
-    console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("MQTT Message Received");
-    console.log("Topic:", topic);
-    console.log("Type:", type);
-    console.log("Count:", data.length);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+    // console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    // console.log("MQTT Message Received");
+    // console.log("Topic:", topic);
+    // console.log("Type:", type);
+    // console.log("Count:", data.length);
+    // console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     logToFile({ timestamp: loggedAt, topic, type, data, direction: "RECEIVED" });
 
@@ -214,7 +214,7 @@ client.on("message", async (topic, message) => {
                         createdAt: new Date(),
                         updatedAt: new Date()
                     });
-                    console.log(`HISTORY: Start session created for ${serialNumber}`);
+                    // console.log(`HISTORY: Start session created for ${serialNumber}`);
                     
                     // Check if notification was already sent recently
                     if (isRedisConnected() && redisClient.isOpen) {
@@ -223,7 +223,7 @@ client.on("message", async (topic, message) => {
                         if (alreadySent) {
                             notifyUser(db, userId, "STATUS", entry);
                         } else {
-                            console.log(`[MQTT] Duplicate START notification blocked for ${serialNumber}`);
+                            // console.log(`[MQTT] Duplicate START notification blocked for ${serialNumber}`);
                         }
                     } else {
                         notifyUser(db, userId, "STATUS", entry);
@@ -256,7 +256,7 @@ client.on("message", async (topic, message) => {
                     );
 
                     if (updateResult.modifiedCount > 0) {
-                        console.log(`HISTORY: Session closed for ${serialNumber}`);
+                        // console.log(`HISTORY: Session closed for ${serialNumber}`);
 
                         // Check if notification was already sent recently
                         if (isRedisConnected() && redisClient.isOpen) {
@@ -265,7 +265,7 @@ client.on("message", async (topic, message) => {
                             if (alreadySent) {
                                 notifyUser(db, userId, "STATUS", entry);
                             } else {
-                                console.log(`[MQTT] Duplicate STOP notification blocked for ${serialNumber}`);
+                                // console.log(`[MQTT] Duplicate STOP notification blocked for ${serialNumber}`);
                             }
                         } else {
                             notifyUser(db, userId, "STATUS", entry);
@@ -308,7 +308,7 @@ client.on("message", async (topic, message) => {
             // Check if motor is actually running before sending alert notifications
             // If the motor was just stopped by the user, we skip any pending alerts
             if (device && device.start_status === false) {
-                console.log(`[MQTT] Skipping alert ${item.ALERT_TYPE || item.alert_type} for ${serialNumber} as motor is OFF`);
+                // console.log(`[MQTT] Skipping alert ${item.ALERT_TYPE || item.alert_type} for ${serialNumber} as motor is OFF`);
             } else {
                 // Check for duplicate alerts within a 1-minute window using atomic SET NX
                 if (isRedisConnected() && redisClient.isOpen) {
@@ -318,7 +318,7 @@ client.on("message", async (topic, message) => {
                     if (alreadySent) {
                         notifyUser(db, userId, type, entry);
                     } else {
-                        console.log(`[MQTT] Duplicate alert ${alertType} blocked for ${serialNumber}`);
+                        // console.log(`[MQTT] Duplicate alert ${alertType} blocked for ${serialNumber}`);
                     }
                 } else {
                     notifyUser(db, userId, type, entry);

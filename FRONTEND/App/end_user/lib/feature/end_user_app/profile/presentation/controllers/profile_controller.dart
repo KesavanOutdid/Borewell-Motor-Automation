@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 import '../../../../../core/config/env.dart';
 import '../../../../../core/services/token_service.dart';
@@ -25,6 +27,7 @@ class ProfileController extends GetxController {
 
   final logger = Logger();
   final ImagePicker _picker = ImagePicker();
+  final _storage = GetStorage();
 
   void _checkChanges() {
     hasChanges.value = nameEditingController.text != userName.value ||
@@ -53,8 +56,29 @@ class ProfileController extends GetxController {
     phoneEditingController.addListener(_checkChanges);
     passwordEditingController.addListener(_checkChanges);
     
+    _loadCachedProfile();
+    
     tokenService = Get.find<TokenService>();
     fetchProfile();
+  }
+
+  void _loadCachedProfile() {
+    try {
+      final cached = _storage.read('user_profile');
+      if (cached != null) {
+        final user = Map<String, dynamic>.from(cached);
+        userName.value = user['user_name'] ?? "";
+        userEmail.value = user['user_email'] ?? "";
+        userPhone.value = user['user_phone']?.toString() ?? "";
+        userIdValue.value = user['user_id'] ?? 0;
+        roleIdValue.value = user['role_id'] ?? 0;
+        userProfileImage.value = user['profile_image'] ?? "";
+        oldPassword.value = user['password']?.toString() ?? "";
+        print('👤 [PROFILE] Loaded profile from cache');
+      }
+    } catch (e) {
+      print('👤 [PROFILE] Error loading cached profile: $e');
+    }
   }
 
   @override
@@ -64,6 +88,20 @@ class ProfileController extends GetxController {
     phoneEditingController.dispose();
     passwordEditingController.dispose();
     super.onClose();
+  }
+
+  void _showSafeSnackbar(String title, String message, {bool isError = true}) {
+    if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
+      Get.snackbar(
+        title,
+        message,
+        backgroundColor: (isError ? Colors.red : Colors.green).withOpacity(0.8),
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } else {
+      logger.w('⚠️ Cannot show snackbar: No overlay found');
+    }
   }
 
   Future<void> fetchProfile() async {
@@ -108,6 +146,16 @@ class ProfileController extends GetxController {
           roleIdValue.value = user['role_id'] ?? 0;
           userProfileImage.value = user['profile_image'] ?? "";
           oldPassword.value = user['password']?.toString() ?? "";
+          
+          // Keep TokenService in sync
+          await tokenService.saveToken(
+            tokenService.getToken() ?? "",
+            userIdValue.value,
+            userName.value,
+            userEmail: userEmail.value,
+          );
+          
+          await _storage.write('user_profile', user);
         } else {
           isLoading.value = false;
           errorMessage.value = responseData['message'] ?? "Failed to fetch profile";
@@ -144,8 +192,13 @@ class ProfileController extends GetxController {
 
   Future<String?> updateProfile() async {
     logger.i('📝 updateProfile called');
-    if (nameEditingController.text.isEmpty) {
+    final name = nameEditingController.text.trim();
+    if (name.isEmpty) {
       return "Name cannot be empty";
+    }
+
+    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(name)) {
+      return "Name should contain letters only.";
     }
 
     if (emailEditingController.text.isEmpty) {
@@ -176,7 +229,7 @@ class ProfileController extends GetxController {
 
     try {
       final body = {
-        "user_name": nameEditingController.text,
+        "user_name": name,
         "user_email": emailEditingController.text,
         "role_id": roleIdValue.value,
       };
@@ -214,6 +267,16 @@ class ProfileController extends GetxController {
           userName.value = user['user_name'] ?? "";
           userEmail.value = user['user_email'] ?? "";
           userPhone.value = user['user_phone']?.toString() ?? "";
+          
+          // Keep TokenService in sync
+          await tokenService.saveToken(
+            tokenService.getToken() ?? "",
+            userIdValue.value,
+            userName.value,
+            userEmail: userEmail.value,
+          );
+          
+          await _storage.write('user_profile', user);
           return null; // Success
         } else {
           isUpdating.value = false;
@@ -238,6 +301,45 @@ class ProfileController extends GetxController {
 
   Future<void> pickAndUploadImage(ImageSource source) async {
     try {
+      if (source == ImageSource.camera) {
+        var status = await Permission.camera.status;
+        if (status.isDenied) {
+          status = await Permission.camera.request();
+          if (status.isDenied) {
+            Get.rawSnackbar(
+              title: "Permission Denied",
+              message: "Please allow camera access to take a profile photo",
+              backgroundColor: Colors.red.withOpacity(0.8),
+            );
+            return;
+          }
+        }
+        if (status.isPermanentlyDenied) {
+          openAppSettings();
+          return;
+        }
+      } else if (source == ImageSource.gallery) {
+        var status = Platform.isAndroid 
+            ? await Permission.photos.status 
+            : await Permission.photos.status;
+        
+        // For Android 13+ use photos permission, for older use storage
+        if (Platform.isAndroid) {
+          status = await Permission.photos.request();
+        } else {
+          status = await Permission.photos.request();
+        }
+
+        if (status.isDenied) {
+          Get.rawSnackbar(
+            title: "Permission Denied",
+            message: "Please allow access to your gallery to pick a profile photo",
+            backgroundColor: Colors.red.withOpacity(0.8),
+          );
+          return;
+        }
+      }
+
       final XFile? image = await _picker.pickImage(
         source: source,
         imageQuality: 50,
@@ -247,7 +349,7 @@ class ProfileController extends GetxController {
         await uploadProfileImage(File(image.path));
       }
     } catch (e) {
-      Get.rawSnackbar(title: "Error", message: "Failed to pick image: $e");
+      _showSafeSnackbar("Error", "Failed to pick image: $e");
     }
   }
 
@@ -260,7 +362,7 @@ class ProfileController extends GetxController {
     if (userId == null || userId == 0) {
       logger.e('❌ userId is null or 0');
       isUpdating.value = false;
-      Get.rawSnackbar(title: "Error", message: "User ID not found");
+      _showSafeSnackbar("Error", "User ID not found");
       return;
     }
 
@@ -300,12 +402,23 @@ class ProfileController extends GetxController {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         if (responseData['success'] == true) {
           userProfileImage.value = responseData['profile_image'] ?? "";
-          Get.rawSnackbar(title: "Success", message: "Profile image updated successfully");
+          Get.dialog(
+            AlertDialog(
+              title: const Text("Success"),
+              content: const Text("Profile photo updated successfully"),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(Get.context!),
+                  child: const Text("OK"),
+                ),
+              ],
+            ),
+          );
         } else {
-          Get.rawSnackbar(title: "Error", message: responseData['message'] ?? "Upload failed");
+          _showSafeSnackbar("Error", responseData['message'] ?? "Upload failed");
         }
       } else {
-        Get.rawSnackbar(title: "Error", message: "Failed to upload image: ${response.statusCode}");
+        _showSafeSnackbar("Error", "Failed to upload image: ${response.statusCode}");
       }
     } catch (e) {
       isUpdating.value = false;
@@ -313,7 +426,7 @@ class ProfileController extends GetxController {
       if (e is SocketException) {
         msg = "Network connection failed. Please check your internet.";
       }
-      Get.rawSnackbar(title: "Error", message: msg);
+      _showSafeSnackbar("Error", msg);
     }
   }
 
@@ -326,7 +439,7 @@ class ProfileController extends GetxController {
     if (userId == null || userId == 0) {
       logger.e('❌ userId is null or 0');
       isUpdating.value = false;
-      Get.rawSnackbar(title: "Error", message: "User ID not found");
+      _showSafeSnackbar("Error", "User ID not found");
       return;
     }
 
@@ -350,12 +463,12 @@ class ProfileController extends GetxController {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         if (responseData['success'] == true) {
           userProfileImage.value = "";
-          Get.rawSnackbar(title: "Success", message: "Profile image removed successfully");
+          _showSafeSnackbar("Success", "Profile image removed successfully", isError: false);
         } else {
-          Get.rawSnackbar(title: "Error", message: responseData['message'] ?? "Removal failed");
+          _showSafeSnackbar("Error", responseData['message'] ?? "Removal failed");
         }
       } else {
-        Get.rawSnackbar(title: "Error", message: "Failed to remove image: ${response.statusCode}");
+        _showSafeSnackbar("Error", "Failed to remove image: ${response.statusCode}");
       }
     } catch (e) {
       isUpdating.value = false;
@@ -363,7 +476,7 @@ class ProfileController extends GetxController {
       if (e is SocketException) {
         msg = "Network connection failed. Please check your internet.";
       }
-      Get.rawSnackbar(title: "Error", message: msg);
+      _showSafeSnackbar("Error", msg);
     }
   }
 

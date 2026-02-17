@@ -83,11 +83,11 @@ const cacheMiddleware = (prefix, ttl = CACHE_TTL.DEFAULT) => {
             const cachedData = await cacheGet(cacheKey);
 
             if (cachedData) {
-                console.log(`Cache HIT: ${cacheKey}`);
+                // console.log(`Cache HIT: ${cacheKey}`);
                 return res.json(cachedData);
             }
 
-            console.log(`Cache MISS: ${cacheKey}`);
+            // console.log(`Cache MISS: ${cacheKey}`);
             const originalJson = res.json.bind(res);
 
             res.json = function(data) {
@@ -109,7 +109,7 @@ const cacheResponse = async (req, res, next) => {
     try {
         if (req.cacheKey && req.cachedData) {
             await cacheSet(req.cacheKey, req.cachedData, req.cacheTTL || CACHE_TTL.DEFAULT);
-            console.log(`Cache SET: ${req.cacheKey}`);
+            // console.log(`Cache SET: ${req.cacheKey}`);
         }
     } catch (err) {
         console.error('Response cache error:', err);

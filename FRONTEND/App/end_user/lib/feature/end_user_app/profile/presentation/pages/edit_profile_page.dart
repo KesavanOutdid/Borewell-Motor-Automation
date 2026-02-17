@@ -226,6 +226,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
               hint: 'Enter your name',
               icon: Icons.person_outline,
               controller: controller.nameEditingController,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
+              ],
             ),
             const SizedBox(height: 20),
             _buildTextField(

@@ -14,64 +14,68 @@ class NotificationPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Notifications'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.done_all),
-            tooltip: 'Mark all as read',
-            onPressed: () {
-              controller.markAllAsRead();
-              Get.snackbar(
-                'Success',
-                'All notifications marked as read',
-                snackPosition: SnackPosition.BOTTOM,
-                duration: const Duration(seconds: 2),
-              );
-            },
-          ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'clear_all') {
-                Get.dialog(
-                  Builder(
-                    builder: (context) => AlertDialog(
-                      title: const Text('Clear All Notifications'),
-                      content: const Text('Are you sure you want to clear all notifications?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('No'),
+          Obx(() => controller.notifications.isNotEmpty 
+            ? IconButton(
+                icon: const Icon(Icons.done_all),
+                tooltip: 'Mark all as read',
+                onPressed: () {
+                  controller.markAllAsRead();
+                  Get.snackbar(
+                    'Success',
+                    'All notifications marked as read',
+                    snackPosition: SnackPosition.BOTTOM,
+                    duration: const Duration(seconds: 2),
+                  );
+                },
+              )
+            : const SizedBox.shrink()),
+          Obx(() => controller.notifications.isNotEmpty 
+            ? PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'clear_all') {
+                    Get.dialog(
+                      Builder(
+                        builder: (context) => AlertDialog(
+                          title: const Text('Clear All Notifications'),
+                          content: const Text('Are you sure you want to clear all notifications?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text('No'),
+                            ),
+                            TextButton(
+                              onPressed: () async {
+                                Navigator.of(context).pop();
+                                await controller.clearAll();
+                                Get.snackbar(
+                                  'Success',
+                                  'All notifications cleared',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  duration: const Duration(seconds: 2),
+                                );
+                              },
+                              child: const Text('Yes', style: TextStyle(color: Colors.red)),
+                            ),
+                          ],
                         ),
-                        TextButton(
-                          onPressed: () async {
-                            Navigator.of(context).pop();
-                            await controller.clearAll();
-                            Get.snackbar(
-                              'Success',
-                              'All notifications cleared',
-                              snackPosition: SnackPosition.BOTTOM,
-                              duration: const Duration(seconds: 2),
-                            );
-                          },
-                          child: const Text('Yes', style: TextStyle(color: Colors.red)),
-                        ),
+                      ),
+                    );
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'clear_all',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete_sweep, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text('Clear All'),
                       ],
                     ),
                   ),
-                );
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'clear_all',
-                child: Row(
-                  children: [
-                    Icon(Icons.delete_sweep, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text('Clear All'),
-                  ],
-                ),
-              ),
-            ],
-          ),
+                ],
+              )
+            : const SizedBox.shrink()),
         ],
       ),
       body: RefreshIndicator(

@@ -19,6 +19,10 @@
 -keep class com.razorpay.** {*;}
 -dontwarn com.razorpay.**
 
+# Google Play Core Rules
+-dontwarn com.google.android.play.core.**
+-keep class com.google.android.play.core.** { *; }
+
 # Standard rules to keep necessary code
 -keepattributes Signature, *Annotation*, EnclosingMethod, InnerClasses
 -dontwarn okio.**

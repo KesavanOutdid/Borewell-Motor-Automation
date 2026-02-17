@@ -71,12 +71,30 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     tokenService = Get.find<TokenService>();
+    _loadCachedDevices();
     
     scrollController.addListener(() {
       if (scrollController.position.pixels >= scrollController.position.maxScrollExtent - 200) {
         fetchMoreDevices();
       }
     });
+  }
+
+  void _loadCachedDevices() {
+    try {
+      final cached = _storage.read('assigned_devices');
+      if (cached != null) {
+        final List<Map<String, dynamic>> list = List<Map<String, dynamic>>.from(
+          (cached as List).map((i) => Map<String, dynamic>.from(i))
+        );
+        if (list.isNotEmpty) {
+          print('🏠 [HOME] Loaded ${list.length} devices from cache');
+          devices.assignAll(list);
+        }
+      }
+    } catch (e) {
+      print('🏠 [HOME] Error loading cached devices: $e');
+    }
   }
 
   @override

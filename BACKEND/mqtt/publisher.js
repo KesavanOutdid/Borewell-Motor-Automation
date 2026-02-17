@@ -66,8 +66,8 @@ function publish(topic, payload) {
     }
 
     client.publish(topic, JSON.stringify(payload), { qos: 1 }, err => {
-        if (err) console.error(`Publish error on ${topic}:`, err);
-        else console.log(`Published: ${topic}`);
+        // if (err) console.error(`Publish error on ${topic}:`, err);
+        // else console.log(`Published: ${topic}`);
     });
 }
 
