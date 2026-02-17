@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { sanitizeEmail, sanitizePassword } from '../../utils/validation';
 
 const useSignIn = (handleSignIn) => {
@@ -8,6 +8,15 @@ const useSignIn = (handleSignIn) => {
     const [errorMessage, setErrorMessage] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const [loadingSubmit, setLoadingSubmit] = useState(false);
+
+    useEffect(() => {
+        if (errorMessage) {
+            const timer = setTimeout(() => {
+                setErrorMessage('');
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [errorMessage]);
 
     const handleSignInFormSubmit = async (e) => {
         e.preventDefault();
@@ -19,14 +28,12 @@ const useSignIn = (handleSignIn) => {
         // Email validation (checking if the sanitized email contains "@" and ".")
         if (!sanitizedEmail.includes('@') || !sanitizedEmail.includes('.')) {
             setErrorMessage('Invalid email address.');
-            setTimeout(() => setErrorMessage(''), 5000);
             return;
         }
 
-        // Password validation (check for a valid 4-digit password)
+        // Password validation (check for a valid 6-digit password)
         if (sanitizedPassword.length !== 6) {
-            setErrorMessage('Password must be a 4-digit number.');
-            setTimeout(() => setErrorMessage(''), 5000);
+            setErrorMessage('Password must be a 6-digit number.');
             return;
         }
 
@@ -63,7 +70,6 @@ const useSignIn = (handleSignIn) => {
         } catch (error) {
             setErrorMessage('An error occurred during sign-in. Please try again later.');
             setSuccessMessage('');
-            setTimeout(() => setErrorMessage(''), 5000);
             setLoadingSubmit(false);
         }
     };

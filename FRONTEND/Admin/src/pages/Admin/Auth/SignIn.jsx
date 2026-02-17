@@ -73,7 +73,7 @@ const SignIn = ({ handleSignIn, userInfo }) => {
                                         <input
                                             type="email"
                                             className="form-control border-0 shadow-none bg-transparent"
-                                            placeholder="user@gmail.com"
+                                            placeholder="Enter your email"
                                             value={user_email}
                                             onChange={(e) => setEmail(sanitizeEmail(e.target.value))}
                                             required
@@ -89,7 +89,7 @@ const SignIn = ({ handleSignIn, userInfo }) => {
                                         <input
                                             type={showPassword ? "text" : "password"}
                                             className="form-control border-0 shadow-none bg-transparent"
-                                            placeholder="Password"
+                                            placeholder="Enter your 6-digit password"
                                             value={passwords}
                                             onChange={(e) => setPassword(sanitizePassword(e.target.value))}
                                             required
@@ -120,7 +120,7 @@ const SignIn = ({ handleSignIn, userInfo }) => {
                                             boxShadow: '0 4px 15px rgba(139, 128, 249, 0.3)'
                                         }}
                                     >
-                                        <span>{loadingSubmit ? "login..." : "login..."}</span>
+                                        <span>{loadingSubmit ? "login" : "login"}</span>
                                         <i className="fas fa-arrow-right ms-2"></i>
                                     </button>
                                 </div>
@@ -147,7 +147,7 @@ const SignIn = ({ handleSignIn, userInfo }) => {
                     </div>
                 </div>
                 <div style={{ opacity: 0.6, textAlign: 'right', fontWeight: '500' }}>
-                    @{new Date().getFullYear()} All Rights Reserved
+                    Outdid Unified Pvt Ltd @{new Date().getFullYear()} All Rights Reserved
                 </div>
             </div>
         </div>
