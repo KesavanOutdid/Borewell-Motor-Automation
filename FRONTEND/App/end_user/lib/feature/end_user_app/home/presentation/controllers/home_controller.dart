@@ -13,7 +13,7 @@ import 'dart:convert';
 
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
-class HomeController extends GetxController {
+class HomeController extends GetxController with WidgetsBindingObserver {
   var devices = <Map<String, dynamic>>[].obs;
   var isLoading = false.obs;
   var isLoadingMore = false.obs;
@@ -32,6 +32,7 @@ class HomeController extends GetxController {
   final _storage = GetStorage();
   IO.Socket? _socket;
   Timer? _offlineCheckTimer;
+  Timer? _pendingRefreshTimer;
 
   // Track pending commands to avoid status mismatch during socket lag
   final _pendingCommands = <String, _PendingCommand>{};
@@ -70,14 +71,24 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     tokenService = Get.find<TokenService>();
     _loadCachedDevices();
     
     scrollController.addListener(() {
-      if (scrollController.position.pixels >= scrollController.position.maxScrollExtent - 200) {
+      if (scrollController.offset >= scrollController.position.maxScrollExtent - 200) {
         fetchMoreDevices();
       }
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      print('🏠 [HOME] App resumed, refreshing device states...');
+      _socket?.connect(); // Ensure socket is connected
+      fetchDevices(silent: true);
+    }
   }
 
   void _loadCachedDevices() {
@@ -99,6 +110,7 @@ class HomeController extends GetxController {
 
   @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     scrollController.dispose();
     _socket?.dispose();
     _offlineCheckTimer?.cancel();

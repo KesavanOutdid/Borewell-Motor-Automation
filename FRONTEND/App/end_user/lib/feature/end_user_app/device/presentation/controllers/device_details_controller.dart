@@ -13,7 +13,7 @@ import '../../../../../core/config/env.dart';
 import '../../../../../core/services/token_service.dart';
 // import '../../../../../core/services/notification_service.dart';
 
-class DeviceDetailsController extends GetxController {
+class DeviceDetailsController extends GetxController with WidgetsBindingObserver {
   final liveData = <String, dynamic>{}.obs;
   final isConnected = false.obs;
   final isLoading = false.obs;
@@ -53,6 +53,7 @@ class DeviceDetailsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     tokenService = Get.find<TokenService>();
     
     // Initialize with arguments if available
@@ -63,7 +64,17 @@ class DeviceDetailsController extends GetxController {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      print('🔧 [DETAILS] App resumed, refreshing state for $serialNumber');
+      _ensureSocketConnection();
+      refreshData();
+    }
+  }
+
+  @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     _closeSocket();
     super.onClose();
   }
