@@ -50,6 +50,47 @@ router.post(
 
 /**
  * @swagger
+ * /app/signup:
+ *   post:
+ *     summary: Signup new user and return JWT token
+ *     tags: [App]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               user_name:
+ *                 type: string
+ *               user_email:
+ *                 type: string
+ *               user_phone:
+ *                 type: number
+ *               password:
+ *                 type: number
+ *               role_id:
+ *                 type: number
+ *     responses:
+ *       201:
+ *         description: User created and token returned
+ */
+router.post(
+    '/signup',
+    [
+        body('user_name').notEmpty().withMessage("user_name required"),
+        body('user_email').isEmail().withMessage("Invalid email"),
+        body('role_id').isInt().withMessage("role_id required"),
+        body('user_phone').matches(/^[0-9]{10}$/).withMessage("Phone must be 10 digits"),
+        body('password')
+            .matches(/^[0-9]{6}$/)
+            .withMessage("Password must be 6 digits")
+    ],
+    appCtrl.signup
+);
+
+/**
+ * @swagger
  * /app/profile/{user_id}:
  *   get:
  *     summary: Get user profile by user_id (Requires JWT)

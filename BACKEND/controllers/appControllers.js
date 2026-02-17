@@ -1,5 +1,6 @@
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
+const Role = require('../models/Role');
 const Device = require('../models/Device');
 const Product = require('../models/Product');
 const Cart = require('../models/Cart');
@@ -59,6 +60,70 @@ exports.login = async (req, res, next) => {
         res.status(200).json({
             success: true,
             message: "Login successful",
+            token,
+            user: payload
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.signup = async (req, res, next) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty())
+            return res.status(400).json({ success: false, errors: errors.array() });
+
+        const { user_name, user_email, user_phone, password, role_id } = req.body;
+
+        // Check if role exists
+        const role = await Role.findOne({ role_id: Number(role_id) });
+        if (!role)
+            return res.status(400).json({ success: false, message: 'Invalid role_id' });
+
+        // Check if email already exists
+        const emailExists = await User.findOne({ user_email });
+        if (emailExists)
+            return res.status(409).json({ success: false, message: "Email already exists" });
+
+        // Check if phone already exists
+        const phoneExists = await User.findOne({ user_phone });
+        if (phoneExists)
+            return res.status(409).json({ success: false, message: "Phone number already exists" });
+
+        // AUTO-INCREMENT user_id
+        const lastUser = await User.findOne().sort({ user_id: -1 }).lean();
+        const newUserId = lastUser ? lastUser.user_id + 1 : 1;
+
+        // Create user
+        const user = new User({
+            user_id: newUserId,
+            user_name,
+            role_id: Number(role_id),
+            user_email,
+            user_phone: Number(user_phone),
+            password: Number(password),
+            createdBy: user_email,
+        });
+
+        await user.save();
+
+        // Direct Login: Prepare payload
+        const payload = {
+            user_id: user.user_id,
+            user_email: user.user_email,
+            user_name: user.user_name,
+            role_id: user.role_id,
+            user_phone: Number(user.user_phone),
+        };
+
+        // Generate JWT
+        const token = jwt.sign(payload, JWT_SECRET);
+
+        res.status(201).json({
+            success: true,
+            message: "Signup successful",
             token,
             user: payload
         });

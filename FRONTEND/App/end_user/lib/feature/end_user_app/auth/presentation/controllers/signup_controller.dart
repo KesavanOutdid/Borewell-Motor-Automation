@@ -4,6 +4,9 @@ import '../../../../../core/config/env.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../../../../../core/services/token_service.dart';
+import '../../../home/presentation/controllers/home_controller.dart';
+import './auth_controller.dart';
 
 class SignupController extends GetxController {
   var name = "".obs;
@@ -11,6 +14,14 @@ class SignupController extends GetxController {
   var phone = "".obs;
   var password = "".obs;
   var isLoading = false.obs;
+
+  late TokenService tokenService;
+
+  @override
+  void onInit() {
+    super.onInit();
+    tokenService = Get.find<TokenService>();
+  }
 
   bool isValidEmail(String email) {
     return RegExp(
@@ -24,32 +35,6 @@ class SignupController extends GetxController {
 
   void _showErrorDialog(String message) {
     UIUtils.showErrorDialog(message: message);
-  }
-
-  void _showSuccessDialog(String email) {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.check_circle_outline, color: Colors.green),
-            SizedBox(width: 8),
-            Text("Success"),
-          ],
-        ),
-        content: const Text("Account created successfully"),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Get.back();
-              Get.offNamed('/login', arguments: {'email': email});
-            },
-            child: const Text("OK", style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-      barrierDismissible: false,
-    );
   }
 
   Future<void> signup() async {
@@ -95,8 +80,42 @@ class SignupController extends GetxController {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
-        final userEmail = responseData['user']['user_email'] ?? email.value;
-        _showSuccessDialog(userEmail);
+        
+        if (responseData['success'] == true) {
+          final authToken = responseData['token'] ?? "";
+          final userData = responseData['user'];
+          final userId = userData['user_id'] ?? 0;
+          final userName = userData['user_name'] ?? "";
+          final userEmail = userData['user_email'] ?? email.value;
+          
+          await tokenService.saveToken(
+            authToken,
+            userId,
+            userName,
+            userEmail: userEmail,
+          );
+          
+          // Update AuthController state if needed
+          try {
+            final authController = Get.find<AuthController>();
+            authController.loadStoredToken();
+            authController.email.value = userEmail;
+            await authController.updateFcmToken();
+          } catch (e) {
+            print('AuthController not found: $e');
+          }
+
+          Get.offAllNamed('/home');
+          
+          try {
+            final homeController = Get.find<HomeController>();
+            homeController.fetchDevices();
+          } catch (e) {
+            print('HomeController not found: $e');
+          }
+        } else {
+          _showErrorDialog(responseData['message'] ?? "Signup failed");
+        }
       } else {
         final Map<String, dynamic> errorData = jsonDecode(response.body);
         String errorMsg = "Signup failed";

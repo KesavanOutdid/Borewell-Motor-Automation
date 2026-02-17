@@ -1,7 +1,7 @@
 class AppConfig {
   static const String baseUrl = "http://192.168.0.40:3030";
   static const String loginEndpoint = "/app/login";
-  static const String signupEndpoint = "/admin/createUser";
+  static const String signupEndpoint = "/app/signup";
   static const String deviceEndpoint = "/api/devices";
   static const String profileEndpoint = "/app/profile";
   static const String updateProfileEndpoint = "/app/updatedProfile";
