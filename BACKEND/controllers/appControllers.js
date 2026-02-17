@@ -99,7 +99,14 @@ exports.updateProfile = async (req, res, next) => {
     try {
         const userId = Number(req.params.user_id);
 
-        const { user_name, user_phone, status, password } = req.body;
+        let { user_name, user_phone, status, password } = req.body;
+
+        if (user_name) {
+            user_name = user_name.trim();
+            if (!/^[a-zA-Z\s]+$/.test(user_name)) {
+                return res.status(400).json({ success: false, message: 'Name should contain letters only.' });
+            }
+        }
 
         // Check if phone is being updated and if it already exists for another user
         if (user_phone) {
@@ -1897,6 +1904,14 @@ exports.createVoucher = async (req, res, next) => {
 
         const { voucher_code, discount_percentage, start_date, end_date, max_usage, description, createdBy } = req.body;
 
+        // Validation
+        if (discount_percentage !== undefined && (isNaN(discount_percentage) || discount_percentage < 0 || discount_percentage > 100)) {
+            return res.status(400).json({ success: false, message: "Discount percentage must be between 0 and 100" });
+        }
+        if (max_usage !== undefined && max_usage !== null && max_usage !== '' && (isNaN(max_usage) || max_usage < 1)) {
+            return res.status(400).json({ success: false, message: "Max usage must be at least 1" });
+        }
+
         const existingVoucher = await Voucher.findOne({ voucher_code: voucher_code.toUpperCase() });
         if (existingVoucher)
             return res.status(400).json({ success: false, message: "Voucher code already exists" });
@@ -2003,6 +2018,17 @@ exports.updateVoucher = async (req, res, next) => {
 
         if (!id)
             return res.status(400).json({ success: false, message: "Voucher ID is required" });
+
+        // Validation
+        if (discount_percentage !== undefined && (isNaN(discount_percentage) || discount_percentage < 0 || discount_percentage > 100)) {
+            return res.status(400).json({ success: false, message: "Discount percentage must be between 0 and 100" });
+        }
+        if (max_usage !== undefined && max_usage !== null && max_usage !== '' && (isNaN(max_usage) || max_usage < 1)) {
+            return res.status(400).json({ success: false, message: "Max usage must be at least 1" });
+        }
+        if (used_count !== undefined && isNaN(used_count)) {
+            return res.status(400).json({ success: false, message: "Used count must be a number" });
+        }
 
         const voucher = await Voucher.findById(id);
         if (!voucher)

@@ -44,10 +44,13 @@ export const sanitizeMobile = (value) => {
 // };
 
 export const sanitizeEmail = (value) => {
-    // Remove spaces and keep only valid characters for an email
+    // Remove spaces and keep only valid characters for an email (letters, digits, @, and .)
     const noSpaces = value.replace(/\s/g, '');
-    const validChars = noSpaces.replace(/[^a-zA-Z0-9@._-]/g, ''); // Allow letters, digits, @, ., _, and -
+    let validChars = noSpaces.replace(/[^a-zA-Z0-9@.]/g, ''); // Disallow - and _
     
+    // Collapse consecutive dots
+    validChars = validChars.replace(/\.+/g, '.');
+
     // Convert to lowercase
     const lowerCaseEmail = validChars.toLowerCase();
 

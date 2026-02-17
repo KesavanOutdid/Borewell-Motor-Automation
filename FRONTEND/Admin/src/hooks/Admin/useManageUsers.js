@@ -107,7 +107,8 @@ const useManageUsers = (userInfo) => {
 
         if (!sanitizedName) return setErrorMessage("Name required");
         if (sanitizedMobile.length !== 10) return setErrorMessage("Mobile must be 10 digits");
-        if (!sanitizedEmail.includes("@")) return setErrorMessage("Invalid email");
+        const emailRegex = /^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(sanitizedEmail) || sanitizedEmail.includes('-') || sanitizedEmail.includes('_')) return setErrorMessage("Invalid email format (Hyphens and underscores not allowed)");
         if (sanitizedPassword.length !== 6) return setErrorMessage("Password must be 6 digits");
 
         if (loadingSubmit) return;
@@ -133,7 +134,11 @@ const useManageUsers = (userInfo) => {
             const res = await response.json();
 
             if (!response.ok) {
-                setErrorMessage(res.message || "Error creating user");
+                let errorMsg = res.message || "Error creating user";
+                if (res.errors && Array.isArray(res.errors) && res.errors.length > 0) {
+                    errorMsg = res.errors[0].msg;
+                }
+                setErrorMessage(errorMsg);
                 setLoadingSubmit(false);
                 return;
             }

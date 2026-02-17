@@ -105,9 +105,7 @@ const useManageDevices = (userInfo) => {
 
     const handleDeviceCreate = async (e) => {
         e.preventDefault();
-
-        if (loadingSubmit) return;
-        setLoadingSubmit(true);
+        setErrorMessage('');
 
         const sanitizedSerialNumber = sanitizeSerialNumber(serialNumber);
 
@@ -117,11 +115,20 @@ const useManageDevices = (userInfo) => {
             return;
         }
 
+        if (sanitizedSerialNumber.length < 10) {
+            setErrorMessage("Serial Number must be at least 10 characters.");
+            setTimeout(() => setErrorMessage(''), 5000);
+            return;
+        }
+
         if (sanitizedSerialNumber.length < 17 || sanitizedSerialNumber.length > 20) {
             setErrorMessage("Serial Number must be between 17 to 20 characters.");
             setTimeout(() => setErrorMessage(''), 5000);
             return;
         }
+
+        if (loadingSubmit) return;
+        setLoadingSubmit(true);
 
         try {
             const response = await fetch(`${API_BASE}/admin/createdDevice`, {

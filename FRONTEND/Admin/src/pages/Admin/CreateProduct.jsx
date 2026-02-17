@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
-import { showAlertSuccess } from '../../utils/alert';
+import { showAlertSuccess, showAlertError } from '../../utils/alert';
 
 const CreateProduct = ({ userInfo, handleLogout }) => {
     const API_BASE = process.env.REACT_APP_SERVER_URL;
@@ -105,6 +105,18 @@ const CreateProduct = ({ userInfo, handleLogout }) => {
         if (!productDescription.trim()) return setErrorMessage('Product description is required');
         if (!mainImageFile) return setErrorMessage('Main image is required');
 
+        // Box Size Validation: Allow only numbers and '*'
+        const boxSizeRegex = /^[\d*]*$/;
+        if (boxSize.trim() && !boxSizeRegex.test(boxSize.trim())) {
+            return setErrorMessage('Invalid Box Size format. Only numbers and "*" are allowed (e.g., 3*6)');
+        }
+
+        // Numeric fields validation
+        if (productPrice && isNaN(productPrice)) return setErrorMessage('Price must be a number');
+        if (productGst && isNaN(productGst)) return setErrorMessage('GST must be a number');
+        if (productShippingCost && isNaN(productShippingCost)) return setErrorMessage('Shipping Cost must be a number');
+        if (productQuantity && !/^\d+$/.test(productQuantity)) return setErrorMessage('Quantity must be an integer');
+
         if (loading) return;
         setLoading(true);
         setErrorMessage('');
@@ -140,7 +152,7 @@ const CreateProduct = ({ userInfo, handleLogout }) => {
                 }
             }
 
-            const response = await fetch(`${API_BASE}/createProduct`, {
+            const response = await fetch(`${API_BASE}/admin/createProduct`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -167,7 +179,9 @@ const CreateProduct = ({ userInfo, handleLogout }) => {
             const res = await response.json();
 
             if (!response.ok) {
-                setErrorMessage(res.message || 'Error creating product');
+                const errorMsg = res.message || 'Error creating product';
+                setErrorMessage(errorMsg);
+                showAlertError(errorMsg);
                 setLoading(false);
                 return;
             }
@@ -176,7 +190,9 @@ const CreateProduct = ({ userInfo, handleLogout }) => {
             navigate('/manage-products');
         } catch (err) {
             console.log('Create Product Error:', err);
-            setErrorMessage(err.message || 'Error creating product');
+            const errorMsg = err.message || 'Error creating product';
+            setErrorMessage(errorMsg);
+            showAlertError(errorMsg);
             setLoading(false);
         }
 
@@ -235,8 +251,8 @@ const CreateProduct = ({ userInfo, handleLogout }) => {
                                                         type="text"
                                                         className="form-control"
                                                         value={boxSize}
-                                                        onChange={(e) => setBoxSize(e.target.value)}
-                                                        placeholder="e.g., 10x10x10 cm"
+                                                        onChange={(e) => setBoxSize(e.target.value.replace(/[^\d*]/g, ''))}
+                                                        placeholder="e.g., 10*10*10"
                                                     />
                                                 </div>
                                             </div>
@@ -455,7 +471,7 @@ const CreateProduct = ({ userInfo, handleLogout }) => {
                                             <button
                                                 type="submit"
                                                 className="btn btn-primary mb-0"
-                                                disabled={loading}
+                                                disabled={loading || !productName.trim() || !productDescription.trim() || !mainImageFile || productPrice === '' || productGst === '' || productShippingCost === '' || productQuantity === ''}
                                             >
                                                 {loading ? 'Creating...' : 'Create Product'}
                                             </button>

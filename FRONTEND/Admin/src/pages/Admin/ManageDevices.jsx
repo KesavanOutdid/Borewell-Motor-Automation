@@ -103,7 +103,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
         setLoadingUpdate(true);
 
         try {
-            const response = await fetch(`${API_BASE}/updatedDevice`, {
+            const response = await fetch(`${API_BASE}/admin/updatedDevice`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

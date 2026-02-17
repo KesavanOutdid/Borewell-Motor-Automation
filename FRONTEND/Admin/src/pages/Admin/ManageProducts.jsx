@@ -53,10 +53,8 @@ const ManageProducts = ({ userInfo, handleLogout }) => {
     };
 
     const handleDeleteProduct = async (id, productName) => {
-        if (window.confirm(`Are you sure you want to delete "${productName}"?`)) {
-            await handleProductDelete(id);
-            fetchProductData();
-        }
+        await handleProductDelete(id, productName);
+        fetchProductData();
     };
 
     return (

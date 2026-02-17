@@ -48,12 +48,13 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
         navigate('/edit-voucher', { state: { voucher } });
     };
 
-    const handleDeleteVoucher = async (id, code) => {
-        const result = await showDeleteConfirmation(code);
-        if (result.isConfirmed) {
-            await handleVoucherDelete(id);
-            fetchVoucherData();
+    const handleDeleteVoucher = async (e, id, code) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
         }
+        await handleVoucherDelete(id, code);
+        fetchVoucherData();
     };
 
     const formatDate = (date) => {
@@ -131,12 +132,13 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                         <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Valid From</th>
                                                         <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Valid Until</th>
                                                         <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Usage</th>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Description</th>
                                                         <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Status</th>
                                                         <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Actions</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <TableSkeleton rows={8} columns={7} />
+                                                    <TableSkeleton rows={8} columns={8} />
                                                 </tbody>
                                             </table>
                                         </div>
@@ -155,6 +157,7 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                             <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Valid From</th>
                                                             <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Valid Until</th>
                                                             <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Usage</th>
+                                                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Description</th>
                                                             <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Status</th>
                                                             <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Actions</th>
                                                         </tr>
@@ -167,6 +170,19 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                                 <td style={{ padding: '12px', color: '#666' }}>{formatDate(voucher.start_date)}</td>
                                                                 <td style={{ padding: '12px', color: '#666' }}>{formatDate(voucher.end_date)}</td>
                                                                 <td style={{ padding: '12px', color: '#666' }}>{voucher.used_count}{voucher.max_usage ? `/${voucher.max_usage}` : ''}</td>
+                                                                <td style={{ padding: '12px', color: '#666', minWidth: '150px', maxWidth: '250px' }}>
+                                                                    <div style={{ 
+                                                                        maxHeight: '100px', 
+                                                                        overflowY: 'auto', 
+                                                                        whiteSpace: 'normal', 
+                                                                        wordBreak: 'break-word',
+                                                                        fontSize: '12px',
+                                                                        lineHeight: '1.5',
+                                                                        paddingRight: '5px'
+                                                                    }}>
+                                                                        {voucher.description || 'N/A'}
+                                                                    </div>
+                                                                </td>
                                                                 <td style={{ padding: '12px' }}>
                                                                     <span style={{
                                                                         backgroundColor: isVoucherValid(voucher) ? '#15803d' : (voucher.status ? '#f97316' : '#6c757d'),
@@ -189,7 +205,7 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                                     </button>
                                                                     <button
                                                                         className="btn btn-sm btn-danger mb-0"
-                                                                        onClick={() => handleDeleteVoucher(voucher._id, voucher.voucher_code)}
+                                                                        onClick={(e) => handleDeleteVoucher(e, voucher._id, voucher.voucher_code)}
                                                                     >
                                                                         <i className="fas fa-trash"></i> Delete
                                                                     </button>

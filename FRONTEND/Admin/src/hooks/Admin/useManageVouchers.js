@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { showAlertSuccess } from '../../utils/alert';
+import { showAlertSuccess, showDeleteConfirmation, showAlertError } from '../../utils/alert';
 
 const useManageVouchers = (userInfo) => {
     const API_BASE = process.env.REACT_APP_SERVER_URL;
@@ -121,8 +121,11 @@ const useManageVouchers = (userInfo) => {
         if (new Date(startDate) >= new Date(endDate))
             return setErrorMessage('Start date must be before end date');
 
-        if (discountPercentage < 0 || discountPercentage > 100)
-            return setErrorMessage('Discount percentage must be between 0-100');
+        if (isNaN(discountPercentage) || discountPercentage < 0 || discountPercentage > 100)
+            return setErrorMessage('Discount percentage must be a number between 0-100');
+
+        if (maxUsage !== '' && maxUsage !== null && (isNaN(maxUsage) || maxUsage < 1))
+            return setErrorMessage('Max usage must be a number at least 1');
 
         if (loadingSubmit) return;
         setLoadingSubmit(true);
@@ -156,12 +159,14 @@ const useManageVouchers = (userInfo) => {
             showAlertSuccess('Voucher created successfully!');
             fetchVoucherData();
             closeModal();
+            setLoadingSubmit(false);
+            return true;
         } catch (err) {
             console.log('Create Voucher Error:', err);
             setErrorMessage('Error creating voucher.');
+            setLoadingSubmit(false);
+            return false;
         }
-
-        setLoadingSubmit(false);
     }, [API_BASE, userInfo, voucherCode, discountPercentage, startDate, endDate, maxUsage, description, loadingSubmit, fetchVoucherData, closeModal]);
 
     const handleVoucherUpdate = useCallback(async (e) => {
@@ -198,6 +203,12 @@ const useManageVouchers = (userInfo) => {
 
         if (new Date(currentVoucherDetails.start_date) >= new Date(currentVoucherDetails.end_date))
             return setErrorMessageEdit('Start date must be before end date');
+
+        if (isNaN(currentVoucherDetails.discount_percentage) || currentVoucherDetails.discount_percentage < 0 || currentVoucherDetails.discount_percentage > 100)
+            return setErrorMessageEdit('Discount percentage must be a number between 0-100');
+
+        if (currentVoucherDetails.max_usage !== '' && currentVoucherDetails.max_usage !== null && (isNaN(currentVoucherDetails.max_usage) || currentVoucherDetails.max_usage < 1))
+            return setErrorMessageEdit('Max usage must be a number at least 1');
 
         if (loadingUpdate) return;
         setLoadingUpdate(true);
@@ -245,8 +256,9 @@ const useManageVouchers = (userInfo) => {
         }
     }, [API_BASE, userInfo, currentVoucherDetails, loadingUpdate, fetchVoucherData, pagination.currentPage, pagination.limit, closeModal]);
 
-    const handleVoucherDelete = useCallback(async (id) => {
-        if (!window.confirm('Are you sure you want to delete this voucher?')) return;
+    const handleVoucherDelete = useCallback(async (id, voucherCode) => {
+        const result = await showDeleteConfirmation(voucherCode, 'voucher');
+        if (!result.isConfirmed) return;
 
         try {
             const response = await fetch(`${API_BASE}/app/deleteVoucher`, {
@@ -261,7 +273,7 @@ const useManageVouchers = (userInfo) => {
             const res = await response.json();
 
             if (!response.ok) {
-                alert(res.message || 'Error deleting voucher');
+                showAlertError(res.message || 'Error deleting voucher');
                 return;
             }
 
@@ -269,7 +281,7 @@ const useManageVouchers = (userInfo) => {
             fetchVoucherData(pagination.currentPage, pagination.limit);
         } catch (err) {
             console.log('Delete Voucher Error:', err);
-            alert('Error deleting voucher');
+            showAlertError('Error deleting voucher');
         }
     }, [API_BASE, userInfo.token, fetchVoucherData, pagination.currentPage, pagination.limit]);
 

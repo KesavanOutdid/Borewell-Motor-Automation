@@ -68,6 +68,10 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
         const { name, value, type, checked } = e.target;
         let finalValue = type === 'checkbox' ? checked : value;
 
+        if (name === 'status') {
+            finalValue = value === 'true';
+        }
+
         if (name === 'discount_percentage' || name === 'max_usage' || name === 'used_count') {
             if (value === '') {
                 finalValue = '';
@@ -129,6 +133,7 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
         const success = await handleVoucherUpdate(e);
         if (success) {
             setInitialVoucherDetails({ ...currentVoucherDetails });
+            navigate('/manage-vouchers');
         }
     };
 
@@ -251,7 +256,7 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                                         </div>
 
                                         <div className="row mt-3">
-                                            <div className="col-md-6 col-12">
+                                            <div className="col-md-4 col-12">
                                                 <label className="form-label">Max Usage</label>
                                                 <input
                                                     type="number"
@@ -265,7 +270,7 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                                                 />
                                             </div>
 
-                                            <div className="col-md-6 col-12">
+                                            <div className="col-md-4 col-12">
                                                 <label className="form-label">Usage Count</label>
                                                 <input
                                                     type="number"
@@ -277,6 +282,19 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                                                     required
                                                 />
                                                 <small className="text-muted">Usage count of the voucher</small>
+                                            </div>
+
+                                            <div className="col-md-4 col-12">
+                                                <label className="form-label">Status</label>
+                                                <select
+                                                    className="form-control"
+                                                    name="status"
+                                                    value={currentVoucherDetails.status.toString()}
+                                                    onChange={handleChange}
+                                                >
+                                                    <option value="true">Active</option>
+                                                    <option value="false">Inactive</option>
+                                                </select>
                                             </div>
                                         </div>
 
@@ -291,27 +309,6 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                                                     onChange={handleChange}
                                                     required
                                                 ></textarea>
-                                            </div>
-                                        </div>
-
-                                        <div className="row mt-3">
-                                            <div className="col-12">
-                                                <div className="form-check">
-                                                    <input
-                                                        type="checkbox"
-                                                        className="form-check-input"
-                                                        id="voucherStatus"
-                                                        name="status"
-                                                        checked={currentVoucherDetails.status}
-                                                        onChange={handleChange}
-                                                    />
-                                                    <label className="form-check-label" htmlFor="voucherStatus">
-                                                        Active/Inactive
-                                                    </label>
-                                                </div>
-                                                <small className="text-muted">
-                                                    Status: {currentVoucherDetails.status ? 'Active' : 'Inactive'}
-                                                </small>
                                             </div>
                                         </div>
 

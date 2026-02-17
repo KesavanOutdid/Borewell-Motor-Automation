@@ -145,7 +145,17 @@ router.post(
     [
         body('user_name').notEmpty().withMessage("user_name required"),
         body('role_id').isInt().withMessage("role_id must be a number"),
-        body('user_email').isEmail().withMessage("Invalid email format"),
+        body('user_email')
+            .isEmail().withMessage("Invalid email format (e.g., user@example.com)")
+            .custom(value => {
+                if (/[-_]/.test(value)) {
+                    throw new Error("Hyphens (-) and underscores (_) are not allowed in email");
+                }
+                if (/\.{2,}/.test(value)) {
+                    throw new Error("Consecutive dots (..) are not allowed in email");
+                }
+                return true;
+            }),
         body('user_phone').matches(/^[0-9]{10}$/).withMessage("Phone must be 10 digits"),
         body('password').matches(/^[0-9]{6}$/).withMessage("Password must be 6 digits"),
         body('createdBy').notEmpty().withMessage("createdBy required"),
@@ -430,7 +440,18 @@ router.post("/deviceAssignTouser", adminCtrl.deviceAssignToUser);
  *       400:
  *         description: Bad request
  */
-router.post("/manageUserUpdated", adminCtrl.manageUserUpdated);
+router.post(
+    "/manageUserUpdated",
+    [
+        body('user_id').notEmpty().withMessage("user_id required"),
+        body('user_name').optional().notEmpty().withMessage("user_name cannot be empty"),
+        body('user_phone').optional().matches(/^[0-9]{10}$/).withMessage("Phone must be 10 digits"),
+        body('password').optional().matches(/^[0-9]{6}$/).withMessage("Password must be 6 digits"),
+        body('status').optional().isBoolean().withMessage("status must be true/false"),
+        body('updatedBy').notEmpty().withMessage("updatedBy required"),
+    ],
+    adminCtrl.manageUserUpdated
+);
 
 /**
  * @swagger

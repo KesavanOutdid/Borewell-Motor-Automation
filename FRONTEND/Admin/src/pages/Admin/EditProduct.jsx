@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
-import { showAlertSuccess } from '../../utils/alert';
+import { showAlertSuccess, showAlertError } from '../../utils/alert';
 
 const EditProduct = ({ userInfo, handleLogout }) => {
     const API_BASE = process.env.REACT_APP_SERVER_URL;
@@ -162,6 +162,18 @@ const EditProduct = ({ userInfo, handleLogout }) => {
         if (!productName.trim()) return setErrorMessage('Product name is required');
         if (!productDescription.trim()) return setErrorMessage('Product description is required');
 
+        // Box Size Validation: Allow only numbers and '*'
+        const boxSizeRegex = /^[\d*]*$/;
+        if (boxSize.trim() && !boxSizeRegex.test(boxSize.trim())) {
+            return setErrorMessage('Invalid Box Size format. Only numbers and "*" are allowed (e.g., 3*6)');
+        }
+
+        // Numeric fields validation
+        if (productPrice && isNaN(productPrice)) return setErrorMessage('Price must be a number');
+        if (productGst && isNaN(productGst)) return setErrorMessage('GST must be a number');
+        if (productShippingCost && isNaN(productShippingCost)) return setErrorMessage('Shipping Cost must be a number');
+        if (productQuantity && !/^\d+$/.test(productQuantity)) return setErrorMessage('Quantity must be an integer');
+
         if (loading) return;
         setLoading(true);
         setErrorMessage('');
@@ -186,7 +198,7 @@ const EditProduct = ({ userInfo, handleLogout }) => {
                 }
             }
 
-            const response = await fetch(`${API_BASE}/updateProduct`, {
+            const response = await fetch(`${API_BASE}/admin/updateProduct`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -215,7 +227,9 @@ const EditProduct = ({ userInfo, handleLogout }) => {
             const res = await response.json();
 
             if (!response.ok) {
-                setErrorMessage(res.message || 'Error updating product');
+                const errorMsg = res.message || 'Error updating product';
+                setErrorMessage(errorMsg);
+                showAlertError(errorMsg);
                 setLoading(false);
                 return;
             }
@@ -224,7 +238,9 @@ const EditProduct = ({ userInfo, handleLogout }) => {
             navigate('/manage-products');
         } catch (err) {
             console.log('Update Product Error:', err);
-            setErrorMessage(err.message || 'Error updating product');
+            const errorMsg = err.message || 'Error updating product';
+            setErrorMessage(errorMsg);
+            showAlertError(errorMsg);
             setLoading(false);
         }
 
@@ -282,7 +298,7 @@ const EditProduct = ({ userInfo, handleLogout }) => {
                                                         type="text"
                                                         className="form-control"
                                                         value={boxSize}
-                                                        onChange={(e) => setBoxSize(e.target.value)}
+                                                        onChange={(e) => setBoxSize(e.target.value.replace(/[^\d*]/g, ''))}
                                                     />
                                                 </div>
                                             </div>
@@ -522,7 +538,7 @@ const EditProduct = ({ userInfo, handleLogout }) => {
                                             <button
                                                 type="submit"
                                                 className="btn btn-primary mb-0"
-                                                disabled={loading || !isFormDirty}
+                                                disabled={loading || !isFormDirty || !productName.trim() || !productDescription.trim() || productPrice === '' || productGst === '' || productShippingCost === '' || productQuantity === ''}
                                             >
                                                 {loading ? 'Updating...' : 'Update Product'}
                                             </button>

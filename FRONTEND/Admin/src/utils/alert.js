@@ -44,9 +44,10 @@ export const showAlertError = (title) => {
 };
 
 // Function to show delete confirmation alert
-export const showDeleteConfirmation = async (itemName) => {
+export const showDeleteConfirmation = async (itemName, type = 'item') => {
     return Swal.fire({
-        title: `Are you sure you want to delete voucher "${itemName}"?`,
+        title: `Are you sure you want to delete this ${type}?`,
+        text: itemName ? `Item: ${itemName}` : "",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Yes, Delete',

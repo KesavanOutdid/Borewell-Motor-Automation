@@ -35,6 +35,13 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
         description.trim() &&
         maxUsage !== '';
 
+    const onCreate = async (e) => {
+        const success = await handleVoucherCreate(e);
+        if (success) {
+            navigate('/manage-vouchers');
+        }
+    };
+
     return (
         <div style={{ paddingTop: '15px' }}>
             <Sidebar />
@@ -56,7 +63,7 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
                                         </div>
                                     )}
 
-                                    <form onSubmit={handleVoucherCreate}>
+                                    <form onSubmit={onCreate}>
                                         <div className="row">
                                             <div className="col-md-6 col-12">
                                                 <label className="form-label">Voucher Code</label>

@@ -149,7 +149,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
         setLoadingUpdate(true); // Disable button
 
         try {
-            const response = await fetch(`${API_BASE}/manageUserUpdated`, {
+            const response = await fetch(`${API_BASE}/admin/manageUserUpdated`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -236,7 +236,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                             <form className="form" onSubmit={handleUserCreateWrapper} style={{ overflowY: "auto" }}>
                                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                                     <h5 style={{ margin: 0 }}>Create User</h5>
-                                                    <button onClick={closeModal} style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer" }}>
+                                                    <button type="button" onClick={closeModal} style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer" }}>
                                                         &times;
                                                     </button>
                                                 </div>
@@ -254,7 +254,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                                 style={{ width: "100%", padding: "8px", margin: "5px 0" }}
                                                                 value={selectedUserRoleId || selectedUserRoleName || ''}
                                                                 onChange={(e) => {
-                                                                    const selectedUserRole = userRolesData.find(role => role.id === e.target.value);
+                                                                    const selectedUserRole = userRolesData.find(role => String(role.role_id) === String(e.target.value));
                                                                     setSelectedUserRoleId(selectedUserRole?.role_id || null);
                                                                     setSelectedUserRoleName(selectedUserRole?.role_name || '');
                                                                     handleRoleChange(e); // Function to handle role selection and fetch clients
@@ -332,6 +332,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                     gap: "10px"
                                                 }}>
                                                     <button
+                                                        type="button"
                                                         className="btn btn-secondary mb-0"
                                                         style={{ padding: '10px' }}
                                                         onClick={closeModal}
@@ -342,7 +343,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                         type="submit"
                                                         className="btn btn-primary mb-0"
                                                         style={{ padding: '10px' }}
-                                                        disabled={loadingSubmit}>{loadingSubmit ? "Creating..." : "Create"}</button>
+                                                        disabled={loadingSubmit || !selectedUserRoleId || !userName.trim() || userMobile.length !== 10 || !userEmail.trim() || userPassword.length !== 6}>{loadingSubmit ? "Creating..." : "Create"}</button>
                                                 </div>
                                             </form>
                                             {errorMessage && (
@@ -361,7 +362,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                 <form className="form" onSubmit={handleEditSubmit}>
                                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", }}>
                                                         <h5 style={{ margin: 0 }}>Edit User</h5>
-                                                        <button onClick={closeModal} style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer", }}> &times; </button>
+                                                        <button type="button" onClick={closeModal} style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer", }}> &times; </button>
                                                     </div>
                                                     <div style={{ marginTop: "15px" }}>
                                                         <div style={{ marginBottom: "10px" }}>
@@ -405,8 +406,8 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                         justifyContent: "flex-end",
                                                         gap: "10px"
                                                     }}>
-                                                        <button className="btn btn-secondary mb-0" style={{ padding: '10px' }} onClick={closeModal}>Close</button>
-                                                        <button type="submit" className="btn btn-primary mb-0" style={{ padding: '10px' }} disabled={!isFormDirty || loadingUpdate}>{loadingUpdate ? "Updating..." : "Update"}</button>
+                                                        <button type="button" className="btn btn-secondary mb-0" style={{ padding: '10px' }} onClick={closeModal}>Close</button>
+                                                        <button type="submit" className="btn btn-primary mb-0" style={{ padding: '10px' }} disabled={!isFormDirty || loadingUpdate || !currentUserDetails?.user_name?.trim() || currentUserDetails?.password?.length !== 6}>{loadingUpdate ? "Updating..." : "Update"}</button>
                                                     </div>
                                                 </form>
                                                 {errorMessageEdit && (

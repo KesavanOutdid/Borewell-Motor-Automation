@@ -229,30 +229,63 @@ exports.getUsers = async (req, res, next) => {
         const totalDeactiveUsers = await User.countDocuments({ ...searchFilter, status: false });
 
         // Aggregation for users paging
-        const users = await User.aggregate([
-            { $match: searchFilter },
-            {
-                $lookup: {
-                    from: "roles",
-                    localField: "role_id",
-                    foreignField: "role_id",
-                    as: "role"
-                }
-            },
-            { $unwind: { path: "$role", preserveNullAndEmptyArrays: true } },
-            { $match: aggregatedSearchFilter },
+        const pipeline = [];
+
+        // If searching, we need to lookup role first to search by role_name
+        if (search) {
+            pipeline.push(
+                {
+                    $lookup: {
+                        from: "roles",
+                        localField: "role_id",
+                        foreignField: "role_id",
+                        as: "role"
+                    }
+                },
+                { $unwind: { path: "$role", preserveNullAndEmptyArrays: true } },
+                { $match: aggregatedSearchFilter }
+            );
+        } else {
+            pipeline.push(
+                { $match: searchFilter },
+                {
+                    $lookup: {
+                        from: "roles",
+                        localField: "role_id",
+                        foreignField: "role_id",
+                        as: "role"
+                    }
+                },
+                { $unwind: { path: "$role", preserveNullAndEmptyArrays: true } }
+            );
+        }
+
+        pipeline.push(
             { $project: { "role._id": 0, "role.createdAt": 0, "role.updatedAt": 0, "role.__v": 0 } },
-            { $sort: { createdAt: -1 } },
+            { $sort: { createdAt: -1 } }
+        );
+
+        // Get total count for pagination when searching
+        let totalUsersFiltered = totalUsers;
+        if (search) {
+            const countPipeline = [...pipeline, { $count: "total" }];
+            const countResult = await User.aggregate(countPipeline);
+            totalUsersFiltered = countResult.length > 0 ? countResult[0].total : 0;
+        }
+
+        pipeline.push(
             { $skip: skip },
             { $limit: limit }
-        ]);
+        );
+
+        const users = await User.aggregate(pipeline);
 
         const formatted = users.map(u => ({
             ...u,
             role_name: u.role?.role_name || "N/A"
         }));
 
-        const totalPages = Math.ceil(totalUsers / limit);
+        const totalPages = Math.ceil(totalUsersFiltered / limit);
 
         const response = {
             success: true,
@@ -261,7 +294,7 @@ exports.getUsers = async (req, res, next) => {
                 currentPage: page,
                 totalPages,
                 limit,
-                totalUsers,
+                totalUsers: totalUsersFiltered,
                 totalCustomerUsers,
                 totalAdminUsers,
                 totalActiveUsers,
@@ -894,6 +927,29 @@ exports.createProduct = async (req, res, next) => {
                 message: "product_name, product_description, and product_main_image are required"
             });
 
+        // Box Size Validation
+        const boxSizeRegex = /^(\d+(\.\d+)?\s*[xX*]\s*)*\d+(\.\d+)?$/;
+        if (product_quality?.box_size && !boxSizeRegex.test(product_quality.box_size)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid Box Size format. Use numbers (e.g., 10 or 10x10x10)"
+            });
+        }
+
+        // Numeric fields validation
+        if (product_price !== undefined && isNaN(product_price)) {
+            return res.status(400).json({ success: false, message: "Price must be a number" });
+        }
+        if (product_gst !== undefined && isNaN(product_gst)) {
+            return res.status(400).json({ success: false, message: "GST must be a number" });
+        }
+        if (product_shipping_cost !== undefined && isNaN(product_shipping_cost)) {
+            return res.status(400).json({ success: false, message: "Shipping Cost must be a number" });
+        }
+        if (product_quantity !== undefined && !/^\d+$/.test(product_quantity)) {
+            return res.status(400).json({ success: false, message: "Quantity must be an integer" });
+        }
+
         const lastProduct = await Product.findOne().sort({ product_id: -1 }).lean();
         const newProductId = lastProduct ? lastProduct.product_id + 1 : 1;
 
@@ -1033,6 +1089,29 @@ exports.updateProduct = async (req, res, next) => {
 
         if (!product)
             return res.status(404).json({ success: false, message: "Product not found" });
+
+        // Box Size Validation
+        const boxSizeRegex = /^(\d+(\.\d+)?\s*[xX*]\s*)*\d+(\.\d+)?$/;
+        if (product_quality?.box_size && !boxSizeRegex.test(product_quality.box_size)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid Box Size format. Use numbers (e.g., 10 or 10x10x10)"
+            });
+        }
+
+        // Numeric fields validation
+        if (product_price !== undefined && isNaN(product_price)) {
+            return res.status(400).json({ success: false, message: "Price must be a number" });
+        }
+        if (product_gst !== undefined && isNaN(product_gst)) {
+            return res.status(400).json({ success: false, message: "GST must be a number" });
+        }
+        if (product_shipping_cost !== undefined && isNaN(product_shipping_cost)) {
+            return res.status(400).json({ success: false, message: "Shipping Cost must be a number" });
+        }
+        if (product_quantity !== undefined && !/^\d+$/.test(product_quantity)) {
+            return res.status(400).json({ success: false, message: "Quantity must be an integer" });
+        }
 
         if (product_name) product.product_name = product_name;
         if (product_description) product.product_description = product_description;

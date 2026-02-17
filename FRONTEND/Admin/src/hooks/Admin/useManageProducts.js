@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { showAlertSuccess } from '../../utils/alert';
+import { showAlertSuccess, showDeleteConfirmation, showAlertError } from '../../utils/alert';
 
 const useManageProducts = (userInfo) => {
     const API_BASE = process.env.REACT_APP_SERVER_URL;
@@ -215,8 +215,9 @@ const useManageProducts = (userInfo) => {
     };
 
     // Delete product
-    const handleProductDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this product?')) return;
+    const handleProductDelete = async (id, productName) => {
+        const result = await showDeleteConfirmation(productName, 'product');
+        if (!result.isConfirmed) return;
 
         try {
             const response = await fetch(`${API_BASE}/admin/deleteProduct`, {
@@ -231,7 +232,7 @@ const useManageProducts = (userInfo) => {
             const res = await response.json();
 
             if (!response.ok) {
-                alert(res.message || 'Error deleting product');
+                showAlertError(res.message || 'Error deleting product');
                 return;
             }
 
@@ -239,7 +240,7 @@ const useManageProducts = (userInfo) => {
             fetchProductData(pagination.currentPage, pagination.limit);
         } catch (err) {
             console.log('Delete Product Error:', err);
-            alert('Error deleting product');
+            showAlertError('Error deleting product');
         }
     };
 
