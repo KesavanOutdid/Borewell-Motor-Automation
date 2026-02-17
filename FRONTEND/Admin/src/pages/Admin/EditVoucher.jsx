@@ -21,6 +21,17 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
         loadingUpdate
     } = useManageVouchers(userInfo);
 
+    const formatDateForInput = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
     const loadVoucherData = useCallback(async () => {
         if (voucher) {
             const data = {
@@ -76,10 +87,33 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
             if (value === '') {
                 finalValue = '';
             } else {
-                // Parse to integer to remove leading zeros
-                finalValue = parseInt(value, 10);
-                if (isNaN(finalValue)) finalValue = '';
+                if (name === 'discount_percentage') {
+                    // For discount percentage, don't allow more than 100
+                    const numericVal = parseFloat(value);
+                    if (numericVal > 100) return;
+                    // Allow up to 2 decimal places
+                    if (!/^\d*\.?\d{0,2}$/.test(value)) return;
+                    finalValue = value;
+                } else {
+                    if (value.length > 6 && (name === 'max_usage' || name === 'used_count')) return;
+                    // Parse to integer to remove leading zeros
+                    finalValue = parseInt(value, 10);
+                    if (isNaN(finalValue)) finalValue = '';
+                }
             }
+        }
+
+        if (name === 'start_date') {
+            const selectedStart = value;
+            setCurrentVoucherDetails(prev => {
+                const updated = { ...prev, [name]: finalValue };
+                // If new start date is after current end date, reset end date
+                if (prev.end_date && selectedStart > formatDateForInput(prev.end_date)) {
+                    updated.end_date = '';
+                }
+                return updated;
+            });
+            return;
         }
 
         setCurrentVoucherDetails(prev => ({
@@ -98,16 +132,14 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
         }
     };
 
-    const formatDateForInput = (dateString) => {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-    };
+    const now = new Date();
+    const minDateTime = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+
+    const minStartDate = initialVoucherDetails?.start_date 
+        ? (new Date(initialVoucherDetails.start_date) < now 
+            ? formatDateForInput(initialVoucherDetails.start_date) 
+            : minDateTime)
+        : minDateTime;
 
     const isModified = initialVoucherDetails && currentVoucherDetails && (
         currentVoucherDetails.voucher_code !== initialVoucherDetails.voucher_code ||
@@ -120,10 +152,10 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
         currentVoucherDetails.status !== initialVoucherDetails.status
     );
 
-    const isRequiredFieldsFilled = 
-        currentVoucherDetails?.voucher_code?.trim() && 
-        currentVoucherDetails?.discount_percentage !== '' && 
-        currentVoucherDetails?.start_date && 
+    const isRequiredFieldsFilled =
+        currentVoucherDetails?.voucher_code?.trim() &&
+        currentVoucherDetails?.discount_percentage !== '' &&
+        currentVoucherDetails?.start_date &&
         currentVoucherDetails?.end_date &&
         currentVoucherDetails?.description?.trim() &&
         currentVoucherDetails?.max_usage !== '' &&
@@ -176,10 +208,10 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                             <div className="card">
                                 <div className="card-header pb-3" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <h6 className="mb-0">Edit Voucher - {currentVoucherDetails.voucher_code}</h6>
-                                    <button 
+                                    <button
                                         className="btn btn-sm mb-0"
-                                        style={{ 
-                                            backgroundColor: '#67748e', 
+                                        style={{
+                                            backgroundColor: '#67748e',
                                             color: 'white',
                                             padding: '8px 16px',
                                             fontSize: '13px'
@@ -238,6 +270,7 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                                                     name="start_date"
                                                     value={formatDateForInput(currentVoucherDetails.start_date)}
                                                     onChange={handleChange}
+                                                    min={minStartDate}
                                                     required
                                                 />
                                             </div>
@@ -250,6 +283,7 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                                                     name="end_date"
                                                     value={formatDateForInput(currentVoucherDetails.end_date)}
                                                     onChange={handleChange}
+                                                    min={formatDateForInput(currentVoucherDetails.start_date) || minDateTime}
                                                     required
                                                 />
                                             </div>
@@ -257,7 +291,7 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
 
                                         <div className="row mt-3">
                                             <div className="col-md-4 col-12">
-                                                <label className="form-label">Max Usage</label>
+                                                <label className="form-label">Voucher Limit (Max Usage)</label>
                                                 <input
                                                     type="number"
                                                     className="form-control"
@@ -266,12 +300,14 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                                                     onChange={handleChange}
                                                     onFocus={handleFocus}
                                                     min="1"
+                                                    max="999999"
                                                     required
                                                 />
+                                                <small className="text-muted">Max 6 digits</small>
                                             </div>
 
                                             <div className="col-md-4 col-12">
-                                                <label className="form-label">Usage Count</label>
+                                                <label className="form-label">Current Usage Count</label>
                                                 <input
                                                     type="number"
                                                     className="form-control"
@@ -279,9 +315,10 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
                                                     value={currentVoucherDetails.used_count === 0 ? '0' : (currentVoucherDetails.used_count || '')}
                                                     onChange={handleChange}
                                                     onFocus={handleFocus}
+                                                    max="999999"
                                                     required
+                                                    readOnly
                                                 />
-                                                <small className="text-muted">Usage count of the voucher</small>
                                             </div>
 
                                             <div className="col-md-4 col-12">
@@ -341,5 +378,5 @@ const EditVoucher = ({ userInfo, handleLogout }) => {
         </div>
     );
 };
- 
+
 export default EditVoucher;

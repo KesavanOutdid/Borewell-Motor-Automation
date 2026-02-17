@@ -258,14 +258,24 @@ const Profile = ({ userInfo, handleLogout }) => {
                                                         type="text"
                                                         className="form-control"
                                                         id="password"
-                                                        value={password}
+                                                        value={password ? password.toString() : ''}
                                                         maxLength={6}
-                                                        minLength={6}
-                                                        onChange={(e) => setUpdatePassword(e.target.value)}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value.replace(/\D/g, '');
+                                                            setUpdatePassword(val);
+                                                            if (errorMessage) setErrorMessage('');
+                                                        }}
                                                         autoComplete="off" />
                                                 </div>
+                                                {errorMessage && (
+                                                    <div className="alert alert-danger text-white text-sm" role="alert">
+                                                        {errorMessage}
+                                                    </div>
+                                                )}
                                                 <div className="text-center">
-                                                    <button className="btn btn-primary" id="Update" disabled={!userModified || loadingUpdate || !user_name.trim() || (password && password.toString().length !== 6)}>{loadingUpdate ? "Updating..." : "Update"}</button>
+                                                    <button className="btn btn-primary" id="Update" disabled={!userModified || loadingUpdate || !user_name.trim() || !password || password.toString().length !== 6}>
+                                                        {loadingUpdate ? "Updating..." : "Update"}
+                                                    </button>
                                                 </div>
                                             </form>
                                         </div>

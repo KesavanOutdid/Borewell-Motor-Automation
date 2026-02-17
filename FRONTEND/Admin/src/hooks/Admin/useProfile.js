@@ -71,7 +71,16 @@ export const useProfile = (userInfo) => {
     // Update Profile (NodeJS)
     const handleUpdate = async () => {
         if (loadingUpdate) return;
+
+        // Password validation: must be numeric and exactly 6 digits
+        const passwordStr = password ? password.toString() : '';
+        if (!password || passwordStr.length !== 6 || !/^\d+$/.test(passwordStr)) {
+            setErrorMessage("Password must be numeric and exactly 6 digits.");
+            return;
+        }
+
         setLoadingUpdate(true);
+        setErrorMessage('');
 
         try {
             const res = await fetch(`${API_BASE}/app/updatedProfile/${userId}`, {
@@ -83,7 +92,7 @@ export const useProfile = (userInfo) => {
                 body: JSON.stringify({
                     user_name,
                     user_phone: parseInt(user_phone),
-                    password: parseInt(password),
+                    password: password ? parseInt(password) : undefined,
                     status: true
                 })
             });

@@ -41,7 +41,7 @@ const useManageDevices = (userInfo) => {
         async function loadUsers() {
             if (isModalAssign && !fetchuserDataCalled.current) {
                 try {
-                    const response = await fetch(`${API_BASE}/admin/getUsers`);
+                    const response = await fetch(`${API_BASE}/admin/getUsers?limit=1000`);
                     if (response.ok) {
                         const data = await response.json();
                         setusers(data.users);

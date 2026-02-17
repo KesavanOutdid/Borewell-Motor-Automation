@@ -25,13 +25,14 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
         loadingSubmit
     } = useManageVouchers(userInfo);
 
-    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const minDateTime = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
 
-    const isFormValid = 
-        voucherCode.trim() && 
-        discountPercentage !== '' && 
-        startDate && 
-        endDate && 
+    const isFormValid =
+        voucherCode.trim() &&
+        discountPercentage !== '' &&
+        startDate &&
+        endDate &&
         description.trim() &&
         maxUsage !== '';
 
@@ -72,10 +73,13 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
                                                     className="form-control"
                                                     placeholder="e.g., SAVE20"
                                                     value={voucherCode}
-                                                    onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '');
+                                                        setVoucherCode(val);
+                                                    }}
                                                     required
                                                 />
-                                                <small className="text-muted">Code will be automatically converted to uppercase</small>
+                                                <small className="text-muted">Only letters, numbers, and underscores allowed (No spaces)</small>
                                             </div>
 
                                             <div className="col-md-6 col-12">
@@ -83,15 +87,22 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
                                                 <input
                                                     type="number"
                                                     className="form-control"
-                                                    placeholder="e.g., 20"
+                                                    placeholder="e.g., 20.00"
                                                     value={discountPercentage}
                                                     onChange={(e) => {
                                                         const val = e.target.value;
                                                         if (val === '') {
                                                             setDiscountPercentage('');
-                                                        } else {
-                                                            const parsed = parseInt(val, 10);
-                                                            setDiscountPercentage(isNaN(parsed) ? '' : parsed);
+                                                        } else if (/^\d*\.?\d{0,2}$/.test(val)) {
+                                                            const numericVal = parseFloat(val);
+                                                            if (numericVal <= 100) {
+                                                                setDiscountPercentage(val);
+                                                            }
+                                                        }
+                                                    }}
+                                                    onKeyDown={(e) => {
+                                                        if (['e', 'E', '+', '-'].includes(e.key)) {
+                                                            e.preventDefault();
                                                         }
                                                     }}
                                                     onFocus={(e) => {
@@ -99,9 +110,10 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
                                                     }}
                                                     min="0"
                                                     max="100"
+                                                    step="0.01"
                                                     required
                                                 />
-                                                <small className="text-muted">Must be between 0-100</small>
+                                                <small className="text-muted">Must be between 0-100 (Max 2 decimal places)</small>
                                             </div>
                                         </div>
 
@@ -112,8 +124,15 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
                                                     type="datetime-local"
                                                     className="form-control"
                                                     value={startDate}
-                                                    onChange={(e) => setStartDate(e.target.value)}
-                                                    min={today}
+                                                    onChange={(e) => {
+                                                        const selectedStart = e.target.value;
+                                                        setStartDate(selectedStart);
+                                                        // If new start date is after current end date, reset end date
+                                                        if (endDate && selectedStart > endDate) {
+                                                            setEndDate('');
+                                                        }
+                                                    }}
+                                                    min={minDateTime}
                                                     required
                                                 />
                                             </div>
@@ -125,7 +144,7 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
                                                     className="form-control"
                                                     value={endDate}
                                                     onChange={(e) => setEndDate(e.target.value)}
-                                                    min={today}
+                                                    min={startDate || minDateTime}
                                                     required
                                                 />
                                             </div>
@@ -133,7 +152,7 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
 
                                         <div className="row mt-3">
                                             <div className="col-md-6 col-12">
-                                                <label className="form-label">Max Usage</label>
+                                                <label className="form-label">Voucher Limit (Max Usage)</label>
                                                 <input
                                                     type="number"
                                                     className="form-control"
@@ -144,6 +163,7 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
                                                         if (val === '') {
                                                             setMaxUsage('');
                                                         } else {
+                                                            if (val.length > 6) return;
                                                             const parsed = parseInt(val, 10);
                                                             setMaxUsage(isNaN(parsed) ? '' : parsed);
                                                         }
@@ -152,8 +172,10 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
                                                         if (e.target.value === '0') setMaxUsage('');
                                                     }}
                                                     min="1"
+                                                    max="999999"
                                                     required
                                                 />
+                                                <small className="text-muted">Maximum number of times this voucher can be used (Max 6 digits)</small>
                                             </div>
                                         </div>
 

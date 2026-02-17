@@ -77,7 +77,7 @@ const CreateProduct = ({ userInfo, handleLogout }) => {
         formData.append('file', file);
 
         try {
-            const response = await fetch(`${API_BASE}/${endpoint}`, {
+            const response = await fetch(`${API_BASE}/admin/${endpoint}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${userInfo.token}`
@@ -85,7 +85,14 @@ const CreateProduct = ({ userInfo, handleLogout }) => {
                 body: formData
             });
 
-            const data = await response.json();
+            const contentType = response.headers.get("content-type");
+            let data;
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                data = await response.json();
+            } else {
+                const text = await response.text();
+                throw new Error(`Server returned non-JSON response: ${text.substring(0, 100)}...`);
+            }
 
             if (!response.ok) {
                 throw new Error(data.message || `Error uploading file to ${endpoint}`);
@@ -112,10 +119,18 @@ const CreateProduct = ({ userInfo, handleLogout }) => {
         }
 
         // Numeric fields validation
-        if (productPrice && isNaN(productPrice)) return setErrorMessage('Price must be a number');
-        if (productGst && isNaN(productGst)) return setErrorMessage('GST must be a number');
-        if (productShippingCost && isNaN(productShippingCost)) return setErrorMessage('Shipping Cost must be a number');
-        if (productQuantity && !/^\d+$/.test(productQuantity)) return setErrorMessage('Quantity must be an integer');
+        if (!productPrice || isNaN(productPrice) || parseFloat(productPrice) <= 0) {
+            return setErrorMessage('Please enter a valid Price greater than 0');
+        }
+        if (productGst === '' || isNaN(productGst) || parseFloat(productGst) < 0 || parseFloat(productGst) > 100) {
+            return setErrorMessage('Please enter a valid GST percentage (0-100)');
+        }
+        if (productShippingCost === '' || isNaN(productShippingCost) || parseFloat(productShippingCost) < 0) {
+            return setErrorMessage('Please enter a valid Shipping Cost');
+        }
+        if (!productQuantity || !/^\d+$/.test(productQuantity) || parseInt(productQuantity) < 0) {
+            return setErrorMessage('Please enter a valid Quantity (integer)');
+        }
 
         if (loading) return;
         setLoading(true);
@@ -168,15 +183,21 @@ const CreateProduct = ({ userInfo, handleLogout }) => {
                         box_size: boxSize.trim() || null,
                         extra_details: extraDetails.trim() || null
                     },
-                    product_price: productPrice ? parseFloat(productPrice) : 0,
-                    product_gst: productGst ? parseFloat(productGst) : 0,
-                    product_shipping_cost: productShippingCost ? parseFloat(productShippingCost) : 0,
-                    product_quantity: productQuantity ? parseInt(productQuantity) : 0,
+                    product_price: parseFloat(parseFloat(productPrice).toFixed(2)),
+                    product_gst: parseFloat(parseFloat(productGst).toFixed(2)),
+                    product_shipping_cost: parseFloat(parseFloat(productShippingCost).toFixed(2)),
+                    product_quantity: parseInt(productQuantity),
                     createdBy: userInfo?.user?.user_email
                 })
             });
 
-            const res = await response.json();
+            const contentType = response.headers.get("content-type");
+            let res;
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                res = await response.json();
+            } else {
+                throw new Error('Server returned an unexpected error format. Please contact support.');
+            }
 
             if (!response.ok) {
                 const errorMsg = res.message || 'Error creating product';
@@ -291,7 +312,17 @@ const CreateProduct = ({ userInfo, handleLogout }) => {
                                                             type="number"
                                                             className="form-control"
                                                             value={productPrice}
-                                                            onChange={(e) => setProductPrice(e.target.value)}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                if (val === '' || /^\d*\.?\d{0,2}$/.test(val)) {
+                                                                    setProductPrice(val);
+                                                                }
+                                                            }}
+                                                            onKeyDown={(e) => {
+                                                                if (['e', 'E', '+', '-'].includes(e.key)) {
+                                                                    e.preventDefault();
+                                                                }
+                                                            }}
                                                             placeholder="0.00"
                                                             step="0.01"
                                                             min="0"
@@ -305,7 +336,24 @@ const CreateProduct = ({ userInfo, handleLogout }) => {
                                                             type="number"
                                                             className="form-control"
                                                             value={productGst}
-                                                            onChange={(e) => setProductGst(e.target.value)}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                if (val === '') {
+                                                                    setProductGst(val);
+                                                                    return;
+                                                                }
+                                                                if (/^\d*\.?\d{0,2}$/.test(val)) {
+                                                                    const num = parseFloat(val);
+                                                                    if (num <= 100) {
+                                                                        setProductGst(val);
+                                                                    }
+                                                                }
+                                                            }}
+                                                            onKeyDown={(e) => {
+                                                                if (['e', 'E', '+', '-'].includes(e.key)) {
+                                                                    e.preventDefault();
+                                                                }
+                                                            }}
                                                             placeholder="0.00"
                                                             step="0.01"
                                                             min="0"
@@ -320,7 +368,17 @@ const CreateProduct = ({ userInfo, handleLogout }) => {
                                                             type="number"
                                                             className="form-control"
                                                             value={productShippingCost}
-                                                            onChange={(e) => setProductShippingCost(e.target.value)}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                if (val === '' || /^\d*\.?\d{0,2}$/.test(val)) {
+                                                                    setProductShippingCost(val);
+                                                                }
+                                                            }}
+                                                            onKeyDown={(e) => {
+                                                                if (['e', 'E', '+', '-'].includes(e.key)) {
+                                                                    e.preventDefault();
+                                                                }
+                                                            }}
                                                             placeholder="0.00"
                                                             step="0.01"
                                                             min="0"
@@ -334,7 +392,17 @@ const CreateProduct = ({ userInfo, handleLogout }) => {
                                                             type="number"
                                                             className="form-control"
                                                             value={productQuantity}
-                                                            onChange={(e) => setProductQuantity(e.target.value)}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                if (val === '' || /^\d+$/.test(val)) {
+                                                                    setProductQuantity(val);
+                                                                }
+                                                            }}
+                                                            onKeyDown={(e) => {
+                                                                if (['.', 'e', 'E', '+', '-'].includes(e.key)) {
+                                                                    e.preventDefault();
+                                                                }
+                                                            }}
                                                             placeholder="0"
                                                             step="1"
                                                             min="0"

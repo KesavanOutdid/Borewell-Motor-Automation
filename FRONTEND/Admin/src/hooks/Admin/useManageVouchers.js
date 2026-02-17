@@ -254,7 +254,7 @@ const useManageVouchers = (userInfo) => {
             setLoadingUpdate(false);
             return false;
         }
-    }, [API_BASE, userInfo, currentVoucherDetails, loadingUpdate, fetchVoucherData, pagination.currentPage, pagination.limit, closeModal]);
+    }, [API_BASE, userInfo, currentVoucherDetails, loadingUpdate, fetchVoucherData, pagination.currentPage, pagination.limit]);
 
     const handleVoucherDelete = useCallback(async (id, voucherCode) => {
         const result = await showDeleteConfirmation(voucherCode, 'voucher');

@@ -1,12 +1,11 @@
 import {useState} from 'react';
-import { Link, useLocation, useNavigate  } from 'react-router-dom';
+import { Link, useLocation  } from 'react-router-dom';
 import './Sidebar.css';
 import logo from '../../assets/img/AgriPlus.png';
 
 const Sidebar = () => {
     const [isSidebarPinned, setSidebarPinned] = useState(true);
     const location = useLocation();
-    const navigate = useNavigate(); // Hook for navigation
 
     // Toggle sidebar pinning
     const toggleSidebar = () => {

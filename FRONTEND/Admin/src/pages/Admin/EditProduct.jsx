@@ -135,7 +135,7 @@ const EditProduct = ({ userInfo, handleLogout }) => {
         formData.append('file', file);
 
         try {
-            const response = await fetch(`${API_BASE}/${endpoint}`, {
+            const response = await fetch(`${API_BASE}/admin/${endpoint}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${userInfo.token}`
@@ -143,7 +143,14 @@ const EditProduct = ({ userInfo, handleLogout }) => {
                 body: formData
             });
 
-            const data = await response.json();
+            const contentType = response.headers.get("content-type");
+            let data;
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                data = await response.json();
+            } else {
+                const text = await response.text();
+                throw new Error(`Server returned non-JSON response: ${text.substring(0, 100)}...`);
+            }
 
             if (!response.ok) {
                 throw new Error(data.message || `Error uploading file`);
@@ -224,7 +231,14 @@ const EditProduct = ({ userInfo, handleLogout }) => {
                 })
             });
 
-            const res = await response.json();
+            const contentType = response.headers.get("content-type");
+            let res;
+            if (contentType && contentType.includes("application/json")) {
+                res = await response.json();
+            } else {
+                const text = await response.text();
+                throw new Error(`Server returned non-JSON response: ${text.substring(0, 100)}...`);
+            }
 
             if (!response.ok) {
                 const errorMsg = res.message || 'Error updating product';
@@ -349,7 +363,17 @@ const EditProduct = ({ userInfo, handleLogout }) => {
                                                             type="number"
                                                             className="form-control"
                                                             value={productPrice}
-                                                            onChange={(e) => setProductPrice(e.target.value)}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                if (val === '' || /^\d*\.?\d{0,2}$/.test(val)) {
+                                                                    setProductPrice(val);
+                                                                }
+                                                            }}
+                                                            onKeyDown={(e) => {
+                                                                if (['e', 'E', '+', '-'].includes(e.key)) {
+                                                                    e.preventDefault();
+                                                                }
+                                                            }}
                                                             placeholder="0.00"
                                                             step="0.01"
                                                             min="0"
@@ -363,7 +387,24 @@ const EditProduct = ({ userInfo, handleLogout }) => {
                                                             type="number"
                                                             className="form-control"
                                                             value={productGst}
-                                                            onChange={(e) => setProductGst(e.target.value)}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                if (val === '') {
+                                                                    setProductGst(val);
+                                                                    return;
+                                                                }
+                                                                if (/^\d*\.?\d{0,2}$/.test(val)) {
+                                                                    const num = parseFloat(val);
+                                                                    if (num <= 100) {
+                                                                        setProductGst(val);
+                                                                    }
+                                                                }
+                                                            }}
+                                                            onKeyDown={(e) => {
+                                                                if (['e', 'E', '+', '-'].includes(e.key)) {
+                                                                    e.preventDefault();
+                                                                }
+                                                            }}
                                                             placeholder="0.00"
                                                             step="0.01"
                                                             min="0"
@@ -378,7 +419,17 @@ const EditProduct = ({ userInfo, handleLogout }) => {
                                                             type="number"
                                                             className="form-control"
                                                             value={productShippingCost}
-                                                            onChange={(e) => setProductShippingCost(e.target.value)}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                if (val === '' || /^\d*\.?\d{0,2}$/.test(val)) {
+                                                                    setProductShippingCost(val);
+                                                                }
+                                                            }}
+                                                            onKeyDown={(e) => {
+                                                                if (['e', 'E', '+', '-'].includes(e.key)) {
+                                                                    e.preventDefault();
+                                                                }
+                                                            }}
                                                             placeholder="0.00"
                                                             step="0.01"
                                                             min="0"
@@ -392,7 +443,17 @@ const EditProduct = ({ userInfo, handleLogout }) => {
                                                             type="number"
                                                             className="form-control"
                                                             value={productQuantity}
-                                                            onChange={(e) => setProductQuantity(e.target.value)}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                if (val === '' || /^\d+$/.test(val)) {
+                                                                    setProductQuantity(val);
+                                                                }
+                                                            }}
+                                                            onKeyDown={(e) => {
+                                                                if (['.', 'e', 'E', '+', '-'].includes(e.key)) {
+                                                                    e.preventDefault();
+                                                                }
+                                                            }}
                                                             placeholder="0"
                                                             step="1"
                                                             min="0"

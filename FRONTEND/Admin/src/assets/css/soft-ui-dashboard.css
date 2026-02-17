@@ -2705,9 +2705,9 @@ progress {
 .form-control:focus {
     color: #495057;
     background-color: #fff;
-    border-color: #e293d3;
+    border-color: #d2d6da;
     outline: 0;
-    box-shadow: 0 0 0 2px #e9aede;
+    box-shadow: 0 0 0 2px transparent;
 }
 
 .form-control::-webkit-date-and-time-value {
@@ -2890,9 +2890,9 @@ textarea.form-control-lg {
 }
 
 .form-select:focus {
-    border-color: #e293d3;
+    border-color: #d2d6da;
     outline: 0;
-    box-shadow: 0 0 0 2px #e9aede;
+    box-shadow: 0 0 0 2px transparent;
 }
 
 .form-select[multiple],
@@ -3065,11 +3065,11 @@ textarea.form-control-lg {
 }
 
 .form-range:focus::-webkit-slider-thumb {
-    box-shadow: 0 0 0 1px #fff, 0 0 0 2px #e9aede;
+    box-shadow: 0 0 0 1px #fff, 0 0 0 2px transparent;
 }
 
 .form-range:focus::-moz-range-thumb {
-    box-shadow: 0 0 0 1px #fff, 0 0 0 2px #e9aede;
+    box-shadow: 0 0 0 1px #fff, 0 0 0 2px transparent;
 }
 
 .form-range::-moz-focus-outer {
@@ -5581,7 +5581,7 @@ fieldset:disabled .btn {
 
 .accordion-button:focus {
     z-index: 3;
-    border-color: #e293d3;
+    border-color: #d2d6da;
     outline: 0;
     box-shadow: none;
 }
@@ -19918,8 +19918,6 @@ fieldset:disabled .btn {
 }
 
 .input-group .form-control:focus {
-    border-left: 1px solid #e293d3 !important;
-    border-right: 1px solid #e293d3 !important;
 }
 
 .input-group .form-control:not(:first-child) {

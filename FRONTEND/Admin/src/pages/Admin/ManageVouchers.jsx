@@ -5,7 +5,6 @@ import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
 import TableSkeleton from '../../components/Common/TableSkeleton';
 import useManageVouchers from '../../hooks/Admin/useManageVouchers';
-import { showDeleteConfirmation } from '../../utils/alert';
 
 const ManageVouchers = ({ userInfo, handleLogout }) => {
     const navigate = useNavigate();
@@ -65,11 +64,25 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
         });
     };
 
-    const isVoucherValid = (voucher) => {
-        const now = new Date();
-        const start = new Date(voucher.start_date);
-        const end = new Date(voucher.end_date);
-        return voucher.status && now >= start && now <= end;
+    const getVoucherStatus = (voucher) => {
+        if (!voucher.status) return 'Inactive';
+        const now = new Date().getTime();
+        const start = new Date(voucher.start_date).getTime();
+        const end = new Date(voucher.end_date).getTime();
+
+        if (now < start) return 'Pending';
+        if (now > end) return 'Expired';
+        return 'Valid';
+    };
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'Valid': return '#15803d';
+            case 'Pending': return '#f97316';
+            case 'Expired': return '#991b1b';
+            case 'Inactive': return '#6c757d';
+            default: return '#6c757d';
+        }
     };
 
     return (
@@ -185,14 +198,14 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                                 </td>
                                                                 <td style={{ padding: '12px' }}>
                                                                     <span style={{
-                                                                        backgroundColor: isVoucherValid(voucher) ? '#15803d' : (voucher.status ? '#f97316' : '#6c757d'),
+                                                                        backgroundColor: getStatusColor(getVoucherStatus(voucher)),
                                                                         color: 'white',
                                                                         padding: '4px 10px',
                                                                         borderRadius: '4px',
                                                                         fontSize: '11px',
                                                                         fontWeight: '600'
                                                                     }}>
-                                                                        {isVoucherValid(voucher) ? 'Valid' : (voucher.status ? 'Pending' : 'Inactive')}
+                                                                        {getVoucherStatus(voucher)}
                                                                     </span>
                                                                 </td>
                                                                 <td style={{ padding: '12px' }}>
