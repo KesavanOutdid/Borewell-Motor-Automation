@@ -362,6 +362,36 @@ router.post(
 
 /**
  * @swagger
+ * /app/getProducts:
+ *   get:
+ *     summary: Get all active products with pagination
+ *     tags: [App]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of products per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search query
+ *     responses:
+ *       200:
+ *         description: Paginated list of active products
+ */
+router.get('/getProducts', appCtrl.getProducts);
+
+/**
+ * @swagger
  * /app/startStopDevice:
  *   post:
  *     summary: Start or Stop a device

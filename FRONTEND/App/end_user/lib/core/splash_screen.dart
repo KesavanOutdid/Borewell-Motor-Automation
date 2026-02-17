@@ -84,7 +84,7 @@ class _SplashViewState extends State<SplashView> {
               ),
               const SizedBox(height: 10),
               const Text(
-                'Borewell Motor Automation',
+                'Smart Motor Automation',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.black54,

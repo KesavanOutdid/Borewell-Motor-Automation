@@ -302,7 +302,9 @@ class CheckoutController extends GetxController {
             logger.e('❌ Error clearing cart: $e');
           }
           
-          Get.back();
+          if (Navigator.of(Get.context!).canPop()) {
+            Navigator.of(Get.context!).pop();
+          }
           
           _showOrderSuccessDialog();
         } else {

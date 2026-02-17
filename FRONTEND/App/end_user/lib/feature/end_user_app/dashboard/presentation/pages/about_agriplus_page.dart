@@ -64,7 +64,7 @@ class AboutAgriPlusPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             _buildSectionTitle('Key Features'),
-            _buildFeatureItem(Icons.settings_remote, 'Remote Motor Control', 'Manage your borewell motors from anywhere.'),
+            _buildFeatureItem(Icons.settings_remote, 'Remote Motor Control', 'Manage your Smart motors from anywhere.'),
             _buildFeatureItem(Icons.timer, 'Automated Scheduling', 'Set timers and schedules for efficient irrigation.'),
             _buildFeatureItem(Icons.bolt, 'Power Monitoring', 'Real-time updates on power status and voltage.'),
             _buildFeatureItem(Icons.warning_amber_rounded, 'Instant Alerts', 'Get notified about faults and issues immediately.'),

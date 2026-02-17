@@ -149,10 +149,10 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
                     },
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Required';
+                        return 'Enter valid pincode';
                       }
-                      if (value.length != 6) {
-                        return 'Invalid';
+                      if (!RegExp(r'^\d{6}$').hasMatch(value)) {
+                        return 'Enter valid pincode';
                       }
                       return null;
                     },
@@ -171,7 +171,10 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
               icon: Icons.location_city,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter city';
+                  return 'Enter valid city name';
+                }
+                if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
+                  return 'Enter valid city name';
                 }
                 return null;
               },
@@ -183,7 +186,10 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
               icon: Icons.map,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter state';
+                  return 'Enter valid state name';
+                }
+                if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
+                  return 'Enter valid state name';
                 }
                 return null;
               },

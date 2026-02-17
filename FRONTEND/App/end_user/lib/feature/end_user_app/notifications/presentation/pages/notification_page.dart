@@ -40,12 +40,12 @@ class NotificationPage extends StatelessWidget {
                           content: const Text('Are you sure you want to clear all notifications?'),
                           actions: [
                             TextButton(
-                              onPressed: () => Navigator.of(context).pop(),
+                              onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
                               child: const Text('No'),
                             ),
                             TextButton(
                               onPressed: () async {
-                                Navigator.of(context).pop();
+                                Navigator.of(context, rootNavigator: true).pop();
                                 await controller.clearAll();
                                 Get.snackbar(
                                   'Success',

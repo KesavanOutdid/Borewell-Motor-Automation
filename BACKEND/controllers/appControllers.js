@@ -1591,36 +1591,61 @@ exports.fetchCart = async (req, res, next) => {
                     cart_id: 1,
                     user_id: 1,
                     items: {
-                        $map: {
-                            input: "$items",
-                            as: "item",
-                            in: {
-                                product_id: "$$item.product_id",
-                                product_name: "$$item.product_name",
-                                product_price: "$$item.product_price",
-                                product_gst: "$$item.product_gst",
-                                product_shipping_cost: "$$item.product_shipping_cost",
-                                quantity: "$$item.quantity",
-                                added_at: "$$item.added_at",
-                                product_main_image: {
-                                    $arrayElemAt: [
-                                        {
-                                            $map: {
-                                                input: {
-                                                    $filter: {
-                                                        input: "$productDetails",
-                                                        as: "prod",
-                                                        cond: { $eq: ["$$prod.product_id", "$$item.product_id"] }
+                        $filter: {
+                            input: {
+                                $map: {
+                                    input: "$items",
+                                    as: "item",
+                                    in: {
+                                        product_id: "$$item.product_id",
+                                        product_name: "$$item.product_name",
+                                        product_price: "$$item.product_price",
+                                        product_gst: "$$item.product_gst",
+                                        product_shipping_cost: "$$item.product_shipping_cost",
+                                        quantity: "$$item.quantity",
+                                        added_at: "$$item.added_at",
+                                        // Get product status from productDetails
+                                        status: {
+                                            $arrayElemAt: [
+                                                {
+                                                    $map: {
+                                                        input: {
+                                                            $filter: {
+                                                                input: "$productDetails",
+                                                                as: "p",
+                                                                cond: { $eq: ["$$p.product_id", "$$item.product_id"] }
+                                                            }
+                                                        },
+                                                        as: "p",
+                                                        in: "$$p.status"
                                                     }
                                                 },
-                                                as: "prod",
-                                                in: "$$prod.product_main_image"
-                                            }
+                                                0
+                                            ]
                                         },
-                                        0
-                                    ]
+                                        product_main_image: {
+                                            $arrayElemAt: [
+                                                {
+                                                    $map: {
+                                                        input: {
+                                                            $filter: {
+                                                                input: "$productDetails",
+                                                                as: "prod",
+                                                                cond: { $eq: ["$$prod.product_id", "$$item.product_id"] }
+                                                            }
+                                                        },
+                                                        as: "prod",
+                                                        in: "$$prod.product_main_image"
+                                                    }
+                                                },
+                                                0
+                                            ]
+                                        }
+                                    }
                                 }
-                            }
+                            },
+                            as: "item",
+                            cond: { $eq: ["$$item.status", true] }
                         }
                     },
                     total_price: 1,
@@ -2423,5 +2448,54 @@ exports.cancelSchedule = async (req, res) => {
     } catch (error) {
         console.error("cancelSchedule Error:", error);
         res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+exports.getProducts = async (req, res, next) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
+        const skip = (page - 1) * limit;
+
+        const searchFilter = {
+            status: true,
+            ...(search ? {
+                $or: [
+                    { product_name: { $regex: search, $options: 'i' } },
+                    { product_description: { $regex: search, $options: 'i' } }
+                ]
+            } : {})
+        };
+
+        const totalProducts = await Product.countDocuments(searchFilter);
+
+        const products = await Product.find(searchFilter)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean();
+
+        const totalPages = Math.ceil(totalProducts / limit);
+
+        res.status(200).json({
+            success: true,
+            data: products,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalProducts,
+                limit,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1
+            }
+        });
+
+    } catch (error) {
+        console.error("Get App Products Error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Server error fetching products"
+        });
     }
 };

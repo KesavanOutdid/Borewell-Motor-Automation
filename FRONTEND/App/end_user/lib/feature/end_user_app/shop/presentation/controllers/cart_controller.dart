@@ -30,6 +30,8 @@ class CartController extends GetxController {
   }
 
   Future<bool> addToCart(int productId, int quantity, {CartItem? productData}) async {
+    if (updatingProductIds.contains(productId)) return false;
+    
     // Check total quantity including existing cart items
     final existingItem = cart.value?.items.firstWhereOrNull((item) => item.productId == productId);
     final existingQuantity = existingItem?.quantity ?? 0;
@@ -48,6 +50,8 @@ class CartController extends GetxController {
       UIUtils.showErrorDialog(message: 'User not logged in');
       return false;
     }
+
+    updatingProductIds.add(productId);
 
     // Optimistic Update if we have product data or it's already in cart
     final previousCart = cart.value;
@@ -113,6 +117,8 @@ class CartController extends GetxController {
       cart.value = previousCart;
       logger.e('❌ Exception: $e');
       UIUtils.showErrorSnackbar(title: 'Error', message: 'Failed to add product to cart');
+    } finally {
+      updatingProductIds.remove(productId);
     }
     
     return false;

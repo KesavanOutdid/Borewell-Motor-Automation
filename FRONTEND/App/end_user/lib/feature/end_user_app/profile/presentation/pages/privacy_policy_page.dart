@@ -19,7 +19,7 @@ class PrivacyPolicyView extends StatelessWidget {
               _buildSection(
                 context,
                 'Introduction',
-                'This Privacy Policy explains how we collect, use, and protect your personal information when you use our Borewell Motor Automation application.',
+                'This Privacy Policy explains how we collect, use, and protect your personal information when you use our Smart Motor Automation application.',
               ),
               _buildSection(
                 context,

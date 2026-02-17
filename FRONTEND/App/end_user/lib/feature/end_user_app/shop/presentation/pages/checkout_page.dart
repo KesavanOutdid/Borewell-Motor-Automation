@@ -63,7 +63,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   void _onFieldChanged() {
     if (selectedAddress != null) {
-      hasModifiedAddress = true;
+      final isModified = fullNameController.text.trim() != selectedAddress!.fullName ||
+          phoneController.text.trim() != selectedAddress!.phone ||
+          emailController.text.trim() != selectedAddress!.email ||
+          streetController.text.trim() != selectedAddress!.street ||
+          cityController.text.trim() != selectedAddress!.city ||
+          stateController.text.trim() != selectedAddress!.state ||
+          pincodeController.text.trim() != selectedAddress!.pincode;
+
+      if (hasModifiedAddress != isModified) {
+        setState(() {
+          hasModifiedAddress = isModified;
+        });
+      }
     }
   }
 
@@ -234,20 +246,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       children: [
                         Expanded(
                           child: _buildTextField(
-                            controller: cityController,
-                            label: 'City',
-                            icon: Icons.location_city,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Required';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildTextField(
                             controller: pincodeController,
                             label: 'Pincode',
                             icon: Icons.pin_drop,
@@ -259,10 +257,27 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             },
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Required';
+                                return 'Enter valid pincode';
                               }
-                              if (value.length != 6) {
-                                return 'Invalid';
+                              if (!RegExp(r'^\d{6}$').hasMatch(value)) {
+                                return 'Enter valid pincode';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildTextField(
+                            controller: cityController,
+                            label: 'City',
+                            icon: Icons.location_city,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Enter valid city name';
+                              }
+                              if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
+                                return 'Enter valid city name';
                               }
                               return null;
                             },
@@ -277,7 +292,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       icon: Icons.map,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter state';
+                          return 'Enter valid state name';
+                        }
+                        if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
+                          return 'Enter valid state name';
                         }
                         return null;
                       },
@@ -706,39 +724,38 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Future<void> _placeOrder(CartModel cart) async {
     if (_formKey.currentState!.validate()) {
       final userId = addressController.tokenService.getUserId();
-      
-      if (selectedAddress != null && hasModifiedAddress) {
+      final currentFullName = fullNameController.text.trim();
+      final currentPhone = phoneController.text.trim();
+      final currentEmail = emailController.text.trim();
+      final currentStreet = streetController.text.trim();
+      final currentCity = cityController.text.trim();
+      final currentState = stateController.text.trim();
+      final currentPincode = pincodeController.text.trim();
+
+      // Check if this exact address already exists in saved addresses
+      final existingAddressMatch = addressController.addresses.firstWhereOrNull(
+        (addr) => 
+            addr.fullName == currentFullName &&
+            addr.phone == currentPhone &&
+            addr.email == currentEmail &&
+            addr.street == currentStreet &&
+            addr.city == currentCity &&
+            addr.state == currentState &&
+            addr.pincode == currentPincode
+      );
+
+      if (existingAddressMatch == null) {
+        // Only create a new address if no match was found
         final now = DateTime.now();
         final newAddress = AddressModel(
           userId: userId ?? 0,
-          fullName: fullNameController.text.trim(),
-          phone: phoneController.text.trim(),
-          email: emailController.text.trim(),
-          street: streetController.text.trim(),
-          city: cityController.text.trim(),
-          state: stateController.text.trim(),
-          pincode: pincodeController.text.trim(),
-          country: 'India',
-          isDefault: false,
-          createdAt: now,
-          updatedAt: now,
-        );
-        
-        await addressController.createAddress(newAddress);
-      } else if (selectedAddress == null && 
-                 fullNameController.text.trim().isNotEmpty &&
-                 phoneController.text.trim().isNotEmpty &&
-                 emailController.text.trim().isNotEmpty) {
-        final now = DateTime.now();
-        final newAddress = AddressModel(
-          userId: userId ?? 0,
-          fullName: fullNameController.text.trim(),
-          phone: phoneController.text.trim(),
-          email: emailController.text.trim(),
-          street: streetController.text.trim(),
-          city: cityController.text.trim(),
-          state: stateController.text.trim(),
-          pincode: pincodeController.text.trim(),
+          fullName: currentFullName,
+          phone: currentPhone,
+          email: currentEmail,
+          street: currentStreet,
+          city: currentCity,
+          state: currentState,
+          pincode: currentPincode,
           country: 'India',
           isDefault: addressController.addresses.isEmpty,
           createdAt: now,
@@ -749,13 +766,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
       }
 
       final shippingAddress = ShippingAddress(
-        fullName: fullNameController.text.trim(),
-        phone: phoneController.text.trim(),
-        email: emailController.text.trim(),
-        street: streetController.text.trim(),
-        city: cityController.text.trim(),
-        state: stateController.text.trim(),
-        pincode: pincodeController.text.trim(),
+        fullName: currentFullName,
+        phone: currentPhone,
+        email: currentEmail,
+        street: currentStreet,
+        city: currentCity,
+        state: currentState,
+        pincode: currentPincode,
         country: 'India',
       );
 

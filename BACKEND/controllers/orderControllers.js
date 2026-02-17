@@ -64,6 +64,20 @@ exports.createOrder = async (req, res, next) => {
         if (!cart_items || !Array.isArray(cart_items) || cart_items.length === 0)
             return res.status(400).json({ success: false, message: "Cart items are required" });
 
+        // Validate all products are active
+        const productIds = cart_items.map(item => item.product_id);
+        const activeProducts = await Product.find({ 
+            product_id: { $in: productIds }, 
+            status: true 
+        });
+
+        if (activeProducts.length !== productIds.length) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "One or more products in your order are no longer active and cannot be purchased" 
+            });
+        }
+
         // Validate shipping address
         if (!shipping_address)
             return res.status(400).json({ success: false, message: "Shipping address is required" });

@@ -79,6 +79,7 @@ class VoucherController extends GetxController {
   }
 
   Future<ValidatedVoucher?> validateVoucher(String voucherCode) async {
+    if (isLoading.value) return null;
     try {
       isLoading.value = true;
       final token = await tokenService.getToken();

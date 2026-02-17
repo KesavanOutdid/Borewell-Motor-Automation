@@ -82,7 +82,7 @@ class ConfigureDeviceView extends StatelessWidget {
                       _buildTextField(
                         controller: controller.nicknameController,
                         label: 'Device Name',
-                        hint: 'e.g., Main Borewell',
+                        hint: 'e.g., Motor-1',
                         icon: Icons.drive_file_rename_outline_rounded,
                         isDark: isDark,
                       ),

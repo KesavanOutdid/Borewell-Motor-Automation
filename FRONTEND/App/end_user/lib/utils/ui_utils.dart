@@ -23,8 +23,10 @@ class UIUtils {
         actions: [
           TextButton(
             onPressed: () {
+              if (Get.isDialogOpen ?? false) {
+                Navigator.of(Get.context!, rootNavigator: true).pop();
+              }
               _isDialogShowing = false;
-              Get.back();
             },
             child: const Text('OK', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryGreen)),
           ),
@@ -52,8 +54,10 @@ class UIUtils {
         actions: [
           TextButton(
             onPressed: () {
+              if (Get.isDialogOpen ?? false) {
+                Navigator.of(Get.context!, rootNavigator: true).pop();
+              }
               _isDialogShowing = false;
-              Get.back();
             },
             child: const Text('OK', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryGreen)),
           ),

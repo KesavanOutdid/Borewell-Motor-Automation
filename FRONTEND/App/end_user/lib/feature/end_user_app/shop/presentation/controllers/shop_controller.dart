@@ -93,7 +93,7 @@ class ShopController extends GetxController {
       isLoadingMore.value = true;
     }
 
-    final url = Uri.parse('$baseUrl/admin/getProducts?page=${currentPage.value}&limit=$limit');
+    final url = Uri.parse('$baseUrl/app/getProducts?page=${currentPage.value}&limit=$limit');
     logger.i('🌐 API URL: $url');
 
     try {

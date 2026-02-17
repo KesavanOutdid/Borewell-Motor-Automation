@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:agri_plus/utils/ui_utils.dart';
 import '../../../../../utils/theme/app_colors.dart';
@@ -363,7 +364,7 @@ class _CartPageState extends State<CartPage> {
         ),
         const SizedBox(height: 8),
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(24),
@@ -378,60 +379,68 @@ class _CartPageState extends State<CartPage> {
           child: Column(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade100),
+                  border: Border.all(color: Colors.grey.shade200),
                 ),
                 child: Row(
                   children: [
+                    const SizedBox(width: 16),
+                    Icon(Icons.local_offer_outlined, color: Colors.grey.shade400, size: 20),
                     Expanded(
                       child: TextField(
                         controller: voucherCodeController,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                          UpperCaseTextFormatter(),
+                        ],
                         decoration: InputDecoration(
-                          hintText: 'Voucher Code',
+                          hintText: 'Enter Voucher Code',
                           hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
                         ),
                         textCapitalization: TextCapitalization.characters,
                       ),
                     ),
-                    Obx(() => ElevatedButton(
-                      onPressed: voucherController.isLoading.value 
-                        ? null 
-                        : () async {
-                            final code = voucherCodeController.text.trim();
-                            if (code.isEmpty) return;
-                            
-                            final validatedVoucher = await voucherController.validateVoucher(code);
-                            if (validatedVoucher != null) {
-                              FocusScope.of(context).unfocus();
-                              setState(() {
-                                appliedDiscountPercentage = validatedVoucher.discountPercentage;
-                                appliedVoucherCode = validatedVoucher.voucherCode;
-                              });
-                            }
-                          },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryGreen,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    Padding(
+                      padding: const EdgeInsets.all(6.0),
+                      child: Obx(() => ElevatedButton(
+                        onPressed: voucherController.isLoading.value 
+                          ? null 
+                          : () async {
+                              final code = voucherCodeController.text.trim();
+                              if (code.isEmpty) return;
+                              
+                              final validatedVoucher = await voucherController.validateVoucher(code);
+                              if (validatedVoucher != null) {
+                                FocusScope.of(context).unfocus();
+                                setState(() {
+                                  appliedDiscountPercentage = validatedVoucher.discountPercentage;
+                                  appliedVoucherCode = validatedVoucher.voucherCode;
+                                });
+                              }
+                            },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryGreen,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                      ),
-                      child: voucherController.isLoading.value
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                          )
-                        : const Text('Apply', style: TextStyle(fontWeight: FontWeight.bold)),
-                    )),
+                        child: voucherController.isLoading.value
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            )
+                          : const Text('Apply', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                      )),
+                    ),
                   ],
                 ),
               ),
@@ -506,60 +515,55 @@ class _CartPageState extends State<CartPage> {
 
   Widget _buildCheckoutBottomBar(dynamic cart) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 15,
             offset: const Offset(0, -5),
           ),
         ],
       ),
       child: SafeArea(
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Total Amount',
-                    style: TextStyle(fontSize: 14, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
-                  ),
-                  Text(
-                    '₹${_calculateFinalTotal(cart.grandTotal, cart.totalPrice).toStringAsFixed(2)}',
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.primaryGreen),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              flex: 2,
-              child: SizedBox(
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () => Get.toNamed('/checkout', arguments: {
-                    'appliedDiscountPercentage': appliedDiscountPercentage,
-                    'appliedVoucherCode': appliedVoucherCode,
-                  }),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: const Text(
-                    'CHECKOUT',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1),
-                  ),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Total Amount',
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade500, fontWeight: FontWeight.w600),
                 ),
+                Text(
+                  '₹${_calculateFinalTotal(cart.grandTotal, cart.totalPrice).toStringAsFixed(2)}',
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.primaryGreen, letterSpacing: -0.5),
+                ),
+              ],
+            ),
+            const SizedBox(width: 20),
+            ElevatedButton(
+              onPressed: () => Get.toNamed('/checkout', arguments: {
+                'appliedDiscountPercentage': appliedDiscountPercentage,
+                'appliedVoucherCode': appliedVoucherCode,
+              }),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                foregroundColor: Colors.white,
+                elevation: 4,
+                shadowColor: AppColors.primaryGreen.withOpacity(0.4),
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+              ),
+              child: const Text(
+                'CHECKOUT',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: 1.2),
               ),
             ),
           ],
@@ -608,12 +612,12 @@ class _CartPageState extends State<CartPage> {
         content: const Text('Are you sure you want to remove this item from your cart?'),
         actions: [
           TextButton(
-            onPressed: () => Get.back(),
+            onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
-              Get.back();
+              Navigator.of(context, rootNavigator: true).pop();
               controller.removeFromCart(productId);
             },
             child: const Text(
@@ -635,12 +639,12 @@ class _CartPageState extends State<CartPage> {
         content: const Text('Are you sure you want to remove all items from your cart?'),
         actions: [
           TextButton(
-            onPressed: () => Get.back(),
+            onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
-              Get.back();
+              Navigator.of(context, rootNavigator: true).pop();
               controller.clearCart();
             },
             child: const Text(
@@ -695,6 +699,16 @@ class _QuantityButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    return TextEditingValue(
+      text: newValue.text.toUpperCase(),
+      selection: newValue.selection,
     );
   }
 }
