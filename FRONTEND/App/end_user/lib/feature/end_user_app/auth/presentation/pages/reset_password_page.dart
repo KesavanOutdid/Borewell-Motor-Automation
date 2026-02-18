@@ -60,24 +60,7 @@ class ResetPasswordView extends GetView<ForgotPasswordController> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 20),
-                      Text(
-                        "Step 2: Set New Password",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade800,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Please enter your new 6-digit PIN and confirm it.",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 10),
                       
                       Obx(() => TextFormField(
                         onChanged: (value) => controller.newPassword.value = value,

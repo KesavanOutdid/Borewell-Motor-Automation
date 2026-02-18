@@ -216,12 +216,11 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     int index = devices.indexWhere((d) => (d['serial_number'] ?? d['serialNumber']) == serial);
     if (index != -1) {
       var device = Map<String, dynamic>.from(devices[index]);
-      if (isDeviceRunning(device) != isRunning) {
-        device['start_status'] = isRunning;
-        device['updatedAt'] = DateTime.now().toIso8601String();
-        devices[index] = device;
-        devices.refresh();
-      }
+      device['start_status'] = isRunning;
+      device['updatedAt'] = DateTime.now().toUtc().toIso8601String();
+      device['last_heartbeat'] = DateTime.now().toUtc().toIso8601String();
+      devices[index] = device;
+      devices.refresh();
     }
   }
 
@@ -897,7 +896,16 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   }
 
   bool isOnline(Map<String, dynamic> device) {
-    // Check real-time connectivity based on last heartbeat (2 minute threshold)
+    // If we just successfully sent a command, trust that we are connected to the system
+    final serial = device['serial_number'] ?? device['serialNumber'];
+    if (serial != null && _pendingCommands.containsKey(serial)) {
+      final pending = _pendingCommands[serial]!;
+      if (DateTime.now().difference(pending.time) < _commandPendingWindow) {
+        return true;
+      }
+    }
+
+    // Check real-time connectivity based on last heartbeat (3 minute threshold for clock drift)
     final heartbeat = device['last_heartbeat'];
     if (heartbeat == null) return false;
     
@@ -913,10 +921,13 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     }
     
     final now = DateTime.now();
-    // Use UTC for comparison if the server sends UTC, but here we assume local time alignment
-    final difference = now.difference(lastUpdate).inSeconds;
+    // Support UTC comparison + allow for clock drift (up to 3 minutes)
+    final lastUpdateUtc = lastUpdate.toUtc();
+    final nowUtc = now.toUtc();
+    final difference = nowUtc.difference(lastUpdateUtc).inSeconds;
     
-    return difference >= 0 && difference < 120;
+    // Allow for future timestamps (server clock ahead) and up to 3 minutes in the past
+    return difference < 180;
   }
 
   String getLastSeenText(Map<String, dynamic> device) {

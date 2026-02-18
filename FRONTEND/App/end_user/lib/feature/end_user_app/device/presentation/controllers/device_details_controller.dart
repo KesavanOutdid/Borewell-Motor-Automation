@@ -46,7 +46,7 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
   }
 
   static const Duration _istOffset = Duration(hours: 5, minutes: 30);
-  static const Duration _heartbeatGrace = Duration(seconds: 120);
+  static const Duration _heartbeatGrace = Duration(seconds: 180);
   static const Duration _commandPendingWindow = Duration(seconds: 20);
   static const Duration _commandConfirmTimeout = Duration(seconds: 15);
 
@@ -97,7 +97,7 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
       try {
         final lastSeen = DateTime.parse(lastSeenStr.toString()).toUtc();
         final now = DateTime.now().toUtc();
-        if (now.difference(lastSeen).inSeconds < 120) {
+        if (now.difference(lastSeen).inSeconds < 180) {
           isConnected.value = true;
           _startHeartbeatTimer();
         }
@@ -992,19 +992,38 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
     }
 
     // Check if online based on last update
-    final lastUpdate = data['updatedAt'] ?? data['timestamp'];
-    if (lastUpdate != null) {
-      try {
-        final dateTime = DateTime.parse(lastUpdate.toString()).toUtc();
-        final now = DateTime.now().toUtc();
-        if (now.difference(dateTime).inSeconds < 120) {
-          _startHeartbeatTimer();
-        } else {
-          isConnected.value = false;
+    // Priority: 1. Socket connection, 2. Recent command, 3. Timestamp threshold
+    bool isActuallyConnected = isConnected.value;
+
+    if (_socket?.connected == true) {
+      isActuallyConnected = true;
+    } else {
+      final lastUpdate = data['last_heartbeat'] ?? data['updatedAt'] ?? data['timestamp'];
+      if (lastUpdate != null) {
+        try {
+          final dateTime = DateTime.parse(lastUpdate.toString()).toUtc();
+          final now = DateTime.now().toUtc();
+          final diff = now.difference(dateTime).inSeconds;
+          
+          // Use 180s (3m) threshold for API-based online status to allow for some clock drift
+          if (diff < 180) {
+            isActuallyConnected = true;
+          } else if (_lastCommandTime != null && DateTime.now().difference(_lastCommandTime!).inSeconds < 60) {
+            // Stay online if we just successfully sent a command to the server
+            isActuallyConnected = true;
+          } else {
+            isActuallyConnected = false;
+          }
+        } catch (_) {
+          // Keep current state on parse error if not already offline
         }
-      } catch (_) {
-        isConnected.value = false;
       }
+    }
+
+    if (isActuallyConnected) {
+      _startHeartbeatTimer();
+    } else {
+      isConnected.value = false;
     }
   }
 

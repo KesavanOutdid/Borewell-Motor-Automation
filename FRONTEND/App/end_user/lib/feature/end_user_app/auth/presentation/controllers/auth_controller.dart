@@ -138,9 +138,9 @@ class AuthController extends GetxController {
 
       isLoading.value = false;
 
+      final Map<String, dynamic> responseData = jsonDecode(response.body);
+
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = jsonDecode(response.body);
-        
         if (responseData['success'] == true) {
           authToken.value = responseData['token'] ?? "";
           final userData = responseData['user'];
@@ -168,12 +168,10 @@ class AuthController extends GetxController {
             print('HomeController not found: $e');
           }
         } else {
-          isLoading.value = false;
           return responseData['message'] ?? "Login failed";
         }
       } else {
-        isLoading.value = false;
-        return "Invalid credentials";
+        return responseData['message'] ?? "Invalid credentials";
       }
     } catch (e) {
       isLoading.value = false;

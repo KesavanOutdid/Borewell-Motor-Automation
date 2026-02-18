@@ -320,7 +320,7 @@ class _FormContentState extends State<_FormContent> {
                   () => SizedBox(
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: controller.isLoading.value
+                      onPressed: (controller.isLoading.value || controller.email.value.isEmpty || controller.password.value.isEmpty)
                           ? null
                           : () async {
                               if (formKey.currentState?.validate() ?? false) {

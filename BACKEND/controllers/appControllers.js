@@ -727,8 +727,8 @@ exports.userAssignDevices = async (req, res) => {
         const limitNum = parseInt(limit);
         const skip = (pageNum - 1) * limitNum;
 
-        // Threshold for online status (2 minutes)
-        const onlineThreshold = new Date(Date.now() - 2 * 60 * 1000);
+        // Threshold for online status (3 minutes to allow for clock drift and signal issues)
+        const onlineThreshold = new Date(Date.now() - 3 * 60 * 1000);
 
         // Define base query for devices where user is master or shared
         // First get shared serials

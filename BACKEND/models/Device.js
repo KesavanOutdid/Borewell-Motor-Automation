@@ -23,6 +23,7 @@ const deviceSchema = new mongoose.Schema({
 
     updatedBy: { type: String, default: null },
     updatedAt: { type: Date, default: null },
+    last_heartbeat: { type: Date, default: null },
     startAt: { type: Date, default: null },
     stopAt: { type: Date, default: null },
     last_started_by: { type: String, default: null },
