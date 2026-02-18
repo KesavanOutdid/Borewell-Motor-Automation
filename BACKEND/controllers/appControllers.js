@@ -2585,7 +2585,9 @@ exports.forgotPasswordRequest = async (req, res, next) => {
 
         // Send Email
         const transporter = nodemailer.createTransport({
-            service: 'gmail',
+            host: process.env.EMAIL_HOST,
+            port: parseInt(process.env.EMAIL_PORT),
+            secure: parseInt(process.env.EMAIL_PORT) === 465, // true for 465, false for other ports
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
@@ -2593,7 +2595,7 @@ exports.forgotPasswordRequest = async (req, res, next) => {
         });
 
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: `"Smart Motor Automation" <${process.env.EMAIL_USER}>`,
             to: user_email,
             subject: 'Password Reset OTP',
             text: `Your OTP for password reset is ${otp}. It is valid for 10 minutes.`

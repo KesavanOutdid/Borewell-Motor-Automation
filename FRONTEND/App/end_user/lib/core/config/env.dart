@@ -22,5 +22,7 @@ class AppConfig {
   static const String deviceAssignToUserEndpoint = "/admin/deviceAssignTouser";
   static const String getAllVouchersEndpoint = "/app/getAllVouchers";
   static const String validateVoucherEndpoint = "/app/validateVoucher";
+  static const String sendOtpEndpoint = "/app/forgotPasswordRequest";
+  static const String verifyOtpAndResetPasswordEndpoint = "/app/resetPassword";
   static const String socketIOUrl = "http://192.168.0.26:3030";
 }

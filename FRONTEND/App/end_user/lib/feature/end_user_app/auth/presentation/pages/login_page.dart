@@ -299,7 +299,22 @@ class _FormContentState extends State<_FormContent> {
                     },
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Get.toNamed(AppRoutes.forgotPassword),
+                    child: const Text(
+                      "Forgot Password?",
+                      style: TextStyle(
+                        color: AppColors.primaryGreen,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
                 Obx(
                   () => SizedBox(
                     height: 56,
@@ -310,7 +325,7 @@ class _FormContentState extends State<_FormContent> {
                               if (formKey.currentState?.validate() ?? false) {
                                 if (passwordController.text.length == 6) {
                                   final errorMessage = await controller.login();
-                                  if (errorMessage != null) {
+                                  if (errorMessage != null && context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(errorMessage),

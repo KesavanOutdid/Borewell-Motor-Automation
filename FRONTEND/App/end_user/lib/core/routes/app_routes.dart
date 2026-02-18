@@ -4,8 +4,10 @@ import '../../feature/end_user_app/auth/presentation/pages/login_page.dart';
 import '../../feature/end_user_app/auth/presentation/pages/login_binding.dart';
 import '../../feature/end_user_app/auth/presentation/pages/signup_page.dart';
 import '../../feature/end_user_app/auth/presentation/pages/signup_binding.dart';
-import '../../feature/end_user_app/home/presentation/pages/home_page.dart';
-import '../../feature/end_user_app/home/presentation/pages/home_binding.dart';
+import '../../feature/end_user_app/auth/presentation/pages/forgot_password_page.dart';
+import '../../feature/end_user_app/auth/presentation/pages/forgot_password_binding.dart';
+import '../../feature/end_user_app/dashboard/presentation/pages/dashboard_page.dart';
+import '../../feature/end_user_app/dashboard/presentation/pages/dashboard_binding.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_page.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_binding.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_details_page.dart';
@@ -56,6 +58,7 @@ class AppRoutes {
   static const addresses = '/addresses';
   static const addAddress = '/add-address';
   static const vouchers = '/vouchers';
+  static const forgotPassword = '/forgot-password';
 
   static final routes = [
     GetPage(
@@ -71,6 +74,11 @@ class AppRoutes {
       name: signup,
       page: () => SignupView(),
       binding: SignupBinding(),
+    ),
+    GetPage(
+      name: forgotPassword,
+      page: () => ForgotPasswordView(),
+      binding: ForgotPasswordBinding(),
     ),
     GetPage(
       name: home,
