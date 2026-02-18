@@ -1611,4 +1611,64 @@ router.post('/createSchedule', authMiddleware(), appCtrl.createSchedule);
 router.get('/getSchedules', authMiddleware(), appCtrl.getSchedules);
 router.post('/cancelSchedule/:schedule_id', authMiddleware(), appCtrl.cancelSchedule);
 
+/**
+ * @swagger
+ * /app/forgotPasswordRequest:
+ *   post:
+ *     summary: Request password reset OTP
+ *     tags: [App]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               user_email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: OTP sent to email
+ */
+router.post(
+    '/forgotPasswordRequest',
+    [
+        body('user_email').isEmail().withMessage("Invalid email")
+    ],
+    appCtrl.forgotPasswordRequest
+);
+
+/**
+ * @swagger
+ * /app/resetPassword:
+ *   post:
+ *     summary: Reset password using OTP
+ *     tags: [App]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               user_email:
+ *                 type: string
+ *               otp:
+ *                 type: string
+ *               new_password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Password reset successful
+ */
+router.post(
+    '/resetPassword',
+    [
+        body('user_email').isEmail().withMessage("Invalid email"),
+        body('otp').notEmpty().withMessage("OTP is required"),
+        body('new_password').matches(/^[0-9]{6}$/).withMessage("Password must be 6 digits")
+    ],
+    appCtrl.resetPassword
+);
+
 module.exports = router;

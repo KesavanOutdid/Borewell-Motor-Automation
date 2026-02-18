@@ -41,7 +41,10 @@ const UserSchema = new mongoose.Schema({
     updatedAt: { type: Date, default: null },
 
     status: { type: Boolean, default: true },
-    fcm_tokens: { type: [String], default: [] }
+    fcm_tokens: { type: [String], default: [] },
+
+    resetPasswordOtp: { type: String, default: null },
+    resetPasswordExpires: { type: Date, default: null }
 
 });
 

@@ -16,6 +16,7 @@ const { redisClient, isRedisConnected } = require('../config/redis');
 const { client: mqttPublisher } = require('../mqtt/publisher');
 const fs = require('fs');
 const path = require('path');
+const nodemailer = require('nodemailer');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change_this_secret';
 // const JWT_EXPIRES = '2h';
@@ -2562,5 +2563,77 @@ exports.getProducts = async (req, res, next) => {
             success: false,
             message: "Server error fetching products"
         });
+    }
+};
+
+exports.forgotPasswordRequest = async (req, res, next) => {
+    try {
+        const { user_email } = req.body;
+        const user = await User.findOne({ user_email });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        // Generate 4-digit OTP
+        const otp = Math.floor(1000 + Math.random() * 9000).toString();
+        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        user.resetPasswordOtp = otp;
+        user.resetPasswordExpires = otpExpiry;
+        await user.save();
+
+        // Send Email
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        });
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: user_email,
+            subject: 'Password Reset OTP',
+            text: `Your OTP for password reset is ${otp}. It is valid for 10 minutes.`
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.error("Email send error:", error);
+                return res.status(500).json({ success: false, message: "Error sending email" });
+            }
+            res.status(200).json({ success: true, message: "OTP sent to email" });
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.resetPassword = async (req, res, next) => {
+    try {
+        const { user_email, otp, new_password } = req.body;
+
+        const user = await User.findOne({
+            user_email,
+            resetPasswordOtp: otp,
+            resetPasswordExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
+        }
+
+        user.password = Number(new_password);
+        user.resetPasswordOtp = null;
+        user.resetPasswordExpires = null;
+        await user.save();
+
+        res.status(200).json({ success: true, message: "Password reset successful" });
+
+    } catch (error) {
+        next(error);
     }
 };
