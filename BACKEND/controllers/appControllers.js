@@ -2614,6 +2614,27 @@ exports.forgotPasswordRequest = async (req, res, next) => {
     }
 };
 
+exports.verifyOtp = async (req, res, next) => {
+    try {
+        const { user_email, otp } = req.body;
+
+        const user = await User.findOne({
+            user_email,
+            resetPasswordOtp: otp,
+            resetPasswordExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
+        }
+
+        res.status(200).json({ success: true, message: "OTP verified successfully" });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
 exports.resetPassword = async (req, res, next) => {
     try {
         const { user_email, otp, new_password } = req.body;

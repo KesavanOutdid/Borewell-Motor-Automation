@@ -6,6 +6,8 @@ import '../../feature/end_user_app/auth/presentation/pages/signup_page.dart';
 import '../../feature/end_user_app/auth/presentation/pages/signup_binding.dart';
 import '../../feature/end_user_app/auth/presentation/pages/forgot_password_page.dart';
 import '../../feature/end_user_app/auth/presentation/pages/forgot_password_binding.dart';
+import '../../feature/end_user_app/auth/presentation/pages/otp_verification_page.dart';
+import '../../feature/end_user_app/auth/presentation/pages/reset_password_page.dart';
 import '../../feature/end_user_app/dashboard/presentation/pages/dashboard_page.dart';
 import '../../feature/end_user_app/dashboard/presentation/pages/dashboard_binding.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_page.dart';
@@ -20,8 +22,6 @@ import '../../feature/end_user_app/device/presentation/pages/add_device_page.dar
 import '../../feature/end_user_app/profile/presentation/pages/profile_page.dart';
 import '../../feature/end_user_app/profile/presentation/pages/profile_binding.dart';
 import '../../feature/end_user_app/profile/presentation/pages/edit_profile_page.dart';
-import '../../feature/end_user_app/dashboard/presentation/pages/dashboard_page.dart';
-import '../../feature/end_user_app/dashboard/presentation/pages/dashboard_binding.dart';
 import '../../feature/end_user_app/settings/presentation/pages/settings_page.dart';
 import '../../feature/end_user_app/settings/presentation/pages/settings_binding.dart';
 import '../../feature/end_user_app/contact/presentation/pages/contact_page.dart';
@@ -59,6 +59,8 @@ class AppRoutes {
   static const addAddress = '/add-address';
   static const vouchers = '/vouchers';
   static const forgotPassword = '/forgot-password';
+  static const otpVerification = '/otp-verification';
+  static const resetPassword = '/reset-password';
 
   static final routes = [
     GetPage(
@@ -78,6 +80,16 @@ class AppRoutes {
     GetPage(
       name: forgotPassword,
       page: () => ForgotPasswordView(),
+      binding: ForgotPasswordBinding(),
+    ),
+    GetPage(
+      name: otpVerification,
+      page: () => OtpVerificationView(),
+      binding: ForgotPasswordBinding(),
+    ),
+    GetPage(
+      name: resetPassword,
+      page: () => ResetPasswordView(),
       binding: ForgotPasswordBinding(),
     ),
     GetPage(

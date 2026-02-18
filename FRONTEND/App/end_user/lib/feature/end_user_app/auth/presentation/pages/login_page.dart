@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../utils/theme/app_colors.dart';
+import '../../../../../utils/ui_utils.dart';
 
 class LoginView extends GetView<AuthController> {
   LoginView({super.key});
@@ -326,28 +327,10 @@ class _FormContentState extends State<_FormContent> {
                                 if (passwordController.text.length == 6) {
                                   final errorMessage = await controller.login();
                                   if (errorMessage != null && context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(errorMessage),
-                                        backgroundColor: AppColors.error,
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                      ),
-                                    );
+                                    UIUtils.showErrorDialog(message: errorMessage);
                                   }
                                 } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: const Text("Please enter 6-digit password"),
-                                      backgroundColor: AppColors.warning,
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                  );
+                                  UIUtils.showErrorDialog(message: "Please enter 6-digit password");
                                 }
                               }
                             },

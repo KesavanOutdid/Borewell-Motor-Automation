@@ -1640,6 +1640,36 @@ router.post(
 
 /**
  * @swagger
+ * /app/verifyOtp:
+ *   post:
+ *     summary: Verify password reset OTP
+ *     tags: [App]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               user_email:
+ *                 type: string
+ *               otp:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: OTP verified successfully
+ */
+router.post(
+    '/verifyOtp',
+    [
+        body('user_email').isEmail().withMessage("Invalid email"),
+        body('otp').notEmpty().withMessage("OTP is required")
+    ],
+    appCtrl.verifyOtp
+);
+
+/**
+ * @swagger
  * /app/resetPassword:
  *   post:
  *     summary: Reset password using OTP
