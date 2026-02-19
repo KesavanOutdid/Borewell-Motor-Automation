@@ -12,6 +12,7 @@ import 'dart:convert';
 import 'package:http_parser/http_parser.dart';
 
 class ProfileController extends GetxController {
+  final formKey = GlobalKey<FormState>();
   var userName = "".obs;
   var userEmail = "".obs;
   var userPhone = "".obs;

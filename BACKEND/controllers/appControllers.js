@@ -2649,6 +2649,10 @@ exports.resetPassword = async (req, res, next) => {
             return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
         }
 
+        if (Number(user.password) === Number(new_password)) {
+            return res.status(400).json({ success: false, message: "New password cannot be the same as the old password." });
+        }
+
         user.password = Number(new_password);
         user.resetPasswordOtp = null;
         user.resetPasswordExpires = null;

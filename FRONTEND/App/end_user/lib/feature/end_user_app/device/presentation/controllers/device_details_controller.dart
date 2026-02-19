@@ -324,13 +324,19 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
   Future<void> _sendStartStopCommand(bool start) async {
     if (isProcessing.value) return;
 
-    print('🔧 [DETAILS] Sending Start/Stop Command: ${start ? 'START' : 'STOP'} for $serialNumber');
+    final startTime = DateTime.now();
+    print('⏱️ [LATENCY] 1. App sending command: ${start ? 'START' : 'STOP'} at ${startTime.toIso8601String()}');
+    
     if (serialNumber == null || imeiNumber == null) {
       _showMessage('Missing device information');
       return;
     }
 
     isProcessing.value = true;
+    _lastCommandTime = DateTime.now();
+    _lastCommandStatus = start;
+    _pendingCommandStatus = start;
+
     try {
       final token = tokenService.getToken();
       if (token == null) {
@@ -345,9 +351,7 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
       }
 
       final url = Uri.parse(AppConfig.baseUrl + AppConfig.startStopDeviceEndpoint);
-      print('🔧 [DETAILS] API Request: POST $url');
-      print('🔧 [DETAILS] Body: {serial: $serialNumber, status: $start, email: $userEmail}');
-
+      
       final response = await http.post(
         url,
         headers: {
@@ -362,23 +366,19 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
         }),
       );
 
-      print('🔧 [DETAILS] API Response: Status ${response.statusCode}');
-      print('🔧 [DETAILS] Response Body: ${response.body}');
+      final endTime = DateTime.now();
+      print('⏱️ [LATENCY] 2. HTTP Response received in ${endTime.difference(startTime).inMilliseconds}ms (Status: ${response.statusCode})');
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
         final message = body['message']?.toString() ?? 'Command sent to device';
         _showMessage(message);
         
-        _lastCommandTime = DateTime.now();
-        _lastCommandStatus = start;
-        _pendingCommandStatus = start;
-        
         // Start timeout timer for confirmation
         _commandTimeoutTimer?.cancel();
         _commandTimeoutTimer = Timer(_commandConfirmTimeout, () {
           if (isProcessing.value && _pendingCommandStatus != null) {
-            print('🔧 [DETAILS] Command confirmation timed out');
+            print('⏱️ [LATENCY] ❌ Command confirmation TIMED OUT after ${_commandConfirmTimeout.inSeconds}s');
             isProcessing.value = false;
             _pendingCommandStatus = null;
             _showMessage('Command sent, waiting for device confirmation...');
@@ -403,9 +403,13 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
         _showMessage('Device not found');
       } else {
         _showMessage('Command failed (${response.statusCode})');
+        isProcessing.value = false;
+        _pendingCommandStatus = null;
       }
     } catch (e) {
       _showMessage('Command failed: $e');
+      isProcessing.value = false;
+      _pendingCommandStatus = null;
     } finally {
       // Small delay before allowing next command to prevent UI rapid fire
       await Future.delayed(const Duration(milliseconds: 500));
@@ -617,12 +621,14 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
       }
 
       if (confirmed) {
-        print('🔧 [DETAILS] Command confirmed via STATUS message');
+        final confirmedTime = DateTime.now();
+        final diff = _lastCommandTime != null ? confirmedTime.difference(_lastCommandTime!).inMilliseconds : -1;
+        print('⏱️ [LATENCY] 4. Socket Confirmation received! Time from command: ${diff}ms (via STATUS)');
         _commandTimeoutTimer?.cancel();
         _pendingCommandStatus = null;
         isProcessing.value = false;
       } else {
-        print('🔧 [DETAILS] Status update received while processing, but not confirming pending command');
+        print('🔧 [DETAILS] Status update received: ${running ? 'RUNNING' : 'STOPPED'} (Still waiting for ${_pendingCommandStatus == true ? 'START' : 'STOP'})');
         return; // Ignore updates that don't match our pending command
       }
     }

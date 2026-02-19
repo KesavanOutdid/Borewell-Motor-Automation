@@ -171,154 +171,192 @@ class _EditProfilePageState extends State<EditProfilePage> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Stack(
-                children: [
-                  Obx(() => Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.primaryGreen, width: 2),
+        child: Form(
+          key: controller.formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Stack(
+                  children: [
+                    Obx(() => Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.primaryGreen, width: 2),
+                      ),
+                      child: CircleAvatar(
+                        radius: 50,
+                        backgroundColor: AppColors.primaryGreen.withOpacity(0.1),
+                        backgroundImage: controller.userProfileImage.value.isNotEmpty
+                            ? NetworkImage("${AppConfig.baseUrl}${controller.userProfileImage.value}")
+                            : null,
+                        child: controller.userProfileImage.value.isEmpty
+                            ? Text(
+                                controller.userName.value.isNotEmpty
+                                    ? controller.userName.value[0].toUpperCase()
+                                    : 'U',
+                                style: const TextStyle(
+                                  fontSize: 40,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primaryGreen,
+                                ),
+                              )
+                            : null,
+                      ),
+                    )),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: () => _showImageSourceDialog(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: AppColors.primaryGreen,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                        ),
+                      ),
                     ),
-                    child: CircleAvatar(
-                      radius: 50,
-                      backgroundColor: AppColors.primaryGreen.withOpacity(0.1),
-                      backgroundImage: controller.userProfileImage.value.isNotEmpty
-                          ? NetworkImage("${AppConfig.baseUrl}${controller.userProfileImage.value}")
-                          : null,
-                      child: controller.userProfileImage.value.isEmpty
-                          ? Text(
-                              controller.userName.value.isNotEmpty
-                                  ? controller.userName.value[0].toUpperCase()
-                                  : 'U',
-                              style: const TextStyle(
-                                fontSize: 40,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primaryGreen,
-                              ),
-                            )
-                          : null,
+                  ],
+                ),
+              ),
+              const SizedBox(height: 40),
+              _buildTextField(
+                label: 'Full Name',
+                hint: 'Enter your name',
+                icon: Icons.person_outline,
+                controller: controller.nameEditingController,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
+                ],
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Full Name is required';
+                  }
+                  if (value.trim().length < 3) {
+                    return 'Name must be at least 3 characters';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 20),
+              _buildTextField(
+                label: 'Email Address',
+                hint: 'Enter your email',
+                icon: Icons.email_outlined,
+                controller: controller.emailEditingController,
+                keyboardType: TextInputType.emailAddress,
+                enabled: false,
+              ),
+              const SizedBox(height: 20),
+              _buildTextField(
+                label: 'Phone Number',
+                hint: 'Enter 10 digit number',
+                icon: Icons.phone_outlined,
+                controller: controller.phoneEditingController,
+                keyboardType: TextInputType.phone,
+                maxLength: 10,
+                enabled: false,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              ),
+              const SizedBox(height: 20),
+              Obx(() => _buildTextField(
+                    label: 'Password',
+                    hint: 'Update your 6-digit password',
+                    icon: Icons.lock_outline,
+                    controller: controller.passwordEditingController,
+                    obscureText: !controller.isPasswordVisible.value,
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Password is required';
+                      }
+                      if (value.length != 6) {
+                        return 'Password must be exactly 6 digits';
+                      }
+                      return null;
+                    },
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        controller.isPasswordVisible.value
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        size: 20,
+                      ),
+                      onPressed: () => controller.isPasswordVisible.toggle(),
                     ),
                   )),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: GestureDetector(
-                      onTap: () => _showImageSourceDialog(context),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                          color: AppColors.primaryGreen,
-                          shape: BoxShape.circle,
+              const SizedBox(height: 40),
+              Obx(() => SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: controller.isUpdating.value || !controller.hasChanges.value
+                          ? null
+                          : () async {
+                              if (controller.formKey.currentState!.validate()) {
+                                final error = await controller.updateProfile();
+                                if (error == null) {
+                                  Navigator.of(context).pop();
+                                  Get.rawSnackbar(
+                                    title: 'Success',
+                                    message: 'Profile updated successfully',
+                                    backgroundColor: AppColors.success,
+                                    snackPosition: SnackPosition.BOTTOM,
+                                    margin: const EdgeInsets.all(16),
+                                    borderRadius: 12,
+                                  );
+                                } else {
+                                  Get.rawSnackbar(
+                                    title: 'Error',
+                                    message: error,
+                                    backgroundColor: AppColors.error,
+                                    snackPosition: SnackPosition.BOTTOM,
+                                    margin: const EdgeInsets.all(16),
+                                    borderRadius: 12,
+                                  );
+                                }
+                              } else {
+                                Get.rawSnackbar(
+                                  title: 'Validation Error',
+                                  message: 'Please fix the errors in the form',
+                                  backgroundColor: AppColors.error,
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  margin: const EdgeInsets.all(16),
+                                  borderRadius: 12,
+                                );
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryGreen,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                        disabledBackgroundColor: AppColors.primaryGreen.withOpacity(0.5),
                       ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 40),
-            _buildTextField(
-              label: 'Full Name',
-              hint: 'Enter your name',
-              icon: Icons.person_outline,
-              controller: controller.nameEditingController,
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _buildTextField(
-              label: 'Email Address',
-              hint: 'Enter your email',
-              icon: Icons.email_outlined,
-              controller: controller.emailEditingController,
-              keyboardType: TextInputType.emailAddress,
-              enabled: false,
-            ),
-            const SizedBox(height: 20),
-            _buildTextField(
-              label: 'Phone Number',
-              hint: 'Enter 10 digit number',
-              icon: Icons.phone_outlined,
-              controller: controller.phoneEditingController,
-              keyboardType: TextInputType.phone,
-              maxLength: 10,
-              enabled: false,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            ),
-            const SizedBox(height: 20),
-            Obx(() => _buildTextField(
-                  label: 'Password',
-                  hint: 'Update your 6-digit password',
-                  icon: Icons.lock_outline,
-                  controller: controller.passwordEditingController,
-                  obscureText: !controller.isPasswordVisible.value,
-                  keyboardType: TextInputType.number,
-                  maxLength: 6,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      controller.isPasswordVisible.value
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                      size: 20,
-                    ),
-                    onPressed: () => controller.isPasswordVisible.toggle(),
-                  ),
-                )),
-            const SizedBox(height: 40),
-            Obx(() => SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: controller.isUpdating.value || !controller.hasChanges.value
-                        ? null
-                        : () async {
-                            final error = await controller.updateProfile();
-                            if (error == null) {
-                              Navigator.of(context).pop();
-                              Get.rawSnackbar(
-                                title: 'Success',
-                                message: 'Profile updated successfully',
-                                backgroundColor: AppColors.success,
-                              );
-                            } else {
-                              Get.rawSnackbar(
-                                title: 'Error',
-                                message: error,
-                                backgroundColor: AppColors.error,
-                              );
-                            }
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryGreen,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      disabledBackgroundColor: AppColors.primaryGreen.withOpacity(0.5),
-                    ),
-                    child: controller.isUpdating.value
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 3,
+                      child: controller.isUpdating.value
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 3,
+                              ),
+                            )
+                          : const Text(
+                              'Save Changes',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             ),
-                          )
-                        : const Text(
-                            'Save Changes',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                  ),
-                )),
-          ],
+                    ),
+                  )),
+            ],
+          ),
         ),
       ),
     );
@@ -335,6 +373,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     int? maxLength,
     bool enabled = true,
     List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -350,13 +389,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
           ),
         ),
         const SizedBox(height: 8),
-        TextField(
+        TextFormField(
           controller: controller,
           enabled: enabled,
           keyboardType: keyboardType,
           obscureText: obscureText,
           maxLength: maxLength,
           inputFormatters: inputFormatters,
+          validator: validator,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           style: TextStyle(
             color: enabled 
                 ? (isDark ? Colors.white : AppColors.textPrimary)
@@ -393,6 +434,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red, width: 1),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
             ),
           ),
         ),

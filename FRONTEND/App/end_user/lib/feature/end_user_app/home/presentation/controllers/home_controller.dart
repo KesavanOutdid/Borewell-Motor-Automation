@@ -391,6 +391,9 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     }
 
     processingDevices.add(serialNumber);
+    // Mark as pending locally BEFORE the call to handle socket lag
+    markCommandPending(serialNumber, status);
+
     try {
       final url = Uri.parse(AppConfig.baseUrl + AppConfig.startStopDeviceEndpoint);
       final token = tokenService.getToken();
@@ -417,9 +420,6 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       print('🏠 [HOME] Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
-        // Mark as pending locally to handle socket lag
-        markCommandPending(serialNumber, status);
-        
         // Update local state immediately for better UX and sorting
         _updateDeviceStatus(serialNumber, status);
         

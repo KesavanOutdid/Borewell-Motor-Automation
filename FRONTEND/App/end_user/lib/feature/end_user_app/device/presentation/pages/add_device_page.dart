@@ -4,7 +4,7 @@ import '../controllers/add_device_controller.dart';
 import '../../../../../utils/theme/app_colors.dart';
 
 class ConfigureDeviceView extends StatelessWidget {
-  const ConfigureDeviceView({Key? key}) : super(key: key);
+  ConfigureDeviceView({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -21,117 +21,153 @@ class ConfigureDeviceView extends StatelessWidget {
       ),
       body: Obx(() => SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.cardDark : Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200,
+            child: Form(
+              key: controller.formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.cardDark : Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200,
+                      ),
                     ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryGreen.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryGreen.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.settings_input_component_rounded, color: AppColors.primaryGreen, size: 24),
                             ),
-                            child: const Icon(Icons.settings_input_component_rounded, color: AppColors.primaryGreen, size: 24),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Device Hardware',
+                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(
+                                    'Serial ${controller.serialNumber}',
+                                    style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600], fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        _buildTextField(
+                          controller: controller.imeiController,
+                          label: 'IMEI Number',
+                          hint: 'Enter 15-digit IMEI',
+                          icon: Icons.phonelink_setup_rounded,
+                          keyboardType: TextInputType.number,
+                          maxLength: 15,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'IMEI is required';
+                            }
+                            if (value.length != 15) {
+                              return 'IMEI must be exactly 15 digits';
+                            }
+                            if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                              return 'Only digits are allowed';
+                            }
+                            return null;
+                          },
+                          suffix: IconButton(
+                            icon: const Icon(Icons.qr_code_scanner_rounded, color: AppColors.primaryGreen),
+                            onPressed: () => controller.scanQRCode(),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Device Hardware',
-                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          isDark: isDark,
+                        ),
+                        const SizedBox(height: 20),
+                        _buildTextField(
+                          controller: controller.nicknameController,
+                          label: 'Device Name',
+                          hint: 'e.g., Motor-1',
+                          icon: Icons.drive_file_rename_outline_rounded,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Device name is required';
+                            }
+                            return null;
+                          },
+                          isDark: isDark,
+                        ),
+                        const SizedBox(height: 20),
+                        _buildTextField(
+                          controller: controller.locationController,
+                          label: 'Device Location',
+                          hint: 'e.g., Farm Sector A',
+                          icon: Icons.location_on_rounded,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Location is required';
+                            }
+                            return null;
+                          },
+                          suffix: controller.isGettingLocation.value
+                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                              : IconButton(
+                                  icon: const Icon(Icons.my_location_rounded, color: AppColors.primaryGreen),
+                                  onPressed: () => controller.getCurrentLocation(),
                                 ),
-                                Text(
-                                  'Serial ${controller.serialNumber}',
-                                  style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600], fontSize: 12),
-                                ),
+                          isDark: isDark,
+                        ),
+                        const SizedBox(height: 12),
+                        InkWell(
+                          onTap: () => controller.pickLocationOnMap(),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              children: const [
+                                Icon(Icons.map_rounded, size: 18, color: AppColors.primaryGreen),
+                                SizedBox(width: 8),
+                                Text('Pick from map', style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.w600, fontSize: 13)),
                               ],
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
-                      _buildTextField(
-                        controller: controller.imeiController,
-                        label: 'IMEI Number',
-                        hint: 'Enter 15-digit IMEI',
-                        icon: Icons.phonelink_setup_rounded,
-                        keyboardType: TextInputType.number,
-                        maxLength: 15,
-                        suffix: IconButton(
-                          icon: const Icon(Icons.qr_code_scanner_rounded, color: AppColors.primaryGreen),
-                          onPressed: () => controller.scanQRCode(),
                         ),
-                        isDark: isDark,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildTextField(
-                        controller: controller.nicknameController,
-                        label: 'Device Name',
-                        hint: 'e.g., Motor-1',
-                        icon: Icons.drive_file_rename_outline_rounded,
-                        isDark: isDark,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildTextField(
-                        controller: controller.locationController,
-                        label: 'Device Location',
-                        hint: 'e.g., Farm Sector A',
-                        icon: Icons.location_on_rounded,
-                        suffix: controller.isGettingLocation.value
-                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                            : IconButton(
-                                icon: const Icon(Icons.my_location_rounded, color: AppColors.primaryGreen),
-                                onPressed: () => controller.getCurrentLocation(),
-                              ),
-                        isDark: isDark,
-                      ),
-                      const SizedBox(height: 12),
-                      InkWell(
-                        onTap: () => controller.pickLocationOnMap(),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Row(
-                            children: const [
-                              Icon(Icons.map_rounded, size: 18, color: AppColors.primaryGreen),
-                              SizedBox(width: 8),
-                              Text('Pick from map', style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.w600, fontSize: 13)),
-                            ],
-                          ),
+                        const SizedBox(height: 20),
+                        _buildTextField(
+                          controller: controller.motorHpController,
+                          label: 'Motor Capacity (HP)',
+                          hint: 'e.g., 5.0',
+                          icon: Icons.speed_rounded,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Motor capacity is required';
+                            }
+                            if (double.tryParse(value) == null) {
+                              return 'Enter a valid number';
+                            }
+                            return null;
+                          },
+                          isDark: isDark,
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      _buildTextField(
-                        controller: controller.motorHpController,
-                        label: 'Motor Capacity (HP)',
-                        hint: 'e.g., 5.0',
-                        icon: Icons.speed_rounded,
-                        keyboardType: TextInputType.number,
-                        isDark: isDark,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                _buildInstructions(isDark),
-                const SizedBox(height: 32),
-                _buildActionButtons(controller),
-              ],
+                  const SizedBox(height: 24),
+                  _buildInstructions(isDark),
+                  const SizedBox(height: 32),
+                  _buildActionButtons(controller),
+                ],
+              ),
             ),
           )),
     );
@@ -146,16 +182,19 @@ class ConfigureDeviceView extends StatelessWidget {
     TextInputType? keyboardType,
     int? maxLength,
     Widget? suffix,
+    String? Function(String?)? validator,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.grey[400] : Colors.grey[600])),
         const SizedBox(height: 8),
-        TextField(
+        TextFormField(
           controller: controller,
           keyboardType: keyboardType,
           maxLength: maxLength,
+          validator: validator,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: Icon(icon, size: 20, color: AppColors.primaryGreen),
@@ -171,6 +210,14 @@ class ConfigureDeviceView extends StatelessWidget {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Colors.red, width: 1),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
             ),
           ),
         ),
@@ -231,7 +278,22 @@ class ConfigureDeviceView extends StatelessWidget {
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
-        onPressed: controller.isLoading.value ? null : () => controller.configureDevice(),
+        onPressed: controller.isLoading.value
+            ? null
+            : () {
+                if (controller.formKey.currentState!.validate()) {
+                  controller.configureDevice();
+                } else {
+                  Get.rawSnackbar(
+                    title: 'Validation Error',
+                    message: 'Please check the IMEI and other fields',
+                    backgroundColor: Colors.red.withOpacity(0.8),
+                    snackPosition: SnackPosition.BOTTOM,
+                    margin: const EdgeInsets.all(16),
+                    borderRadius: 12,
+                  );
+                }
+              },
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryGreen,
           foregroundColor: Colors.white,

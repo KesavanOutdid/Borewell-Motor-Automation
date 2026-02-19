@@ -126,7 +126,7 @@ class AppRoutes {
     ),
     GetPage(
       name: configureDevice,
-      page: () => const config_device.ConfigureDeviceView(),
+      page: () => config_device.ConfigureDeviceView(),
     ),
     GetPage(
       name: profile,

@@ -600,6 +600,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
             const SizedBox(height: 24),
             SwipeButton(
               onSwipe: () {
+                if (controller.isProcessing.value) return;
                 if (isRunning) {
                   controller.stopMotor();
                 } else {
@@ -609,7 +610,8 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
               label: controller.isProcessing.value ? 'Waiting for confirmation...' : (isRunning ? 'Swipe Left to Stop' : 'Swipe to Start'),
               icon: isRunning ? Icons.arrow_back_rounded : Icons.play_arrow_rounded,
               activeColor: isRunning ? AppColors.error : AppColors.primaryGreen,
-              isEnabled: isConnected && !controller.isProcessing.value,
+              isEnabled: isConnected,
+              disabledLabel: 'OFFLINE',
               direction: isRunning ? SwipeDirection.left : SwipeDirection.right,
             ),
             const SizedBox(height: 20),

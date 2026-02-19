@@ -123,16 +123,20 @@ class OtpVerificationView extends GetView<ForgotPasswordController> {
                             disabledBackgroundColor: Colors.grey.shade200,
                             disabledForegroundColor: Colors.grey.shade500,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
+                              borderRadius: BorderRadius.circular(28),
                             ),
                             elevation: controller.otp.value.length < 4 ? 0 : 4,
                             shadowColor: AppColors.primaryGreen.withOpacity(0.3),
                           ),
                           child: controller.isLoading.value
-                              ? const CircularProgressIndicator(color: Colors.white)
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                )
                               : const Text(
                                   "Verify & Continue",
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1),
                                 ),
                         ),
                       )),
@@ -206,14 +210,14 @@ class _OtpInputState extends State<_OtpInput> {
                 decoration: InputDecoration(
                   counterText: "",
                   filled: true,
-                  fillColor: Colors.grey.shade50,
+                  fillColor: Colors.white,
                   contentPadding: EdgeInsets.zero,
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide(color: Colors.grey.shade200),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(15),
                     borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
                   ),
                 ),

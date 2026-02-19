@@ -8,6 +8,7 @@ class SwipeButton extends StatefulWidget {
   final IconData icon;
   final Color activeColor;
   final bool isEnabled;
+  final String? disabledLabel;
   final SwipeDirection direction;
 
   const SwipeButton({
@@ -17,6 +18,7 @@ class SwipeButton extends StatefulWidget {
     required this.icon,
     required this.activeColor,
     this.isEnabled = true,
+    this.disabledLabel,
     this.direction = SwipeDirection.right,
   }) : super(key: key);
 
@@ -109,7 +111,7 @@ class _SwipeButtonState extends State<SwipeButton> with SingleTickerProviderStat
               Opacity(
                 opacity: (1.0 - (_progress * 1.5)).clamp(0.0, 1.0),
                 child: Text(
-                  widget.isEnabled ? widget.label.toUpperCase() : 'OFFLINE',
+                  widget.isEnabled ? widget.label.toUpperCase() : (widget.disabledLabel?.toUpperCase() ?? 'OFFLINE'),
                   style: TextStyle(
                     color: widget.isEnabled ? widget.activeColor.withOpacity(0.7) : Colors.grey,
                     fontWeight: FontWeight.w900,

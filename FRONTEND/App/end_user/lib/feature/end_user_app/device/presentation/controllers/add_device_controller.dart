@@ -12,6 +12,7 @@ import '../pages/map_picker_page.dart';
 import '../pages/qr_scanner_page.dart';
 
 class ConfigureDeviceController extends GetxController {
+  final formKey = GlobalKey<FormState>();
   final imeiController = TextEditingController();
   final nicknameController = TextEditingController();
   final locationController = TextEditingController();

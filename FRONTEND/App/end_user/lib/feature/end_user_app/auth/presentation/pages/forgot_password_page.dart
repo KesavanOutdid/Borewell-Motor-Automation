@@ -104,7 +104,7 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
                           return null;
                         },
                       )),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 32),
                       
                       Obx(() => SizedBox(
                         height: 56,
@@ -118,7 +118,7 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
                             disabledBackgroundColor: Colors.grey.shade200,
                             disabledForegroundColor: Colors.grey.shade500,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
+                              borderRadius: BorderRadius.circular(28),
                             ),
                             elevation: 0,
                           ),
@@ -130,7 +130,7 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
                                 )
                               : const Text(
                                   "Send OTP",
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1),
                                 ),
                         ),
                       )),

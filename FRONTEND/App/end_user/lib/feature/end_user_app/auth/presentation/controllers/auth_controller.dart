@@ -36,6 +36,7 @@ class AuthController extends GetxController {
     authToken.value = tokenService.getToken() ?? "";
     userId.value = tokenService.getUserId() ?? 0;
     userName.value = tokenService.getUserName() ?? "";
+    email.value = tokenService.getUserEmail() ?? "";
   }
 
   Future<void> logout() async {
@@ -56,6 +57,10 @@ class AuthController extends GetxController {
           }),
         );
         print('🔔 FCM Token Removed on Logout: $token');
+        
+        // Also delete token from Firebase to be sure
+        await messaging.deleteToken();
+        print('🔔 FCM Token Deleted from Firebase instance');
       }
     } catch (e) {
       print('❌ Error removing FCM token on logout: $e');
