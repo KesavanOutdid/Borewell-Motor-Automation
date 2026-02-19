@@ -1186,7 +1186,12 @@ exports.getTelemetryAnalytics = async (req, res) => {
                         {
                             $project: {
                                 _id: 0,
-                                label: { $dateToString: { format: "%H:%M", date: "$timestamp" } },
+                                label: { 
+                                    $concat: [
+                                        { $dateToString: { format: "%d %b ", date: "$timestamp" } },
+                                        { $dateToString: { format: "%H:%M", date: "$timestamp" } }
+                                    ]
+                                },
                                 value: "$value",
                                 timestamp: "$timestamp",
                                 count: "$count"
@@ -1204,6 +1209,9 @@ exports.getTelemetryAnalytics = async (req, res) => {
                         {
                             $group: {
                                 _id: {
+                                    year: { $year: "$ts" },
+                                    month: { $month: "$ts" },
+                                    day: { $dayOfMonth: "$ts" },
                                     hour: { $hour: "$ts" }
                                 },
                                 value: { $avg: "$val" },
