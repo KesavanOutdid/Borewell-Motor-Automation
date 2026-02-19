@@ -159,8 +159,8 @@ exports.getProfileById = async (req, res, next) => {
         const userId = Number(req.params.user_id);
 
         // Only JWT verified users can access (authMiddleware already checked token)
-        // Get user from DB
-        const user = await User.findOne({ user_id: userId });
+        // Get user from DB excluding password
+        const user = await User.findOne({ user_id: userId }).select("-password");
 
         if (!user)
             return res.status(404).json({
@@ -1101,29 +1101,62 @@ exports.getTelemetryAnalytics = async (req, res) => {
             });
         }
 
-        // build query filter - support both timestamp/TIMESTAMP for matching
+        // build query filter - support both lowercase/UPPERCASE for device and timestamp fields
         const filter = {
-            $or: [{ timestamp: { $exists: true } }, { TIMESTAMP: { $exists: true } }]
+            $and: [
+                { 
+                    $or: [
+                        { timestamp: { $exists: true } }, 
+                        { TIMESTAMP: { $exists: true } },
+                        { receivedAt: { $exists: true } }
+                    ] 
+                }
+            ]
         };
-        if (serial_number) filter.serial_number = serial_number;
-        if (imei_number) filter.imei_number = imei_number;
+        
+        if (serial_number) {
+            filter.$and.push({ 
+                $or: [
+                    { serial_number: serial_number.trim() }, 
+                    { SERIAL_NUMBER: serial_number.trim() }
+                ] 
+            });
+        }
+        if (imei_number) {
+            filter.$and.push({ 
+                $or: [
+                    { imei_number: imei_number.trim() }, 
+                    { IMEI_NUMBER: imei_number.trim() }
+                ] 
+            });
+        }
 
         const now = new Date();
 
         // ------------------------------------------
         // 📍 Updated aggregation with time-based filtering and case normalization
         // ------------------------------------------
-        const db = mongoose.connection.db;
-        const telemetryCollection = db.collection("agri_telemetry");
-
-        const analytics = await telemetryCollection.aggregate([
+        const analytics = await Telemetry.aggregate([
             { $match: filter },
             {
                 $addFields: {
-                    // Support both timestamp/TIMESTAMP and normalize to 'ts'
-                    ts: { $toDate: { $ifNull: ["$timestamp", "$TIMESTAMP"] } },
-                    // Support both lowercase and uppercase field names (e.g. motor_rpm / MOTOR_RPM)
-                    val: { $ifNull: [`$${type}`, `$${type.toUpperCase()}`] }
+                    // Support both timestamp/TIMESTAMP/receivedAt and normalize to 'ts'
+                    ts: { $toDate: { $ifNull: ["$timestamp", "$TIMESTAMP", "$receivedAt"] } },
+                    // Support both lowercase and uppercase field names, plus common variations
+                    val: { 
+                        $ifNull: [
+                            `$${type}`, 
+                            `$${type.toUpperCase()}`,
+                            // Handle special hardware-specific mappings
+                            type === "motor_frequency_hz" ? "$FREQUENCY_HZ" : null,
+                            type === "motor_rpm" ? "$RPM" : null,
+                            type === "voltage_rms" ? "$VOLTAGE" : null,
+                            type === "current_rms" ? "$CURRENT" : null,
+                            type === "power_kw" ? "$POWER" : null,
+                            type === "energy_kwh" ? "$ENERGY" : null,
+                            0 // Default to 0 if not found
+                        ] 
+                    }
                 }
             },
             {
@@ -2545,6 +2578,24 @@ exports.createSchedule = async (req, res) => {
                 for (const email of uniqueEmails) {
                     sendEmail(email, subject, body).catch(e => console.error(`Schedule email failed for ${email}:`, e));
                 }
+
+                // 3. Send FCM Notification to all related users
+                const sharedUserIds = sharedEntries.map(s => s.shared_to_user_id);
+                const allUserIds = [...new Set([user_id, ...sharedUserIds])];
+                const usersToNotify = await User.find({ user_id: { $in: allUserIds } });
+
+                const fcmTitle = "📅 New Schedule Set";
+                const fcmBody = `Device ${serial_number} scheduled to run from ${start.toLocaleTimeString()} to ${stop.toLocaleTimeString()} (Set by: ${user_name})`;
+
+                for (const user of usersToNotify) {
+                    if (user.fcm_tokens && user.fcm_tokens.length > 0) {
+                        sendPushNotification(user.fcm_tokens, { title: fcmTitle, body: fcmBody }, {
+                            type: "SCHEDULE",
+                            serial_number,
+                            schedule_id: newSchedule._id.toString()
+                        });
+                    }
+                }
             } catch (err) {
                 console.error("Schedule notification error:", err);
             }
@@ -2622,6 +2673,24 @@ exports.cancelSchedule = async (req, res) => {
 
                 for (const email of uniqueEmails) {
                     sendEmail(email, subject, body).catch(e => console.error(`Cancel email failed for ${email}:`, e));
+                }
+
+                // 3. Send FCM Notification to all related users
+                const sharedUserIds = sharedEntries.map(s => s.shared_to_user_id);
+                const allUserIds = [...new Set([schedule.user_id, ...sharedUserIds])];
+                const usersToNotify = await User.find({ user_id: { $in: allUserIds } });
+
+                const fcmTitle = "📅 Schedule Cancelled";
+                const fcmBody = `Motor schedule for ${schedule.serial_number} has been cancelled by ${user_name || 'System'}`;
+
+                for (const user of usersToNotify) {
+                    if (user.fcm_tokens && user.fcm_tokens.length > 0) {
+                        sendPushNotification(user.fcm_tokens, { title: fcmTitle, body: fcmBody }, {
+                            type: "SCHEDULE_CANCEL",
+                            serial_number: schedule.serial_number,
+                            schedule_id: schedule._id.toString()
+                        });
+                    }
                 }
             } catch (err) {
                 console.error("Cancel schedule notification error:", err);

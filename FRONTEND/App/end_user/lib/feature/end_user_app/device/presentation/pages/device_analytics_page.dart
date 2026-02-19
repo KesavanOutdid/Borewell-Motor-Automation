@@ -712,14 +712,14 @@ class DeviceAnalyticsView extends StatelessWidget {
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 32,
+              reservedSize: 36,
               interval: data.length > 12 ? (data.length / 6).ceil().toDouble() : 2.0,
               getTitlesWidget: (value, meta) {
                 final index = value.toInt();
                 if (index >= 0 && index < data.length) {
                   return SideTitleWidget(
                     axisSide: meta.axisSide,
-                    space: 8,
+                    space: 10,
                     child: Text(
                       data[index].label,
                       style: TextStyle(
@@ -737,12 +737,12 @@ class DeviceAnalyticsView extends StatelessWidget {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 50,
+              reservedSize: 60,
               interval: horizontalInterval,
               getTitlesWidget: (value, meta) {
                 return SideTitleWidget(
                   axisSide: meta.axisSide,
-                  space: 8,
+                  space: 10,
                   child: Text(
                     value >= 1000 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toStringAsFixed(1),
                     style: TextStyle(

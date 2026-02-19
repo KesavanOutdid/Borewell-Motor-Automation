@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const DeviceSchedule = require('../models/DeviceSchedule');
 const Device = require('../models/Device');
 const User = require('../models/User');
+const DeviceShare = require('../models/DeviceShare');
 const { client: mqttPublisher } = require('../mqtt/publisher');
 const { sendPushNotification } = require('./notificationHelper');
 const mongoose = require('mongoose');
@@ -101,18 +102,38 @@ const executeCommand = async (schedule, isStart) => {
         schedule.updated_at = new Date();
         await schedule.save();
 
-        // Notify User
-        const user = await User.findOne({ user_id });
-        if (user && user.fcm_tokens) {
-            const title = isStart ? "🟢 Auto Start Triggered" : "🔴 Auto Stop Triggered";
-            const setByInfo = schedule.user_name ? ` (Set by: ${schedule.user_name})` : '';
-            const body = `Scheduled task: Device ${serial_number} has been ${isStart ? 'started' : 'stopped'} automatically${setByInfo}.`;
-            sendPushNotification(user.fcm_tokens, { title, body }, {
-                type: "STATUS",
-                serial_number,
-                action: isStart ? "START" : "STOP"
-            });
-        }
+        // Notify Owner and Shared Users
+        const notifyAllUsers = async () => {
+            try {
+                // 1. Get Device and Owner
+                const device = await Device.findOne({ serial_number });
+                const ownerId = device ? device.assigned_user_id : user_id;
+                
+                // 2. Get Shared Users
+                const sharedEntries = await DeviceShare.find({ serial_number, status: true, acceptance_status: 'accepted' });
+                const sharedUserIds = sharedEntries.map(s => s.shared_to_user_id);
+                
+                const allUserIds = [...new Set([ownerId, ...sharedUserIds])];
+                const users = await User.find({ user_id: { $in: allUserIds } });
+                
+                const title = isStart ? "🟢 Auto Start Triggered" : "🔴 Auto Stop Triggered";
+                const setByInfo = schedule.user_name ? ` (Set by: ${schedule.user_name})` : '';
+                const body = `Scheduled task: Device ${serial_number} has been ${isStart ? 'started' : 'stopped'} automatically${setByInfo}.`;
+
+                for (const user of users) {
+                    if (user.fcm_tokens && user.fcm_tokens.length > 0) {
+                        sendPushNotification(user.fcm_tokens, { title, body }, {
+                            type: "STATUS",
+                            serial_number,
+                            action: isStart ? "START" : "STOP"
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error("Schedule FCM notification failed:", err);
+            }
+        };
+        notifyAllUsers();
 
     } catch (error) {
         console.error(`Execution failed for ${serial_number}:`, error);
