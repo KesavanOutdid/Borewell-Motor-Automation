@@ -1101,21 +1101,29 @@ exports.getTelemetryAnalytics = async (req, res) => {
             });
         }
 
-        // build query filter
-        const filter = { timestamp: { $exists: true } };
+        // build query filter - support both timestamp/TIMESTAMP for matching
+        const filter = {
+            $or: [{ timestamp: { $exists: true } }, { TIMESTAMP: { $exists: true } }]
+        };
         if (serial_number) filter.serial_number = serial_number;
         if (imei_number) filter.imei_number = imei_number;
 
         const now = new Date();
 
         // ------------------------------------------
-        // 📍 Updated aggregation with time-based filtering
+        // 📍 Updated aggregation with time-based filtering and case normalization
         // ------------------------------------------
-        const analytics = await Telemetry.aggregate([
+        const db = mongoose.connection.db;
+        const telemetryCollection = db.collection("agri_telemetry");
+
+        const analytics = await telemetryCollection.aggregate([
             { $match: filter },
             {
                 $addFields: {
-                    ts: { $toDate: "$timestamp" }
+                    // Support both timestamp/TIMESTAMP and normalize to 'ts'
+                    ts: { $toDate: { $ifNull: ["$timestamp", "$TIMESTAMP"] } },
+                    // Support both lowercase and uppercase field names (e.g. motor_rpm / MOTOR_RPM)
+                    val: { $ifNull: [`$${type}`, `$${type.toUpperCase()}`] }
                 }
             },
             {
@@ -1135,7 +1143,7 @@ exports.getTelemetryAnalytics = async (req, res) => {
                                     day: { $dayOfMonth: "$ts" },
                                     hour: { $hour: "$ts" }
                                 },
-                                value: { $avg: `$${type}` },
+                                value: { $avg: "$val" },
                                 timestamp: { $first: "$ts" },
                                 count: { $sum: 1 }
                             }
@@ -1165,7 +1173,7 @@ exports.getTelemetryAnalytics = async (req, res) => {
                                 _id: {
                                     hour: { $hour: "$ts" }
                                 },
-                                value: { $avg: `$${type}` },
+                                value: { $avg: "$val" },
                                 timestamp: { $first: "$ts" },
                                 count: { $sum: 1 }
                             }
@@ -1196,7 +1204,7 @@ exports.getTelemetryAnalytics = async (req, res) => {
                                     month: { $month: "$ts" },
                                     day: { $dayOfMonth: "$ts" }
                                 },
-                                value: { $avg: `$${type}` },
+                                value: { $avg: "$val" },
                                 timestamp: { $first: "$ts" },
                                 count: { $sum: 1 }
                             }
@@ -1232,7 +1240,7 @@ exports.getTelemetryAnalytics = async (req, res) => {
                                     month: { $month: "$ts" },
                                     day: { $dayOfMonth: "$ts" }
                                 },
-                                value: { $avg: `$${type}` },
+                                value: { $avg: "$val" },
                                 timestamp: { $first: "$ts" },
                                 count: { $sum: 1 }
                             }
@@ -1257,7 +1265,7 @@ exports.getTelemetryAnalytics = async (req, res) => {
                                     year: { $year: "$ts" },
                                     month: { $month: "$ts" }
                                 },
-                                value: { $avg: `$${type}` },
+                                value: { $avg: "$val" },
                                 timestamp: { $first: "$ts" },
                                 count: { $sum: 1 }
                             }

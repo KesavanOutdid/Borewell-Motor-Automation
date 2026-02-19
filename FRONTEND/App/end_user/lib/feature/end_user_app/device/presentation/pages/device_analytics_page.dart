@@ -712,13 +712,14 @@ class DeviceAnalyticsView extends StatelessWidget {
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 28,
+              reservedSize: 32,
               interval: data.length > 12 ? (data.length / 6).ceil().toDouble() : 2.0,
               getTitlesWidget: (value, meta) {
                 final index = value.toInt();
                 if (index >= 0 && index < data.length) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 8),
+                  return SideTitleWidget(
+                    axisSide: meta.axisSide,
+                    space: 8,
                     child: Text(
                       data[index].label,
                       style: TextStyle(
@@ -729,21 +730,26 @@ class DeviceAnalyticsView extends StatelessWidget {
                     ),
                   );
                 }
-                return const Text('');
+                return const SizedBox();
               },
             ),
           ),
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 45,
+              reservedSize: 50,
               interval: horizontalInterval,
               getTitlesWidget: (value, meta) {
-                return Text(
-                  value >= 1000 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toStringAsFixed(1),
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[600],
+                return SideTitleWidget(
+                  axisSide: meta.axisSide,
+                  space: 8,
+                  child: Text(
+                    value >= 1000 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toStringAsFixed(1),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey[600],
+                    ),
+                    textAlign: TextAlign.right,
                   ),
                 );
               },
