@@ -65,20 +65,17 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
     };
 
     const getVoucherStatus = (voucher) => {
-        if (!voucher.status) return 'Inactive';
-        const now = new Date().getTime();
-        const start = new Date(voucher.start_date).getTime();
-        const end = new Date(voucher.end_date).getTime();
+        const now = new Date();
+        const endDate = new Date(voucher.end_date);
 
-        if (now < start) return 'Pending';
-        if (now > end) return 'Expired';
+        if (now > endDate) return 'Expired';
+        if (!voucher.status) return 'Inactive';
         return 'Valid';
     };
 
     const getStatusColor = (status) => {
         switch (status) {
             case 'Valid': return '#15803d';
-            case 'Pending': return '#f97316';
             case 'Expired': return '#991b1b';
             case 'Inactive': return '#6c757d';
             default: return '#6c757d';

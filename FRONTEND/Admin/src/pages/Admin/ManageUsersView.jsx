@@ -338,19 +338,18 @@ const ManageUsersView = ({ userInfo, handleLogout }) => {
                                                                         style={{ 
                                                                             padding: '6px 12px', 
                                                                             fontSize: '11px',
-                                                                            backgroundColor: hasHistory ? '#fdc858' : '#cccccc',
+                                                                            backgroundColor: '#fdc858',
                                                                             color: 'white',
                                                                             border: 'none',
                                                                             borderRadius: '4px',
                                                                             fontWeight: '500',
-                                                                            cursor: hasHistory ? 'pointer' : 'not-allowed',
-                                                                            opacity: hasHistory ? 1 : 0.6
+                                                                            cursor: 'pointer',
                                                                         }}
-                                                                        onClick={() => hasHistory && handleViewDeviceHistory(device, true)}
-                                                                        disabled={!hasHistory || isCheckingThisDevice}
+                                                                        onClick={() => handleViewDeviceHistory(device, true)}
+                                                                        disabled={isCheckingThisDevice}
                                                                         title={
                                                                             isCheckingThisDevice ? 'Checking history...' :
-                                                                            hasHistory ? 'View Device History' : 'No history available'
+                                                                            'View Device History'
                                                                         }
                                                                     >
                                                                         <i className="fas fa-history"></i> {isCheckingThisDevice ? 'Checking...' : 'History'}
@@ -428,19 +427,18 @@ const ManageUsersView = ({ userInfo, handleLogout }) => {
                                                                         style={{ 
                                                                             padding: '6px 12px', 
                                                                             fontSize: '11px',
-                                                                            backgroundColor: hasHistory ? '#fdc858' : '#cccccc',
+                                                                            backgroundColor: '#fdc858',
                                                                             color: 'white',
                                                                             border: 'none',
                                                                             borderRadius: '4px',
                                                                             fontWeight: '500',
-                                                                            cursor: hasHistory ? 'pointer' : 'not-allowed',
-                                                                            opacity: hasHistory ? 1 : 0.6
+                                                                            cursor: 'pointer',
                                                                         }}
-                                                                        onClick={() => hasHistory && handleViewDeviceHistory(share, false)}
-                                                                        disabled={!hasHistory || isCheckingThisDevice}
+                                                                        onClick={() => handleViewDeviceHistory(share, false)}
+                                                                        disabled={isCheckingThisDevice}
                                                                         title={
                                                                             isCheckingThisDevice ? 'Checking history...' :
-                                                                            hasHistory ? 'View Device History' : 'No history available'
+                                                                            'View Device History'
                                                                         }
                                                                     >
                                                                         <i className="fas fa-history"></i> {isCheckingThisDevice ? 'Checking...' : 'History'}

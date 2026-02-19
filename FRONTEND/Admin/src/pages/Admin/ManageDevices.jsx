@@ -20,6 +20,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
         pagination, handlePageChange, handleLimitChange, loadingAnalytics, errorAnalytics, chartType,
         // analytics,
         setChartType,
+        filterAssignStatus, setFilterAssignStatus
     } = useManageDevices(userInfo);
 
     console.log(successMessage);
@@ -33,7 +34,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
     // Auto-fetch device data
     useEffect(() => {
         if (!fetchDeviceDataCalled.current) {
-            fetchDeviceData();
+            fetchDeviceData(1, 10, '', '');
             fetchDeviceDataCalled.current = true;
         }
     }, [fetchDeviceData]);
@@ -47,8 +48,13 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
         }
 
         searchTimeoutRef.current = setTimeout(() => {
-            fetchDeviceData(1, pagination.limit, query);
+            fetchDeviceData(1, pagination.limit, query, filterAssignStatus);
         }, 500);
+    };
+
+    const handleFilterChange = (status) => {
+        setFilterAssignStatus(status);
+        fetchDeviceData(1, pagination.limit, searchQuery, status);
     };
 
     // Populate currentDeviceDetails when editing
@@ -145,33 +151,47 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                         <div className="col-12">
                             <div className="card mb-4">
                                 <div className="card-header pb-2">
-                                    <div className="row g-2 align-items-center mb-3">
-                                        <div className="col-md-3 col-12 d-flex gap-2">
-                                            <button
-                                                className="btn btn-primary mb-0"
-                                                style={{ padding: '10px' }}
-                                                onClick={() => setIsModalCreate(true)}
-                                            >
-                                                <i className="fas fa-file" aria-hidden="true" style={{ color: 'white' }}></i> Create
-                                            </button>
+                                        <div className="row g-2 align-items-center mb-3">
+                                            <div className="col-md-2 col-12">
+                                                <div className="d-flex gap-2">
+                                                    <button
+                                                        className="btn btn-primary mb-0 flex-fill"
+                                                        style={{ padding: '10px' }}
+                                                        onClick={() => setIsModalCreate(true)}
+                                                    >
+                                                        <i className="fas fa-plus" aria-hidden="true" style={{ color: 'white' }}></i> Create
+                                                    </button>
 
-                                            <button
-                                                className="btn bg-gradient-secondary mb-0"
-                                                style={{ padding: '10px' }}
-                                                onClick={() => setIsModalAssign(true)}
-                                            >
-                                                <i className="fas fa-file" aria-hidden="true" style={{ color: 'white' }}></i> Assign
-                                            </button>
-                                        </div>
-                                        <div className="col-md-3 col-12">
+                                                    <button
+                                                        className="btn bg-gradient-secondary mb-0 flex-fill"
+                                                        style={{ padding: '10px' }}
+                                                        onClick={() => setIsModalAssign(true)}
+                                                    >
+                                                        <i className="fas fa-user-plus" aria-hidden="true" style={{ color: 'white' }}></i> Assign
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        <div className="col-md-2 col-12">
                                             <input
                                                 type="text"
                                                 className="form-control"
-                                                placeholder="🔍 Search by Serial Number, User..."
+                                                placeholder="🔍 Search..."
                                                 value={searchQuery}
                                                 onChange={(e) => handleSearch(e.target.value)}
                                                 style={{ borderRadius: '6px', padding: '10px 15px', fontSize: '13px' }}
                                             />
+                                        </div>
+                                        <div className="col-md-2 col-12">
+                                            <select
+                                                className="form-control"
+                                                value={filterAssignStatus}
+                                                onChange={(e) => handleFilterChange(e.target.value)}
+                                                style={{ borderRadius: '6px', padding: '10px 15px', fontSize: '13px' }}
+                                            >
+                                                <option value="">All Status</option>
+                                                <option value="true">Assigned</option>
+                                                <option value="false">Un-Assigned</option>
+                                            </select>
                                         </div>
                                         <div className="col-md-2 col-6">
                                             <div style={{ backgroundColor: '#f0f9ff', padding: '10px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -533,22 +553,22 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                     {/* Pagination */}
                                     {devices && devices.length > 0 && pagination && (
                                     // {devices && devices.length > 0 && (
-                                        <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mt-3 px-3">
+                                        <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mt-3 px-3 gap-3">
                                             {/* Results info */}
-                                            <div className="mb-2 mb-md-0">
+                                            <div className="text-center text-md-start">
                                                 <span className="text-sm text-muted">
                                                     Showing {((pagination.currentPage - 1) * pagination.limit) + 1} to {Math.min(pagination.currentPage * pagination.limit, pagination.totalDevices)} of {pagination.totalDevices} devices
                                                 </span>
                                             </div>
 
                                             {/* Pagination controls */}
-                                            <div className="d-flex flex-column flex-sm-row align-items-center gap-2">
+                                            <div className="d-flex flex-column flex-sm-row align-items-center gap-3">
                                                 {/* Items per page selector */}
                                                 <div className="d-flex align-items-center gap-2">
                                                     <span className="text-sm">Show:</span>
                                                     <select
                                                         className="form-select form-select-sm"
-                                                        style={{ width: 'auto', minWidth: '70px' }}
+                                                        style={{ width: 'auto', minWidth: '70px', padding: '0.25rem 0.5rem' }}
                                                         value={pagination.limit}
                                                         onChange={(e) => handleLimitChange(parseInt(e.target.value), searchQuery)}
                                                     >
@@ -557,7 +577,6 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                         <option value={25}>25</option>
                                                         <option value={50}>50</option>
                                                     </select>
-                                                    <span className="text-sm">per page</span>
                                                 </div>
 
                                                 {/* Page navigation */}
@@ -626,49 +645,71 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                         <div className="col-lg-12">
                             <div className="card z-index-2">
                                 <div className="card-header pb-0">
-                                    <div className="d-flex flex-wrap justify-content-between align-items-center">
-                                        <div className="d-flex flex-wrap">
-                                            <p className="text-sm me-3 mb-1">
-                                                <i className="fa fa-arrow-up text-success"></i>
-                                                <span className="font-weight-bold">
-                                                    {" "}Total Device: {pagination.totalDevices || "-"}
-                                                </span>
-                                            </p>
-                                            <p className="text-sm me-3 mb-1">
-                                                <i className="fa fa-check text-success"></i>
-                                                <span className="font-weight-bold">
-                                                    {" "}Active Device: {pagination.totalActiveDevices || "-"}
-                                                </span>
-                                            </p>
-                                            <p className="text-sm me-3 mb-1">
-                                                <i className="fa fa-times text-danger"></i>
-                                                <span className="font-weight-bold">
-                                                    {" "}De-Active Device: {pagination.totalDeactiveDevices || "-"}
-                                                </span>
-                                            </p>
-                                            <p className="text-sm me-3 mb-1">
-                                                <i className="fa fa-check text-success"></i>
-                                                <span className="font-weight-bold">
-                                                    {" "}Assigned Device: {pagination.totalAssignedDevices || "-"}
-                                                </span>
-                                            </p>
-                                            <p className="text-sm me-3 mb-1">
-                                                <i className="fa fa-check text-warning"></i>
-                                                <span className="font-weight-bold">
-                                                    {" "}Un-Assigned Device: {pagination.totalUnassignedDevices || "-"}
-                                                </span>
-                                            </p>
+                                    <div className="d-flex flex-column flex-md-row justify-content-between align-items-center">
+                                        <div className="row w-100 w-md-auto mb-3 mb-md-0">
+                                            <div className="col-6 col-md-auto mb-2 mb-md-0">
+                                                <p className="text-sm me-md-3 mb-0 d-flex align-items-center">
+                                                    <i className="fa fa-arrow-up text-success me-1"></i>
+                                                    <span className="font-weight-bold">
+                                                        Total Device: {pagination.totalDevices || "0"}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                            <div className="col-6 col-md-auto mb-2 mb-md-0">
+                                                <p className="text-sm me-md-3 mb-0 d-flex align-items-center">
+                                                    <i className="fa fa-check text-success me-1"></i>
+                                                    <span className="font-weight-bold">
+                                                        Active: {pagination.totalActiveDevices || "0"}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                            <div className="col-6 col-md-auto mb-2 mb-md-0">
+                                                <p className="text-sm me-md-3 mb-0 d-flex align-items-center">
+                                                    <i className="fa fa-times text-danger me-1"></i>
+                                                    <span className="font-weight-bold">
+                                                        De-Active: {pagination.totalDeactiveDevices || "0"}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                            <div className="col-6 col-md-auto mb-2 mb-md-0">
+                                                <p className="text-sm me-md-3 mb-0 d-flex align-items-center">
+                                                    <i className="fa fa-check text-success me-1"></i>
+                                                    <span className="font-weight-bold">
+                                                        Assigned: {pagination.totalAssignedDevices || "0"}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                            <div className="col-6 col-md-auto">
+                                                <p className="text-sm mb-0 d-flex align-items-center">
+                                                    <i className="fa fa-check text-warning me-1"></i>
+                                                    <span className="font-weight-bold">
+                                                        Un-Assigned: {pagination.totalUnassignedDevices || "0"}
+                                                    </span>
+                                                </p>
+                                            </div>
                                         </div>
 
                                         {/* Filter buttons */}
-                                        <div className="btn-group btn-group-sm mt-2 mt-md-0" role="group">
-                                            <button className={`btn ${chartType === "weekly" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setChartType("weekly")}>
+                                        <div className="btn-group btn-group-sm w-100 w-md-auto" role="group">
+                                            <button 
+                                                className={`btn ${chartType === "weekly" ? "btn-primary" : "btn-outline-primary"} flex-fill`} 
+                                                onClick={() => setChartType("weekly")}
+                                                style={{ textTransform: 'uppercase', fontWeight: 'bold' }}
+                                            >
                                                 Weekly
                                             </button>
-                                            <button className={`btn ${chartType === "monthly" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setChartType("monthly")}>
+                                            <button 
+                                                className={`btn ${chartType === "monthly" ? "btn-primary" : "btn-outline-primary"} flex-fill`} 
+                                                onClick={() => setChartType("monthly")}
+                                                style={{ textTransform: 'uppercase', fontWeight: 'bold' }}
+                                            >
                                                 Monthly
                                             </button>
-                                            <button className={`btn ${chartType === "yearly" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setChartType("yearly")}>
+                                            <button 
+                                                className={`btn ${chartType === "yearly" ? "btn-primary" : "btn-outline-primary"} flex-fill`} 
+                                                onClick={() => setChartType("yearly")}
+                                                style={{ textTransform: 'uppercase', fontWeight: 'bold' }}
+                                            >
                                                 Yearly
                                             </button>
                                         </div>

@@ -4,7 +4,7 @@ import Header from '../../components/Admin/Header';
 import Sidebar from '../../components/Admin/Sidebar';
 import Footer from '../../components/Admin/Footer';
 import TableSkeleton from '../../components/Common/TableSkeleton';
-import { sanitizeName, sanitizeMobile, sanitizeEmail, sanitizePassword } from '../../utils/validation';
+import { sanitizeName, sanitizeMobile, sanitizeEmail, sanitizePassword, validateEmail } from '../../utils/validation';
 import useManageUsers from '../../hooks/Admin/useManageUsers';
 import { showAlertSuccess } from '../../utils/alert';
 
@@ -113,7 +113,11 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
 
     useEffect(() => {
         if (originalDetails && currentUserDetails) {
-            const isDirty = JSON.stringify(originalDetails) !== JSON.stringify(currentUserDetails);
+            // Check if any of the editable fields have changed
+            const isDirty = 
+                originalDetails.user_name !== currentUserDetails.user_name ||
+                String(originalDetails.password) !== String(currentUserDetails.password) ||
+                originalDetails.status !== currentUserDetails.status;
             setIsFormDirty(isDirty);
         }
     }, [currentUserDetails, originalDetails]);
@@ -192,8 +196,8 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                 <div className="card-header pb-2">
                                     <div className="row g-2 align-items-center mb-3">
                                         <div className="col-md-2 col-6 d-flex align-items-center">
-                                            <button className="btn btn-primary mb-0" style={{ padding: '10px', width: '50%' }} onClick={() => setIsModalCreate(true)}>
-                                                <i className="fas fa-file" aria-hidden="true" style={{ color: 'white' }}></i> Create
+                                            <button className="btn btn-primary mb-0" style={{ padding: '10px', width: '100%' }} onClick={() => setIsModalCreate(true)}>
+                                                <i className="fas fa-file" aria-hidden="true" style={{ color: 'white' }}></i> CREATE
                                             </button>
                                         </div>
                                         <div className="col-md-3 col-12">
@@ -206,22 +210,26 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                 style={{ borderRadius: '6px', padding: '10px 15px', fontSize: '13px' }}
                                             />
                                         </div>
-                                        <div className="col-md-2 col-6">
-                                            <div style={{ backgroundColor: '#f0f9ff', padding: '10px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Total</p>
+                                        <div className="col-md-7 col-12 d-flex flex-wrap gap-1">
+                                            <div style={{ flex: '1', minWidth: '100px', backgroundColor: '#f0f9ff', padding: '8px 12px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0 }}>Total</p>
                                                 <p style={{ fontSize: '18px', color: '#1e40af', fontWeight: '700', margin: 0 }}>{pagination?.totalUsers || 0}</p>
                                             </div>
-                                        </div>
-                                        <div className="col-md-2 col-6">
-                                            <div style={{ backgroundColor: '#f0fdf4', padding: '10px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Active</p>
+                                            <div style={{ flex: '1', minWidth: '100px', backgroundColor: '#f0fdf4', padding: '8px 12px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0 }}>Active</p>
                                                 <p style={{ fontSize: '18px', color: '#15803d', fontWeight: '700', margin: 0 }}>{pagination?.totalActiveUsers || 0}</p>
                                             </div>
-                                        </div>
-                                        <div className="col-md-2 col-6">
-                                            <div style={{ backgroundColor: '#fef2f2', padding: '10px', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Customers</p>
-                                                <p style={{ fontSize: '18px', color: '#991b1b', fontWeight: '700', margin: 0 }}>{pagination?.totalCustomerUsers || 0}</p>
+                                            <div style={{ flex: '1', minWidth: '100px', backgroundColor: '#fef2f2', padding: '8px 12px', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0 }}>Deactive</p>
+                                                <p style={{ fontSize: '18px', color: '#991b1b', fontWeight: '700', margin: 0 }}>{pagination?.totalDeactiveUsers || 0}</p>
+                                            </div>
+                                            <div style={{ flex: '1', minWidth: '100px', backgroundColor: '#fff7ed', padding: '8px 12px', borderRadius: '8px', border: '1px solid #fed7aa', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0 }}>Customers</p>
+                                                <p style={{ fontSize: '18px', color: '#c2410c', fontWeight: '700', margin: 0 }}>{pagination?.totalCustomerUsers || 0}</p>
+                                            </div>
+                                            <div style={{ flex: '1', minWidth: '100px', backgroundColor: '#faf5ff', padding: '8px 12px', borderRadius: '8px', border: '1px solid #e9d5ff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0 }}>Admin</p>
+                                                <p style={{ fontSize: '18px', color: '#7e22ce', fontWeight: '700', margin: 0 }}>{pagination?.totalAdminUsers || 0}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -311,6 +319,11 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                             onChange={(e) => setUserEmail(sanitizeEmail(e.target.value))}
                                                             required
                                                         />
+                                                        {userEmail && !validateEmail(userEmail) && (
+                                                            <div style={{ color: 'red', fontSize: '12px', marginTop: '2px' }}>
+                                                                Enter a valid email address
+                                                            </div>
+                                                        )}
                                                     </div>
                                                     <div style={{ marginBottom: "10px" }}>
                                                         <label>Password</label>
@@ -343,7 +356,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                         type="submit"
                                                         className="btn btn-primary mb-0"
                                                         style={{ padding: '10px' }}
-                                                        disabled={loadingSubmit || !selectedUserRoleId || !userName.trim() || userMobile.length !== 10 || !userEmail.trim() || userPassword.length !== 6}>{loadingSubmit ? "Creating..." : "Create"}</button>
+                                                        disabled={loadingSubmit || !selectedUserRoleId || !userName.trim() || userMobile.length !== 10 || !userEmail.trim() || !validateEmail(userEmail) || userPassword.length !== 6}>{loadingSubmit ? "Creating..." : "Create"}</button>
                                                 </div>
                                             </form>
                                             {errorMessage && (
@@ -407,7 +420,10 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                         gap: "10px"
                                                     }}>
                                                         <button type="button" className="btn btn-secondary mb-0" style={{ padding: '10px' }} onClick={closeModal}>Close</button>
-                                                        <button type="submit" className="btn btn-primary mb-0" style={{ padding: '10px' }} disabled={!isFormDirty || loadingUpdate || !currentUserDetails?.user_name?.trim() || currentUserDetails?.password?.length !== 6}>{loadingUpdate ? "Updating..." : "Update"}</button>
+                                                        <button type="submit" className="btn btn-primary mb-0" style={{ padding: '10px' }} 
+                                                            disabled={!isFormDirty || loadingUpdate || !currentUserDetails?.user_name?.trim() || String(currentUserDetails?.password || '').length !== 6}>
+                                                            {loadingUpdate ? "Updating..." : "Update"}
+                                                        </button>
                                                     </div>
                                                 </form>
                                                 {errorMessageEdit && (

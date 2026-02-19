@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { sanitizeName, sanitizeMobile, sanitizeEmail, sanitizePassword } from '../../utils/validation';
+import { sanitizeName, sanitizeMobile, sanitizeEmail, sanitizePassword, validateEmail } from '../../utils/validation';
 import { showAlertSuccess } from '../../utils/alert';
 
 const useManageUsers = (userInfo) => {
@@ -107,8 +107,7 @@ const useManageUsers = (userInfo) => {
 
         if (!sanitizedName) return setErrorMessage("Name required");
         if (sanitizedMobile.length !== 10) return setErrorMessage("Mobile must be 10 digits");
-        const emailRegex = /^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]{2,}$/;
-        if (!emailRegex.test(sanitizedEmail) || sanitizedEmail.includes('-') || sanitizedEmail.includes('_')) return setErrorMessage("Invalid email format (Hyphens and underscores not allowed)");
+        if (!validateEmail(sanitizedEmail)) return setErrorMessage("Enter a valid email address");
         if (sanitizedPassword.length !== 6) return setErrorMessage("Password must be 6 digits");
 
         if (loadingSubmit) return;

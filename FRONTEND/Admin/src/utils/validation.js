@@ -32,21 +32,15 @@ export const sanitizeMobile = (value) => {
 };
 
 // Email validation
-// export const sanitizeEmail = (value) => {
-//     // Remove spaces and invalid characters
-//     const noSpaces = value.replace(/\s/g, '');
-//     const validChars = noSpaces.replace(/[^a-zA-Z0-9@.]/g, '');
-//     // Convert to lowercase
-//     const lowerCaseEmail = validChars.toLowerCase();
-//     // Handle multiple @ symbols
-//     const atCount = (lowerCaseEmail.match(/@/g) || []).length;
-//     return atCount <= 1 ? lowerCaseEmail : lowerCaseEmail.replace(/@.*@/, '@');
-// };
+export const validateEmail = (email) => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+};
 
 export const sanitizeEmail = (value) => {
-    // Remove spaces and keep only valid characters for an email (letters, digits, @, and .)
+    // Remove spaces and keep only valid characters for an email (letters, digits, @, ., -, and _)
     const noSpaces = value.replace(/\s/g, '');
-    let validChars = noSpaces.replace(/[^a-zA-Z0-9@.]/g, ''); // Disallow - and _
+    let validChars = noSpaces.replace(/[^a-zA-Z0-9@.\-_]/g, '');
     
     // Collapse consecutive dots
     validChars = validChars.replace(/\.+/g, '.');

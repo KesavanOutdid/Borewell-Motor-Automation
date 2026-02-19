@@ -35,6 +35,7 @@ const useManageDevices = (userInfo) => {
     const [assignErrorMessage, setAssignErrorMessage] = useState('');
     const [loadingSubmit, setLoadingSubmit] = useState(false);
     const [loadingUpdate, setLoadingUpdate] = useState(false);
+    const [filterAssignStatus, setFilterAssignStatus] = useState('');
 
     // Function to fetch users data
     useEffect(() => {
@@ -63,11 +64,12 @@ const useManageDevices = (userInfo) => {
     }, [isModalAssign, API_BASE]);
 
     // Function to fetch device data
-    const fetchDeviceData = async (page = 1, limit = 10, search = '') => {
+    const fetchDeviceData = async (page = 1, limit = 10, search = '', assign_status = '') => {
         try {
             setLoading(true);
             const params = new URLSearchParams({ page, limit });
             if (search) params.append('search', search);
+            if (assign_status) params.append('assign_status', assign_status);
             
             const response = await fetch(`${API_BASE}/admin/getDevices?${params.toString()}`, {
                 method: "GET",
@@ -223,12 +225,12 @@ const useManageDevices = (userInfo) => {
     // Pagination functions
     const handlePageChange = (newPage, searchQuery = '') => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
-            fetchDeviceData(newPage, pagination.limit, searchQuery);
+            fetchDeviceData(newPage, pagination.limit, searchQuery, filterAssignStatus);
         }
     };
 
     const handleLimitChange = (newLimit, searchQuery = '') => {
-        fetchDeviceData(1, newLimit, searchQuery); // Reset to page 1 when limit changes
+        fetchDeviceData(1, newLimit, searchQuery, filterAssignStatus); // Reset to page 1 when limit changes
     };
 
     // fetch analytics Data
@@ -393,7 +395,8 @@ const useManageDevices = (userInfo) => {
         selecteduser, setSelecteduser, handleuserSelection, selectedDevices, setSelectedDevices, handleDeviceSelection, handleAssign, assignErrorMessage, loadingSubmit, loadingUpdate, setLoadingUpdate,
         pagination, handlePageChange, handleLimitChange,
         analytics, loadingAnalytics, errorAnalytics,
-        chartType, setChartType
+        chartType, setChartType,
+        filterAssignStatus, setFilterAssignStatus
     };
 };
 

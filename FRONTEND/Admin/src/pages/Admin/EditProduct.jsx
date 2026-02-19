@@ -167,6 +167,13 @@ const EditProduct = ({ userInfo, handleLogout }) => {
         e.preventDefault();
 
         if (!productName.trim()) return setErrorMessage('Product name is required');
+        
+        // Product Name Validation: Only letters and numbers
+        const productNameRegex = /^[a-zA-Z0-9\s]+$/;
+        if (!productNameRegex.test(productName)) {
+            return setErrorMessage('Product name should contain only letters and numbers');
+        }
+
         if (!productDescription.trim()) return setErrorMessage('Product description is required');
 
         // Box Size Validation: Allow only numbers and '*'
@@ -299,7 +306,16 @@ const EditProduct = ({ userInfo, handleLogout }) => {
                                                         type="text"
                                                         className="form-control"
                                                         value={productName}
-                                                        onChange={(e) => setProductName(e.target.value)}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            // Filter out special characters
+                                                            if (val === '' || /^[a-zA-Z0-9\s]*$/.test(val)) {
+                                                                setProductName(val);
+                                                                setErrorMessage('');
+                                                            } else {
+                                                                setErrorMessage('Product name should contain only letters and numbers');
+                                                            }
+                                                        }}
                                                         required
                                                     />
                                                 </div>

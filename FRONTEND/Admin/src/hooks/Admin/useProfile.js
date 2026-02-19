@@ -59,12 +59,11 @@ export const useProfile = (userInfo) => {
 
     // Detect modifications
     useEffect(() => {
-        setUserModified(
-            user_name !== initialUserData.user_name ||
-            user_phone !== initialUserData.user_phone ||
-            password !== initialUserData.password
+        const isNameChanged = user_name !== initialUserData.user_name;
+        const isPhoneChanged = user_phone !== initialUserData.user_phone;
+        const isPasswordChanged = password?.toString() !== initialUserData.password?.toString();
 
-        );
+        setUserModified(isNameChanged || isPhoneChanged || isPasswordChanged);
     }, [user_name, user_phone, password, initialUserData]);
 
 

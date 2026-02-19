@@ -772,9 +772,10 @@ exports.userAssignDevices = async (req, res) => {
 
         // Base match criteria
         const baseMatch = {
+            status: true,
             $or: [
-                { assigned_user_id: userIdNum, assign_status: true, status: true },
-                { serial_number: { $in: sharedSerials }, status: true }
+                { assigned_user_id: userIdNum, assign_status: true },
+                { serial_number: { $in: sharedSerials } }
             ]
         };
 
@@ -797,9 +798,14 @@ exports.userAssignDevices = async (req, res) => {
             ];
         } else if (filter === 'Not Configured') {
             baseMatch.assigned_user_id = userIdNum; // Only show MY devices
-            baseMatch.$or = [
-                { imei_number: null },
-                { imei_number: "" }
+            delete baseMatch.$or;
+            baseMatch.$and = [
+                {
+                    $or: [
+                        { imei_number: null },
+                        { imei_number: "" }
+                    ]
+                }
             ];
         } else if (filter === 'Shared') {
             baseMatch.assigned_user_id = { $ne: userIdNum };

@@ -13,6 +13,14 @@ const DeviceHistory = ({ userInfo, handleLogout }) => {
     
     const [deviceHistoryData, setDeviceHistoryData] = useState([]);
     const [loadingDeviceHistory, setLoadingDeviceHistory] = useState(false);
+    const [pagination, setPagination] = useState({
+        currentPage: 1,
+        totalPages: 1,
+        totalRecords: 0,
+        limit: 10,
+        hasNextPage: false,
+        hasPrevPage: false
+    });
 
     useEffect(() => {
         if (!device || !user_id) {
@@ -20,11 +28,11 @@ const DeviceHistory = ({ userInfo, handleLogout }) => {
             return;
         }
 
-        fetchDeviceHistory();
+        fetchDeviceHistory(1, pagination.limit);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [device, user_id]);
 
-    const fetchDeviceHistory = async () => {
+    const fetchDeviceHistory = async (page = 1, limit = 10) => {
         try {
             setLoadingDeviceHistory(true);
 
@@ -33,15 +41,26 @@ const DeviceHistory = ({ userInfo, handleLogout }) => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ user_id }),
+                body: JSON.stringify({ 
+                    user_id, 
+                    serial_number: device.serial_number,
+                    page: page,
+                    limit: limit
+                }),
             });
 
             if (response.ok) {
                 const data = await response.json();
-                const deviceHistoryRecords = data.data.find(
-                    item => item.serial_number === device.serial_number
-                );
-                setDeviceHistoryData(deviceHistoryRecords?.records || []);
+                // The API returns history records directly in data.data
+                setDeviceHistoryData(data.data || []);
+                setPagination({
+                    currentPage: data.currentPage || page,
+                    totalPages: data.totalPages || 1,
+                    totalRecords: data.total || 0,
+                    limit: limit,
+                    hasNextPage: data.currentPage < data.totalPages,
+                    hasPrevPage: data.currentPage > 1
+                });
             } else {
                 alert('Failed to fetch device history');
             }
@@ -51,6 +70,16 @@ const DeviceHistory = ({ userInfo, handleLogout }) => {
         } finally {
             setLoadingDeviceHistory(false);
         }
+    };
+
+    const handlePageChange = (newPage) => {
+        if (newPage >= 1 && newPage <= pagination.totalPages) {
+            fetchDeviceHistory(newPage, pagination.limit);
+        }
+    };
+
+    const handleLimitChange = (newLimit) => {
+        fetchDeviceHistory(1, newLimit);
     };
 
     const handleBackClick = () => {
@@ -105,10 +134,12 @@ const DeviceHistory = ({ userInfo, handleLogout }) => {
                                                         </td>
                                                     </tr>
                                                 ) : (
-                                                    deviceHistoryData.slice(0, 20).map((record, index) => (
+                                                    deviceHistoryData.map((record, index) => (
                                                         <tr key={index}>
                                                             <td className="text-center">
-                                                                <p className="text-xs font-weight-bold mb-0">{index + 1}</p>
+                                                                <p className="text-xs font-weight-bold mb-0">
+                                                                    {((pagination.currentPage - 1) * pagination.limit) + index + 1}
+                                                                </p>
                                                             </td>
                                                             <td className="text-center">
                                                                 <p className="text-xs font-weight-bold mb-0">
@@ -144,6 +175,93 @@ const DeviceHistory = ({ userInfo, handleLogout }) => {
                                             </tbody>
                                         </table>
                                     </div>
+                                    
+                                    {/* Pagination Controls */}
+                                    {deviceHistoryData.length > 0 && pagination && (
+                                        <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mt-3 px-3 pb-3">
+                                            {/* Results info */}
+                                            <div className="mb-2 mb-md-0">
+                                                <span className="text-sm text-muted">
+                                                    Showing {((pagination.currentPage - 1) * pagination.limit) + 1} to {Math.min(pagination.currentPage * pagination.limit, pagination.totalRecords)} of {pagination.totalRecords} records
+                                                </span>
+                                            </div>
+
+                                            {/* Pagination controls */}
+                                            <div className="d-flex flex-column flex-sm-row align-items-center gap-2">
+                                                {/* Items per page selector */}
+                                                <div className="d-flex align-items-center gap-2">
+                                                    <span className="text-sm">Show:</span>
+                                                    <select
+                                                        className="form-select form-select-sm"
+                                                        style={{ width: 'auto', minWidth: '70px' }}
+                                                        value={pagination.limit}
+                                                        onChange={(e) => handleLimitChange(parseInt(e.target.value))}
+                                                    >
+                                                        <option value={5}>5</option>
+                                                        <option value={10}>10</option>
+                                                        <option value={25}>25</option>
+                                                        <option value={50}>50</option>
+                                                    </select>
+                                                    <span className="text-sm">per page</span>
+                                                </div>
+
+                                                {/* Page navigation */}
+                                                <nav aria-label="Device history pagination">
+                                                    <ul className="pagination pagination-sm mb-0">
+                                                        {/* Previous button */}
+                                                        <li className={`page-item ${!pagination.hasPrevPage ? 'disabled' : ''}`}>
+                                                            <button
+                                                                className="page-link"
+                                                                onClick={() => handlePageChange(pagination.currentPage - 1)}
+                                                                disabled={!pagination.hasPrevPage}
+                                                                aria-label="Previous"
+                                                            >
+                                                                <i className="fas fa-chevron-left"></i>
+                                                            </button>
+                                                        </li>
+
+                                                        {/* Page numbers */}
+                                                        {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                                                            let pageNum;
+                                                            if (pagination.totalPages <= 5) {
+                                                                pageNum = i + 1;
+                                                            } else if (pagination.currentPage <= 3) {
+                                                                pageNum = i + 1;
+                                                            } else if (pagination.currentPage >= pagination.totalPages - 2) {
+                                                                pageNum = pagination.totalPages - 4 + i;
+                                                            } else {
+                                                                pageNum = pagination.currentPage - 2 + i;
+                                                            }
+
+                                                            return (
+                                                                <li key={`page-${pageNum}`} className={`page-item ${pageNum === pagination.currentPage ? 'active' : ''}`}>
+                                                                    <button
+                                                                        className="page-link"
+                                                                        onClick={() => handlePageChange(pageNum)}
+                                                                        style={pageNum === pagination.currentPage ? { backgroundColor: '#2dce89', borderColor: '#2dce89', color: '#fff' } : {}}
+                                                                    >
+                                                                        {pageNum}
+                                                                    </button>
+                                                                </li>
+                                                            );
+                                                        })}
+
+                                                        {/* Next button */}
+                                                        <li className={`page-item ${!pagination.hasNextPage ? 'disabled' : ''}`}>
+                                                            <button
+                                                                className="page-link"
+                                                                onClick={() => handlePageChange(pagination.currentPage + 1)}
+                                                                disabled={!pagination.hasNextPage}
+                                                                aria-label="Next"
+                                                            >
+                                                                <i className="fas fa-chevron-right"></i>
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </nav>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

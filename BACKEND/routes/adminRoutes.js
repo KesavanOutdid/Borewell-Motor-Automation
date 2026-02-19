@@ -570,7 +570,15 @@ router.get("/getAnalasitic", adminCtrl.getAnalasitic);
  *       201:
  *         description: Product created successfully
  */
-router.post('/createProduct', adminCtrl.createProduct);
+router.post(
+    '/createProduct',
+    [
+        body('product_name')
+            .notEmpty().withMessage("product_name is required")
+            .matches(/^[a-zA-Z0-9\s]+$/).withMessage("Product name should contain only letters and numbers")
+    ],
+    adminCtrl.createProduct
+);
 
 /**
  * @swagger
@@ -628,7 +636,15 @@ router.get('/getProductById', adminCtrl.getProductById);
  *       200:
  *         description: Product updated successfully
  */
-router.post('/updateProduct', adminCtrl.updateProduct);
+router.post(
+    '/updateProduct',
+    [
+        body('product_name')
+            .optional()
+            .matches(/^[a-zA-Z0-9\s]+$/).withMessage("Product name should contain only letters and numbers")
+    ],
+    adminCtrl.updateProduct
+);
 
 /**
  * @swagger

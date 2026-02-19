@@ -6,7 +6,13 @@ const ProductSchema = new mongoose.Schema({
     product_name: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
+        validate: {
+            validator: function(v) {
+                return /^[a-zA-Z0-9\s]+$/.test(v);
+            },
+            message: props => `${props.value} is not a valid product name! Should contain only letters and numbers.`
+        }
     },
 
     product_description: {
