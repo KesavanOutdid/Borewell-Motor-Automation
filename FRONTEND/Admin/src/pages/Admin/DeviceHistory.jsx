@@ -13,6 +13,7 @@ const DeviceHistory = ({ userInfo, handleLogout }) => {
     
     const [deviceHistoryData, setDeviceHistoryData] = useState([]);
     const [loadingDeviceHistory, setLoadingDeviceHistory] = useState(false);
+    const [error, setError] = useState('');
     const [pagination, setPagination] = useState({
         currentPage: 1,
         totalPages: 1,
@@ -35,8 +36,9 @@ const DeviceHistory = ({ userInfo, handleLogout }) => {
     const fetchDeviceHistory = async (page = 1, limit = 10) => {
         try {
             setLoadingDeviceHistory(true);
+            setError('');
 
-            const response = await fetch(`${API_BASE}/app/userDeviceHistory`, {
+            const response = await fetch(`${API_BASE}/admin/userDeviceHistory`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -62,11 +64,14 @@ const DeviceHistory = ({ userInfo, handleLogout }) => {
                     hasPrevPage: data.currentPage > 1
                 });
             } else {
-                alert('Failed to fetch device history');
+                const errorData = await response.json();
+                setError(errorData.message || 'Failed to fetch device history');
+                setDeviceHistoryData([]);
             }
         } catch (error) {
             console.error('Error fetching device history:', error);
-            alert('Error fetching device history');
+            setError('Error fetching device history');
+            setDeviceHistoryData([]);
         } finally {
             setLoadingDeviceHistory(false);
         }
@@ -127,6 +132,12 @@ const DeviceHistory = ({ userInfo, handleLogout }) => {
                                             <tbody>
                                                 {loadingDeviceHistory ? (
                                                     <TableSkeleton rows={8} columns={9} />
+                                                ) : error ? (
+                                                    <tr>
+                                                        <td colSpan="9" style={{ textAlign: 'center', padding: '20px' }}>
+                                                            <p className="text-danger">{error === "No access to this device" ? "Device history not found" : error}</p>
+                                                        </td>
+                                                    </tr>
                                                 ) : deviceHistoryData.length === 0 ? (
                                                     <tr>
                                                         <td colSpan="9" style={{ textAlign: 'center', padding: '20px' }}>

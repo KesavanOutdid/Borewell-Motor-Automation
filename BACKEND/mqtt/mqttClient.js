@@ -215,6 +215,11 @@ client.on("message", async (topic, message) => {
                         updatedAt: new Date()
                     });
                     // console.log(`HISTORY: Start session created for ${serialNumber}`);
+
+                    await db.collection("devices").updateOne(
+                        { serial_number: serialNumber },
+                        { $set: { startAt: new Date(timestamp || Date.now()) } }
+                    );
                     
                     // Check if notification was already sent recently
                     if (isRedisConnected() && redisClient.isOpen) {
@@ -257,6 +262,11 @@ client.on("message", async (topic, message) => {
 
                     if (updateResult.modifiedCount > 0) {
                         // console.log(`HISTORY: Session closed for ${serialNumber}`);
+
+                        await db.collection("devices").updateOne(
+                            { serial_number: serialNumber },
+                            { $set: { stopAt: stopTime } }
+                        );
 
                         // Check if notification was already sent recently
                         if (isRedisConnected() && redisClient.isOpen) {
@@ -327,6 +337,13 @@ client.on("message", async (topic, message) => {
         }
 
         if (global.io) {
+            // Fetch updated device info for timestamps
+            const updatedDevice = await db.collection("devices").findOne({ serial_number: serialNumber });
+            if (updatedDevice) {
+                entry.startAt = updatedDevice.startAt;
+                entry.stopAt = updatedDevice.stopAt;
+            }
+
             if (type === "BOOT") {
                 global.io.emit("LIVE_BOOT", {
                     serial_number: serialNumber,

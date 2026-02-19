@@ -54,6 +54,29 @@ const ManageOrders = ({ userInfo, handleLogout }) => {
         navigate('/view-order', { state: { order } });
     };
 
+    const getStatusLabel = (status) => {
+        const labels = {
+            created: 'Created',
+            confirmed: 'Confirmed',
+            processing: 'Processing',
+            shipped: 'Shipped',
+            out_for_delivery: 'Out for Delivery',
+            delivered: 'Delivered',
+            cancelled: 'Cancelled'
+        };
+        return labels[status] || status;
+    };
+
+    const getPaymentStatusLabel = (status) => {
+        const labels = {
+            pending: 'Pending',
+            completed: 'Completed',
+            failed: 'Failed',
+            cancelled: 'Cancelled'
+        };
+        return labels[status] || status;
+    };
+
     const getStatusBadgeColor = (status) => {
         const colors = {
             created: '#6c757d',
@@ -88,34 +111,34 @@ const ManageOrders = ({ userInfo, handleLogout }) => {
                             <div className="card mb-4">
                                 <div className="card-header pb-3">
                                     <div className="row g-2 align-items-center mb-3">
-                                        <div className="col-md-2 col-6 d-flex align-items-center">
-                                            <div style={{ backgroundColor: '#f0f9ff', padding: '12px', borderRadius: '8px', border: '1px solid #bfdbfe', width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div className="col-md-12 col-12 d-flex flex-wrap gap-1">
+                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#f0f9ff', padding: '12px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Total</p>
                                                 <p style={{ fontSize: '18px', color: '#1e40af', fontWeight: '700', margin: 0 }}>{pagination?.totalOrders || 0}</p>
                                             </div>
-                                        </div>
-                                        <div className="col-md-2 col-6">
-                                            <div style={{ backgroundColor: '#f0fdf4', padding: '12px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#f3f4f6', padding: '12px', borderRadius: '8px', border: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Created</p>
+                                                <p style={{ fontSize: '18px', color: '#374151', fontWeight: '700', margin: 0 }}>{pagination?.totalCreatedOrders || 0}</p>
+                                            </div>
+                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#f0fdf4', padding: '12px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Delivered</p>
                                                 <p style={{ fontSize: '18px', color: '#15803d', fontWeight: '700', margin: 0 }}>{pagination?.totalDeliveredOrders || 0}</p>
                                             </div>
-                                        </div>
-                                        <div className="col-md-2 col-6">
-                                            <div style={{ backgroundColor: '#fef9e7', padding: '12px', borderRadius: '8px', border: '1px solid #fde047', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#fef9e7', padding: '12px', borderRadius: '8px', border: '1px solid #fde047', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Processing</p>
                                                 <p style={{ fontSize: '18px', color: '#b45309', fontWeight: '700', margin: 0 }}>{pagination?.totalProcessingOrders || 0}</p>
                                             </div>
-                                        </div>
-                                        <div className="col-md-2 col-6">
-                                            <div style={{ backgroundColor: '#fef3c7', padding: '12px', borderRadius: '8px', border: '1px solid #fcd34d', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#fef3c7', padding: '12px', borderRadius: '8px', border: '1px solid #fcd34d', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Confirmed</p>
                                                 <p style={{ fontSize: '18px', color: '#d97706', fontWeight: '700', margin: 0 }}>{pagination?.totalConfirmedOrders || 0}</p>
                                             </div>
-                                        </div>
-                                        <div className="col-md-2 col-6">
-                                            <div style={{ backgroundColor: '#fee2e2', padding: '12px', borderRadius: '8px', border: '1px solid #fca5a5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Cancelled</p>
-                                                <p style={{ fontSize: '18px', color: '#dc2626', fontWeight: '700', margin: 0 }}>{pagination?.totalCancelledOrders || 0}</p>
+                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#e0f2fe', padding: '12px', borderRadius: '8px', border: '1px solid #bae6fd', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Shipped</p>
+                                                <p style={{ fontSize: '18px', color: '#0369a1', fontWeight: '700', margin: 0 }}>{pagination?.totalShippedOrders || 0}</p>
+                                            </div>
+                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#fff7ed', padding: '12px', borderRadius: '8px', border: '1px solid #ffedd5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Out for Delivery</p>
+                                                <p style={{ fontSize: '18px', color: '#9a3412', fontWeight: '700', margin: 0 }}>{pagination?.totalOutForDeliveryOrders || 0}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -148,7 +171,6 @@ const ManageOrders = ({ userInfo, handleLogout }) => {
                                                 <option value="shipped">📦 Shipped</option>
                                                 <option value="out_for_delivery">🚚 Out for Delivery</option>
                                                 <option value="delivered">✅ Delivered</option>
-                                                <option value="cancelled">❌ Cancelled</option>
                                             </select>
                                         </div>
                                     </div>
@@ -222,7 +244,7 @@ const ManageOrders = ({ userInfo, handleLogout }) => {
                                                                         textAlign: 'center',
                                                                         minWidth: '100px'
                                                                     }}>
-                                                                        {order.order_status}
+                                                                        {getStatusLabel(order.order_status)}
                                                                     </span>
                                                                 </td>
                                                                 <td style={{ padding: '12px', textAlign: 'center' }}>
@@ -237,7 +259,7 @@ const ManageOrders = ({ userInfo, handleLogout }) => {
                                                                         textAlign: 'center',
                                                                         minWidth: '100px'
                                                                     }}>
-                                                                        {order.payment_status}
+                                                                        {getPaymentStatusLabel(order.payment_status)}
                                                                     </span>
                                                                 </td>
                                                                 <td style={{ padding: '12px', fontSize: '12px', textTransform: 'uppercase' }}>

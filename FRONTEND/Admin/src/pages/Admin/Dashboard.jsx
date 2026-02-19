@@ -32,6 +32,19 @@ const Dashboard = ({ userInfo, handleLogout }) => {
     const heartbeat = useLiveHeartbeat(selectedAssignedDevice?.serial_number);
 
     useEffect(() => {
+        if (status && status.motor_running !== undefined && selectedAssignedDevice) {
+            if (selectedAssignedDevice.start_status !== status.motor_running) {
+                setSelectedAssignedDevice(prev => ({
+                    ...prev,
+                    start_status: status.motor_running,
+                    startAt: status.startAt || prev.startAt,
+                    stopAt: status.stopAt || prev.stopAt
+                }));
+            }
+        }
+    }, [status, selectedAssignedDevice]);
+
+    useEffect(() => {
         const savedDevice = localStorage.getItem("selectedDevice");
         if (savedDevice) setSelectedAssignedDevice(JSON.parse(savedDevice));
     }, []);
@@ -190,9 +203,7 @@ const Dashboard = ({ userInfo, handleLogout }) => {
 
     const lastStart = liveLastStart ?? selectedAssignedDevice?.startAt;
 
-    const lastStop = status?.motor_running === true 
-        ? "-" 
-        : (liveLastStop ?? selectedAssignedDevice?.stopAt ?? "-");
+    const lastStop = liveLastStop ?? selectedAssignedDevice?.stopAt;
 
     const deviceStatusText = computeDeviceStatus();
     const deviceStatusColor = computeStatusColor(deviceStatusText);
@@ -477,8 +488,7 @@ const Dashboard = ({ userInfo, handleLogout }) => {
                                             <div className="timeline-content">
                                                 <h4 className="text-dark text-xs mb-0 font-weight-bold">Device Start/Stop</h4>
                                                 <h6 className={`font-weight ${deviceStatusColor}`}>
-                                                    {status?.motor_running === true ? "Started" :
-                                                        status?.motor_running === false ? "Stopped" : "-"}
+                                                    {deviceStatusText}
                                                 </h6>
                                             </div>
                                         </div>
@@ -502,7 +512,7 @@ const Dashboard = ({ userInfo, handleLogout }) => {
                                             <div className="timeline-content">
                                                 <h4 className="text-dark text-xs mt-1 mb-0 font-weight-bold">Device Last Stop</h4>
                                                 <p className="font-weight text-dark">
-                                                    {status?.motor_running === true ? "-" : formatDateTime(lastStop)}
+                                                    {formatDateTime(lastStop)}
                                                 </p>
                                             </div>
                                         </div>

@@ -21,7 +21,7 @@ const useManageUsersView = () => {
             setLoadingDevices(true);
             setErrorDevices('');
             
-            const response = await fetch(`${API_BASE}/app/userAssignDevices`, {
+            const response = await fetch(`${API_BASE}/admin/userAssignDevices`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

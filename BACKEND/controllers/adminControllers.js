@@ -4,6 +4,8 @@ const Role = require('../models/Role');
 const User = require('../models/User');
 const Device = require("../models/Device");
 const Product = require("../models/Product");
+const Voucher = require('../models/Voucher');
+const DeviceShare = require('../models/DeviceShare');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const { sendEmail } = require('../utils/emailHelper');
@@ -231,14 +233,50 @@ exports.getUsers = async (req, res, next) => {
             aggregatedSearchFilter = { $or: aggregatedSearchConditions };
         }
 
-        // Overall total users
-        const totalUsers = await User.countDocuments(searchFilter);
+        // Summary counts aggregation to correctly reflect filtered counts
+        const countPipelineForSummary = [
+            {
+                $lookup: {
+                    from: "roles",
+                    localField: "role_id",
+                    foreignField: "role_id",
+                    as: "role"
+                }
+            },
+            { $unwind: { path: "$role", preserveNullAndEmptyArrays: true } }
+        ];
 
-        // Additional counts
-        const totalCustomerUsers = await User.countDocuments({ ...searchFilter, role_id: 2 });
-        const totalAdminUsers = await User.countDocuments({ ...searchFilter, role_id: 1 });
-        const totalActiveUsers = await User.countDocuments({ ...searchFilter, status: true });
-        const totalDeactiveUsers = await User.countDocuments({ ...searchFilter, status: false });
+        if (search) {
+            countPipelineForSummary.push({ $match: aggregatedSearchFilter });
+        } else {
+            countPipelineForSummary.push({ $match: searchFilter });
+        }
+
+        countPipelineForSummary.push({
+            $group: {
+                _id: null,
+                totalUsers: { $sum: 1 },
+                totalActiveUsers: { $sum: { $cond: [{ $eq: ["$status", true] }, 1, 0] } },
+                totalDeactiveUsers: { $sum: { $cond: [{ $eq: ["$status", false] }, 1, 0] } },
+                totalAdminUsers: { $sum: { $cond: [{ $eq: ["$role.role_name", "Admin"] }, 1, 0] } },
+                totalCustomerUsers: { $sum: { $cond: [{ $eq: ["$role.role_name", "Customer"] }, 1, 0] } }
+            }
+        });
+
+        const summaryResult = await User.aggregate(countPipelineForSummary);
+        const summary = summaryResult[0] || {
+            totalUsers: 0,
+            totalActiveUsers: 0,
+            totalDeactiveUsers: 0,
+            totalAdminUsers: 0,
+            totalCustomerUsers: 0
+        };
+
+        const totalUsersFiltered = summary.totalUsers;
+        const totalActiveUsers = summary.totalActiveUsers;
+        const totalDeactiveUsers = summary.totalDeactiveUsers;
+        const totalAdminUsers = summary.totalAdminUsers;
+        const totalCustomerUsers = summary.totalCustomerUsers;
 
         // Aggregation for users paging
         const pipeline = [];
@@ -276,14 +314,6 @@ exports.getUsers = async (req, res, next) => {
             { $project: { "role._id": 0, "role.createdAt": 0, "role.updatedAt": 0, "role.__v": 0 } },
             { $sort: { createdAt: -1 } }
         );
-
-        // Get total count for pagination when searching
-        let totalUsersFiltered = totalUsers;
-        if (search) {
-            const countPipeline = [...pipeline, { $count: "total" }];
-            const countResult = await User.aggregate(countPipeline);
-            totalUsersFiltered = countResult.length > 0 ? countResult[0].total : 0;
-        }
 
         pipeline.push(
             { $skip: skip },
@@ -362,13 +392,13 @@ exports.manageUserUpdated = async (req, res, next) => {
             user.user_phone = Number(user_phone);
             detailsChanged = true;
         }
-        if (password !== undefined && password !== '') {
-            if (Number(user.password) === Number(password)) {
-                return res.status(400).json({ success: false, message: "New password cannot be the same as the old password." });
-            }
-            user.password = Number(password);
-            passwordChanged = true;
-        }
+        // if (password !== undefined && password !== '') {
+        //     if (Number(user.password) === Number(password)) {
+        //         return res.status(400).json({ success: false, message: "New password cannot be the same as the old password." });
+        //     }
+        //     user.password = Number(password);
+        //     passwordChanged = true;
+        // }
         if (status !== undefined) {
             const newStatus = status === 'true' || status === true;
             if (newStatus !== user.status) {
@@ -406,6 +436,110 @@ exports.manageUserUpdated = async (req, res, next) => {
     } catch (err) {
         console.error('Update user error:', err);
         res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
+
+exports.getAllVouchers = async (req, res, next) => {
+    try {
+        const { page = 1, limit = 10, search = '' } = req.query;
+
+        const skip = (page - 1) * limit;
+
+        const searchFilter = search ? {
+            $or: [
+                { voucher_code: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
+            ]
+        } : {};
+
+        const vouchers = await Voucher.find(searchFilter)
+            .skip(skip)
+            .limit(parseInt(limit))
+            .sort({ createdAt: -1 });
+
+        const now = new Date();
+        now.setUTCHours(0, 0, 0, 0); // Normalize to UTC start of day for consistent date-only comparison
+        const tomorrow = new Date(now);
+        tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+
+        const summaryResult = await Voucher.aggregate([
+            { $match: searchFilter },
+            {
+                $group: {
+                    _id: null,
+                    total: { $sum: 1 },
+                    valid: {
+                        $sum: {
+                            $cond: [
+                                {
+                                    $and: [
+                                        { $eq: ["$status", true] },
+                                        { $lt: ["$start_date", tomorrow] },
+                                        { $gte: ["$end_date", now] }
+                                    ]
+                                },
+                                1, 0
+                            ]
+                        }
+                    },
+                    pending: {
+                        $sum: {
+                            $cond: [
+                                {
+                                    $and: [
+                                        { $eq: ["$status", true] },
+                                        { $gte: ["$start_date", tomorrow] }
+                                    ]
+                                },
+                                1, 0
+                            ]
+                        }
+                    },
+                    expired: {
+                        $sum: {
+                            $cond: [
+                                {
+                                    $and: [
+                                        { $eq: ["$status", true] },
+                                        { $lt: ["$end_date", now] }
+                                    ]
+                                },
+                                1, 0
+                            ]
+                        }
+                    },
+                    inactive: {
+                        $sum: {
+                            $cond: [{ $eq: ["$status", false] }, 1, 0]
+                        }
+                    }
+                }
+            }
+        ]);
+
+        const summary = summaryResult[0] || { total: 0, valid: 0, pending: 0, expired: 0, inactive: 0 };
+
+        const response = {
+            success: true,
+            data: vouchers,
+            pagination: {
+                currentPage: parseInt(page),
+                totalPages: Math.ceil(summary.total / limit),
+                totalVouchers: summary.total,
+                totalValidVouchers: summary.valid,
+                totalPendingVouchers: summary.pending,
+                totalExpiredVouchers: summary.expired,
+                totalInactiveVouchers: summary.inactive,
+                limit: parseInt(limit),
+                hasNextPage: page * limit < summary.total,
+                hasPrevPage: page > 1
+            }
+        };
+
+        res.status(200).json(response);
+
+    } catch (err) {
+        next(err);
     }
 };
 
@@ -522,16 +656,55 @@ exports.getDevices = async (req, res) => {
             aggregatedSearchFilter.assign_status = false;
         }
 
-        // Total counts
-        const totalDevices = await Device.countDocuments(searchFilter);
-        const totalAssignedDevices = await Device.countDocuments({ ...searchFilter, assign_status: true });
-        const totalUnassignedDevices = await Device.countDocuments({ ...searchFilter, assign_status: false });
-        const totalActiveDevices = await Device.countDocuments({ ...searchFilter, status: true });
-        const totalDeactiveDevices = await Device.countDocuments({ ...searchFilter, status: false });
+        // Summary counts aggregation to correctly reflect search results across all categories
+        const countPipelineForSummary = [
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "assigned_user_id",
+                    foreignField: "user_id",
+                    as: "user_details"
+                }
+            },
+            { $unwind: { path: "$user_details", preserveNullAndEmptyArrays: true } },
+            { 
+                $match: search ? {
+                    $or: [
+                        { serial_number: { $regex: search, $options: 'i' } },
+                        { imei_number: { $regex: search, $options: 'i' } },
+                        { 'user_details.user_name': { $regex: search, $options: 'i' } }
+                    ]
+                } : {}
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalDevices: { $sum: 1 },
+                    totalAssignedDevices: { $sum: { $cond: [{ $eq: ["$assign_status", true] }, 1, 0] } },
+                    totalUnassignedDevices: { $sum: { $cond: [{ $eq: ["$assign_status", false] }, 1, 0] } },
+                    totalActiveDevices: { $sum: { $cond: [{ $eq: ["$status", true] }, 1, 0] } },
+                    totalDeactiveDevices: { $sum: { $cond: [{ $eq: ["$status", false] }, 1, 0] } }
+                }
+            }
+        ];
+
+        const summaryResult = await Device.aggregate(countPipelineForSummary);
+        const summary = summaryResult[0] || {
+            totalDevices: 0,
+            totalAssignedDevices: 0,
+            totalUnassignedDevices: 0,
+            totalActiveDevices: 0,
+            totalDeactiveDevices: 0
+        };
+
+        const totalDevicesFiltered = summary.totalDevices;
+        const totalAssignedDevices = summary.totalAssignedDevices;
+        const totalUnassignedDevices = summary.totalUnassignedDevices;
+        const totalActiveDevices = summary.totalActiveDevices;
+        const totalDeactiveDevices = summary.totalDeactiveDevices;
 
         // Paginated device data with user details
         const devices = await Device.aggregate([
-            { $match: searchFilter },
             {
                 $lookup: {
                     from: "users",
@@ -558,7 +731,6 @@ exports.getDevices = async (req, res) => {
         ]);
 
         // Fetch DeviceShare data for each device
-        const DeviceShare = require('../models/DeviceShare');
         const enrichedDevices = await Promise.all(devices.map(async (device) => {
             const sharedUsers = await DeviceShare.find({
                 serial_number: device.serial_number,
@@ -579,7 +751,7 @@ exports.getDevices = async (req, res) => {
             };
         }));
 
-        const totalPages = Math.ceil(totalDevices / limit);
+        const totalPages = Math.ceil(totalDevicesFiltered / limit);
 
         const response = {
             success: true,
@@ -587,7 +759,7 @@ exports.getDevices = async (req, res) => {
             pagination: {
                 currentPage: page,
                 totalPages,
-                totalDevices,
+                totalDevices: totalDevicesFiltered,
                 totalAssignedDevices,
                 totalUnassignedDevices,
                 totalActiveDevices,
@@ -1229,6 +1401,268 @@ exports.updateProduct = async (req, res, next) => {
         res.status(500).json({
             success: false,
             message: "Server error updating product"
+        });
+    }
+};
+
+exports.userAssignDevices = async (req, res) => {
+    try {
+        const { user_id, page = 1, limit = 10, filter = 'All' } = req.body;
+
+        if (!user_id) {
+            return res.status(400).json({
+                success: false,
+                message: "User ID is required"
+            });
+        }
+
+        const userIdNum = parseInt(user_id);
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const skip = (pageNum - 1) * limitNum;
+
+        // Threshold for online status (3 minutes to allow for clock drift and signal issues)
+        const onlineThreshold = new Date(Date.now() - 3 * 60 * 1000);
+
+        // Define base query for devices where user is master or shared
+        // First get shared serials
+        const shares = await DeviceShare.find({ shared_to_user_id: userIdNum});
+        const sharedSerials = shares.map(s => s.serial_number);
+
+        // Base match criteria
+        const baseMatch = {
+            // status: true,
+            $or: [
+                { assigned_user_id: userIdNum, assign_status: true },
+                { serial_number: { $in: sharedSerials } }
+            ]
+        };
+
+        // Add filter specific criteria
+        if (filter === 'Running') {
+            baseMatch.start_status = true;
+        } else if (filter === 'Stopped') {
+            baseMatch.start_status = false;
+            baseMatch.imei_number = { $ne: null, $not: /^\s*$/ }; // Configured
+        } else if (filter === 'Online') {
+            baseMatch.last_heartbeat = { $gte: onlineThreshold };
+        } else if (filter === 'Offline') {
+            baseMatch.$and = [
+                {
+                    $or: [
+                        { last_heartbeat: { $lt: onlineThreshold } },
+                        { last_heartbeat: { $exists: false } }
+                    ]
+                }
+            ];
+        } else if (filter === 'Not Configured') {
+            baseMatch.assigned_user_id = userIdNum; // Only show MY devices
+            delete baseMatch.$or;
+            baseMatch.$and = [
+                {
+                    $or: [
+                        { imei_number: null },
+                        { imei_number: "" }
+                    ]
+                }
+            ];
+        } else if (filter === 'Shared') {
+            baseMatch.assigned_user_id = { $ne: userIdNum };
+        }
+
+        const sortCriteria = { updatedAt: -1 };
+
+        // Aggregate with pagination
+        const devices = await Device.aggregate([
+            { $match: baseMatch },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "assigned_user_id",
+                    foreignField: "user_id",
+                    as: "user_details"
+                }
+            },
+            {
+                $unwind: {
+                    path: "$user_details",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $addFields: {
+                    role: {
+                        $cond: { if: { $eq: ["$assigned_user_id", userIdNum] }, then: 'master', else: 'shared' }
+                    }
+                }
+            },
+            { $sort: sortCriteria },
+            { $skip: skip },
+            { $limit: filter === 'Recently' ? 5 : limitNum }
+        ]);
+
+        const totalDevices = await Device.countDocuments(baseMatch);
+
+        const enrichedDevices = devices.map(device => {
+            const share = shares.find(s => s.serial_number === device.serial_number);
+            return {
+                ...device,
+                acceptance_status: device.role === 'master' ? 'accepted' : (share ? share.acceptance_status : 'pending'),
+                share_info: device.role === 'shared' && share ? {
+                    master_user_id: share.master_user_id,
+                    master_user_name: share.master_user_name,
+                    master_user_email: share.master_user_email,
+                    shared_to_user_id: share.shared_to_user_id,
+                    shared_to_user_name: share.shared_to_user_name,
+                    shared_to_user_phone: share.shared_to_user_phone,
+                    shared_to_user_email: share.shared_to_user_email,
+                    assignedAt: share.assignedAt
+                } : null,
+                user_details: device.user_details ? {
+                    user_name: device.user_details.user_name,
+                    user_email: device.user_details.user_email,
+                    user_phone: device.user_details.user_phone
+                } : null
+            };
+        });
+
+        // 3. Find all device share relationships where this user is involved (as master or shared_to)
+        const sharedDeviceRelationships = await DeviceShare.find({
+            $or: [
+                { master_user_id: userIdNum },
+                { shared_to_user_id: userIdNum }
+            ],
+            status: true
+        }).sort({ assignedAt: -1 });
+
+        const response = {
+            success: true,
+            count: enrichedDevices.length,
+            total: totalDevices,
+            currentPage: pageNum,
+            totalPages: Math.ceil(totalDevices / limitNum),
+            data: enrichedDevices,
+            shared_devices: sharedDeviceRelationships
+        };
+
+        return res.status(200).json(response);
+
+    } catch (error) {
+        console.error("userAssignDevices Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Server error"
+        });
+    }
+};
+
+exports.userDeviceHistory = async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success: false, errors: errors.array() });
+        }
+
+        const { user_id, page = 1, limit = 10, serial_number } = req.body;
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const skip = (pageNum - 1) * limitNum;
+
+        // Validate user exists
+        const user = await User.findOne({ user_id: parseInt(user_id) });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        let serialNumbers = [];
+        if (serial_number) {
+            // If user is admin (role_id === 1), bypass access check
+            if (user.role_id === 1) {
+                serialNumbers = [serial_number];
+            } else {
+                // Verify if user has access to this serial
+                const hasAccess = await Device.findOne({ serial_number, assigned_user_id: user.user_id }) ||
+                                  await DeviceShare.findOne({ serial_number, shared_to_user_id: user.user_id, status: true, acceptance_status: 'accepted' });
+                
+                if (!hasAccess) {
+                    return res.status(403).json({ success: false, message: "No access to this device" });
+                }
+                serialNumbers = [serial_number];
+            }
+        } else {
+            // 1. Get all serial numbers the user has access to
+            const masterDevices = await Device.find({ assigned_user_id: user.user_id });
+            const sharedShares = await DeviceShare.find({
+                shared_to_user_id: user.user_id,
+                status: true,
+                acceptance_status: 'accepted'
+            });
+
+            serialNumbers = [
+                ...masterDevices.map(d => d.serial_number),
+                ...sharedShares.map(s => s.serial_number)
+            ];
+        }
+
+        if (serialNumbers.length === 0) {
+            return res.status(200).json({
+                success: true,
+                user_id,
+                count: 0,
+                total: 0,
+                data: []
+            });
+        }
+
+        // DB collection
+        const db = mongoose.connection.db;
+        const historyCollection = db.collection("agri_history");
+
+        const query = { serial_number: { $in: serialNumbers } };
+
+        // 2. Fetch history sessions with pagination
+        const history = await historyCollection
+            .find(query)
+            .sort({ startAt: -1 })    // latest first
+            .skip(skip)
+            .limit(limitNum)
+            .toArray();
+
+        const totalRecords = await historyCollection.countDocuments(query);
+
+        if (!history.length) {
+            const response = {
+                success: true,
+                user_id,
+                count: 0,
+                total: totalRecords,
+                currentPage: pageNum,
+                totalPages: Math.ceil(totalRecords / limitNum),
+                data: []
+            };
+            return res.status(200).json(response);
+        }
+
+        const response = {
+            success: true,
+            user_id,
+            count: history.length,
+            total: totalRecords,
+            currentPage: pageNum,
+            totalPages: Math.ceil(totalRecords / limitNum),
+            data: history
+        };
+
+        return res.status(200).json(response);
+
+    } catch (error) {
+        console.error("userDeviceHistory Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Server error"
         });
     }
 };

@@ -49,7 +49,7 @@ const ManageUsersView = ({ userInfo, handleLogout }) => {
             try {
                 // Check history for assigned devices (current user)
                 if (assignedDevices && assignedDevices.length > 0 && selectedUser) {
-                    const response = await fetch(`${API_BASE}/app/userDeviceHistory`, {
+                    const response = await fetch(`${API_BASE}/admin/userDeviceHistory`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

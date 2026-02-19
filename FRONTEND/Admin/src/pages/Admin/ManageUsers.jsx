@@ -211,24 +211,24 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                             />
                                         </div>
                                         <div className="col-md-7 col-12 d-flex flex-wrap gap-1">
-                                            <div style={{ flex: '1', minWidth: '100px', backgroundColor: '#f0f9ff', padding: '8px 12px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0 }}>Total</p>
+                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#f0f9ff', padding: '12px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Total</p>
                                                 <p style={{ fontSize: '18px', color: '#1e40af', fontWeight: '700', margin: 0 }}>{pagination?.totalUsers || 0}</p>
                                             </div>
-                                            <div style={{ flex: '1', minWidth: '100px', backgroundColor: '#f0fdf4', padding: '8px 12px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0 }}>Active</p>
+                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#f0fdf4', padding: '12px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Active</p>
                                                 <p style={{ fontSize: '18px', color: '#15803d', fontWeight: '700', margin: 0 }}>{pagination?.totalActiveUsers || 0}</p>
                                             </div>
-                                            <div style={{ flex: '1', minWidth: '100px', backgroundColor: '#fef2f2', padding: '8px 12px', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0 }}>Deactive</p>
+                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#fef2f2', padding: '12px', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Deactive</p>
                                                 <p style={{ fontSize: '18px', color: '#991b1b', fontWeight: '700', margin: 0 }}>{pagination?.totalDeactiveUsers || 0}</p>
                                             </div>
-                                            <div style={{ flex: '1', minWidth: '100px', backgroundColor: '#fff7ed', padding: '8px 12px', borderRadius: '8px', border: '1px solid #fed7aa', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0 }}>Customers</p>
+                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#fff7ed', padding: '12px', borderRadius: '8px', border: '1px solid #fed7aa', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Customers</p>
                                                 <p style={{ fontSize: '18px', color: '#c2410c', fontWeight: '700', margin: 0 }}>{pagination?.totalCustomerUsers || 0}</p>
                                             </div>
-                                            <div style={{ flex: '1', minWidth: '100px', backgroundColor: '#faf5ff', padding: '8px 12px', borderRadius: '8px', border: '1px solid #e9d5ff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0 }}>Admin</p>
+                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#faf5ff', padding: '12px', borderRadius: '8px', border: '1px solid #e9d5ff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Admin</p>
                                                 <p style={{ fontSize: '18px', color: '#7e22ce', fontWeight: '700', margin: 0 }}>{pagination?.totalAdminUsers || 0}</p>
                                             </div>
                                         </div>

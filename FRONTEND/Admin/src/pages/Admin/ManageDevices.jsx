@@ -193,22 +193,26 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                 <option value="false">Un-Assigned</option>
                                             </select>
                                         </div>
-                                        <div className="col-md-2 col-6">
-                                            <div style={{ backgroundColor: '#f0f9ff', padding: '10px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div className="col-md-6 col-12 d-flex flex-wrap gap-1">
+                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#f0f9ff', padding: '12px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Total</p>
                                                 <p style={{ fontSize: '18px', color: '#1e40af', fontWeight: '700', margin: 0 }}>{pagination?.totalDevices || 0}</p>
                                             </div>
-                                        </div>
-                                        <div className="col-md-2 col-6">
-                                            <div style={{ backgroundColor: '#f0fdf4', padding: '10px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#f0fdf4', padding: '12px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Active</p>
                                                 <p style={{ fontSize: '18px', color: '#15803d', fontWeight: '700', margin: 0 }}>{pagination?.totalActiveDevices || 0}</p>
                                             </div>
-                                        </div>
-                                        <div className="col-md-2 col-6">
-                                            <div style={{ backgroundColor: '#fef2f2', padding: '10px', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#fff5f5', padding: '12px', borderRadius: '8px', border: '1px solid #feb2b2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>De-Active</p>
+                                                <p style={{ fontSize: '18px', color: '#c53030', fontWeight: '700', margin: 0 }}>{pagination?.totalDeactiveDevices || 0}</p>
+                                            </div>
+                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#fef2f2', padding: '12px', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Assigned</p>
                                                 <p style={{ fontSize: '18px', color: '#991b1b', fontWeight: '700', margin: 0 }}>{pagination?.totalAssignedDevices || 0}</p>
+                                            </div>
+                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#fffbeb', padding: '12px', borderRadius: '8px', border: '1px solid #fef3c7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Un-Assigned</p>
+                                                <p style={{ fontSize: '18px', color: '#d97706', fontWeight: '700', margin: 0 }}>{pagination?.totalUnassignedDevices || 0}</p>
                                             </div>
                                         </div>
                                     </div>

@@ -26,12 +26,20 @@ const useLiveStatus = (serialNumber) => {
 
             const newStatus = data.payload;
 
-            if (newStatus.motor_running === true && prevMotorRunning.current === false) {
-                setLastStart(newStatus.timestamp);
+            // Handle transition OR initial state
+            if (newStatus.motor_running === true) {
+                if (prevMotorRunning.current === false || prevMotorRunning.current === null) {
+                    setLastStart(newStatus.timestamp || newStatus.startAt);
+                }
+            } else if (newStatus.motor_running === false) {
+                if (prevMotorRunning.current === true || prevMotorRunning.current === null) {
+                    setLastStop(newStatus.timestamp || newStatus.stopAt);
+                }
             }
-            if (newStatus.motor_running === false && prevMotorRunning.current === true) {
-                setLastStop(newStatus.timestamp);
-            }
+
+            // Also if payload has explicit startAt/stopAt, use them
+            if (newStatus.startAt) setLastStart(newStatus.startAt);
+            if (newStatus.stopAt) setLastStop(newStatus.stopAt);
 
             prevMotorRunning.current = newStatus.motor_running;
             setStatus(newStatus);

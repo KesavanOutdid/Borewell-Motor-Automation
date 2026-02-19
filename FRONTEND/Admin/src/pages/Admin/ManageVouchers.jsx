@@ -66,10 +66,15 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
 
     const getVoucherStatus = (voucher) => {
         const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const startDate = new Date(voucher.start_date);
+        startDate.setHours(0, 0, 0, 0);
         const endDate = new Date(voucher.end_date);
+        endDate.setHours(23, 59, 59, 999);
 
-        if (now > endDate) return 'Expired';
         if (!voucher.status) return 'Inactive';
+        if (now < startDate) return 'Pending';
+        if (now > endDate) return 'Expired';
         return 'Valid';
     };
 
@@ -78,6 +83,7 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
             case 'Valid': return '#15803d';
             case 'Expired': return '#991b1b';
             case 'Inactive': return '#6c757d';
+            case 'Pending': return '#d97706';
             default: return '#6c757d';
         }
     };
@@ -99,25 +105,29 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                     <i className="fas fa-plus" aria-hidden="true" style={{ color: 'white' }}></i> Create
                                                 </button>
                                             </div>
-                                            <div className="col-md-2 col-6">
-                                                <div style={{ backgroundColor: '#f0f9ff', padding: '10px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div className="col-md-7 col-12 d-flex flex-wrap gap-1">
+                                                <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#f0f9ff', padding: '12px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Total</p>
                                                     <p style={{ fontSize: '18px', color: '#1e40af', fontWeight: '700', margin: 0 }}>{pagination?.totalVouchers || 0}</p>
                                                 </div>
-                                            </div>
-                                            <div className="col-md-2 col-6">
-                                                <div style={{ backgroundColor: '#f0fdf4', padding: '12px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Active</p>
-                                                    <p style={{ fontSize: '18px', color: '#15803d', fontWeight: '700', margin: 0 }}>{pagination?.totalActiveVouchers || 0}</p>
+                                                <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#f0fdf4', padding: '12px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Valid</p>
+                                                    <p style={{ fontSize: '18px', color: '#15803d', fontWeight: '700', margin: 0 }}>{pagination?.totalValidVouchers || 0}</p>
                                                 </div>
-                                            </div>
-                                            <div className="col-md-2 col-6">
-                                                <div style={{ backgroundColor: '#fef2f2', padding: '12px', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#fffbeb', padding: '12px', borderRadius: '8px', border: '1px solid #fef3c7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Pending</p>
+                                                    <p style={{ fontSize: '18px', color: '#d97706', fontWeight: '700', margin: 0 }}>{pagination?.totalPendingVouchers || 0}</p>
+                                                </div>
+                                                <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#fef2f2', padding: '12px', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Expired</p>
+                                                    <p style={{ fontSize: '18px', color: '#991b1b', fontWeight: '700', margin: 0 }}>{pagination?.totalExpiredVouchers || 0}</p>
+                                                </div>
+                                                <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#f9fafb', padding: '12px', borderRadius: '8px', border: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Inactive</p>
-                                                    <p style={{ fontSize: '18px', color: '#991b1b', fontWeight: '700', margin: 0 }}>{pagination?.totalInactiveVouchers || 0}</p>
+                                                    <p style={{ fontSize: '18px', color: '#4b5563', fontWeight: '700', margin: 0 }}>{pagination?.totalInactiveVouchers || 0}</p>
                                                 </div>
                                             </div>
-                                            <div className="col-md-2 col-6">
+                                            <div className="col-md-3 col-12">
                                                 <input
                                                     type="text"
                                                     className="form-control"

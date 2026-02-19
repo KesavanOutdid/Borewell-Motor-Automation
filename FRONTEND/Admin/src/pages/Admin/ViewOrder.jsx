@@ -115,6 +115,16 @@ const ViewOrder = ({ userInfo, handleLogout }) => {
         return labels[status] || status;
     };
 
+    const getPaymentStatusLabel = (status) => {
+        const labels = {
+            pending: 'Pending',
+            completed: 'Completed',
+            failed: 'Failed',
+            cancelled: 'Cancelled'
+        };
+        return labels[status] || status;
+    };
+
     const isStatusCompleted = (status) => {
         const orderStatus = order.order_status === 'created' ? 'confirmed' : order.order_status;
         const currentIndex = statusFlow.indexOf(orderStatus);
@@ -296,7 +306,7 @@ const ViewOrder = ({ userInfo, handleLogout }) => {
                                                                 fontWeight: '600',
                                                                 textTransform: 'capitalize'
                                                             }}>
-                                                                {order.order_status.replace(/_/g, ' ')}
+                                                                {getStatusLabel(order.order_status)}
                                                             </span>
                                                         </p>
                                                         <p style={{ fontSize: '12px', margin: '6px 0' }}>
@@ -312,7 +322,7 @@ const ViewOrder = ({ userInfo, handleLogout }) => {
                                                                 fontWeight: '600',
                                                                 textTransform: 'capitalize'
                                                             }}>
-                                                                {order.payment_status}
+                                                                {getPaymentStatusLabel(order.payment_status)}
                                                             </span>
                                                         </p>
                                                         <p style={{ fontSize: '12px', margin: '6px 0' }}>
@@ -431,7 +441,7 @@ const ViewOrder = ({ userInfo, handleLogout }) => {
                                                     display: 'inline-block',
                                                     fontSize: '10px'
                                                 }}>
-                                                    {order.payment_status}
+                                                    {getPaymentStatusLabel(order.payment_status)}
                                                 </span>
                                             </p>
                                             {order.razorpay_payment_id && (

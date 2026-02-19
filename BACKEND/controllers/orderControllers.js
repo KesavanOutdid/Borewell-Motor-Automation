@@ -561,13 +561,68 @@ exports.getAllOrders = async (req, res, next) => {
 
         const orders = await Order.aggregate(aggregateStages);
 
-        // Get total counts for status badges
-        const totalOrders = await Order.countDocuments();
-        const totalConfirmedOrders = await Order.countDocuments({ order_status: 'confirmed' });
-        const totalProcessingOrders = await Order.countDocuments({ order_status: 'processing' });
-        const totalShippedOrders = await Order.countDocuments({ order_status: 'shipped' });
-        const totalDeliveredOrders = await Order.countDocuments({ order_status: 'delivered' });
-        const totalCancelledOrders = await Order.countDocuments({ order_status: 'cancelled' });
+        // Get counts for different statuses based on the search/filter criteria
+        const statsPipeline = [];
+        
+        // Use the same lookup and project as the main list
+        statsPipeline.push(
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "user_id",
+                    foreignField: "user_id",
+                    as: "user_details"
+                }
+            },
+            {
+                $unwind: { path: "$user_details", preserveNullAndEmptyArrays: true }
+            },
+            {
+                $project: {
+                    order_id: 1,
+                    user_email: 1,
+                    order_status: 1,
+                    user_name: "$user_details.user_name"
+                }
+            }
+        );
+
+        // Add search filter if search term exists (but don't add status filter for stats)
+        if (search) {
+            statsPipeline.push({
+                $match: {
+                    $or: [
+                        { order_id: searchRegex },
+                        { user_email: searchRegex },
+                        { "user_name": searchRegex }
+                    ]
+                }
+            });
+        }
+
+        statsPipeline.push({
+            $group: {
+                _id: null,
+                total: { $sum: 1 },
+                created: { $sum: { $cond: [{ $eq: ["$order_status", "created"] }, 1, 0] } },
+                confirmed: { $sum: { $cond: [{ $eq: ["$order_status", "confirmed"] }, 1, 0] } },
+                processing: { $sum: { $cond: [{ $eq: ["$order_status", "processing"] }, 1, 0] } },
+                shipped: { $sum: { $cond: [{ $eq: ["$order_status", "shipped"] }, 1, 0] } },
+                out_for_delivery: { $sum: { $cond: [{ $eq: ["$order_status", "out_for_delivery"] }, 1, 0] } },
+                delivered: { $sum: { $cond: [{ $eq: ["$order_status", "delivered"] }, 1, 0] } }
+            }
+        });
+
+        const statsResult = await Order.aggregate(statsPipeline);
+        const stats = statsResult.length > 0 ? statsResult[0] : {
+            total: 0,
+            created: 0,
+            confirmed: 0,
+            processing: 0,
+            shipped: 0,
+            out_for_delivery: 0,
+            delivered: 0
+        };
 
         const totalPages = Math.ceil(totalFilteredOrders / limit);
 
@@ -579,14 +634,15 @@ exports.getAllOrders = async (req, res, next) => {
                 pagination: {
                     currentPage: page,
                     totalPages,
-                    totalOrders,
+                    totalOrders: stats.total,
                     totalFilteredOrders,
                     limit,
-                    totalConfirmedOrders,
-                    totalProcessingOrders,
-                    totalShippedOrders,
-                    totalDeliveredOrders,
-                    totalCancelledOrders,
+                    totalCreatedOrders: stats.created,
+                    totalConfirmedOrders: stats.confirmed,
+                    totalProcessingOrders: stats.processing,
+                    totalShippedOrders: stats.shipped,
+                    totalOutForDeliveryOrders: stats.out_for_delivery,
+                    totalDeliveredOrders: stats.delivered,
                     hasNextPage: page < totalPages,
                     hasPrevPage: page > 1
                 }

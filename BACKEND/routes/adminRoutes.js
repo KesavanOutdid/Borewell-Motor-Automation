@@ -646,6 +646,28 @@ router.post(
     adminCtrl.updateProduct
 );
 
+router.post(
+    '/userAssignDevices',
+    [
+        body('user_id').notEmpty().withMessage("User ID is required"),
+    ],
+    adminCtrl.userAssignDevices
+);
+
+router.post(
+    '/userDeviceHistory',
+    [
+        body('user_id').notEmpty().withMessage("User ID is required"),
+    ],
+    adminCtrl.userDeviceHistory
+);
+
+router.get(
+    '/getAllVouchers',
+    authMiddleware(),
+    adminCtrl.getAllVouchers
+);
+
 /**
  * @swagger
  * /admin/deleteProduct:

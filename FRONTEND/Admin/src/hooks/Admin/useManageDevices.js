@@ -21,6 +21,10 @@ const useManageDevices = (userInfo) => {
         currentPage: 1,
         totalPages: 1,
         totalDevices: 0,
+        totalAssignedDevices: 0,
+        totalUnassignedDevices: 0,
+        totalActiveDevices: 0,
+        totalDeactiveDevices: 0,
         limit: 10,
         hasNextPage: false,
         hasPrevPage: false

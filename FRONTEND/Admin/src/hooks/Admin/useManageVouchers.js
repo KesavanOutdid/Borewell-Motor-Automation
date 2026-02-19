@@ -24,7 +24,9 @@ const useManageVouchers = (userInfo) => {
         currentPage: 1,
         totalPages: 1,
         totalVouchers: 0,
-        totalActiveVouchers: 0,
+        totalValidVouchers: 0,
+        totalPendingVouchers: 0,
+        totalExpiredVouchers: 0,
         totalInactiveVouchers: 0,
         limit: 10,
         hasNextPage: false,
@@ -43,7 +45,7 @@ const useManageVouchers = (userInfo) => {
             if (search) params.append('search', search);
             
             const response = await fetch(
-                `${API_BASE}/app/getAllVouchers?${params.toString()}`,
+                `${API_BASE}/admin/getAllVouchers?${params.toString()}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${userInfo.token}`
