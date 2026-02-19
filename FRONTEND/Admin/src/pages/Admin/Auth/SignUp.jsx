@@ -32,6 +32,7 @@ const SignUp = ({handleSignUp}) => {
                                                 <label>Name</label>
                                                 <div className="mb-3">
                                                     <input type="text" className="form-control" placeholder="Name" aria-label="Name" aria-describedby="name-addon" autoComplete="off" value={name}
+                                                        maxLength={40}
                                                         onChange={(e) => setName(sanitizeName(e.target.value))} required/>
                                                 </div>
                                                 <label>Mobile</label>

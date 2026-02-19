@@ -43,6 +43,11 @@ class SignupController extends GetxController {
       return;
     }
 
+    if (name.value.trim().length > 40) {
+      _showErrorDialog("Name should not exceed 40 characters");
+      return;
+    }
+
     if (email.value.isEmpty || !isValidEmail(email.value)) {
       _showErrorDialog("Please enter valid email");
       return;

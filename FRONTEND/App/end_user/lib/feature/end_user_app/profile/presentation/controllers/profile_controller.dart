@@ -202,6 +202,10 @@ class ProfileController extends GetxController {
       return "Name should contain letters only.";
     }
 
+    if (name.length > 40) {
+      return "Name should not exceed 40 characters.";
+    }
+
     if (emailEditingController.text.isEmpty) {
       return "Email cannot be empty";
     }
@@ -269,6 +273,11 @@ class ProfileController extends GetxController {
           userEmail.value = user['user_email'] ?? "";
           userPhone.value = user['user_phone']?.toString() ?? "";
           
+          // Update local password state since backend excludes it from response
+          if (password != oldPassword.value) {
+            oldPassword.value = password;
+          }
+          
           // Keep TokenService in sync
           await tokenService.saveToken(
             tokenService.getToken() ?? "",
@@ -276,6 +285,9 @@ class ProfileController extends GetxController {
             userName.value,
             userEmail: userEmail.value,
           );
+          
+          // Ensure password is preserved in cache
+          user['password'] = oldPassword.value;
           
           await _storage.write('user_profile', user);
           return null; // Success

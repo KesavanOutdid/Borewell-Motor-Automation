@@ -4,6 +4,8 @@ const deviceScheduleSchema = new mongoose.Schema({
     serial_number: { type: String, required: true },
     imei_number: { type: String, required: true },
     user_id: { type: Number, required: true },
+    user_name: { type: String },
+    cancelled_by: { type: String },
     
     start_time: { type: Date, required: true },
     stop_time: { type: Date, required: true },

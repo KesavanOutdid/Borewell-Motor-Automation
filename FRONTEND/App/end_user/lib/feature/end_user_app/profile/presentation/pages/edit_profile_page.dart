@@ -228,6 +228,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 hint: 'Enter your name',
                 icon: Icons.person_outline,
                 controller: controller.nameEditingController,
+                maxLength: 40,
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
                 ],
@@ -237,6 +238,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   }
                   if (value.trim().length < 3) {
                     return 'Name must be at least 3 characters';
+                  }
+                  if (value.trim().length > 40) {
+                    return 'Name should not exceed 40 characters';
                   }
                   return null;
                 },

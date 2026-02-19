@@ -6,6 +6,7 @@ const Device = require("../models/Device");
 const Product = require("../models/Product");
 const bcrypt = require('bcrypt');
 const path = require('path');
+const { sendEmail } = require('../utils/emailHelper');
 const { cacheDeletePattern } = require('../middlewares/cacheMiddleware');
 const mongoose = require('mongoose');
 
@@ -110,6 +111,13 @@ exports.createUser = async (req, res, next) => {
         });
 
         await user.save();
+
+        // Send Welcome Email
+        sendEmail(
+            user.user_email,
+            'Account Created - Smart Motor Automation',
+            `Hello ${user.user_name},\n\nAn account has been created for you by the administrator. You can now log in using your email.\n\nThank you!`
+        ).catch(err => console.error("Admin user creation email failed:", err));
 
         res.status(201).json({
             success: true,
@@ -337,7 +345,19 @@ exports.manageUserUpdated = async (req, res, next) => {
         // Update fields (only update fields that are provided and not empty)
         if (user_name !== undefined && user_name !== '') user.user_name = user_name;
         if (user_phone !== undefined && user_phone !== '') user.user_phone = user_phone;
-        if (password !== undefined && password !== '') user.password = password;
+        if (password !== undefined && password !== '') {
+            if (Number(user.password) === Number(password)) {
+                return res.status(400).json({ success: false, message: "New password cannot be the same as the old password." });
+            }
+            user.password = password;
+
+            // Send Password Update Email
+            sendEmail(
+                user.user_email,
+                'Password Updated by Admin',
+                `Hello ${user.user_name},\n\nYour account password has been updated by the administrator on ${new Date().toLocaleString()}.\n\nIf you did not request this, please contact support.`
+            ).catch(err => console.error("Admin password update email failed:", err));
+        }
         if (status !== undefined) user.status = status === 'true' || status === true;
 
         // Update metadata

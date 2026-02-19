@@ -20,7 +20,6 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
   TimeOfDay? startTime;
   DateTime? stopDate;
   TimeOfDay? stopTime;
-  bool isRecurring = false;
 
   @override
   void initState() {
@@ -50,10 +49,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
       setState(() {
         if (isStart) {
           startDate = picked;
-          // If not recurring, keep stop date same as start date
-          if (!isRecurring) {
-            stopDate = picked;
-          } else if (stopDate != null && stopDate!.isBefore(startDate!)) {
+          if (stopDate != null && stopDate!.isBefore(startDate!)) {
             stopDate = picked;
           }
         } else {
@@ -85,7 +81,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
       } else {
         // Default to current time + 1 hour if today, else just current time
         final bool isToday = startDate!.year == now.year && startDate!.month == now.month && startDate!.day == now.day;
-        initialDateTime = isToday ? now.add(const Duration(hours: 1)) : DateTime(startDate!.year, startDate!.month, startDate!.day, now.hour, now.minute);
+        initialDateTime = isToday ? now.add(const Duration(hours: 1, minutes: 5)) : DateTime(startDate!.year, startDate!.month, startDate!.day, now.hour, now.minute);
       }
     } else {
       if (stopTime != null) {
@@ -125,11 +121,11 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                     onPressed: () {
                       final pickedTime = TimeOfDay.fromDateTime(tempPickedDate);
                       
-                      // Validation for today's start time
+                      // Validation for today's start time - exactly 1 hour
                       if (isStart) {
                         final bool isToday = startDate!.year == now.year && startDate!.month == now.month && startDate!.day == now.day;
                         final pickedDateTime = DateTime(startDate!.year, startDate!.month, startDate!.day, pickedTime.hour, pickedTime.minute);
-                        if (isToday && pickedDateTime.isBefore(now.add(const Duration(minutes: 55)))) {
+                        if (isToday && pickedDateTime.isBefore(now.add(const Duration(hours: 1)))) {
                           Get.snackbar('Invalid Time', 'Start time must be at least 1 hour from now',
                               backgroundColor: Colors.red, colorText: Colors.white);
                           return;
@@ -180,60 +176,46 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
       return;
     }
 
-    final now = DateTime.now();
-    final int daysCount = stopDate!.difference(startDate!).inDays + 1;
+    final startDateTime = DateTime(
+      startDate!.year, startDate!.month, startDate!.day,
+      startTime!.hour, startTime!.minute,
+    );
     
-    if (daysCount <= 0) {
-      Get.snackbar('Error', 'End date must be after start date',
+    final stopDateTime = DateTime(
+      stopDate!.year, stopDate!.month, stopDate!.day,
+      stopTime!.hour, stopTime!.minute,
+    );
+
+    final now = DateTime.now();
+    
+    // Validate start date (not yesterday)
+    final todayStart = DateTime(now.year, now.month, now.day);
+    if (startDateTime.isBefore(todayStart)) {
+      Get.snackbar('Error', 'Start date cannot be in the past',
           backgroundColor: Colors.red, colorText: Colors.white);
       return;
     }
 
-    int successCount = 0;
-    controller.isLoading.value = true;
-
-    for (int i = 0; i < daysCount; i++) {
-      final currentDay = startDate!.add(Duration(days: i));
-      
-      final startDateTime = DateTime(
-        currentDay.year, currentDay.month, currentDay.day,
-        startTime!.hour, startTime!.minute,
-      );
-      
-      final stopDateTime = DateTime(
-        currentDay.year, currentDay.month, currentDay.day,
-        stopTime!.hour, stopTime!.minute,
-      );
-
-      // Skip if start time is already in the past
-      if (startDateTime.isBefore(now)) continue;
-
-      // Ensure stop is after start for same day
-      if (stopDateTime.isBefore(startDateTime)) {
-        // If it's not a recurring schedule, show error. 
-        // If it is recurring, we skip invalid configurations (though our picker logic should prevent this)
-        if (!isRecurring) {
-          Get.snackbar('Error', 'Stop time must be after start time',
-              backgroundColor: Colors.red, colorText: Colors.white);
-          controller.isLoading.value = false;
-          return;
-        }
-        continue;
-      }
-
-      final success = await controller.createSchedule(startDateTime, stopDateTime);
-      if (success) successCount++;
+    // Validate 1 hour lead time
+    if (startDateTime.isBefore(now.add(const Duration(hours: 1)))) {
+      Get.snackbar('Error', 'Start time must be at least 1 hour from now',
+          backgroundColor: Colors.red, colorText: Colors.white);
+      return;
     }
 
-    controller.isLoading.value = false;
+    // Validate stop after start
+    if (stopDateTime.isBefore(startDateTime.add(const Duration(minutes: 1)))) {
+      Get.snackbar('Error', 'Stop time must be after start time',
+          backgroundColor: Colors.red, colorText: Colors.white);
+      return;
+    }
 
-    if (successCount > 0) {
-      Get.snackbar('Success', 'Created $successCount schedules successfully',
-          backgroundColor: Colors.green, colorText: Colors.white);
+    final success = await controller.createSchedule(startDateTime, stopDateTime);
+
+    if (success) {
       setState(() {
         startDate = null; startTime = null;
         stopDate = null; stopTime = null;
-        isRecurring = false;
       });
       controller.fetchSchedules();
     }
@@ -274,45 +256,11 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Schedule Motor', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.primaryGreen, letterSpacing: -0.5)),
-                      Text('Configure dates and times', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isRecurring ? AppColors.primaryGreen.withOpacity(0.1) : Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: [
-                        Text('Repeat Daily', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isRecurring ? AppColors.primaryGreen : Colors.grey.shade600)),
-                        const SizedBox(width: 4),
-                        SizedBox(
-                          height: 24,
-                          width: 32,
-                          child: Switch(
-                            value: isRecurring,
-                            onChanged: (value) {
-                              setState(() {
-                                isRecurring = value;
-                                if (!isRecurring) {
-                                  stopDate = startDate;
-                                }
-                              });
-                            },
-                            activeColor: AppColors.primaryGreen,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  Text('Schedule Motor', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.primaryGreen, letterSpacing: -0.5)),
+                  Text('Configure start and stop date/time', style: TextStyle(fontSize: 12, color: Colors.grey)),
                 ],
               ),
               const SizedBox(height: 24),
@@ -328,9 +276,9 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _buildPickerTile(isRecurring ? 'From Date' : 'Start Date', startDate == null ? 'Select' : DateFormat('dd MMM, yyyy').format(startDate!), Icons.today, () => _selectDate(context, true))),
+                  Expanded(child: _buildPickerTile('Start Date', startDate == null ? 'Select' : DateFormat('dd MMM, yyyy').format(startDate!), Icons.today, () => _selectDate(context, true))),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildPickerTile(isRecurring ? 'Until Date' : 'Stop Date', stopDate == null ? 'Select' : DateFormat('dd MMM, yyyy').format(stopDate!), Icons.event, () => _selectDate(context, false))),
+                  Expanded(child: _buildPickerTile('Stop Date', stopDate == null ? 'Select' : DateFormat('dd MMM, yyyy').format(stopDate!), Icons.event, () => _selectDate(context, false))),
                 ],
               ),
               
@@ -350,44 +298,20 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                   Expanded(
                     child: Opacity(
                       opacity: startDate == null ? 0.5 : 1.0,
-                      child: _buildPickerTile(isRecurring ? 'Daily Start' : 'Start Time', startTime == null ? 'Select' : startTime!.format(context), Icons.play_circle_outline, () => _selectTime(context, true)),
+                      child: _buildPickerTile('Start Time', startTime == null ? 'Select' : startTime!.format(context), Icons.play_circle_outline, () => _selectTime(context, true)),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Opacity(
                       opacity: stopDate == null ? 0.5 : 1.0,
-                      child: _buildPickerTile(isRecurring ? 'Daily Stop' : 'Stop Time', stopTime == null ? 'Select' : stopTime!.format(context), Icons.stop_circle, () => _selectTime(context, false)),
+                      child: _buildPickerTile('Stop Time', stopTime == null ? 'Select' : stopTime!.format(context), Icons.stop_circle, () => _selectTime(context, false)),
                     ),
                   ),
                 ],
               ),
 
-              if (isRecurring && startDate != null && stopDate != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 20),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryGreen.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.primaryGreen.withOpacity(0.1)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.info_outline, size: 16, color: AppColors.primaryGreen),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Will repeat every day for ${stopDate!.difference(startDate!).inDays + 1} days',
-                          style: const TextStyle(fontSize: 12, color: AppColors.primaryGreen, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
               Obx(() => Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
@@ -411,7 +335,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                   ),
                   child: controller.isLoading.value 
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : Text(isRecurring ? 'CONFIRM ALL SCHEDULES' : 'CONFIRM SCHEDULE', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: 0.5)),
+                    : const Text('CONFIRM SCHEDULE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: 0.5)),
                 ),
               )),
             ],
@@ -464,6 +388,8 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
           final start = DateTime.parse(s['start_time']);
           final stop = DateTime.parse(s['stop_time']);
           final status = s['status'] as String;
+          final createdBy = s['user_name'] ?? 'Unknown';
+          final cancelledBy = s['cancelled_by'];
           
           return Card(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -473,7 +399,15 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                 child: Icon(_getStatusIcon(status), color: _getStatusColor(status), size: 20),
               ),
               title: Text('Start: ${DateFormat('dd MMM, hh:mm a').format(start)}'),
-              subtitle: Text('Stop: ${DateFormat('dd MMM, hh:mm a').format(stop)}'),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Stop: ${DateFormat('dd MMM, hh:mm a').format(stop)}'),
+                  Text('Created by: $createdBy', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  if (status == 'cancelled' && cancelledBy != null)
+                    Text('Cancelled by: $cancelledBy', style: const TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
+                ],
+              ),
               trailing: status == 'pending' 
                 ? IconButton(icon: const Icon(Icons.cancel, color: Colors.red), onPressed: () => controller.cancelSchedule(s['_id']))
                 : Text(status.toUpperCase(), style: TextStyle(color: _getStatusColor(status), fontWeight: FontWeight.bold, fontSize: 10)),

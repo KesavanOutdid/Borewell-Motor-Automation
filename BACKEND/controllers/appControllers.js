@@ -11,6 +11,7 @@ const Telemetry = require("../models/Telemetry");
 const DeviceShare = require("../models/DeviceShare");
 const DeviceSchedule = require("../models/DeviceSchedule");
 const { sendPushNotification } = require('../utils/notificationHelper');
+const { sendEmail } = require('../utils/emailHelper');
 const { cacheDeletePattern } = require('../middlewares/cacheMiddleware');
 const { redisClient, isRedisConnected } = require('../config/redis');
 const { client: mqttPublisher } = require('../mqtt/publisher');
@@ -58,6 +59,13 @@ exports.login = async (req, res, next) => {
         // Generate JWT
         const token = jwt.sign(payload, JWT_SECRET);
 
+        // Send Login Email
+        sendEmail(
+            user.user_email,
+            'Login Alert - Smart Motor Automation',
+            `Hello ${user.user_name},\n\nYou have successfully logged into your account on ${new Date().toLocaleString()}.\n\nIf this wasn't you, please reset your password immediately.`
+        ).catch(err => console.error("Login email failed:", err));
+
         res.status(200).json({
             success: true,
             message: "Login successful",
@@ -77,6 +85,10 @@ exports.signup = async (req, res, next) => {
             return res.status(400).json({ success: false, errors: errors.array() });
 
         const { user_name, user_email, user_phone, password, role_id } = req.body;
+
+        if (user_name && user_name.trim().length > 40) {
+            return res.status(400).json({ success: false, message: "Name should not exceed 40 characters." });
+        }
 
         // Check if role exists
         const role = await Role.findOne({ role_id: Number(role_id) });
@@ -121,6 +133,13 @@ exports.signup = async (req, res, next) => {
 
         // Generate JWT
         const token = jwt.sign(payload, JWT_SECRET);
+
+        // Send Signup Email
+        sendEmail(
+            user.user_email,
+            'Welcome to Smart Motor Automation!',
+            `Hello ${user.user_name},\n\nYour account has been successfully created. You can now log in and manage your motor automation devices.\n\nThank you for choosing us!`
+        ).catch(err => console.error("Signup email failed:", err));
 
         res.status(201).json({
             success: true,
@@ -172,6 +191,9 @@ exports.updateProfile = async (req, res, next) => {
             if (!/^[a-zA-Z\s]+$/.test(user_name)) {
                 return res.status(400).json({ success: false, message: 'Name should contain letters only.' });
             }
+            if (user_name.length > 40) {
+                return res.status(400).json({ success: false, message: 'Name should not exceed 40 characters.' });
+            }
         }
 
         // Check if phone is being updated and if it already exists for another user
@@ -185,7 +207,20 @@ exports.updateProfile = async (req, res, next) => {
         const updateData = {};
         if (user_name) updateData.user_name = user_name;
         if (user_phone) updateData.user_phone = user_phone;
-        if (password) updateData.password = password;
+        if (password) {
+            const user = await User.findOne({ user_id: userId });
+            if (user && Number(user.password) === Number(password)) {
+                return res.status(400).json({ success: false, message: "New password cannot be the same as the old password." });
+            }
+            updateData.password = Number(password);
+
+            // Send Password Update Email
+            sendEmail(
+                user.user_email,
+                'Password Updated - Smart Motor Automation',
+                `Hello ${user.user_name},\n\nYour account password has been successfully updated on ${new Date().toLocaleString()}.\n\nIf you did not perform this action, please contact support immediately.`
+            ).catch(err => console.error("Password update email failed:", err));
+        }
         if (typeof status === "boolean") updateData.status = status;
 
         updateData.updatedBy = req.user.user_email;
@@ -2238,6 +2273,14 @@ exports.assignDeviceToOther = async (req, res, next) => {
 
         await share.save();
 
+        // Notify both Owner and Shared User
+        const subject = `Device Sharing - ${serial_number}`;
+        const ownerBody = `Hello ${masterUser.user_name},\n\nYou have successfully shared access to device ${serial_number} with ${sharedUser.user_name}.`;
+        const sharedBody = `Hello ${sharedUser.user_name},\n\n${masterUser.user_name} has shared access to device ${serial_number} with you. You can now manage this device from your account.`;
+
+        sendEmail(masterUser.user_email, subject, ownerBody).catch(e => console.error("Owner share email failed:", e));
+        sendEmail(sharedUser.user_email, subject, sharedBody).catch(e => console.error("Shared user email failed:", e));
+
         res.status(200).json({ success: true, message: "Device shared successfully", data: share });
 
     } catch (err) {
@@ -2395,7 +2438,7 @@ exports.getDeviceSmartHistory = async (req, res) => {
 
 exports.createSchedule = async (req, res) => {
     try {
-        const { serial_number, imei_number, user_id, start_time, stop_time } = req.body;
+        const { serial_number, imei_number, user_id, user_name, start_time, stop_time } = req.body;
 
         if (!serial_number || !imei_number || !user_id || !start_time || !stop_time) {
             return res.status(400).json({ success: false, message: "All fields are required" });
@@ -2405,12 +2448,21 @@ exports.createSchedule = async (req, res) => {
         const stop = new Date(stop_time);
         const now = new Date();
 
+        // 0. Ensure start date is not in the past (before today's start)
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        if (start < todayStart) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Start date cannot be in the past" 
+            });
+        }
+
         // 1. Start time must be at least 1 hour after current time
         const minStartTime = new Date(now.getTime() + 60 * 60 * 1000);
         if (start < minStartTime) {
             return res.status(400).json({ 
                 success: false, 
-                message: "Start time must be at least 1 hour after current time" 
+                message: "Start time must be at least 1 hour from now" 
             });
         }
 
@@ -2448,12 +2500,42 @@ exports.createSchedule = async (req, res) => {
             serial_number,
             imei_number,
             user_id,
+            user_name,
             start_time: start,
             stop_time: stop,
             status: 'pending'
         });
 
         await newSchedule.save();
+
+        // Notify Owner and Shared Users via Email
+        const notifyUsers = async () => {
+            try {
+                // 1. Get Owner
+                const owner = await User.findOne({ user_id });
+                
+                // 2. Get Shared Users
+                const sharedEntries = await DeviceShare.find({ serial_number, status: true });
+                const sharedEmails = sharedEntries.map(s => s.shared_to_user_email).filter(e => e);
+                
+                const allEmails = [owner.user_email, ...sharedEmails];
+                const uniqueEmails = [...new Set(allEmails)];
+
+                const subject = `New Schedule Created - ${serial_number}`;
+                const body = `Hello,\n\nA new motor schedule has been created for device ${serial_number}.\n\n` +
+                             `Start Time: ${start.toLocaleString()}\n` +
+                             `Stop Time: ${stop.toLocaleString()}\n` +
+                             `Created by: ${user_name}\n\n` +
+                             `The motor will run continuously during this period.`;
+
+                for (const email of uniqueEmails) {
+                    sendEmail(email, subject, body).catch(e => console.error(`Schedule email failed for ${email}:`, e));
+                }
+            } catch (err) {
+                console.error("Schedule notification error:", err);
+            }
+        };
+        notifyUsers();
 
         res.status(201).json({
             success: true,
@@ -2489,6 +2571,7 @@ exports.getSchedules = async (req, res) => {
 exports.cancelSchedule = async (req, res) => {
     try {
         const { schedule_id } = req.params;
+        const { user_name } = req.body; // Pass who cancelled it
         const schedule = await DeviceSchedule.findById(schedule_id);
 
         if (!schedule) {
@@ -2503,14 +2586,36 @@ exports.cancelSchedule = async (req, res) => {
         }
 
         schedule.status = 'cancelled';
+        if (user_name) schedule.cancelled_by = user_name;
         schedule.updated_at = new Date();
         await schedule.save();
 
-        res.status(200).json({
-            success: true,
-            message: "Schedule cancelled successfully",
-            data: schedule
-        });
+        // Notify Owner and Shared Users via Email
+        const notifyCancel = async () => {
+            try {
+                const owner = await User.findOne({ user_id: schedule.user_id });
+                const sharedEntries = await DeviceShare.find({ serial_number: schedule.serial_number, status: true });
+                const sharedEmails = sharedEntries.map(s => s.shared_to_user_email).filter(e => e);
+                
+                const allEmails = [owner.user_email, ...sharedEmails];
+                const uniqueEmails = [...new Set(allEmails)];
+
+                const subject = `Schedule Cancelled - ${schedule.serial_number}`;
+                const body = `Hello,\n\nA motor schedule has been cancelled for device ${schedule.serial_number}.\n\n` +
+                             `Original Start Time: ${new Date(schedule.start_time).toLocaleString()}\n` +
+                             `Cancelled by: ${user_name || 'System'}\n` +
+                             `Cancellation Time: ${new Date().toLocaleString()}`;
+
+                for (const email of uniqueEmails) {
+                    sendEmail(email, subject, body).catch(e => console.error(`Cancel email failed for ${email}:`, e));
+                }
+            } catch (err) {
+                console.error("Cancel schedule notification error:", err);
+            }
+        };
+        notifyCancel();
+
+        res.status(200).json({ success: true, message: "Schedule cancelled successfully", data: schedule });
     } catch (error) {
         console.error("cancelSchedule Error:", error);
         res.status(500).json({ success: false, message: "Server error" });
@@ -2657,6 +2762,13 @@ exports.resetPassword = async (req, res, next) => {
         user.resetPasswordOtp = null;
         user.resetPasswordExpires = null;
         await user.save();
+
+        // Send Reset Email
+        sendEmail(
+            user.user_email,
+            'Password Reset Successful',
+            `Hello ${user.user_name},\n\nYour password has been successfully reset on ${new Date().toLocaleString()}.\n\nIf you did not perform this action, please contact support immediately.`
+        ).catch(err => console.error("Reset password email failed:", err));
 
         res.status(200).json({ success: true, message: "Password reset successful" });
 

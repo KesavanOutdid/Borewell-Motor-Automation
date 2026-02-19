@@ -105,7 +105,8 @@ const executeCommand = async (schedule, isStart) => {
         const user = await User.findOne({ user_id });
         if (user && user.fcm_tokens) {
             const title = isStart ? "🟢 Auto Start Triggered" : "🔴 Auto Stop Triggered";
-            const body = `Scheduled task: Device ${serial_number} has been ${isStart ? 'started' : 'stopped'} automatically.`;
+            const setByInfo = schedule.user_name ? ` (Set by: ${schedule.user_name})` : '';
+            const body = `Scheduled task: Device ${serial_number} has been ${isStart ? 'started' : 'stopped'} automatically${setByInfo}.`;
             sendPushNotification(user.fcm_tokens, { title, body }, {
                 type: "STATUS",
                 serial_number,

@@ -72,12 +72,14 @@ class SignupView extends StatelessWidget {
                     const SizedBox(height: 32),
                     TextField(
                       onChanged: (value) => controller.name.value = value,
+                      maxLength: 40,
                       style: const TextStyle(
                         color: Colors.black,
                         fontSize: 15,
                       ),
                       decoration: InputDecoration(
                         hintText: "Enter your full name",
+                        counterText: "",
                         hintStyle: TextStyle(
                           color: Colors.grey.shade400,
                           fontSize: 15,

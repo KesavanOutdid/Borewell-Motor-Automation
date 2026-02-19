@@ -49,6 +49,7 @@ class DeviceScheduleController extends GetxController {
     try {
       final token = tokenService.getToken();
       final userId = tokenService.getUserId();
+      final userName = tokenService.getUserName();
       
       final response = await http.post(
         Uri.parse('${AppConfig.baseUrl}/app/createSchedule'),
@@ -60,6 +61,7 @@ class DeviceScheduleController extends GetxController {
           'serial_number': serialNumber,
           'imei_number': imeiNumber,
           'user_id': userId,
+          'user_name': userName,
           'start_time': start.toIso8601String(),
           'stop_time': stop.toIso8601String(),
         }),
@@ -88,11 +90,16 @@ class DeviceScheduleController extends GetxController {
   Future<void> cancelSchedule(String scheduleId) async {
     try {
       final token = tokenService.getToken();
+      final userName = tokenService.getUserName();
       final response = await http.post(
         Uri.parse('${AppConfig.baseUrl}/app/cancelSchedule/$scheduleId'),
         headers: {
           'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
         },
+        body: jsonEncode({
+          'user_name': userName,
+        }),
       );
 
       if (response.statusCode == 200) {

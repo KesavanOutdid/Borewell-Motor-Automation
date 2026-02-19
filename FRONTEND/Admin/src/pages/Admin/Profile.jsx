@@ -27,6 +27,10 @@ const Profile = ({ userInfo, handleLogout }) => {
 
     const handleFormSubmit = async (e) => {
         e.preventDefault();
+        if (user_name && user_name.trim().length > 40) {
+            setErrorMessage('Name should not exceed 40 characters.');
+            return;
+        }
         await handleUpdate(userInfo, setErrorMessage, Swal);
     };
 
@@ -227,6 +231,7 @@ const Profile = ({ userInfo, handleLogout }) => {
                                                         className="form-control"
                                                         id="name"
                                                         value={user_name}
+                                                        maxLength={40}
                                                         onChange={(e) => setUpdateUname(e.target.value)}
                                                         autoComplete="off" />
                                                 </div>
