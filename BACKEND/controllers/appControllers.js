@@ -2694,30 +2694,20 @@ exports.forgotPasswordRequest = async (req, res, next) => {
         user.resetPasswordExpires = otpExpiry;
         await user.save();
 
-        // Send Email
-        const transporter = nodemailer.createTransport({
-            host: process.env.EMAIL_HOST,
-            port: parseInt(process.env.EMAIL_PORT),
-            secure: parseInt(process.env.EMAIL_PORT) === 465, // true for 465, false for other ports
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
+        // Send Email via helper
+        await sendEmail(
+            user_email,
+            'Password Reset OTP',
+            `Your OTP for password reset is ${otp}. It is valid for 10 minutes.`
+        ).then(result => {
+            if (result.success) {
+                res.status(200).json({ success: true, message: "OTP sent to email" });
+            } else {
+                res.status(500).json({ success: false, message: "Error sending email" });
             }
-        });
-
-        const mailOptions = {
-            from: `"Smart Motor Automation" <${process.env.EMAIL_USER}>`,
-            to: user_email,
-            subject: 'Password Reset OTP',
-            text: `Your OTP for password reset is ${otp}. It is valid for 10 minutes.`
-        };
-
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                console.error("Email send error:", error);
-                return res.status(500).json({ success: false, message: "Error sending email" });
-            }
-            res.status(200).json({ success: true, message: "OTP sent to email" });
+        }).catch(err => {
+            console.error("Forgot password email failed:", err);
+            res.status(500).json({ success: false, message: "Error sending email" });
         });
 
     } catch (error) {

@@ -6,6 +6,7 @@ const Device = require("../models/Device");
 const Product = require("../models/Product");
 const bcrypt = require('bcrypt');
 const path = require('path');
+const { sendEmail } = require('../utils/emailHelper');
 const { cacheDeletePattern } = require('../middlewares/cacheMiddleware');
 const mongoose = require('mongoose');
 
@@ -73,6 +74,10 @@ exports.createUser = async (req, res, next) => {
 
         const { user_name, role_id, user_email, user_phone, password, createdBy } = req.body;
 
+        if (user_name && user_name.trim().length > 40) {
+            return res.status(400).json({ success: false, message: "Name should not exceed 40 characters." });
+        }
+
         // Check if role exists
         const role = await Role.findOne({ role_id });
         if (!role)
@@ -102,14 +107,21 @@ exports.createUser = async (req, res, next) => {
         const user = new User({
             user_id: newUserId,
             user_name,
-            role_id,
+            role_id: Number(role_id),
             user_email,
-            user_phone,
-            password,
+            user_phone: Number(user_phone),
+            password: Number(password),
             createdBy,
         });
 
         await user.save();
+
+        // Send Signup Email
+        sendEmail(
+            user.user_email,
+            'Welcome to Smart Motor Automation!',
+            `Hello ${user.user_name},\n\nYour account has been successfully created by our administrator. You can now log in and manage your motor automation devices.\n\nThank you for choosing us!`
+        ).catch(err => console.error("Admin createUser email failed:", err));
 
         res.status(201).json({
             success: true,
@@ -319,6 +331,10 @@ exports.manageUserUpdated = async (req, res, next) => {
 
         const { user_id, user_name, user_phone, password, status, updatedBy } = req.body;
 
+        if (user_name && user_name.trim().length > 40) {
+            return res.status(400).json({ success: false, message: "Name should not exceed 40 characters." });
+        }
+
         // Validate required fields
         if (!user_id) return res.status(400).json({ success: false, message: 'User ID is required' });
 
@@ -335,16 +351,53 @@ exports.manageUserUpdated = async (req, res, next) => {
         }
 
         // Update fields (only update fields that are provided and not empty)
-        if (user_name !== undefined && user_name !== '') user.user_name = user_name;
-        if (user_phone !== undefined && user_phone !== '') user.user_phone = user_phone;
-        if (password !== undefined && password !== '') user.password = password;
-        if (status !== undefined) user.status = status === 'true' || status === true;
+        let passwordChanged = false;
+        let detailsChanged = false;
+
+        if (user_name !== undefined && user_name !== '' && user_name !== user.user_name) {
+            user.user_name = user_name;
+            detailsChanged = true;
+        }
+        if (user_phone !== undefined && user_phone !== '' && Number(user_phone) !== Number(user.user_phone)) {
+            user.user_phone = Number(user_phone);
+            detailsChanged = true;
+        }
+        if (password !== undefined && password !== '') {
+            if (Number(user.password) === Number(password)) {
+                return res.status(400).json({ success: false, message: "New password cannot be the same as the old password." });
+            }
+            user.password = Number(password);
+            passwordChanged = true;
+        }
+        if (status !== undefined) {
+            const newStatus = status === 'true' || status === true;
+            if (newStatus !== user.status) {
+                user.status = newStatus;
+                detailsChanged = true;
+            }
+        }
 
         // Update metadata
         user.updatedBy = updatedBy;
         user.updatedAt = new Date();
 
         await user.save();
+
+        // Send Email if password changed
+        if (passwordChanged) {
+            sendEmail(
+                user.user_email,
+                'Password Updated - Smart Motor Automation',
+                `Hello ${user.user_name},\n\nYour account password has been successfully updated by our administrator on ${new Date().toLocaleString()}.\n\nIf you did not expect this change, please contact us immediately.`
+            ).catch(err => console.error("Admin update password email failed:", err));
+        } else if (detailsChanged) {
+            // Send Profile Update Email
+            sendEmail(
+                user.user_email,
+                'Profile Updated - Smart Motor Automation',
+                `Hello ${user.user_name},\n\nYour account details have been successfully updated by our administrator on ${new Date().toLocaleString()}.\n\nIf you did not expect this change, please contact us immediately.`
+            ).catch(err => console.error("Admin update details email failed:", err));
+        }
 
         await cacheDeletePattern('*users*');
         await cacheDeletePattern('*profile*');

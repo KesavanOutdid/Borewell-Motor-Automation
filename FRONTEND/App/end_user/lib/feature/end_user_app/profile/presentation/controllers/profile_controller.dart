@@ -275,7 +275,7 @@ class ProfileController extends GetxController {
           
           // Update local password state since backend excludes it from response
           if (password != oldPassword.value) {
-            oldPassword.value = password;
+            oldPassword.value = password.toString();
           }
           
           // Keep TokenService in sync
@@ -287,9 +287,10 @@ class ProfileController extends GetxController {
           );
           
           // Ensure password is preserved in cache
-          user['password'] = oldPassword.value;
+          final updatedCache = Map<String, dynamic>.from(user);
+          updatedCache['password'] = oldPassword.value;
           
-          await _storage.write('user_profile', user);
+          await _storage.write('user_profile', updatedCache);
           return null; // Success
         } else {
           isUpdating.value = false;
