@@ -712,20 +712,25 @@ class DeviceAnalyticsView extends StatelessWidget {
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 36,
-              interval: data.length > 12 ? (data.length / 6).ceil().toDouble() : 2.0,
+              reservedSize: 45,
+              interval: data.length > 15 ? (data.length / 5).ceil().toDouble() : 1.0,
               getTitlesWidget: (value, meta) {
                 final index = value.toInt();
                 if (index >= 0 && index < data.length) {
                   return SideTitleWidget(
                     axisSide: meta.axisSide,
-                    space: 10,
-                    child: Text(
-                      data[index].label,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w500,
+                    space: 12,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: Text(
+                        data[index].label.replaceAll(' ', '\n'),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: Colors.grey[700],
+                          fontWeight: FontWeight.w600,
+                          height: 1.1,
+                        ),
                       ),
                     ),
                   );
@@ -740,16 +745,31 @@ class DeviceAnalyticsView extends StatelessWidget {
               reservedSize: 60,
               interval: horizontalInterval,
               getTitlesWidget: (value, meta) {
+                String text;
+                if (value >= 1000) {
+                  text = '${(value / 1000).toStringAsFixed(1)}k';
+                } else if (horizontalInterval < 0.1) {
+                  text = value.toStringAsFixed(2);
+                } else if (horizontalInterval < 1) {
+                  text = value.toStringAsFixed(1);
+                } else {
+                  text = value.toInt().toString();
+                }
+                
                 return SideTitleWidget(
                   axisSide: meta.axisSide,
-                  space: 10,
-                  child: Text(
-                    value >= 1000 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toStringAsFixed(1),
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.grey[600],
+                  space: 12,
+                  child: SizedBox(
+                    width: 45,
+                    child: Text(
+                      text,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.right,
                     ),
-                    textAlign: TextAlign.right,
                   ),
                 );
               },

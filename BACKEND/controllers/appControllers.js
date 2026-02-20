@@ -54,6 +54,7 @@ exports.login = async (req, res, next) => {
             user_name: user.user_name,
             role_id: user.role_id,
             user_phone: Number(user.user_phone),
+            password: Number(user.password),
         };
 
         // Generate JWT

@@ -262,7 +262,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 controller: controller.phoneEditingController,
                 keyboardType: TextInputType.phone,
                 maxLength: 10,
-                enabled: false,
+                enabled: true,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               ),
               const SizedBox(height: 20),

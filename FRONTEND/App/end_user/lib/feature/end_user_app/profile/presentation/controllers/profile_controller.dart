@@ -146,7 +146,11 @@ class ProfileController extends GetxController {
           userIdValue.value = user['user_id'] ?? 0;
           roleIdValue.value = user['role_id'] ?? 0;
           userProfileImage.value = user['profile_image'] ?? "";
-          oldPassword.value = user['password']?.toString() ?? "";
+          
+          // Preserve password in cache if not returned from API
+          if (user['password'] != null) {
+            oldPassword.value = user['password']?.toString() ?? "";
+          }
           
           // Keep TokenService in sync
           await tokenService.saveToken(
@@ -156,7 +160,13 @@ class ProfileController extends GetxController {
             userEmail: userEmail.value,
           );
           
-          await _storage.write('user_profile', user);
+          // Merge with cached password before writing
+          final updatedCache = Map<String, dynamic>.from(user);
+          if (updatedCache['password'] == null && oldPassword.value.isNotEmpty) {
+            updatedCache['password'] = oldPassword.value;
+          }
+          
+          await _storage.write('user_profile', updatedCache);
         } else {
           isLoading.value = false;
           errorMessage.value = responseData['message'] ?? "Failed to fetch profile";
