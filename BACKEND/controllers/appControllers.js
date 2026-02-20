@@ -161,7 +161,7 @@ exports.getProfileById = async (req, res, next) => {
 
         // Only JWT verified users can access (authMiddleware already checked token)
         // Get user from DB excluding password
-        const user = await User.findOne({ user_id: userId }).select("-password");
+        const user = await User.findOne({ user_id: userId });
 
         if (!user)
             return res.status(404).json({
@@ -229,7 +229,7 @@ exports.updateProfile = async (req, res, next) => {
         const updatedUser = await User.findOneAndUpdate(
             { user_id: userId },
             updateData,
-            { new: true, select: "-password" }
+            { new: true }
         );
 
         if (!updatedUser)
