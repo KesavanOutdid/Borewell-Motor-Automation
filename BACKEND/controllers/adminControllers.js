@@ -392,13 +392,13 @@ exports.manageUserUpdated = async (req, res, next) => {
             user.user_phone = Number(user_phone);
             detailsChanged = true;
         }
-        // if (password !== undefined && password !== '') {
-        //     if (Number(user.password) === Number(password)) {
-        //         return res.status(400).json({ success: false, message: "New password cannot be the same as the old password." });
-        //     }
-        //     user.password = Number(password);
-        //     passwordChanged = true;
-        // }
+        if (password !== undefined && password !== '') {
+            if (Number(user.password) === Number(password)) {
+                return res.status(400).json({ success: false, message: "New password cannot be the same as the old password." });
+            }
+            user.password = Number(password);
+            passwordChanged = true;
+        }
         if (status !== undefined) {
             const newStatus = status === 'true' || status === true;
             if (newStatus !== user.status) {

@@ -2842,6 +2842,8 @@ exports.resetPassword = async (req, res, next) => {
         user.password = Number(new_password);
         user.resetPasswordOtp = null;
         user.resetPasswordExpires = null;
+        user.updatedBy = user_email;
+        user.updatedAt = new Date();
         await user.save();
 
         // Send Reset Email
