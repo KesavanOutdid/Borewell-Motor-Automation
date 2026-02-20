@@ -56,21 +56,21 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
         fetchVoucherData();
     };
 
-    const formatDate = (date) => {
-        return new Date(date).toLocaleDateString('en-IN', {
+    const formatDateTime = (date) => {
+        return new Date(date).toLocaleString('en-IN', {
             year: 'numeric',
             month: 'short',
-            day: 'numeric'
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
         });
     };
 
     const getVoucherStatus = (voucher) => {
         const now = new Date();
-        now.setHours(0, 0, 0, 0);
         const startDate = new Date(voucher.start_date);
-        startDate.setHours(0, 0, 0, 0);
         const endDate = new Date(voucher.end_date);
-        endDate.setHours(23, 59, 59, 999);
 
         if (!voucher.status) return 'Inactive';
         if (now < startDate) return 'Pending';
@@ -106,23 +106,23 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                 </button>
                                             </div>
                                             <div className="col-md-7 col-12 d-flex flex-wrap gap-1">
-                                                <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#f0f9ff', padding: '12px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div style={{ flex: '1 0 130px', backgroundColor: '#f0f9ff', padding: '12px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Total</p>
                                                     <p style={{ fontSize: '18px', color: '#1e40af', fontWeight: '700', margin: 0 }}>{pagination?.totalVouchers || 0}</p>
                                                 </div>
-                                                <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#f0fdf4', padding: '12px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div style={{ flex: '1 0 130px', backgroundColor: '#f0fdf4', padding: '12px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Valid</p>
                                                     <p style={{ fontSize: '18px', color: '#15803d', fontWeight: '700', margin: 0 }}>{pagination?.totalValidVouchers || 0}</p>
                                                 </div>
-                                                <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#fffbeb', padding: '12px', borderRadius: '8px', border: '1px solid #fef3c7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div style={{ flex: '1 0 130px', backgroundColor: '#fffbeb', padding: '12px', borderRadius: '8px', border: '1px solid #fef3c7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Pending</p>
                                                     <p style={{ fontSize: '18px', color: '#d97706', fontWeight: '700', margin: 0 }}>{pagination?.totalPendingVouchers || 0}</p>
                                                 </div>
-                                                <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#fef2f2', padding: '12px', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div style={{ flex: '1 0 130px', backgroundColor: '#fef2f2', padding: '12px', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Expired</p>
                                                     <p style={{ fontSize: '18px', color: '#991b1b', fontWeight: '700', margin: 0 }}>{pagination?.totalExpiredVouchers || 0}</p>
                                                 </div>
-                                                <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#f9fafb', padding: '12px', borderRadius: '8px', border: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div style={{ flex: '1 0 130px', backgroundColor: '#f9fafb', padding: '12px', borderRadius: '8px', border: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Inactive</p>
                                                     <p style={{ fontSize: '18px', color: '#4b5563', fontWeight: '700', margin: 0 }}>{pagination?.totalInactiveVouchers || 0}</p>
                                                 </div>
@@ -187,8 +187,8 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                             <tr key={`voucher-${index}`} style={{ borderBottom: '1px solid #e0e0e0', hover: { backgroundColor: '#f9f9f9' } }}>
                                                                 <td style={{ padding: '12px', fontWeight: '600', color: '#1e40af' }}>{voucher.voucher_code}</td>
                                                                 <td style={{ padding: '12px', color: '#333' }}>{voucher.discount_percentage}%</td>
-                                                                <td style={{ padding: '12px', color: '#666' }}>{formatDate(voucher.start_date)}</td>
-                                                                <td style={{ padding: '12px', color: '#666' }}>{formatDate(voucher.end_date)}</td>
+                                                                <td style={{ padding: '12px', color: '#666', fontSize: '11px' }}>{formatDateTime(voucher.start_date)}</td>
+                                                                <td style={{ padding: '12px', color: '#666', fontSize: '11px' }}>{formatDateTime(voucher.end_date)}</td>
                                                                 <td style={{ padding: '12px', color: '#666' }}>{voucher.used_count}{voucher.max_usage ? `/${voucher.max_usage}` : ''}</td>
                                                                 <td style={{ padding: '12px', color: '#666', minWidth: '150px', maxWidth: '250px' }}>
                                                                     <div style={{ 
@@ -207,27 +207,31 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                                     <span style={{
                                                                         backgroundColor: getStatusColor(getVoucherStatus(voucher)),
                                                                         color: 'white',
-                                                                        padding: '4px 10px',
+                                                                        padding: '4px 0',
                                                                         borderRadius: '4px',
                                                                         fontSize: '11px',
-                                                                        fontWeight: '600'
+                                                                        fontWeight: '600',
+                                                                        display: 'inline-block',
+                                                                        width: '75px',
+                                                                        textAlign: 'center'
                                                                     }}>
                                                                         {getVoucherStatus(voucher)}
                                                                     </span>
                                                                 </td>
-                                                                <td style={{ padding: '12px' }}>
+                                                                <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>
                                                                     <button
                                                                         className="btn btn-sm btn-info mb-0"
                                                                         onClick={() => handleEditVoucher(voucher)}
-                                                                        style={{ marginRight: '5px' }}
+                                                                        style={{ marginRight: '5px', width: '75px', padding: '6px 0', fontSize: '11px' }}
                                                                     >
-                                                                        <i className="fas fa-pen"></i> Edit
+                                                                        <i className="fas fa-pen" style={{ fontSize: '10px', marginRight: '4px' }}></i> Edit
                                                                     </button>
                                                                     <button
                                                                         className="btn btn-sm btn-danger mb-0"
                                                                         onClick={(e) => handleDeleteVoucher(e, voucher._id, voucher.voucher_code)}
+                                                                        style={{ width: '75px', padding: '6px 0', fontSize: '11px' }}
                                                                     >
-                                                                        <i className="fas fa-trash"></i> Delete
+                                                                        <i className="fas fa-trash" style={{ fontSize: '10px', marginRight: '4px' }}></i> Delete
                                                                     </button>
                                                                 </td>
                                                             </tr>
