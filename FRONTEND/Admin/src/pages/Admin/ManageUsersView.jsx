@@ -313,7 +313,7 @@ const ManageUsersView = ({ userInfo, handleLogout }) => {
                                                     </tr>
                                                 ) : (
                                                     assignedDevices.map((device, index) => {
-                                                        const hasHistory = deviceHistoryMap[device.serial_number] === true;
+                                                        // const hasHistory = deviceHistoryMap[device.serial_number] === true;
                                                         const isCheckingThisDevice = checkingHistory && !(device.serial_number in deviceHistoryMap);
                                                         
                                                         return (
@@ -391,7 +391,7 @@ const ManageUsersView = ({ userInfo, handleLogout }) => {
                                                 </thead>
                                                 <tbody>
                                                     {sharedDevices.map((share, index) => {
-                                                        const hasHistory = deviceHistoryMap[share.serial_number] === true;
+                                                        // const hasHistory = deviceHistoryMap[share.serial_number] === true;
                                                         const isCheckingThisDevice = checkingHistory && !(share.serial_number in deviceHistoryMap);
                                                         
                                                         return (
