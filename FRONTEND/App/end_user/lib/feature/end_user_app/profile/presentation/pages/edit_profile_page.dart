@@ -15,6 +15,7 @@ class EditProfilePage extends StatefulWidget {
 
 class _EditProfilePageState extends State<EditProfilePage> {
   final controller = Get.find<ProfileController>();
+  AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
 
   @override
   void initState() {
@@ -302,6 +303,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       onPressed: controller.isUpdating.value || !controller.hasChanges.value
                           ? null
                           : () async {
+                              setState(() {
+                                _autovalidateMode = AutovalidateMode.onUserInteraction;
+                              });
                               if (controller.formKey.currentState!.validate()) {
                                 final error = await controller.updateProfile();
                                 if (error == null) {
@@ -401,7 +405,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           maxLength: maxLength,
           inputFormatters: inputFormatters,
           validator: validator,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
+          autovalidateMode: _autovalidateMode,
           style: TextStyle(
             color: enabled 
                 ? (isDark ? Colors.white : AppColors.textPrimary)

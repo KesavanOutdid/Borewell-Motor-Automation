@@ -786,11 +786,11 @@ class HomeController extends GetxController with WidgetsBindingObserver {
 
   List<Map<String, dynamic>> get displayDevices {
     if (selectedFilter.value == 'Running') {
-      return devices.where((d) => isDeviceRunning(d)).toList();
+      return devices.where((d) => isDeviceAccessible(d) && isDeviceRunning(d)).toList();
     } else if (selectedFilter.value == 'Stopped') {
-      return devices.where((d) => isDeviceConfigured(d) && !isDeviceRunning(d)).toList();
+      return devices.where((d) => isDeviceAccessible(d) && isDeviceConfigured(d) && !isDeviceRunning(d)).toList();
     } else if (selectedFilter.value == 'Online') {
-      var filtered = devices.where((d) => isOnline(d)).toList();
+      var filtered = devices.where((d) => isDeviceAccessible(d) && isOnline(d)).toList();
       filtered.sort((a, b) {
         bool runningA = isDeviceRunning(a);
         bool runningB = isDeviceRunning(b);
@@ -799,7 +799,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       });
       return filtered;
     } else if (selectedFilter.value == 'Offline') {
-      var filtered = devices.where((d) => !isOnline(d)).toList();
+      var filtered = devices.where((d) => isDeviceAccessible(d) && !isOnline(d)).toList();
       filtered.sort((a, b) {
         bool runningA = isDeviceRunning(a);
         bool runningB = isDeviceRunning(b);
@@ -809,7 +809,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       return filtered;
     } else if (selectedFilter.value == 'Recently') {
       // Sort by isRunning first, then by updatedAt timestamp
-      var sorted = List<Map<String, dynamic>>.from(devices);
+      var sorted = devices.where((d) => isDeviceAccessible(d)).toList();
       sorted.sort((a, b) {
         // Running devices first
         bool runningA = isDeviceRunning(a);
@@ -826,7 +826,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       return sorted.take(5).toList();
     } else {
       // 'All' - return all devices sorted by running status first
-      var sorted = List<Map<String, dynamic>>.from(devices);
+      var sorted = devices.where((d) => isDeviceAccessible(d)).toList();
       sorted.sort((a, b) {
         bool runningA = isDeviceRunning(a);
         bool runningB = isDeviceRunning(b);
@@ -946,6 +946,11 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     } else {
       return '${difference.inDays}d ago';
     }
+  }
+
+  bool isDeviceAccessible(Map<String, dynamic> device) {
+    final acceptanceStatus = device['acceptance_status'] ?? 'accepted';
+    return acceptanceStatus != 'rejected';
   }
 }
 

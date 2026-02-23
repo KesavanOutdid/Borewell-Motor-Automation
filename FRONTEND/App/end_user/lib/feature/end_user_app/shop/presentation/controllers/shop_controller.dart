@@ -25,6 +25,7 @@ class ShopController extends GetxController {
   late TokenService tokenService;
   final logger = Logger();
   final _storage = GetStorage();
+  bool _shouldShuffleOnNextDisplay = false;
 
   List<Map<String, dynamic>> get filteredProducts {
     if (searchQuery.value.isEmpty) {
@@ -49,6 +50,21 @@ class ShopController extends GetxController {
 
   void clearSearch() {
     searchQuery.value = '';
+  }
+
+  void setShouldShuffleOnNextDisplay() {
+    _shouldShuffleOnNextDisplay = true;
+    logger.i('🔀 Shuffle scheduled for next display');
+  }
+
+  void shuffleProductsIfNeeded() {
+    if (_shouldShuffleOnNextDisplay && products.isNotEmpty) {
+      final List<Map<String, dynamic>> shuffled = List<Map<String, dynamic>>.from(products);
+      shuffled.shuffle(Random());
+      products.assignAll(shuffled);
+      logger.i('🔀 Products shuffled');
+      _shouldShuffleOnNextDisplay = false;
+    }
   }
 
   @override
@@ -89,6 +105,10 @@ class ShopController extends GetxController {
     if (currentPage.value == 1) {
       isLoading.value = true;
       errorMessage.value = "";
+      if (!isRefresh) {
+        products.clear();
+        logger.i('🔄 Clearing products for fresh page 1 load');
+      }
     } else {
       isLoadingMore.value = true;
     }
@@ -116,13 +136,13 @@ class ShopController extends GetxController {
           logger.d('📦 Products: $newProducts');
           logger.d('📄 Pagination: $pagination');
           
-          final shuffledProducts = List<Map<String, dynamic>>.from(newProducts.cast<Map<String, dynamic>>());
-          shuffledProducts.shuffle(Random());
+          final fetchedBatch = List<Map<String, dynamic>>.from(newProducts.cast<Map<String, dynamic>>());
           
           if (isRefresh) {
-            products.value = shuffledProducts;
+            fetchedBatch.shuffle(Random());
+            products.value = fetchedBatch;
           } else {
-            products.addAll(shuffledProducts);
+            products.addAll(fetchedBatch);
           }
 
           if (currentPage.value == 1) {

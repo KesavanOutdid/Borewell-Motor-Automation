@@ -194,7 +194,7 @@ class ConfigureDeviceView extends StatelessWidget {
           keyboardType: keyboardType,
           maxLength: maxLength,
           validator: validator,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
+          autovalidateMode: Get.find<ConfigureDeviceController>().autovalidateMode.value,
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: Icon(icon, size: 20, color: AppColors.primaryGreen),
@@ -281,6 +281,7 @@ class ConfigureDeviceView extends StatelessWidget {
         onPressed: controller.isLoading.value
             ? null
             : () {
+                controller.autovalidateMode.value = AutovalidateMode.onUserInteraction;
                 if (controller.formKey.currentState!.validate()) {
                   controller.configureDevice();
                 } else {

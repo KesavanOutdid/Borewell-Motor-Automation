@@ -39,6 +39,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   
   int? appliedDiscountPercentage;
   String? appliedVoucherCode;
+  AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
 
   @override
   void initState() {
@@ -107,7 +108,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return Scaffold(
       body: Form(
         key: _formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
+        autovalidateMode: AutovalidateMode.disabled,
         child: Column(
           children: [
             Container(
@@ -128,7 +129,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     Row(
                       children: [
                         GestureDetector(
-                          onTap: () => Get.back(),
+                          onTap: () => Navigator.pop(context),
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
@@ -484,6 +485,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       maxLines: maxLines,
       validator: validator,
       onChanged: onChanged,
+      autovalidateMode: _autovalidateMode,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: AppColors.primaryGreen),
@@ -722,6 +724,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   Future<void> _placeOrder(CartModel cart) async {
+    setState(() {
+      _autovalidateMode = AutovalidateMode.onUserInteraction;
+    });
+    
     if (_formKey.currentState!.validate()) {
       final userId = addressController.tokenService.getUserId();
       final currentFullName = fullNameController.text.trim();

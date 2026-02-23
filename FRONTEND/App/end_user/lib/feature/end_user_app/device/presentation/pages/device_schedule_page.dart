@@ -33,7 +33,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
       context: context,
       initialDate: isStart ? (startDate ?? now) : (stopDate ?? startDate ?? now),
       firstDate: isStart ? now : (startDate ?? now),
-      lastDate: now.add(const Duration(days: 30)), // Allow up to 30 days scheduling
+      lastDate: now.add(const Duration(days: 7)), // Allow up to 7 days scheduling
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -134,8 +134,8 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                         // Validation for stop time > start time
                         final startDateTime = DateTime(startDate!.year, startDate!.month, startDate!.day, startTime!.hour, startTime!.minute);
                         final pickedStopDateTime = DateTime(stopDate!.year, stopDate!.month, stopDate!.day, pickedTime.hour, pickedTime.minute);
-                        if (pickedStopDateTime.isBefore(startDateTime.add(const Duration(minutes: 1)))) {
-                          Get.snackbar('Invalid Time', 'Stop time must be after start time',
+                        if (pickedStopDateTime.isBefore(startDateTime.add(const Duration(minutes: 5)))) {
+                          Get.snackbar('Invalid Time', 'Stop time must be at least 5 minutes after start time',
                               backgroundColor: Colors.red, colorText: Colors.white);
                           return;
                         }
@@ -203,9 +203,9 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
       return;
     }
 
-    // Validate stop after start
-    if (stopDateTime.isBefore(startDateTime.add(const Duration(minutes: 1)))) {
-      Get.snackbar('Error', 'Stop time must be after start time',
+    // Validate stop after start (minimum 5 minutes)
+    if (stopDateTime.isBefore(startDateTime.add(const Duration(minutes: 5)))) {
+      Get.snackbar('Error', 'Stop time must be at least 5 minutes after start time',
           backgroundColor: Colors.red, colorText: Colors.white);
       return;
     }

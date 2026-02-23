@@ -17,7 +17,7 @@
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
         android:fullBackupContent="false"
-        android:usesCleartextTraffic="true">
+        android:networkSecurityConfig="@xml/network_security_config">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -47,7 +47,7 @@
             android:value="2" />
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyD4_6anlN09mZ1H6hhnfryibQdAWfygUbo"/>
+            android:value="@string/google_maps_key"/>
         
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"

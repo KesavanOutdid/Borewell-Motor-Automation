@@ -767,8 +767,8 @@ exports.userAssignDevices = async (req, res) => {
         const onlineThreshold = new Date(Date.now() - 3 * 60 * 1000);
 
         // Define base query for devices where user is master or shared
-        // First get shared serials
-        const shares = await DeviceShare.find({ shared_to_user_id: userIdNum, status: true });
+        // First get shared serials - exclude rejected shares but include pending
+        const shares = await DeviceShare.find({ shared_to_user_id: userIdNum, status: true, acceptance_status: { $ne: 'rejected' } });
         const sharedSerials = shares.map(s => s.serial_number);
 
         // Base match criteria
@@ -868,13 +868,14 @@ exports.userAssignDevices = async (req, res) => {
             };
         });
 
-        // 3. Find all device share relationships where this user is involved (as master or shared_to)
+        // 3. Find all device share relationships where this user is involved (as master or shared_to) - exclude rejected shares
         const sharedDeviceRelationships = await DeviceShare.find({
             $or: [
                 { master_user_id: userIdNum },
                 { shared_to_user_id: userIdNum }
             ],
-            status: true
+            status: true,
+            acceptance_status: { $ne: 'rejected' }
         }).sort({ assignedAt: -1 });
 
         const response = {

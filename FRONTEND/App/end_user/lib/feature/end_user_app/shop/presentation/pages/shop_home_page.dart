@@ -71,6 +71,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
   @override
   Widget build(BuildContext context) {
     print('🏪 ShopHomeView build - Products count: ${controller.products.length}');
+    controller.shuffleProductsIfNeeded();
     
     return Material(
       color: AppColors.backgroundLight,
@@ -433,7 +434,6 @@ class _ShopHomeViewState extends State<ShopHomeView> {
       onTap: () async {
         await Future.wait([
           cartController.fetchCart(),
-          controller.fetchProducts(isRefresh: true),
           voucherController.fetchVouchers(),
         ]);
         Get.to(
@@ -571,7 +571,6 @@ class _ShopHomeViewState extends State<ShopHomeView> {
       onTap: () async {
         await Future.wait([
           cartController.fetchCart(),
-          controller.fetchProducts(isRefresh: true),
           voucherController.fetchVouchers(),
         ]);
         Get.to(
