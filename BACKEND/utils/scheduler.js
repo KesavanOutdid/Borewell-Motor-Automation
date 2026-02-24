@@ -7,51 +7,10 @@ const { client: mqttPublisher } = require('../mqtt/publisher');
 const { sendPushNotification } = require('./notificationHelper');
 const mongoose = require('mongoose');
 
-// Power availability time windows (24-hour format)
-const NO_POWER_WINDOWS = [
-    { start: 18, startMin: 0, end: 19, endMin: 30 }  // 6:00 PM - 7:30 PM (18:00 - 19:30)
-];
-
-const isPowerAvailable = () => {
-    const now = new Date();
-    const hour = now.getHours();
-    const minute = now.getMinutes();
-    
-    for (const window of NO_POWER_WINDOWS) {
-        const windowStart = window.start * 60 + window.startMin;
-        const windowEnd = window.end * 60 + window.endMin;
-        const currentTime = hour * 60 + minute;
-        
-        if (currentTime >= windowStart && currentTime < windowEnd) {
-            return false; // No power available
-        }
-    }
-    return true; // Power is available
-};
-
-const getNextPowerAvailableTime = () => {
-    const now = new Date();
-    const hour = now.getHours();
-    const minute = now.getMinutes();
-    
-    for (const window of NO_POWER_WINDOWS) {
-        const windowStart = window.start * 60 + window.startMin;
-        const windowEnd = window.end * 60 + window.endMin;
-        const currentTime = hour * 60 + minute;
-        
-        if (currentTime >= windowStart && currentTime < windowEnd) {
-            // Currently in no-power window, return when power comes back
-            const nextDate = new Date(now);
-            nextDate.setHours(window.end, window.endMin, 0, 0);
-            return nextDate;
-        }
-    }
-    return now; // Power is available now
-};
-
+// Scheduler initialized
 const initScheduler = () => {
     console.log('--- Scheduler Initialized ---');
-    console.log('Power unavailable: 6:00 PM - 7:30 PM (18:00 - 19:30)');
+    console.log('Continuous Mode Active');
     
     // Run every minute
     cron.schedule('* * * * *', async () => {
@@ -66,17 +25,6 @@ const initScheduler = () => {
             });
 
             for (const schedule of pendingStarts) {
-                // Check if power is available
-                if (!isPowerAvailable()) {
-                    const nextPowerTime = getNextPowerAvailableTime();
-                    console.log(`[Scheduler] ⚠️ NO POWER for ${schedule.serial_number}. Next power available: ${nextPowerTime}`);
-                    
-                    // Update schedule with next available time
-                    schedule.start_time = nextPowerTime;
-                    await schedule.save();
-                    continue; // Skip execution, wait for next power window
-                }
-                
                 await executeCommand(schedule, true);
             }
 
@@ -89,6 +37,27 @@ const initScheduler = () => {
 
             for (const schedule of pendingStops) {
                 await executeCommand(schedule, false);
+            }
+
+            // 3. ENFORCE CONTINUITY: Check active schedules to ensure they are still running
+            const activeSchedules = await DeviceSchedule.find({
+                status: 'started',
+                start_executed: true,
+                stop_executed: false,
+                start_time: { $lte: now },
+                stop_time: { $gt: now }
+            });
+
+            for (const schedule of activeSchedules) {
+                const device = await Device.findOne({ serial_number: schedule.serial_number });
+                
+                // If device is found and motor is NOT running (start_status is false)
+                if (device && device.start_status === false) {
+                    console.log(`[Scheduler] 🔄 Continuity Check: Motor stopped unexpectedly for ${schedule.serial_number}. Restarting...`);
+                    
+                    // Re-trigger start command
+                    await executeCommand(schedule, true);
+                }
             }
 
         } catch (error) {

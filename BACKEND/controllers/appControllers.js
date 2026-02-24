@@ -2514,12 +2514,12 @@ exports.createSchedule = async (req, res) => {
             });
         }
 
-        // 1. Start time must be at least 1 hour after current time
-        const minStartTime = new Date(now.getTime() + 60 * 60 * 1000);
+        // 1. Start time must be at least 5 minutes after current time
+        const minStartTime = new Date(now.getTime() + 5 * 60 * 1000);
         if (start < minStartTime) {
             return res.status(400).json({ 
                 success: false, 
-                message: "Start time must be at least 1 hour from now" 
+                message: "Start time must be at least 5 minutes from now" 
             });
         }
 
@@ -2540,16 +2540,19 @@ exports.createSchedule = async (req, res) => {
             });
         }
 
-        // Check if there is already a pending schedule for this device
-        const existingSchedule = await DeviceSchedule.findOne({ 
+        // Check for overlapping schedules (pending or started)
+        const overlappingSchedule = await DeviceSchedule.findOne({ 
             serial_number, 
-            status: 'pending' 
+            status: { $in: ['pending', 'started'] },
+            start_time: { $lt: stop },
+            stop_time: { $gt: start }
         });
 
-        if (existingSchedule) {
+        if (overlappingSchedule) {
+            const type = overlappingSchedule.status === 'started' ? 'active' : 'pending';
             return res.status(400).json({ 
                 success: false, 
-                message: "A pending schedule already exists for this device. Please cancel it before creating a new one." 
+                message: `This time overlaps with an ${type} schedule (${new Date(overlappingSchedule.start_time).toLocaleTimeString()} - ${new Date(overlappingSchedule.stop_time).toLocaleTimeString()}).` 
             });
         }
 
@@ -2653,17 +2656,65 @@ exports.cancelSchedule = async (req, res) => {
             return res.status(404).json({ success: false, message: "Schedule not found" });
         }
 
-        if (schedule.status !== 'pending') {
+        if (schedule.status !== 'pending' && schedule.status !== 'started') {
             return res.status(400).json({ 
                 success: false, 
-                message: "Only pending schedules can be cancelled" 
+                message: "Only pending or started schedules can be cancelled" 
             });
         }
 
+        const wasStarted = schedule.status === 'started';
         schedule.status = 'cancelled';
         if (user_name) schedule.cancelled_by = user_name;
         schedule.updated_at = new Date();
         await schedule.save();
+
+        // If it was started, we should stop the motor
+        if (wasStarted) {
+            try {
+                // Publish MQTT STOP Command
+                const topic = `agri/${schedule.serial_number}/command`;
+                const payload = {
+                    MESSAGE_TYPE: "COMMAND",
+                    SERIAL_NUMBER: schedule.serial_number,
+                    IMEI_NUMBER: schedule.imei_number,
+                    COMMAND: "STOP",
+                    TIMESTAMP: new Date().toISOString()
+                };
+
+                const { client: mqttPublisher } = require('../mqtt/publisher');
+                if (mqttPublisher && mqttPublisher.connected) {
+                    mqttPublisher.publish(topic, JSON.stringify(payload), { qos: 1 });
+                }
+
+                // Update Device State in DB
+                await Device.updateOne(
+                    { serial_number: schedule.serial_number },
+                    { 
+                        $set: { 
+                            start_status: false,
+                            stopAt: new Date(),
+                            last_stopped_by: user_name || 'System (Cancelled Schedule)',
+                            updatedBy: 'SYSTEM_SCHEDULER',
+                            updatedAt: new Date()
+                        } 
+                    }
+                );
+
+                // Emit Socket Event
+                if (global.io) {
+                    global.io.emit("LIVE_STATUS", {
+                        serial_number: schedule.serial_number,
+                        payload: {
+                            motor_running: false,
+                            updatedAt: new Date().toISOString()
+                        }
+                    });
+                }
+            } catch (mqttErr) {
+                console.error("Failed to stop motor on schedule cancellation:", mqttErr);
+            }
+        }
 
         // Notify Owner and Shared Users via Email
         const notifyCancel = async () => {

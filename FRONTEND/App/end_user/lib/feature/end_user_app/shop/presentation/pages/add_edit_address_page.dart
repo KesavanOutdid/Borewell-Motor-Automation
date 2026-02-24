@@ -27,8 +27,8 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
   late TextEditingController stateController;
   late TextEditingController pincodeController;
 
-  bool isDefault = false;
   bool isLoadingPincode = false;
+  bool hasChanges = false;
   AddressModel? existingAddress;
   bool isEditMode = false;
 
@@ -46,7 +46,6 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
     cityController = TextEditingController(text: existingAddress?.city ?? '');
     stateController = TextEditingController(text: existingAddress?.state ?? '');
     pincodeController = TextEditingController(text: existingAddress?.pincode ?? '');
-    isDefault = existingAddress?.isDefault ?? false;
   }
 
   @override
@@ -59,6 +58,26 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
     stateController.dispose();
     pincodeController.dispose();
     super.dispose();
+  }
+
+  bool _hasFieldsChanged() {
+    if (!isEditMode) return true;
+
+    final originalAddress = existingAddress!;
+    
+    return fullNameController.text.trim() != (originalAddress.fullName ?? '') ||
+        phoneController.text.trim() != (originalAddress.phone ?? '') ||
+        emailController.text.trim() != (originalAddress.email ?? '') ||
+        streetController.text.trim() != (originalAddress.street ?? '') ||
+        cityController.text.trim() != (originalAddress.city ?? '') ||
+        stateController.text.trim() != (originalAddress.state ?? '') ||
+        pincodeController.text.trim() != (originalAddress.pincode ?? '');
+  }
+
+  void _onFieldChanged() {
+    setState(() {
+      hasChanges = _hasFieldsChanged();
+    });
   }
 
   @override
@@ -81,6 +100,7 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
               controller: fullNameController,
               label: 'Full Name',
               icon: Icons.person,
+              onChanged: (_) => _onFieldChanged(),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter full name';
@@ -94,6 +114,7 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
               label: 'Phone',
               icon: Icons.phone,
               keyboardType: TextInputType.phone,
+              onChanged: (_) => _onFieldChanged(),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter phone number';
@@ -110,6 +131,7 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
               label: 'Email',
               icon: Icons.email,
               keyboardType: TextInputType.emailAddress,
+              onChanged: (_) => _onFieldChanged(),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter email';
@@ -126,6 +148,7 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
               label: 'Street Address',
               icon: Icons.home,
               maxLines: 2,
+              onChanged: (_) => _onFieldChanged(),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter street address';
@@ -143,6 +166,7 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
                     icon: Icons.pin_drop,
                     keyboardType: TextInputType.number,
                     onChanged: (value) {
+                      _onFieldChanged();
                       if (value.length == 6) {
                         _fetchLocationByPincode(value);
                       }
@@ -169,6 +193,7 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
               controller: cityController,
               label: 'City/District',
               icon: Icons.location_city,
+              onChanged: (_) => _onFieldChanged(),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Enter valid city name';
@@ -184,6 +209,7 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
               controller: stateController,
               label: 'State',
               icon: Icons.map,
+              onChanged: (_) => _onFieldChanged(),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Enter valid state name';
@@ -195,40 +221,33 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
               },
             ),
             const SizedBox(height: 24),
-            CheckboxListTile(
-              value: isDefault,
-              onChanged: (value) {
-                setState(() {
-                  isDefault = value ?? false;
-                });
-              },
-              title: const Text('Set as default address'),
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-            ),
             const SizedBox(height: 32),
-            Obx(() => ElevatedButton(
-              onPressed: controller.isLoading.value ? null : _saveAddress,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            Obx(() {
+              final isButtonDisabled = isEditMode && !hasChanges;
+              
+              return ElevatedButton(
+                onPressed: (controller.isLoading.value || isButtonDisabled) ? null : _saveAddress,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-              ),
-              child: controller.isLoading.value
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(
-                      isEditMode ? 'Update Address' : 'Save Address',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                child: controller.isLoading.value
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(
+                        isEditMode ? 'Update Address' : 'Save Address',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-            )),
+              );
+            }),
           ],
         ),
       ),
@@ -325,7 +344,7 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
       state: stateController.text.trim(),
       pincode: pincodeController.text.trim(),
       country: 'India',
-      isDefault: isDefault,
+      isDefault: false,
       createdAt: existingAddress?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );

@@ -509,17 +509,17 @@ class HomeView extends GetView<HomeController> {
                         ),
                       ),
                     ),
-                    if (isConfigured) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        controller.getLastSeenText(device),
-                        style: TextStyle(
-                          fontSize: 8,
-                          color: Colors.grey.shade500,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                    // if (isConfigured) ...[
+                    //   const SizedBox(height: 4),
+                    //   Text(
+                    //     controller.getLastSeenText(device),
+                    //     style: TextStyle(
+                    //       fontSize: 8,
+                    //       color: Colors.grey.shade500,
+                    //       fontWeight: FontWeight.w500,
+                    //     ),
+                    //   ),
+                    // ],
                     if (!isPending && isConfigured) ...[
                       const SizedBox(height: 8),
                       Obx(() {

@@ -79,9 +79,9 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
       if (startTime != null) {
         initialDateTime = DateTime(startDate!.year, startDate!.month, startDate!.day, startTime!.hour, startTime!.minute);
       } else {
-        // Default to current time + 1 hour if today, else just current time
+        // Default to current time + 5 minutes if today, else just current time
         final bool isToday = startDate!.year == now.year && startDate!.month == now.month && startDate!.day == now.day;
-        initialDateTime = isToday ? now.add(const Duration(hours: 1, minutes: 5)) : DateTime(startDate!.year, startDate!.month, startDate!.day, now.hour, now.minute);
+        initialDateTime = isToday ? now.add(const Duration(minutes: 5)) : DateTime(startDate!.year, startDate!.month, startDate!.day, now.hour, now.minute);
       }
     } else {
       if (stopTime != null) {
@@ -121,12 +121,12 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                     onPressed: () {
                       final pickedTime = TimeOfDay.fromDateTime(tempPickedDate);
                       
-                      // Validation for today's start time - exactly 1 hour
+                      // Validation for today's start time - exactly 5 minutes
                       if (isStart) {
                         final bool isToday = startDate!.year == now.year && startDate!.month == now.month && startDate!.day == now.day;
                         final pickedDateTime = DateTime(startDate!.year, startDate!.month, startDate!.day, pickedTime.hour, pickedTime.minute);
-                        if (isToday && pickedDateTime.isBefore(now.add(const Duration(hours: 1)))) {
-                          Get.snackbar('Invalid Time', 'Start time must be at least 1 hour from now',
+                        if (isToday && pickedDateTime.isBefore(now.add(const Duration(minutes: 5)))) {
+                          Get.snackbar('Invalid Time', 'Start time must be at least 5 minutes from now',
                               backgroundColor: Colors.red, colorText: Colors.white);
                           return;
                         }
@@ -196,9 +196,9 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
       return;
     }
 
-    // Validate 1 hour lead time
-    if (startDateTime.isBefore(now.add(const Duration(hours: 1)))) {
-      Get.snackbar('Error', 'Start time must be at least 1 hour from now',
+    // Validate 5 minutes lead time
+    if (startDateTime.isBefore(now.add(const Duration(minutes: 5)))) {
+      Get.snackbar('Error', 'Start time must be at least 5 minutes from now',
           backgroundColor: Colors.red, colorText: Colors.white);
       return;
     }
@@ -408,7 +408,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                     Text('Cancelled by: $cancelledBy', style: const TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
                 ],
               ),
-              trailing: status == 'pending' 
+              trailing: (status == 'pending' || status == 'started') 
                 ? IconButton(icon: const Icon(Icons.cancel, color: Colors.red), onPressed: () => controller.cancelSchedule(s['_id']))
                 : Text(status.toUpperCase(), style: TextStyle(color: _getStatusColor(status), fontWeight: FontWeight.bold, fontSize: 10)),
             ),

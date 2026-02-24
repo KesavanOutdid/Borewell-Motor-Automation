@@ -8,7 +8,6 @@ import '../controllers/profile_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../home/presentation/controllers/home_controller.dart';
 import 'edit_profile_page.dart';
-import '../../../../../utils/theme/theme_controller.dart';
 import '../../../../../utils/theme/app_colors.dart';
 import '../../../../../utils/widgets/ui_components.dart';
 
@@ -27,56 +26,6 @@ class ProfileView extends GetView<ProfileController> {
     } catch (e) {
       print('Error launching email: $e');
     }
-  }
-
-  void _showThemeDialog(BuildContext context) {
-    final themeController = Get.find<ThemeController>();
-    Get.dialog(
-      Builder(
-        builder: (dialogContext) => AlertDialog(
-          backgroundColor: Theme.of(context).dialogTheme.backgroundColor ?? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white),
-          title: const Text('Choose Theme'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              RadioListTile<ThemeMode>(
-                title: const Text('Light'),
-                value: ThemeMode.light,
-                groupValue: themeController.themeMode,
-                onChanged: (ThemeMode? value) {
-                  if (value != null) {
-                    themeController.setLight();
-                    Navigator.of(dialogContext, rootNavigator: true).pop();
-                  }
-                },
-              ),
-              RadioListTile<ThemeMode>(
-                title: const Text('Dark'),
-                value: ThemeMode.dark,
-                groupValue: themeController.themeMode,
-                onChanged: (ThemeMode? value) {
-                  if (value != null) {
-                    themeController.setDark();
-                    Navigator.of(dialogContext, rootNavigator: true).pop();
-                  }
-                },
-              ),
-              RadioListTile<ThemeMode>(
-                title: const Text('System Default'),
-                value: ThemeMode.system,
-                groupValue: themeController.themeMode,
-                onChanged: (ThemeMode? value) {
-                  if (value != null) {
-                    themeController.setSystem();
-                    Navigator.of(dialogContext, rootNavigator: true).pop();
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   void _showLogoutConfirmation(BuildContext context) {
@@ -534,12 +483,6 @@ class ProfileView extends GetView<ProfileController> {
                           title: 'Notification',
                           color: AppColors.primaryGreen,
                           onTap: () => Get.toNamed('/notifications'),
-                        ),
-                        _MenuItemData(
-                          icon: Icons.palette_rounded,
-                          title: 'Theme',
-                          color: AppColors.primaryGreen,
-                          onTap: () => _showThemeDialog(context),
                         ),
                         _MenuItemData(
                           icon: Icons.headset_mic_rounded,
