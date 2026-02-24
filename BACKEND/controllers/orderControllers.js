@@ -609,7 +609,8 @@ exports.getAllOrders = async (req, res, next) => {
                 processing: { $sum: { $cond: [{ $eq: ["$order_status", "processing"] }, 1, 0] } },
                 shipped: { $sum: { $cond: [{ $eq: ["$order_status", "shipped"] }, 1, 0] } },
                 out_for_delivery: { $sum: { $cond: [{ $eq: ["$order_status", "out_for_delivery"] }, 1, 0] } },
-                delivered: { $sum: { $cond: [{ $eq: ["$order_status", "delivered"] }, 1, 0] } }
+                delivered: { $sum: { $cond: [{ $eq: ["$order_status", "delivered"] }, 1, 0] } },
+                cancelled: { $sum: { $cond: [{ $eq: ["$order_status", "cancelled"] }, 1, 0] } }
             }
         });
 
@@ -621,7 +622,8 @@ exports.getAllOrders = async (req, res, next) => {
             processing: 0,
             shipped: 0,
             out_for_delivery: 0,
-            delivered: 0
+            delivered: 0,
+            cancelled: 0
         };
 
         const totalPages = Math.ceil(totalFilteredOrders / limit);
@@ -643,6 +645,7 @@ exports.getAllOrders = async (req, res, next) => {
                     totalShippedOrders: stats.shipped,
                     totalOutForDeliveryOrders: stats.out_for_delivery,
                     totalDeliveredOrders: stats.delivered,
+                    totalCancelledOrders: stats.cancelled,
                     hasNextPage: page < totalPages,
                     hasPrevPage: page > 1
                 }

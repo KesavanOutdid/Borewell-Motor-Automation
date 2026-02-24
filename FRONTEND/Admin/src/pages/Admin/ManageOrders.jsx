@@ -140,6 +140,10 @@ const ManageOrders = ({ userInfo, handleLogout }) => {
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Out for Delivery</p>
                                                 <p style={{ fontSize: '18px', color: '#9a3412', fontWeight: '700', margin: 0 }}>{pagination?.totalOutForDeliveryOrders || 0}</p>
                                             </div>
+                                            {/* <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#fef2f2', padding: '12px', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Cancelled</p>
+                                                <p style={{ fontSize: '18px', color: '#991b1b', fontWeight: '700', margin: 0 }}>{pagination?.totalCancelledOrders || 0}</p>
+                                            </div> */}
                                         </div>
                                     </div>
 

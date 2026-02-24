@@ -74,12 +74,12 @@ const AddVoucher = ({ userInfo, handleLogout }) => {
                                                     placeholder="e.g., SAVE20"
                                                     value={voucherCode}
                                                     onChange={(e) => {
-                                                        const val = e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '');
+                                                        const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
                                                         setVoucherCode(val);
                                                     }}
                                                     required
                                                 />
-                                                <small className="text-muted">Only letters, numbers, and underscores allowed (No spaces)</small>
+                                                <small className="text-muted">Only letters and numbers allowed (No spaces or special characters)</small>
                                             </div>
 
                                             <div className="col-md-6 col-12">
