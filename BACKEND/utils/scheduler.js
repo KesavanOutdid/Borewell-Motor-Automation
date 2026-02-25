@@ -24,19 +24,50 @@ const initScheduler = () => {
                 start_executed: false
             });
 
+            if (pendingStarts.length > 0) {
+                console.log(`[Scheduler] Found ${pendingStarts.length} pending starts at ${now.toISOString()}`);
+            }
+
             for (const schedule of pendingStarts) {
+                // Double check if it should also be stopped (to avoid immediate start-stop if both times passed)
+                if (schedule.stop_time <= now) {
+                    console.log(`[Scheduler] Skipping start for ${schedule.serial_number} as stop time has also passed.`);
+                    schedule.status = 'completed';
+                    schedule.start_executed = true;
+                    schedule.stop_executed = true;
+                    await schedule.save();
+                    continue;
+                }
                 await executeCommand(schedule, true);
             }
 
             // 2. Process Started Schedules to STOP
             const pendingStops = await DeviceSchedule.find({
-                status: { $in: ['pending', 'started'] },
+                status: 'started', // Only process schedules that have actually started
                 stop_time: { $lte: now },
                 stop_executed: false
             });
 
+            if (pendingStops.length > 0) {
+                console.log(`[Scheduler] Found ${pendingStops.length} pending stops at ${now.toISOString()}`);
+            }
+
             for (const schedule of pendingStops) {
                 await executeCommand(schedule, false);
+            }
+
+            // 3. Clean up missed/expired pending schedules (that were never started)
+            const expiredSchedules = await DeviceSchedule.find({
+                status: 'pending',
+                stop_time: { $lte: now },
+                start_executed: false
+            });
+
+            for (const schedule of expiredSchedules) {
+                console.log(`[Scheduler] Marking expired pending schedule ${schedule._id} as failed (missed)`);
+                schedule.status = 'failed';
+                schedule.updated_at = new Date();
+                await schedule.save();
             }
 
             // 3. ENFORCE CONTINUITY: Check active schedules to ensure they are still running

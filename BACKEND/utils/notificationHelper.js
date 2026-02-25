@@ -193,8 +193,12 @@ exports.notifyUser = async (db, userId, type, payload) => {
             body = `${alertType}: ${description}`;
         } else if (type === "STATUS") {
             const running = payload.motor_running === true;
-            const userName = device.last_started_by || device.last_stopped_by || "User";
-            const actionBy = running ? (device.last_started_by || "Manual") : (device.last_stopped_by || "Manual");
+            
+            // Re-fetch the device to get the latest last_started_by/last_stopped_by
+            // which might have been updated by mqttClient.js right before this call.
+            const latestDevice = await db.collection("devices").findOne({ serial_number: String(serial_number) });
+            
+            const actionBy = running ? (latestDevice.last_started_by || "Manual") : (latestDevice.last_stopped_by || "Manual");
             
             title = running ? "🟢 Motor Started" : "🔴 Motor Stopped";
             body = `Device ${serial_number} was ${running ? 'started' : 'stopped'} by ${actionBy}`;

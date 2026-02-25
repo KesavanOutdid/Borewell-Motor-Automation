@@ -27,6 +27,27 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
     controller.initialize(Get.arguments);
   }
 
+  void _showErrorDialog(String message) {
+    Get.dialog(
+      AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.error_outline, color: Colors.red),
+            SizedBox(width: 10),
+            Text('Invalid Input'),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _selectDate(BuildContext context, bool isStart) async {
     final DateTime now = DateTime.now();
     final DateTime? picked = await showDatePicker(
@@ -64,13 +85,11 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
     
     // Check if date is selected first
     if (isStart && startDate == null) {
-      Get.snackbar('Error', 'Please select Start Date first',
-          backgroundColor: Colors.red, colorText: Colors.white);
+      _showErrorDialog('Please select Start Date first');
       return;
     }
     if (!isStart && stopDate == null) {
-      Get.snackbar('Error', 'Please select Stop Date first',
-          backgroundColor: Colors.red, colorText: Colors.white);
+      _showErrorDialog('Please select Stop Date first');
       return;
     }
 
@@ -126,8 +145,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                         final bool isToday = startDate!.year == now.year && startDate!.month == now.month && startDate!.day == now.day;
                         final pickedDateTime = DateTime(startDate!.year, startDate!.month, startDate!.day, pickedTime.hour, pickedTime.minute);
                         if (isToday && pickedDateTime.isBefore(now.add(const Duration(minutes: 5)))) {
-                          Get.snackbar('Invalid Time', 'Start time must be at least 5 minutes from now',
-                              backgroundColor: Colors.red, colorText: Colors.white);
+                          _showErrorDialog('Start time must be at least 5 minutes from now');
                           return;
                         }
                       } else if (startDate != null && startTime != null) {
@@ -135,8 +153,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                         final startDateTime = DateTime(startDate!.year, startDate!.month, startDate!.day, startTime!.hour, startTime!.minute);
                         final pickedStopDateTime = DateTime(stopDate!.year, stopDate!.month, stopDate!.day, pickedTime.hour, pickedTime.minute);
                         if (pickedStopDateTime.isBefore(startDateTime.add(const Duration(minutes: 5)))) {
-                          Get.snackbar('Invalid Time', 'Stop time must be at least 5 minutes after start time',
-                              backgroundColor: Colors.red, colorText: Colors.white);
+                          _showErrorDialog('Stop time must be at least 5 minutes after start time');
                           return;
                         }
                       }
@@ -171,8 +188,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
 
   Future<void> _submitSchedule() async {
     if (startDate == null || startTime == null || stopDate == null || stopTime == null) {
-      Get.snackbar('Error', 'Please select both start and stop date/time',
-          backgroundColor: Colors.red, colorText: Colors.white);
+      _showErrorDialog('Please select both start and stop date/time');
       return;
     }
 
@@ -191,22 +207,47 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
     // Validate start date (not yesterday)
     final todayStart = DateTime(now.year, now.month, now.day);
     if (startDateTime.isBefore(todayStart)) {
-      Get.snackbar('Error', 'Start date cannot be in the past',
-          backgroundColor: Colors.red, colorText: Colors.white);
+      _showErrorDialog('Start date cannot be in the past');
       return;
     }
 
     // Validate 5 minutes lead time
     if (startDateTime.isBefore(now.add(const Duration(minutes: 5)))) {
-      Get.snackbar('Error', 'Start time must be at least 5 minutes from now',
-          backgroundColor: Colors.red, colorText: Colors.white);
+      _showErrorDialog('Start time must be at least 5 minutes from now');
       return;
     }
 
     // Validate stop after start (minimum 5 minutes)
     if (stopDateTime.isBefore(startDateTime.add(const Duration(minutes: 5)))) {
-      Get.snackbar('Error', 'Stop time must be at least 5 minutes after start time',
-          backgroundColor: Colors.red, colorText: Colors.white);
+      _showErrorDialog('Stop time must be at least 5 minutes after start time');
+      return;
+    }
+
+    // Confirm with user
+    final bool? confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('Confirm Schedule'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Are you sure you want to set this schedule?'),
+            const SizedBox(height: 15),
+            Text('Start: ${DateFormat('dd MMM, hh:mm a').format(startDateTime)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text('Stop:  ${DateFormat('dd MMM, hh:mm a').format(stopDateTime)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel', style: TextStyle(color: Colors.grey))),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true), 
+            child: const Text('Confirm', style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) {
       return;
     }
 
@@ -224,21 +265,51 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Auto Start/Stop'),
+        title: const Text('Scheduler', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        centerTitle: false,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
         flexibleSpace: Container(
-          decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
+          decoration: const BoxDecoration(
+            gradient: AppColors.primaryGradient,
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(30),
+              bottomRight: Radius.circular(30),
+            ),
+          ),
         ),
       ),
-      body: Column(
-        children: [
-          _buildScheduleForm(),
-          const Divider(),
-          const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text('Active/Past Schedules', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(child: _buildScheduleForm()),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Active/Past Schedules',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textPrimary),
+                  ),
+                ],
+              ),
+            ),
           ),
-          Expanded(child: _buildScheduleList()),
+          SliverPadding(
+            padding: const EdgeInsets.only(bottom: 20),
+            sliver: _buildScheduleList(),
+          ),
         ],
       ),
     );
@@ -247,82 +318,58 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
   Widget _buildScheduleForm() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Card(
-        elevation: 8,
-        shadowColor: Colors.black.withOpacity(0.1),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [AppColors.cardShadow],
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Schedule Motor', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.primaryGreen, letterSpacing: -0.5)),
-                  Text('Configure start and stop date/time', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                ],
-              ),
-              const SizedBox(height: 24),
-              
-              // 1. DATES SECTION
-              const Row(
-                children: [
-                  Icon(Icons.calendar_month_outlined, size: 18, color: AppColors.primaryGreen),
-                  SizedBox(width: 8),
-                  Text('1. SELECT DATES', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 1.0, color: AppColors.primaryGreen)),
-                ],
-              ),
-              const SizedBox(height: 12),
+              _buildSectionTitle('START (Date & Time)', AppColors.primaryGreen, Icons.play_circle_fill),
+              const SizedBox(height: 16),
               Row(
                 children: [
-                  Expanded(child: _buildPickerTile('Start Date', startDate == null ? 'Select' : DateFormat('dd MMM, yyyy').format(startDate!), Icons.today, () => _selectDate(context, true))),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildPickerTile('Stop Date', stopDate == null ? 'Select' : DateFormat('dd MMM, yyyy').format(stopDate!), Icons.event, () => _selectDate(context, false))),
-                ],
-              ),
-              
-              const SizedBox(height: 20),
-              
-              // 2. TIMES SECTION
-              const Row(
-                children: [
-                  Icon(Icons.access_time_outlined, size: 18, color: AppColors.primaryGreen),
-                  SizedBox(width: 8),
-                  Text('2. SELECT TIMES', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 1.0, color: AppColors.primaryGreen)),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
+                  Expanded(child: _buildPickerTile(startDate == null ? 'Select Date' : DateFormat('dd MMM, yyyy').format(startDate!), Icons.event_note, () => _selectDate(context, true))),
+                  const SizedBox(width: 15),
                   Expanded(
                     child: Opacity(
-                      opacity: startDate == null ? 0.5 : 1.0,
-                      child: _buildPickerTile('Start Time', startTime == null ? 'Select' : startTime!.format(context), Icons.play_circle_outline, () => _selectTime(context, true)),
+                      opacity: startDate == null ? 0.6 : 1.0,
+                      child: _buildPickerTile(startTime == null ? 'Select Time' : startTime!.format(context), Icons.schedule, () => _selectTime(context, true)),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                ],
+              ),
+              
+              const SizedBox(height: 24),
+              
+              _buildSectionTitle('STOP (Date & Time)', AppColors.error, Icons.stop_circle),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(child: _buildPickerTile(stopDate == null ? 'Select Date' : DateFormat('dd MMM, yyyy').format(stopDate!), Icons.event_note, () => _selectDate(context, false))),
+                  const SizedBox(width: 15),
                   Expanded(
                     child: Opacity(
-                      opacity: stopDate == null ? 0.5 : 1.0,
-                      child: _buildPickerTile('Stop Time', stopTime == null ? 'Select' : stopTime!.format(context), Icons.stop_circle, () => _selectTime(context, false)),
+                      opacity: stopDate == null ? 0.6 : 1.0,
+                      child: _buildPickerTile(stopTime == null ? 'Select Time' : stopTime!.format(context), Icons.schedule, () => _selectTime(context, false)),
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 40),
               Obx(() => Container(
+                height: 55,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                   gradient: controller.isLoading.value ? null : AppColors.primaryGradient,
                   boxShadow: [
                     if (!controller.isLoading.value)
-                      BoxShadow(
-                        color: AppColors.primaryGreen.withOpacity(0.3),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
+                      AppColors.primaryShadow,
                   ],
                 ),
                 child: ElevatedButton(
@@ -330,12 +377,11 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   child: controller.isLoading.value 
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('CONFIRM SCHEDULE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: 0.5)),
+                    ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
+                    : const Text('CONFIRM SCHEDULE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1.0)),
                 ),
               )),
             ],
@@ -345,27 +391,53 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
     );
   }
 
-  Widget _buildPickerTile(String label, String value, IconData icon, VoidCallback onTap) {
+  Widget _buildSectionTitle(String title, Color color, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: color),
+        const SizedBox(width: 8),
+        Text(
+          title, 
+          style: TextStyle(
+            fontSize: 14, 
+            fontWeight: FontWeight.w800, 
+            letterSpacing: 0.5, 
+            color: color
+          )
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPickerTile(String value, IconData icon, VoidCallback onTap) {
+    bool isPlaceholder = value.contains('Select');
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
-          borderRadius: BorderRadius.circular(10),
-          color: Colors.grey.shade50,
+          color: AppColors.backgroundLight,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isPlaceholder ? Colors.grey.withOpacity(0.2) : AppColors.primaryGreen.withOpacity(0.3),
+            width: 1.5
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(icon, size: 16, color: AppColors.primaryGreen),
-                const SizedBox(width: 8),
-                Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-              ],
+            Icon(icon, size: 16, color: isPlaceholder ? AppColors.textMuted : AppColors.primaryGreen),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                value, 
+                style: TextStyle(
+                  fontWeight: FontWeight.bold, 
+                  color: isPlaceholder ? AppColors.textMuted : AppColors.textPrimary,
+                  fontSize: 12
+                ), 
+                overflow: TextOverflow.ellipsis
+              )
             ),
           ],
         ),
@@ -376,66 +448,177 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
   Widget _buildScheduleList() {
     return Obx(() {
       if (controller.isLoading.value && controller.schedules.isEmpty) {
-        return const Center(child: CircularProgressIndicator());
+        return const SliverFillRemaining(child: Center(child: CircularProgressIndicator()));
       }
       if (controller.schedules.isEmpty) {
-        return const Center(child: Text('No schedules found'));
-      }
-      return ListView.builder(
-        itemCount: controller.schedules.length,
-        itemBuilder: (context, index) {
-          final s = controller.schedules[index];
-          final start = DateTime.parse(s['start_time']);
-          final stop = DateTime.parse(s['stop_time']);
-          final status = s['status'] as String;
-          final createdBy = s['user_name'] ?? 'Unknown';
-          final cancelledBy = s['cancelled_by'];
-          
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: _getStatusColor(status).withOpacity(0.1),
-                child: Icon(_getStatusIcon(status), color: _getStatusColor(status), size: 20),
-              ),
-              title: Text('Start: ${DateFormat('dd MMM, hh:mm a').format(start)}'),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Stop: ${DateFormat('dd MMM, hh:mm a').format(stop)}'),
-                  Text('Created by: $createdBy', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                  if (status == 'cancelled' && cancelledBy != null)
-                    Text('Cancelled by: $cancelledBy', style: const TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
-                ],
-              ),
-              trailing: (status == 'pending' || status == 'started') 
-                ? IconButton(icon: const Icon(Icons.cancel, color: Colors.red), onPressed: () => controller.cancelSchedule(s['_id']))
-                : Text(status.toUpperCase(), style: TextStyle(color: _getStatusColor(status), fontWeight: FontWeight.bold, fontSize: 10)),
+        return SliverFillRemaining(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.event_busy, size: 64, color: Colors.grey.withOpacity(0.3)),
+                const SizedBox(height: 16),
+                const Text('No schedules found', style: TextStyle(color: AppColors.textMuted)),
+              ],
             ),
-          );
-        },
+          ),
+        );
+      }
+      return SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final s = controller.schedules[index];
+            final start = DateTime.parse(s['start_time']).toLocal();
+            final stop = DateTime.parse(s['stop_time']).toLocal();
+            final status = s['status'] as String;
+            final createdBy = s['user_name'] ?? 'Unknown';
+            final cancelledBy = s['cancelled_by'];
+            
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [AppColors.softShadow],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      left: BorderSide(color: _getStatusColor(status), width: 6),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildStatusBadge(status),
+                            if (status == 'pending' || status == 'started')
+                              IconButton(
+                                icon: const Icon(Icons.cancel_outlined, color: Colors.red),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                onPressed: () => controller.cancelSchedule(s['_id']),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            _buildTimeInfo(Icons.play_arrow_rounded, 'Start', start, AppColors.primaryGreen),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 10),
+                              child: Icon(Icons.arrow_forward, size: 16, color: Colors.grey),
+                            ),
+                            _buildTimeInfo(Icons.stop_rounded, 'Stop', stop, Colors.red),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.person_outline, size: 14, color: Colors.grey),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'By: $createdBy', 
+                                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500)
+                                ),
+                              ],
+                            ),
+                            if (status == 'cancelled' && cancelledBy != null)
+                              Text(
+                                'X by: $cancelledBy',
+                                style: const TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.w600)
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+          childCount: controller.schedules.length,
+        ),
       );
     });
   }
 
+  Widget _buildStatusBadge(String status) {
+    final color = _getStatusColor(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(_getStatusIcon(status), color: color, size: 14),
+          const SizedBox(width: 6),
+          Text(
+            status.toUpperCase(),
+            style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 0.5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeInfo(IconData icon, String label, DateTime dateTime, Color color) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 4),
+              Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            DateFormat('dd MMM').format(dateTime),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          ),
+          Text(
+            DateFormat('hh:mm a').format(dateTime),
+            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
   Color _getStatusColor(String status) {
-    switch(status) {
-      case 'pending': return Colors.orange;
-      case 'started': return Colors.blue;
-      case 'completed': return Colors.green;
+    switch(status.toLowerCase()) {
+      case 'pending': return AppColors.warning;
+      case 'started': return AppColors.primaryBlue;
+      case 'completed': return AppColors.success;
       case 'cancelled': return Colors.grey;
-      case 'failed': return Colors.red;
+      case 'failed': return AppColors.error;
       default: return Colors.black;
     }
   }
 
   IconData _getStatusIcon(String status) {
-    switch(status) {
+    switch(status.toLowerCase()) {
       case 'pending': return Icons.timer_outlined;
-      case 'started': return Icons.play_arrow;
+      case 'started': return Icons.play_circle_filled;
       case 'completed': return Icons.check_circle;
-      case 'cancelled': return Icons.cancel_outlined;
-      case 'failed': return Icons.error_outline;
+      case 'cancelled': return Icons.cancel;
+      case 'failed': return Icons.error;
       default: return Icons.help_outline;
     }
   }

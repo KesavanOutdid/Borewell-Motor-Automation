@@ -13,6 +13,27 @@ class DeviceScheduleController extends GetxController {
   
   late String serialNumber;
   late String imeiNumber;
+
+  void _showErrorDialog(String message) {
+    Get.dialog(
+      AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.error_outline, color: Colors.red),
+            SizedBox(width: 10),
+            Text('Error'),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(Get.context!).pop(),
+            child: const Text('OK', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
   
   void initialize(Map<String, dynamic> args) {
     serialNumber = args['serial_number'] ?? '';
@@ -62,25 +83,40 @@ class DeviceScheduleController extends GetxController {
           'imei_number': imeiNumber,
           'user_id': userId,
           'user_name': userName,
-          'start_time': start.toIso8601String(),
-          'stop_time': stop.toIso8601String(),
+          'start_time': start.toUtc().toIso8601String(),
+          'stop_time': stop.toUtc().toIso8601String(),
         }),
       );
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 201 && data['success']) {
-        Get.snackbar('Success', 'Schedule created successfully', 
-          backgroundColor: Colors.green, colorText: Colors.white);
+        Get.dialog(
+          AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.green),
+                SizedBox(width: 10),
+                Text('Success'),
+              ],
+            ),
+            content: const Text('Motor schedule has been created successfully.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(Get.context!).pop(),
+                child: const Text('OK', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
         fetchSchedules();
         return true;
       } else {
-        Get.snackbar('Error', data['message'] ?? 'Failed to create schedule',
-          backgroundColor: Colors.red, colorText: Colors.white);
+        _showErrorDialog(data['message'] ?? 'Failed to create schedule');
         return false;
       }
     } catch (e) {
-      Get.snackbar('Error', 'Connection failed',
-          backgroundColor: Colors.red, colorText: Colors.white);
+      print('Create schedule error: $e');
+      _showErrorDialog('Connection failed: $e');
       return false;
     } finally {
       isLoading.value = false;
@@ -103,8 +139,24 @@ class DeviceScheduleController extends GetxController {
       );
 
       if (response.statusCode == 200) {
-        Get.snackbar('Success', 'Schedule cancelled',
-          backgroundColor: Colors.green, colorText: Colors.white);
+        Get.dialog(
+          AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.green),
+                SizedBox(width: 10),
+                Text('Cancelled'),
+              ],
+            ),
+            content: const Text('Schedule has been cancelled successfully.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(Get.context!).pop(),
+                child: const Text('OK', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
         fetchSchedules();
       }
     } catch (e) {
