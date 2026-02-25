@@ -583,6 +583,24 @@ exports.startStopDevice = async (req, res) => {
             { $set: updateData }
         );
 
+        // If user manually stops, find any active schedule for this device and mark it as completed/cancelled
+        if (start_status === false) {
+            await DeviceSchedule.updateMany(
+                { 
+                    serial_number, 
+                    status: 'started',
+                    stop_executed: false 
+                },
+                { 
+                    $set: { 
+                        status: 'completed',
+                        stop_executed: true,
+                        updated_at: new Date()
+                    } 
+                }
+            );
+        }
+
         // Save to agri_history
         try {
             const db = mongoose.connection.db;
