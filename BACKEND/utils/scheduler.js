@@ -149,9 +149,11 @@ const executeCommand = async (schedule, isStart) => {
         if (isStart) {
             schedule.start_executed = true;
             schedule.status = 'started';
+            schedule.started_by = 'Auto';
         } else {
             schedule.stop_executed = true;
             schedule.status = 'completed';
+            schedule.stopped_by = 'Auto';
         }
         schedule.updated_at = new Date();
         await schedule.save();
