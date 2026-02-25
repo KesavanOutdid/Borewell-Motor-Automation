@@ -583,7 +583,7 @@ exports.startStopDevice = async (req, res) => {
             { $set: updateData }
         );
 
-        // If user manually stops, find any active schedule for this device and mark it as completed/cancelled
+        // If user manually stops, find any active schedule for this device and mark it as stopped
         if (start_status === false) {
             await DeviceSchedule.updateMany(
                 { 
@@ -593,7 +593,8 @@ exports.startStopDevice = async (req, res) => {
                 },
                 { 
                     $set: { 
-                        status: 'completed',
+                        status: 'stopped',
+                        stopped_by: user.user_name,
                         stop_executed: true,
                         updated_at: new Date()
                     } 
@@ -2647,10 +2648,15 @@ exports.createSchedule = async (req, res) => {
 
 exports.getSchedules = async (req, res) => {
     try {
-        const { serial_number, user_id } = req.query;
+        const { serial_number, user_id, status } = req.query;
         const query = {};
         if (serial_number) query.serial_number = serial_number;
         if (user_id) query.user_id = user_id;
+        
+        // Add status filtering
+        if (status && status !== 'All') {
+            query.status = status.toLowerCase();
+        }
 
         const schedules = await DeviceSchedule.find(query).sort({ created_at: -1 });
 

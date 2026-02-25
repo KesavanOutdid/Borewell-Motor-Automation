@@ -282,15 +282,6 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Row(
                 children: [
-                  Container(
-                    width: 4,
-                    height: 20,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryGreen,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
                   const Text(
                     'Active/Past Schedules',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textPrimary),
@@ -299,6 +290,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
               ),
             ),
           ),
+          SliverToBoxAdapter(child: _buildStatusFilters()),
           SliverPadding(
             padding: const EdgeInsets.only(bottom: 20),
             sliver: _buildScheduleList(),
@@ -323,11 +315,11 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildSectionTitle('START (Date & Time)', AppColors.primaryGreen, Icons.play_circle_fill),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(child: _buildPickerTile(startDate == null ? 'Select Date' : DateFormat('dd MMM, yyyy').format(startDate!), Icons.event_note, () => _selectDate(context, true))),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Opacity(
                       opacity: startDate == null ? 0.6 : 1.0,
@@ -337,14 +329,14 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                 ],
               ),
               
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               
               _buildSectionTitle('STOP (Date & Time)', AppColors.error, Icons.stop_circle),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(child: _buildPickerTile(stopDate == null ? 'Select Date' : DateFormat('dd MMM, yyyy').format(stopDate!), Icons.event_note, () => _selectDate(context, false))),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Opacity(
                       opacity: stopDate == null ? 0.6 : 1.0,
@@ -354,9 +346,9 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                 ],
               ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
               Obx(() => Container(
-                height: 55,
+                height: 50,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   gradient: controller.isLoading.value ? null : AppColors.primaryGradient,
@@ -408,7 +400,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.backgroundLight,
           borderRadius: BorderRadius.circular(16),
@@ -434,6 +426,53 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatusFilters() {
+    final filters = ['All', 'Pending', 'Started', 'Completed', 'Stopped', 'Cancelled', 'Failed'];
+    return SizedBox(
+      height: 45,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: filters.length,
+        itemBuilder: (context, index) {
+          final filter = filters[index];
+          return Obx(() {
+            final isSelected = controller.selectedStatus.value == filter;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FilterChip(
+                label: Text(
+                  filter,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : AppColors.textSecondary,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 12,
+                  ),
+                ),
+                selected: isSelected,
+                onSelected: (selected) {
+                  controller.selectedStatus.value = filter;
+                  controller.fetchSchedules();
+                },
+                selectedColor: AppColors.primaryGreen,
+                backgroundColor: Colors.white,
+                checkmarkColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(
+                    color: isSelected ? AppColors.primaryGreen : Colors.grey.shade300,
+                  ),
+                ),
+                showCheckmark: false,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+            );
+          });
+        },
       ),
     );
   }
@@ -466,6 +505,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
             final status = s['status'] as String;
             final createdBy = s['user_name'] ?? 'Unknown';
             final cancelledBy = s['cancelled_by'];
+            final stoppedBy = s['stopped_by'];
             
             return Container(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -529,6 +569,11 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                               Text(
                                 'X by: $cancelledBy',
                                 style: const TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.w600)
+                              ),
+                            if (status == 'stopped' && stoppedBy != null)
+                              Text(
+                                '⏹ by: $stoppedBy',
+                                style: const TextStyle(fontSize: 11, color: Colors.orange, fontWeight: FontWeight.w600)
                               ),
                           ],
                         ),
@@ -600,6 +645,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
       case 'started': return AppColors.primaryBlue;
       case 'completed': return AppColors.success;
       case 'cancelled': return Colors.grey;
+      case 'stopped': return Colors.orange;
       case 'failed': return AppColors.error;
       default: return Colors.black;
     }
@@ -611,6 +657,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
       case 'started': return Icons.play_circle_filled;
       case 'completed': return Icons.check_circle;
       case 'cancelled': return Icons.cancel;
+      case 'stopped': return Icons.front_hand_outlined;
       case 'failed': return Icons.error;
       default: return Icons.help_outline;
     }

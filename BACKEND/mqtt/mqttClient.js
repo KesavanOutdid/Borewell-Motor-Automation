@@ -127,7 +127,20 @@ client.on("message", async (topic, message) => {
             };
 
             if ((type === "PHASE" || type === "STATUS" || type === "HEARTBEAT") && motorRunning !== undefined) {
-                deviceUpdate.start_status = motorRunning;
+                // If motorRunning is false, check if we should suppress this update (e.g. just after a scheduler start)
+                let shouldSuppress = false;
+                if (motorRunning === false && isRedisConnected() && redisClient.isOpen) {
+                    const suppressionKey = `scheduler_start_suppress:${serialNumber.trim()}`;
+                    const suppressed = await redisClient.get(suppressionKey);
+                    if (suppressed === "ACTIVE") {
+                        shouldSuppress = true;
+                        console.log(`[MQTT] 🛡️ Suppressing false STOP status for ${serialNumber} (within suppression window)`);
+                    }
+                }
+
+                if (!shouldSuppress) {
+                    deviceUpdate.start_status = motorRunning;
+                }
             }
 
             await db.collection("devices").updateOne(
@@ -236,49 +249,60 @@ client.on("message", async (topic, message) => {
                 }
 
             } else if (motorRunning === false) {
+                // Check for suppression (same logic as start_status update above)
+                let shouldSuppress = false;
+                if (isRedisConnected() && redisClient.isOpen) {
+                    const suppressionKey = `scheduler_start_suppress:${serialNumber.trim()}`;
+                    const suppressed = await redisClient.get(suppressionKey);
+                    if (suppressed === "ACTIVE") shouldSuppress = true;
+                }
 
-                // CLOSE existing session
-                const session = await db.collection("agri_history").findOne({
-                    serial_number: serialNumber,
-                    stopAt: null
-                });
+                if (shouldSuppress) {
+                    console.log(`[MQTT] 🛡️ History: Skipping session close for ${serialNumber} (within suppression window)`);
+                } else {
+                    // CLOSE existing session
+                    const session = await db.collection("agri_history").findOne({
+                        serial_number: serialNumber,
+                        stopAt: null
+                    });
+                    
+                    if (session) {
+                        const stopTime = new Date(timestamp || Date.now());
+                        const duration = (stopTime - new Date(session.startAt)) / 60000;
 
-                if (session) {
-                    const stopTime = new Date(timestamp || Date.now());
-                    const duration = (stopTime - new Date(session.startAt)) / 60000;
-
-                    const updateResult = await db.collection("agri_history").updateOne(
-                        { _id: session._id, stopAt: null }, // Atomic check to ensure only one process closes this
-                        {
-                            $set: {
-                                stopAt: stopTime,
-                                stopped_by: device ? device.last_stopped_by : null,
-                                stopped_by_email: device ? device.last_stopped_by_email : null,
-                                duration_minutes: Math.round(duration),
-                                updatedAt: new Date()
+                        const updateResult = await db.collection("agri_history").updateOne(
+                            { _id: session._id, stopAt: null }, // Atomic check to ensure only one process closes this
+                            {
+                                $set: {
+                                    stopAt: stopTime,
+                                    stopped_by: device ? device.last_stopped_by : null,
+                                    stopped_by_email: device ? device.last_stopped_by_email : null,
+                                    duration_minutes: Math.round(duration),
+                                    updatedAt: new Date()
+                                }
                             }
-                        }
-                    );
-
-                    if (updateResult.modifiedCount > 0) {
-                        // console.log(`HISTORY: Session closed for ${serialNumber}`);
-
-                        await db.collection("devices").updateOne(
-                            { serial_number: serialNumber },
-                            { $set: { stopAt: stopTime } }
                         );
 
-                        // Check if notification was already sent recently
-                        if (isRedisConnected() && redisClient.isOpen) {
-                            const notifKey = `notif_sent:${serialNumber.trim()}:STOP`;
-                            const alreadySent = await redisClient.set(notifKey, "SENT", { NX: true, EX: 30 });
-                            if (alreadySent) {
-                                notifyUser(db, userId, "STATUS", entry);
+                        if (updateResult.modifiedCount > 0) {
+                            // console.log(`HISTORY: Session closed for ${serialNumber}`);
+
+                            await db.collection("devices").updateOne(
+                                { serial_number: serialNumber },
+                                { $set: { stopAt: stopTime } }
+                            );
+
+                            // Check if notification was already sent recently
+                            if (isRedisConnected() && redisClient.isOpen) {
+                                const notifKey = `notif_sent:${serialNumber.trim()}:STOP`;
+                                const alreadySent = await redisClient.set(notifKey, "SENT", { NX: true, EX: 30 });
+                                if (alreadySent) {
+                                    notifyUser(db, userId, "STATUS", entry);
+                                } else {
+                                    // console.log(`[MQTT] Duplicate STOP notification blocked for ${serialNumber}`);
+                                }
                             } else {
-                                // console.log(`[MQTT] Duplicate STOP notification blocked for ${serialNumber}`);
+                                notifyUser(db, userId, "STATUS", entry);
                             }
-                        } else {
-                            notifyUser(db, userId, "STATUS", entry);
                         }
                     }
                 }

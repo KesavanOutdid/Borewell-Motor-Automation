@@ -10,6 +10,7 @@ class DeviceScheduleController extends GetxController {
   
   var isLoading = false.obs;
   var schedules = <Map<String, dynamic>>[].obs;
+  var selectedStatus = 'All'.obs;
   
   late String serialNumber;
   late String imeiNumber;
@@ -47,8 +48,12 @@ class DeviceScheduleController extends GetxController {
     isLoading.value = true;
     try {
       final token = tokenService.getToken();
+      String url = '${AppConfig.baseUrl}/app/getSchedules?serial_number=$serialNumber';
+      if (selectedStatus.value != 'All') {
+        url += '&status=${selectedStatus.value.toLowerCase()}';
+      }
       final response = await http.get(
-        Uri.parse('${AppConfig.baseUrl}/app/getSchedules?serial_number=$serialNumber'),
+        Uri.parse(url),
         headers: {
           'Authorization': 'Bearer $token',
         },

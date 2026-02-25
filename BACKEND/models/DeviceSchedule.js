@@ -6,13 +6,14 @@ const deviceScheduleSchema = new mongoose.Schema({
     user_id: { type: Number, required: true },
     user_name: { type: String },
     cancelled_by: { type: String },
+    stopped_by: { type: String },
     
     start_time: { type: Date, required: true },
     stop_time: { type: Date, required: true },
     
     status: { 
         type: String, 
-        enum: ['pending', 'started', 'completed', 'cancelled', 'failed'], 
+        enum: ['pending', 'started', 'completed', 'cancelled', 'failed', 'stopped'], 
         default: 'pending' 
     },
     
