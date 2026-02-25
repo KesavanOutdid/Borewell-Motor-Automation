@@ -277,7 +277,7 @@ client.on("message", async (topic, message) => {
                                     stopAt: stopTime,
                                     stopped_by: device ? device.last_stopped_by : null,
                                     stopped_by_email: device ? device.last_stopped_by_email : null,
-                                    duration_minutes: Math.round(duration),
+                                    duration_minutes: Number(duration.toFixed(3)),
                                     updatedAt: new Date()
                                 }
                             }

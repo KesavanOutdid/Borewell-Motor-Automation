@@ -123,11 +123,26 @@ const ManageDevicesView = ({ userInfo, handleLogout }) => {
         const day = pad(date.getDate());
         const month = pad(date.getMonth() + 1);
         const year = date.getFullYear();
-        const hours = pad(date.getHours());
+        
+        let hours = date.getHours();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
         const minutes = pad(date.getMinutes());
         const seconds = pad(date.getSeconds());
         
-        return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
+        return `${day}/${month}/${year}, ${pad(hours)}:${minutes}:${seconds} ${ampm}`;
+    };
+
+    const calculateDuration = (startAt, stopAt) => {
+        if (!startAt || !stopAt) return '-';
+        const start = new Date(startAt);
+        const stop = new Date(stopAt);
+        if (isNaN(start.getTime()) || isNaN(stop.getTime())) return '-';
+        
+        const diffMs = Math.max(0, stop.getTime() - start.getTime());
+        const diffMins = diffMs / (1000 * 60);
+        return `${diffMins.toFixed(1)}mints`;
     };
 
     return (
@@ -286,7 +301,7 @@ const ManageDevicesView = ({ userInfo, handleLogout }) => {
                                                                         <p className="text-xs font-weight-bold mb-0">{record.stopped_by || '-'}</p>
                                                                     </td>
                                                                     <td>
-                                                                        <p className="text-xs font-weight-bold mb-0">{record.duration_minutes || '-'}</p>
+                                                                        <p className="text-xs font-weight-bold mb-0">{calculateDuration(record.startAt, record.stopAt)}</p>
                                                                     </td>
                                                                     <td>
                                                                         <p className="text-xs font-weight-bold mb-0">{record.energy_kwh != null ? record.energy_kwh.toFixed(3) : '-'}</p>
