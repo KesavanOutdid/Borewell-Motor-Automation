@@ -20,6 +20,9 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
   TimeOfDay? startTime;
   DateTime? stopDate;
   TimeOfDay? stopTime;
+  
+  // Track expanded cards
+  final Set<String> _expandedCards = {};
 
   @override
   void initState() {
@@ -235,8 +238,8 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
           children: [
             const Text('Are you sure you want to set this schedule?'),
             const SizedBox(height: 15),
-            Text('Start: ${DateFormat('dd MMM, hh:mm a').format(startDateTime)}', style: const TextStyle(fontWeight: FontWeight.bold)),
-            Text('Stop:  ${DateFormat('dd MMM, hh:mm a').format(stopDateTime)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text('Start  ${DateFormat('dd MMM, h:mm a').format(startDateTime)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text('Stop   ${DateFormat('dd MMM, h:mm a').format(stopDateTime)}', style: const TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
         actions: [
@@ -323,7 +326,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                   Expanded(
                     child: Opacity(
                       opacity: startDate == null ? 0.6 : 1.0,
-                      child: _buildPickerTile(startTime == null ? 'Select Time' : startTime!.format(context), Icons.schedule, () => _selectTime(context, true)),
+                      child: _buildPickerTile(startTime == null ? 'Select Time' : DateFormat('h:mm a').format(DateTime(0,0,0, startTime!.hour, startTime!.minute)), Icons.schedule, () => _selectTime(context, true)),
                     ),
                   ),
                 ],
@@ -340,7 +343,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                   Expanded(
                     child: Opacity(
                       opacity: stopDate == null ? 0.6 : 1.0,
-                      child: _buildPickerTile(stopTime == null ? 'Select Time' : stopTime!.format(context), Icons.schedule, () => _selectTime(context, false)),
+                      child: _buildPickerTile(stopTime == null ? 'Select Time' : DateFormat('h:mm a').format(DateTime(0,0,0, stopTime!.hour, stopTime!.minute)), Icons.schedule, () => _selectTime(context, false)),
                     ),
                   ),
                 ],
@@ -348,13 +351,23 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
 
               const SizedBox(height: 32),
               Obx(() => Container(
-                height: 50,
+                height: 54,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  gradient: controller.isLoading.value ? null : AppColors.primaryGradient,
+                  borderRadius: BorderRadius.circular(24),
+                  gradient: controller.isLoading.value 
+                    ? null 
+                    : const LinearGradient(
+                        colors: [Color(0xFF00B894), Color(0xFF00A382)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
                   boxShadow: [
                     if (!controller.isLoading.value)
-                      AppColors.primaryShadow,
+                      BoxShadow(
+                        color: const Color(0xFF00B894).withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
                   ],
                 ),
                 child: ElevatedButton(
@@ -362,11 +375,11 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   ),
                   child: controller.isLoading.value 
                     ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
-                    : const Text('CONFIRM SCHEDULE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1.0)),
+                    : const Text('CONFIRM SCHEDULE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1.2)),
                 ),
               )),
             ],
@@ -500,84 +513,83 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
         delegate: SliverChildBuilderDelegate(
           (context, index) {
             final s = controller.schedules[index];
+            final id = s['_id'] as String;
             final start = DateTime.parse(s['start_time']).toLocal();
             final stop = DateTime.parse(s['stop_time']).toLocal();
             final status = s['status'] as String;
-            final createdBy = s['user_name'] ?? 'Unknown';
-            final cancelledBy = s['cancelled_by'];
+            final createdBy = s['user_name'] ?? 'User';
+            final startedBy = s['started_by'];
             final stoppedBy = s['stopped_by'];
+            final cancelledBy = s['cancelled_by'];
             
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [AppColors.softShadow],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border(
-                      left: BorderSide(color: _getStatusColor(status), width: 6),
+            final isExpanded = _expandedCards.contains(id);
+            
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  if (isExpanded) {
+                    _expandedCards.remove(id);
+                  } else {
+                    _expandedCards.add(id);
+                  }
+                });
+              },
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [AppColors.softShadow],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        left: BorderSide(color: _getStatusColor(status), width: 6),
+                      ),
                     ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _buildStatusBadge(status),
-                            if (status == 'pending' || status == 'started')
-                              IconButton(
-                                icon: const Icon(Icons.cancel_outlined, color: Colors.red),
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                onPressed: () => controller.cancelSchedule(s['_id']),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            _buildTimeInfo(Icons.play_arrow_rounded, 'Start', start, AppColors.primaryGreen),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 10),
-                              child: Icon(Icons.arrow_forward, size: 16, color: Colors.grey),
-                            ),
-                            _buildTimeInfo(Icons.stop_rounded, 'Stop', stop, Colors.red),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(Icons.person_outline, size: 14, color: Colors.grey),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'By: $createdBy', 
-                                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500)
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildStatusBadge(status),
+                              if (status == 'pending')
+                                IconButton(
+                                  icon: const Icon(Icons.cancel_outlined, color: Colors.red, size: 20),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  onPressed: () => controller.cancelSchedule(id),
                                 ),
-                              ],
-                            ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              _buildTimeInfo(Icons.play_arrow_rounded, 'Start', start, AppColors.primaryGreen),
+                              const Icon(Icons.arrow_forward_rounded, size: 16, color: Colors.grey),
+                              _buildTimeInfo(Icons.stop_rounded, 'Stop', stop, Colors.red),
+                            ],
+                          ),
+                          
+                          if (isExpanded) ...[
+                            const SizedBox(height: 12),
+                            const Divider(height: 1),
+                            const SizedBox(height: 12),
+                            _buildDetailRow(Icons.person_add_alt_1_outlined, 'Created by', createdBy, Colors.blue),
+                            if (startedBy != null)
+                              _buildDetailRow(Icons.play_circle_outlined, 'Started by', startedBy, AppColors.primaryGreen),
+                            if (stoppedBy != null)
+                              _buildDetailRow(Icons.stop_circle_outlined, 'Stopped by', stoppedBy, Colors.red),
                             if (status == 'cancelled' && cancelledBy != null)
-                              Text(
-                                'X by: $cancelledBy',
-                                style: const TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.w600)
-                              ),
-                            if (status == 'stopped' && stoppedBy != null)
-                              Text(
-                                '⏹ by: $stoppedBy',
-                                style: const TextStyle(fontSize: 11, color: Colors.orange, fontWeight: FontWeight.w600)
-                              ),
+                              _buildDetailRow(Icons.cancel_outlined, 'Cancelled by', cancelledBy, Colors.orange),
                           ],
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -631,8 +643,29 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
           ),
           Text(
-            DateFormat('hh:mm a').format(dateTime),
+            DateFormat('h:mm a').format(dateTime),
             style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: color.withOpacity(0.7)),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
           ),
         ],
       ),
