@@ -24,10 +24,6 @@ const initScheduler = () => {
                 start_executed: false
             });
 
-            if (pendingStarts.length > 0) {
-                console.log(`[Scheduler] Found ${pendingStarts.length} pending starts at ${now.toISOString()}`);
-            }
-
             for (const schedule of pendingStarts) {
                 // Double check if it should also be stopped (to avoid immediate start-stop if both times passed)
                 if (schedule.stop_time <= now) {
@@ -47,10 +43,6 @@ const initScheduler = () => {
                 stop_time: { $lte: now },
                 stop_executed: false
             });
-
-            if (pendingStops.length > 0) {
-                console.log(`[Scheduler] Found ${pendingStops.length} pending stops at ${now.toISOString()}`);
-            }
 
             for (const schedule of pendingStops) {
                 await executeCommand(schedule, false);
@@ -119,6 +111,14 @@ const executeCommand = async (schedule, isStart) => {
         }
 
         await Device.updateOne({ serial_number }, { $set: updateData });
+
+        // Set a suppression key in Redis to ignore false STOP notifications for the next 15 seconds
+        const { redisClient, isRedisConnected } = require('../config/redis');
+        if (isRedisConnected() && redisClient.isOpen && isStart) {
+            const suppressionKey = `scheduler_start_suppress:${serial_number.trim()}`;
+            await redisClient.set(suppressionKey, "ACTIVE", { EX: 15 });
+            console.log(`[Scheduler] Set suppression key for ${serial_number}`);
+        }
 
         // Publish MQTT Command
         const topic = `agri/${serial_number}/command`;

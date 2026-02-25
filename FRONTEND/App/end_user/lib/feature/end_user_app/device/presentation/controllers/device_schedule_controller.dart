@@ -15,8 +15,10 @@ class DeviceScheduleController extends GetxController {
   late String imeiNumber;
 
   void _showErrorDialog(String message) {
-    Get.dialog(
-      AlertDialog(
+    if (Get.context == null) return;
+    showDialog(
+      context: Get.context!,
+      builder: (context) => AlertDialog(
         title: const Row(
           children: [
             Icon(Icons.error_outline, color: Colors.red),
@@ -27,7 +29,7 @@ class DeviceScheduleController extends GetxController {
         content: Text(message),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(Get.context!).pop(),
+            onPressed: () => Navigator.of(context).pop(),
             child: const Text('OK', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
           ),
         ],
@@ -90,24 +92,27 @@ class DeviceScheduleController extends GetxController {
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 201 && data['success']) {
-        Get.dialog(
-          AlertDialog(
-            title: const Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.green),
-                SizedBox(width: 10),
-                Text('Success'),
+        if (Get.context != null) {
+          showDialog(
+            context: Get.context!,
+            builder: (context) => AlertDialog(
+              title: const Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green),
+                  SizedBox(width: 10),
+                  Text('Success'),
+                ],
+              ),
+              content: const Text('Motor schedule has been created successfully.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                ),
               ],
             ),
-            content: const Text('Motor schedule has been created successfully.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(Get.context!).pop(),
-                child: const Text('OK', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        );
+          );
+        }
         fetchSchedules();
         return true;
       } else {
@@ -139,24 +144,27 @@ class DeviceScheduleController extends GetxController {
       );
 
       if (response.statusCode == 200) {
-        Get.dialog(
-          AlertDialog(
-            title: const Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.green),
-                SizedBox(width: 10),
-                Text('Cancelled'),
+        if (Get.context != null) {
+          showDialog(
+            context: Get.context!,
+            builder: (context) => AlertDialog(
+              title: const Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green),
+                  SizedBox(width: 10),
+                  Text('Cancelled'),
+                ],
+              ),
+              content: const Text('Schedule has been cancelled successfully.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                ),
               ],
             ),
-            content: const Text('Schedule has been cancelled successfully.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(Get.context!).pop(),
-                child: const Text('OK', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        );
+          );
+        }
         fetchSchedules();
       }
     } catch (e) {

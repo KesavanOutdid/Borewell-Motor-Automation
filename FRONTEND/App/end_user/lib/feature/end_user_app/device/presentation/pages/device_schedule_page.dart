@@ -28,8 +28,9 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
   }
 
   void _showErrorDialog(String message) {
-    Get.dialog(
-      AlertDialog(
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
         title: const Row(
           children: [
             Icon(Icons.error_outline, color: Colors.red),
@@ -224,8 +225,9 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
     }
 
     // Confirm with user
-    final bool? confirmed = await Get.dialog<bool>(
-      AlertDialog(
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
         title: const Text('Confirm Schedule'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -267,19 +269,10 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Scheduler', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        centerTitle: false,
+        title: const Text('Scheduler', style: TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
-        backgroundColor: Colors.transparent,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: AppColors.primaryGradient,
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(30),
-              bottomRight: Radius.circular(30),
-            ),
-          ),
-        ),
+        backgroundColor: Colors.white,
+        foregroundColor: AppColors.textPrimary,
       ),
       body: CustomScrollView(
         slivers: [
@@ -330,11 +323,11 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildSectionTitle('START (Date & Time)', AppColors.primaryGreen, Icons.play_circle_fill),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(child: _buildPickerTile(startDate == null ? 'Select Date' : DateFormat('dd MMM, yyyy').format(startDate!), Icons.event_note, () => _selectDate(context, true))),
-                  const SizedBox(width: 15),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Opacity(
                       opacity: startDate == null ? 0.6 : 1.0,
@@ -344,14 +337,14 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                 ],
               ),
               
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               
               _buildSectionTitle('STOP (Date & Time)', AppColors.error, Icons.stop_circle),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(child: _buildPickerTile(stopDate == null ? 'Select Date' : DateFormat('dd MMM, yyyy').format(stopDate!), Icons.event_note, () => _selectDate(context, false))),
-                  const SizedBox(width: 15),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Opacity(
                       opacity: stopDate == null ? 0.6 : 1.0,

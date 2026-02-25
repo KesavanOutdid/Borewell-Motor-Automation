@@ -194,11 +194,35 @@ exports.notifyUser = async (db, userId, type, payload) => {
         } else if (type === "STATUS") {
             const running = payload.motor_running === true;
             
-            // Re-fetch the device to get the latest last_started_by/last_stopped_by
-            // which might have been updated by mqttClient.js right before this call.
+            // Re-fetch the device to get the latest attribution data
             const latestDevice = await db.collection("devices").findOne({ serial_number: String(serial_number) });
             
-            const actionBy = running ? (latestDevice.last_started_by || "Manual") : (latestDevice.last_stopped_by || "Manual");
+            // Determine who/what triggered this
+            let actionBy = "User";
+            if (latestDevice.updatedBy === 'SYSTEM_SCHEDULER') {
+                actionBy = "Auto Scheduler";
+            } else {
+                actionBy = running ? (latestDevice.last_started_by || "Manual") : (latestDevice.last_stopped_by || "Manual");
+            }
+
+            // 1. Suppression check: If recently started by scheduler, skip any STOP notifications
+            if (!running && isRedisConnected() && redisClient.isOpen) {
+                const suppressionKey = `scheduler_start_suppress:${serial_number.trim()}`;
+                const isSuppressed = await redisClient.get(suppressionKey);
+                if (isSuppressed) {
+                    console.log(`[Notification] Redis-based suppression: Ignoring false STOP for ${serial_number}`);
+                    return;
+                }
+            }
+
+            // 2. Fallback DB suppression logic
+            if (!running && latestDevice.updatedBy === 'SYSTEM_SCHEDULER') {
+                const timeSinceUpdate = Date.now() - new Date(latestDevice.updatedAt).getTime();
+                if (timeSinceUpdate < 15000) { // Increased to 15s
+                    console.log(`[Notification] DB suppression: Ignoring false STOP for ${serial_number}`);
+                    return;
+                }
+            }
             
             title = running ? "🟢 Motor Started" : "🔴 Motor Stopped";
             body = `Device ${serial_number} was ${running ? 'started' : 'stopped'} by ${actionBy}`;
