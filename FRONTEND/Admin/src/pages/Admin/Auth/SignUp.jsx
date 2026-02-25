@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import signUpHandler from '../../../hooks/Admin/useSignUp'; 
+import signUpHandler from '../../../hooks/Admin/Auth/useSignUp'; 
 import { sanitizeName, sanitizeMobile, sanitizeEmail, sanitizePassword } from '../../../utils/validation';
 
 const SignUp = ({handleSignUp}) => {

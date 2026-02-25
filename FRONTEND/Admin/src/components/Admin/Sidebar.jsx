@@ -44,7 +44,7 @@ const Sidebar = () => {
                         </Link>
                     </li>
                     <li className="nav-item">
-                        <Link className={location.pathname === '/manage-devices' || location.pathname === '/manage-devices-view' || location.pathname === '/device-history' ? 'nav-link  active' : 'nav-link'} to="/manage-devices" onClick={() => handleNavClick('/manage-devices')}>
+                        <Link className={location.pathname === '/manage-devices' || location.pathname === '/manage-devices-view' || (location.pathname === '/device-history' && location.state?.from !== 'manage-users') ? 'nav-link  active' : 'nav-link'} to="/manage-devices" onClick={() => handleNavClick('/manage-devices')}>
                             <div className="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                                 <i className="fas fa-laptop" style={{ fontSize: '12px', color: '#344767', lineHeight: '12px' }}></i>
                             </div>

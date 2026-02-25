@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import SignInHandler from '../../../hooks/Admin/useSignIn';
+import SignInHandler from '../../../hooks/Admin/Auth/useSignIn';
 import { sanitizeEmail, sanitizePassword } from '../../../utils/validation';
 import { useNavigate } from "react-router-dom";
 import signInBg from '../../../assets/img/signin.png';
