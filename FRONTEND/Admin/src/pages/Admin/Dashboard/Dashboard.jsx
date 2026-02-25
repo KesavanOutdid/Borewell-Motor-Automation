@@ -31,7 +31,7 @@ const Dashboard = ({ userInfo, handleLogout }) => {
     const alert = useLiveAlert(selectedAssignedDevice?.serial_number);
     const boot = useLiveBoot(selectedAssignedDevice?.serial_number);
     const heartbeat = useLiveHeartbeat(selectedAssignedDevice?.serial_number);
-    const { schedules, loading: loadingSchedules } = useDeviceSchedules(selectedAssignedDevice?.serial_number, userInfo);
+    const { schedules, loading: loadingSchedules } = useDeviceSchedules(selectedAssignedDevice?.serial_number, userInfo, true);
 
     useEffect(() => {
         if (status && status.motor_running !== undefined && selectedAssignedDevice) {

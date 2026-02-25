@@ -2648,7 +2648,7 @@ exports.createSchedule = async (req, res) => {
 
 exports.getSchedules = async (req, res) => {
     try {
-        const { serial_number, user_id, status } = req.query;
+        const { serial_number, user_id, status, dashboard } = req.query;
         const query = {};
         if (serial_number) query.serial_number = serial_number;
         if (user_id) query.user_id = user_id;
@@ -2656,6 +2656,28 @@ exports.getSchedules = async (req, res) => {
         // Add status filtering
         if (status && status !== 'All') {
             query.status = status.toLowerCase();
+        }
+
+        if (dashboard === 'true' && serial_number) {
+            // Get all pending and started schedules (active ones)
+            const activeSchedules = await DeviceSchedule.find({
+                ...query,
+                status: { $in: ['pending', 'started'] }
+            }).sort({ created_at: -1 });
+
+            // Get non-active schedules (completed, cancelled)
+            const completedSchedules = await DeviceSchedule.find({
+                ...query,
+                status: { $in: ['completed', 'cancelled'] }
+            }).sort({ created_at: -1 }).limit(Math.max(0, 5 - activeSchedules.length));
+
+            // Combine them
+            const combinedSchedules = [...activeSchedules, ...completedSchedules];
+
+            return res.status(200).json({
+                success: true,
+                data: combinedSchedules
+            });
         }
 
         const schedules = await DeviceSchedule.find(query).sort({ created_at: -1 });
