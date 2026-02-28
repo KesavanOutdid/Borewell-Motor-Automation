@@ -40,9 +40,9 @@ client.on('connect', () => {
     sendBoot();
 
     intervals.push(setInterval(sendHeartbeat, 10000)); 
-    intervals.push(setInterval(sendStatusAck, 500000)); 
-    intervals.push(setInterval(sendTelemetry, 500000));
-    intervals.push(setInterval(sendAlert, 500000)); 
+    intervals.push(setInterval(sendStatusAck, 10000)); 
+    intervals.push(setInterval(sendTelemetry, 10000));
+    intervals.push(setInterval(sendAlert, 10000)); 
 
 });
 

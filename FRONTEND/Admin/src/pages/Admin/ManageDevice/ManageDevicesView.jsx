@@ -173,21 +173,46 @@ const ManageDevicesView = ({ userInfo, handleLogout }) => {
                                         <h6 style={{ fontSize: '13px', fontWeight: '600', color: '#8f9297', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '15px' }}>Device Information</h6>
                                         <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px' }}>
                                             <div className="row">
-                                                <div className="col-md-6" style={{ marginBottom: '15px' }}>
+                                                <div className="col-md-4" style={{ marginBottom: '15px' }}>
                                                     <div style={{ fontSize: '12px', color: '#8f9297', marginBottom: '5px' }}>Serial Number</div>
                                                     <div style={{ fontSize: '14px', fontWeight: '500', color: '#344767' }}>{deviceDetails.serial_number || '-'}</div>
                                                 </div>
-                                                <div className="col-md-6" style={{ marginBottom: '15px' }}>
+                                                <div className="col-md-4" style={{ marginBottom: '15px' }}>
+                                                    <div style={{ fontSize: '12px', color: '#8f9297', marginBottom: '5px' }}>IMEI Number</div>
+                                                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#344767' }}>{deviceDetails.imei_number || '-'}</div>
+                                                </div>
+                                                <div className="col-md-4" style={{ marginBottom: '15px' }}>
                                                     <div style={{ fontSize: '12px', color: '#8f9297', marginBottom: '5px' }}>Device Nickname</div>
                                                     <div style={{ fontSize: '14px', fontWeight: '500', color: '#344767' }}>{deviceDetails.device_nickname || '-'}</div>
                                                 </div>
-                                                <div className="col-md-6" style={{ marginBottom: '15px' }}>
+                                                <div className="col-md-4" style={{ marginBottom: '15px' }}>
                                                     <div style={{ fontSize: '12px', color: '#8f9297', marginBottom: '5px' }}>Status</div>
                                                     <span className={`badge badge-sm ${deviceDetails.status ? 'bg-gradient-success' : 'bg-gradient-secondary'}`} style={{ padding: '6px 12px' }}>
                                                         {deviceDetails.status ? 'Active' : 'Inactive'}
                                                     </span>
                                                 </div>
                                             </div>
+
+                                            {/* Assigned User Details */}
+                                            {deviceDetails.user_details && (
+                                                <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #e9ecef' }}>
+                                                    <h6 style={{ fontSize: '11px', fontWeight: '600', color: '#8f9297', textTransform: 'uppercase', marginBottom: '15px' }}>Assigned User Details</h6>
+                                                    <div className="row">
+                                                        <div className="col-md-4" style={{ marginBottom: '15px' }}>
+                                                            <div style={{ fontSize: '12px', color: '#8f9297', marginBottom: '5px' }}>User Name</div>
+                                                            <div style={{ fontSize: '14px', fontWeight: '500', color: '#344767' }}>{deviceDetails.user_details.user_name || '-'}</div>
+                                                        </div>
+                                                        <div className="col-md-4" style={{ marginBottom: '15px' }}>
+                                                            <div style={{ fontSize: '12px', color: '#8f9297', marginBottom: '5px' }}>User Email</div>
+                                                            <div style={{ fontSize: '14px', fontWeight: '500', color: '#344767' }}>{deviceDetails.user_details.user_email || '-'}</div>
+                                                        </div>
+                                                        <div className="col-md-4" style={{ marginBottom: '15px' }}>
+                                                            <div style={{ fontSize: '12px', color: '#8f9297', marginBottom: '5px' }}>User Phone</div>
+                                                            <div style={{ fontSize: '14px', fontWeight: '500', color: '#344767' }}>{deviceDetails.user_details.user_phone || '-'}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 

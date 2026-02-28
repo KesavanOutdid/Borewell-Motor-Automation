@@ -90,17 +90,21 @@ const ViewProduct = ({ userInfo, handleLogout }) => {
 
                                 <div className="card-body">
                                     <div className="row" style={{ marginBottom: '30px' }}>
-                                        <div className="col-md-6">
+                                        <div className="col-md-4">
                                             <div style={{ marginBottom: '20px' }}>
                                                 <label style={{ fontWeight: '600', color: '#666', fontSize: '14px', marginBottom: '5px', display: 'block' }}>Product ID</label>
                                                 <p style={{ fontSize: '16px', margin: 0 }}>{product.product_id || 'N/A'}</p>
                                             </div>
+                                        </div>
 
+                                        <div className="col-md-4">
                                             <div style={{ marginBottom: '20px' }}>
                                                 <label style={{ fontWeight: '600', color: '#666', fontSize: '14px', marginBottom: '5px', display: 'block' }}>Product Name</label>
                                                 <p style={{ fontSize: '16px', margin: 0 }}>{product.product_name}</p>
                                             </div>
+                                        </div>
 
+                                        <div className="col-md-4">
                                             <div style={{ marginBottom: '20px' }}>
                                                 <label style={{ fontWeight: '600', color: '#666', fontSize: '14px', marginBottom: '5px', display: 'block' }}>Status</label>
                                                 <p style={{ fontSize: '16px', margin: 0 }}>
@@ -116,31 +120,39 @@ const ViewProduct = ({ userInfo, handleLogout }) => {
                                                     </span>
                                                 </p>
                                             </div>
+                                        </div>
 
+                                        <div className="col-md-4">
                                             <div style={{ marginBottom: '20px' }}>
                                                 <label style={{ fontWeight: '600', color: '#666', fontSize: '14px', marginBottom: '5px', display: 'block' }}>Box Size</label>
                                                 <p style={{ fontSize: '16px', margin: 0 }}>{product.product_quality?.box_size || 'N/A'}</p>
                                             </div>
                                         </div>
 
-                                        <div className="col-md-6">
+                                        <div className="col-md-4">
                                             <div style={{ marginBottom: '20px' }}>
                                                 <label style={{ fontWeight: '600', color: '#666', fontSize: '14px', marginBottom: '5px', display: 'block' }}>Created By</label>
                                                 <p style={{ fontSize: '16px', margin: 0 }}>{product.createdBy || 'N/A'}</p>
                                             </div>
+                                        </div>
 
+                                        <div className="col-md-4">
                                             <div style={{ marginBottom: '20px' }}>
                                                 <label style={{ fontWeight: '600', color: '#666', fontSize: '14px', marginBottom: '5px', display: 'block' }}>Created At</label>
                                                 <p style={{ fontSize: '16px', margin: 0 }}>
                                                     {new Date(product.createdAt).toLocaleString()}
                                                 </p>
                                             </div>
+                                        </div>
 
+                                        <div className="col-md-4">
                                             <div style={{ marginBottom: '20px' }}>
                                                 <label style={{ fontWeight: '600', color: '#666', fontSize: '14px', marginBottom: '5px', display: 'block' }}>Updated By</label>
                                                 <p style={{ fontSize: '16px', margin: 0 }}>{product.updatedBy || 'N/A'}</p>
                                             </div>
+                                        </div>
 
+                                        <div className="col-md-4">
                                             <div style={{ marginBottom: '20px' }}>
                                                 <label style={{ fontWeight: '600', color: '#666', fontSize: '14px', marginBottom: '5px', display: 'block' }}>Updated At</label>
                                                 <p style={{ fontSize: '16px', margin: 0 }}>
@@ -171,27 +183,27 @@ const ViewProduct = ({ userInfo, handleLogout }) => {
                                             <label style={{ fontWeight: '600', color: '#666', fontSize: '14px', marginBottom: '15px', display: 'block' }}>Pricing & Logistics</label>
                                             <div className="row">
                                                 <div className="col-md-3">
-                                                    <div style={{ backgroundColor: '#f0f9ff', padding: '15px', borderRadius: '6px', border: '1px solid #bfdbfe' }}>
-                                                        <p style={{ fontSize: '12px', color: '#1e40af', fontWeight: '600', margin: '0 0 5px 0' }}>Price</p>
-                                                        <p style={{ fontSize: '20px', fontWeight: '700', color: '#1e40af', margin: 0 }}>₹{product.product_price || '0'}</p>
+                                                    <div style={{ backgroundColor: '#f0f9ff', padding: '10px 15px', borderRadius: '6px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <p style={{ fontSize: '12px', color: '#1e40af', fontWeight: '600', margin: 0 }}>Price</p>
+                                                        <p style={{ fontSize: '16px', fontWeight: '700', color: '#1e40af', margin: 0 }}>₹{product.product_price || '0'}</p>
                                                     </div>
                                                 </div>
                                                 <div className="col-md-3">
-                                                    <div style={{ backgroundColor: '#fef3f2', padding: '15px', borderRadius: '6px', border: '1px solid #fecaca' }}>
-                                                        <p style={{ fontSize: '12px', color: '#991b1b', fontWeight: '600', margin: '0 0 5px 0' }}>GST</p>
-                                                        <p style={{ fontSize: '20px', fontWeight: '700', color: '#991b1b', margin: 0 }}>{product.product_gst || '0'}%</p>
+                                                    <div style={{ backgroundColor: '#fef3f2', padding: '10px 15px', borderRadius: '6px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <p style={{ fontSize: '12px', color: '#991b1b', fontWeight: '600', margin: 0 }}>GST</p>
+                                                        <p style={{ fontSize: '16px', fontWeight: '700', color: '#991b1b', margin: 0 }}>{product.product_gst || '0'}%</p>
                                                     </div>
                                                 </div>
                                                 <div className="col-md-3">
-                                                    <div style={{ backgroundColor: '#f0fdf4', padding: '15px', borderRadius: '6px', border: '1px solid #bbf7d0' }}>
-                                                        <p style={{ fontSize: '12px', color: '#15803d', fontWeight: '600', margin: '0 0 5px 0' }}>Shipping Cost</p>
-                                                        <p style={{ fontSize: '20px', fontWeight: '700', color: '#15803d', margin: 0 }}>₹{product.product_shipping_cost || '0'}</p>
+                                                    <div style={{ backgroundColor: '#f0fdf4', padding: '10px 15px', borderRadius: '6px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <p style={{ fontSize: '12px', color: '#15803d', fontWeight: '600', margin: 0 }}>Shipping Cost</p>
+                                                        <p style={{ fontSize: '16px', fontWeight: '700', color: '#15803d', margin: 0 }}>₹{product.product_shipping_cost || '0'}</p>
                                                     </div>
                                                 </div>
                                                 <div className="col-md-3">
-                                                    <div style={{ backgroundColor: '#fef9e7', padding: '15px', borderRadius: '6px', border: '1px solid #fde047' }}>
-                                                        <p style={{ fontSize: '12px', color: '#b45309', fontWeight: '600', margin: '0 0 5px 0' }}>Quantity</p>
-                                                        <p style={{ fontSize: '20px', fontWeight: '700', color: '#b45309', margin: 0 }}>{product.product_quantity || '0'}</p>
+                                                    <div style={{ backgroundColor: '#fef9e7', padding: '10px 15px', borderRadius: '6px', border: '1px solid #fde047', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <p style={{ fontSize: '12px', color: '#b45309', fontWeight: '600', margin: 0 }}>Quantity</p>
+                                                        <p style={{ fontSize: '16px', fontWeight: '700', color: '#b45309', margin: 0 }}>{product.product_quantity || '0'}</p>
                                                     </div>
                                                 </div>
                                             </div>

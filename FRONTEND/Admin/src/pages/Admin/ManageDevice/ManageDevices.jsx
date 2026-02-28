@@ -270,6 +270,11 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                                 onChange={(e) => handleInputChange("serial_number", sanitizeSerialNumber(e.target.value))} readOnly={currentDeviceDetails.assign_status === true} required />
                                                         </div>
                                                         <div style={{ marginBottom: "10px" }}>
+                                                            <label>IMEI Number</label>
+                                                            <input type="text" name="imei" className="form-control" style={{ width: "100%", padding: "8px", margin: "5px 0" }}
+                                                                value={currentDeviceDetails.imei_number || ""} readOnly />
+                                                        </div>
+                                                        <div style={{ marginBottom: "10px" }}>
                                                             <label>Status</label>
                                                             <select name="status" className="form-control" style={{ width: "100%", padding: "8px", margin: "5px 0" }} value={currentDeviceDetails.status}  // ensures value reflects the state correctly
                                                                 onChange={(e) => handleInputChange("status", e.target.value)}  // handle change with string values "true" or "false"
@@ -402,7 +407,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                                                 .filter((d) => d.status === true && d.assign_status === false)
                                                                                 .map((d) => (
                                                                                     <option key={d._id} value={d.serial_number}>
-                                                                                        {d.serial_number}
+                                                                                        {d.serial_number} {d.imei_number ? `(${d.imei_number})` : ''}
                                                                                     </option>
                                                                                 ))}
                                                                         </>
@@ -478,6 +483,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                 <tr>
                                                     <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">S.No</th>
                                                     <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Serial Number</th>
+                                                    <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">IMEI Number</th>
                                                     <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Device Nickname</th>
                                                     <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Assign Device By</th>
                                                     <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Assign Status</th>
@@ -487,10 +493,10 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                             </thead>
                                             <tbody>
                                                 {loading ? (
-                                                    <TableSkeleton rows={8} columns={7} />
+                                                    <TableSkeleton rows={8} columns={8} />
                                                 ) : errorDevice ? (
                                                     <tr>
-                                                        <td colSpan="7" style={{ textAlign: 'center', color: 'red' }}>
+                                                        <td colSpan="8" style={{ textAlign: 'center', color: 'red' }}>
                                                             <p>{errorDevice}</p>
                                                         </td>
                                                     </tr>
@@ -505,6 +511,11 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                             <td className="align-middle text-center">
                                                                 <span className="text-secondary text-xs font-weight-bold">
                                                                     {device.serial_number || '-'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="align-middle text-center">
+                                                                <span className="text-secondary text-xs font-weight-bold">
+                                                                    {device.imei_number || '-'}
                                                                 </span>
                                                             </td>
                                                             <td className="align-middle text-center">
