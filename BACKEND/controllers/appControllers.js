@@ -386,9 +386,9 @@ exports.configIMEInumber = async (req, res, next) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty())
-            return res.status(400).json({ success: false, errors: errors.array() });
+            return res.status(400).json({ success: false, message: errors.array()[0].msg, errors: errors.array() });
 
-        const { serial_number, imei_number, user_email, timestamp, latitude, longitude, motor_hp, device_nickname } = req.body;
+        const { serial_number, user_email, timestamp, latitude, longitude, motor_hp, device_nickname } = req.body;
 
         // Find user by email
         const user = await User.findOne({ user_email });
@@ -408,27 +408,27 @@ exports.configIMEInumber = async (req, res, next) => {
             });
 
         // Check if imei_number is already exists for another device
-        if (imei_number) {
-            const existingImei = await Device.findOne({
-                imei_number,
-                serial_number: { $ne: serial_number }
-            });
-            if (existingImei) {
-                return res.status(400).json({
-                    success: false,
-                    message: "imei_number is there give unique"
-                });
-            }
-        }
+        // if (imei_number) {
+        //     const existingImei = await Device.findOne({
+        //         imei_number,
+        //         serial_number: { $ne: serial_number }
+        //     });
+        //     if (existingImei) {
+        //         return res.status(400).json({
+        //             success: false,
+        //             message: "imei_number is there give unique"
+        //         });
+        //     }
+        // }
 
         // Prepare update object
         const updateData = {
-            imei_number,
+            // imei_number: imei_number || null,
             latitude,
             longitude,
             motor_hp,
             config_status: true,
-            updatedAt: new Date(timestamp),
+            updatedAt: timestamp ? new Date(timestamp) : new Date(),
             updatedBy: user_email
         };
 
@@ -452,7 +452,7 @@ exports.configIMEInumber = async (req, res, next) => {
             message: "IMEI & location configured successfully",
             device: {
                 serial_number: updatedDevice.serial_number,
-                imei_number: updatedDevice.imei_number,
+                // imei_number: updatedDevice.imei_number,
                 latitude: updatedDevice.latitude,
                 longitude: updatedDevice.longitude,
                 motor_hp: updatedDevice.motor_hp,
