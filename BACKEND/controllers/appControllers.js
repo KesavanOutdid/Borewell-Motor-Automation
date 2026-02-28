@@ -407,23 +407,8 @@ exports.configIMEInumber = async (req, res, next) => {
                 message: "Device not found or not assigned to this user"
             });
 
-        // Check if imei_number is already exists for another device
-        // if (imei_number) {
-        //     const existingImei = await Device.findOne({
-        //         imei_number,
-        //         serial_number: { $ne: serial_number }
-        //     });
-        //     if (existingImei) {
-        //         return res.status(400).json({
-        //             success: false,
-        //             message: "imei_number is there give unique"
-        //         });
-        //     }
-        // }
-
         // Prepare update object
         const updateData = {
-            // imei_number: imei_number || null,
             latitude,
             longitude,
             motor_hp,
@@ -452,7 +437,6 @@ exports.configIMEInumber = async (req, res, next) => {
             message: "IMEI & location configured successfully",
             device: {
                 serial_number: updatedDevice.serial_number,
-                // imei_number: updatedDevice.imei_number,
                 latitude: updatedDevice.latitude,
                 longitude: updatedDevice.longitude,
                 motor_hp: updatedDevice.motor_hp,
