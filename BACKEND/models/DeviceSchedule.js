@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const deviceScheduleSchema = new mongoose.Schema({
     serial_number: { type: String, required: true },
-    imei_number: { type: String, required: true },
+    imei_number: { type: String, default: null },
     user_id: { type: Number, required: true },
     user_name: { type: String },
     started_by: { type: String },

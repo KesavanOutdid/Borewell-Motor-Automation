@@ -544,7 +544,7 @@ exports.startStopDevice = async (req, res) => {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
-        const device = await Device.findOne({ serial_number, imei_number });
+        const device = await Device.findOne({ serial_number });
         if (!device) {
             return res.status(404).json({ success: false, message: "Device not found" });
         }
@@ -593,7 +593,7 @@ exports.startStopDevice = async (req, res) => {
         }
 
         await Device.updateOne(
-            { serial_number, imei_number },
+            { serial_number },
             { $set: updateData }
         );
 
@@ -631,7 +631,7 @@ exports.startStopDevice = async (req, res) => {
                 if (!openSession) {
                     await historyCollection.insertOne({
                         serial_number,
-                        imei_number,
+                        imei_number: imei_number || device.imei_number || null,
                         user_id: user.user_id,
                         date: new Date().toISOString().split("T")[0],
                         startAt: updateData.startAt,
@@ -739,10 +739,11 @@ exports.startStopDevice = async (req, res) => {
         const payload = {
             MESSAGE_TYPE: "COMMAND",
             SERIAL_NUMBER: serial_number,
-            IMEI_NUMBER: imei_number,
             COMMAND: start_status ? "START" : "STOP",
             TIMESTAMP: new Date().toISOString()
         };
+        const effectiveImei = imei_number || device.imei_number;
+        if (effectiveImei) payload.IMEI_NUMBER = effectiveImei;
 
         if (mqttPublisher && mqttPublisher.connected) {
             mqttPublisher.publish(topic, JSON.stringify(payload), { qos: 1 });

@@ -42,7 +42,7 @@ client.on('connect', () => {
     intervals.push(setInterval(sendHeartbeat, 10000)); 
     intervals.push(setInterval(sendStatusAck, 10000)); 
     intervals.push(setInterval(sendTelemetry, 10000));
-    intervals.push(setInterval(sendAlert, 10000)); 
+    intervals.push(setInterval(sendAlert, 500000)); 
 
 });
 
@@ -82,16 +82,18 @@ async function sendBoot() {
         devices.forEach(d => {
             if (d.start_status) return;  // motor ON → do NOT send BOOT
 
-            publish(`agri/${d.serial_number}/boot`, {
+            const payload = {
                 MESSAGE_TYPE: "BOOTNOTIFICATION",
                 SERIAL_NUMBER: d.serial_number,
-                IMEI_NUMBER: d.imei_number,
                 FIRMWARE_VERSION: "1.0.3",
                 HARDWARE_VERSION: "HW1.0",
                 TIMESTAMP: new Date().toISOString(),
                 POWER_STATUS: "ON",
                 NETWORK_STATUS: "4G",
-            });
+            };
+            if (d.imei_number) payload.IMEI_NUMBER = d.imei_number;
+
+            publish(`agri/${d.serial_number}/boot`, payload);
         });
     } catch (error) {
         console.error('Error sending boot notifications:', error.message);
@@ -107,14 +109,16 @@ async function sendHeartbeat() {
         const devices = await getConfiguredDevices();
 
         devices.forEach(d => {
-            publish(`agri/${d.serial_number}/heartbeat`, {
+            const payload = {
                 MESSAGE_TYPE: "HEARTBEAT",
                 SERIAL_NUMBER: d.serial_number,
-                IMEI_NUMBER: d.imei_number,
                 SIGNAL_STRENGTH: 30 + Math.floor(Math.random() * 50),
                 TIMESTAMP: new Date().toISOString(),
                 MOTOR_RUNNING: !!d.start_status
-            });
+            };
+            if (d.imei_number) payload.IMEI_NUMBER = d.imei_number;
+
+            publish(`agri/${d.serial_number}/heartbeat`, payload);
         });
     } catch (error) {
         console.error('Error sending heartbeat:', error.message);
@@ -129,14 +133,16 @@ async function sendStatusAck() {
         const devices = await getConfiguredDevices();
 
         devices.forEach(d => {
-            publish(`agri/${d.serial_number}/phase`, {
+            const payload = {
                 MESSAGE_TYPE: "STATUS",
                 SERIAL_NUMBER: d.serial_number,
-                IMEI_NUMBER: d.imei_number,
                 MOTOR_RUNNING: !!d.start_status,
                 MOTOR_POWER: "Single Phase",
                 TIMESTAMP: new Date().toISOString()
-            });
+            };
+            if (d.imei_number) payload.IMEI_NUMBER = d.imei_number;
+
+            publish(`agri/${d.serial_number}/phase`, payload);
         });
     } catch (error) {
         console.error('Error sending status ack:', error.message);
@@ -153,10 +159,9 @@ async function sendTelemetry() {
         devices.forEach(d => {
             if (!d.start_status) return; // motor OFF → do not send
 
-            publish(`agri/${d.serial_number}/telemetry`, {
+            const payload = {
                 TYPE: "TELEMETRY",
                 SERIAL_NUMBER: d.serial_number,
-                IMEI_NUMBER: d.imei_number,
                 TIMESTAMP: new Date().toISOString(),
                 VOLTAGE_RMS: Number((230 + Math.random() * 10).toFixed(1)),
                 CURRENT_RMS: Number((5 + Math.random() * 2).toFixed(1)),
@@ -169,7 +174,10 @@ async function sendTelemetry() {
                 POWER_FACTOR: 0.92,
                 SIGNAL_STRENGTH: 75,
                 FAULT_CODE: 0
-            });
+            };
+            if (d.imei_number) payload.IMEI_NUMBER = d.imei_number;
+
+            publish(`agri/${d.serial_number}/telemetry`, payload);
         });
     } catch (error) {
         console.error('Error sending telemetry:', error.message);
@@ -190,15 +198,17 @@ async function sendAlert() {
 
         const alert = alertTypes[Math.floor(Math.random() * alertTypes.length)];
 
-        publish(`agri/${d.serial_number}/alert`, {
+        const payload = {
             MESSAGE_TYPE: "ALERT",
             ALERT_TYPE: alert,
             SERIAL_NUMBER: d.serial_number,
-            IMEI_NUMBER: d.imei_number,
             DEVICE_STATUS: alert === "DRY_RUN" ? "CRITICAL" : "WARNING",
             FAULT_CODE: 101,
             TIMESTAMP: new Date().toISOString()
-        });
+        };
+        if (d.imei_number) payload.IMEI_NUMBER = d.imei_number;
+
+        publish(`agri/${d.serial_number}/alert`, payload);
     });
     } catch (error) {
         console.error('Error sending alert:', error.message);

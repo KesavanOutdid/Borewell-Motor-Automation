@@ -94,7 +94,7 @@ client.on("message", async (topic, message) => {
     for (const item of data) {
         // Normalize keys to support both old and new formats during transition
         const serialNumber = item.SERIAL_NUMBER || item.serial_number;
-        const imeiNumber = item.IMEI_NUMBER || item.imei_number;
+        const imeiNumber = item.IMEI_NUMBER || item.imei_number || null;
         const timestamp = item.TIMESTAMP || item.timestamp;
         const motorRunning = item.MOTOR_RUNNING !== undefined ? item.MOTOR_RUNNING : item.motor_running;
 
@@ -163,28 +163,33 @@ client.on("message", async (topic, message) => {
 
             try {
                 // 1) Save Daily Power Usage (per day)
+                const dailyEnergyFilter = {
+                    serial_number: serialNumber,
+                    user_id: userId,
+                    date: usageDate
+                };
+
+                const dailyEnergyUpdate = {
+                    $inc: { energy_kwh: energyValue },
+
+                    $max: {
+                        maxCurrent: item.CURRENT_RMS ?? item.current_rms,
+                        maxVoltage: item.VOLTAGE_RMS ?? item.voltage_rms
+                    },
+
+                    $min: {
+                        minCurrent: item.CURRENT_RMS ?? item.current_rms,
+                        minVoltage: item.VOLTAGE_RMS ?? item.voltage_rms
+                    },
+
+                    $set: { updatedAt: new Date() }
+                };
+
+                if (imeiNumber) dailyEnergyUpdate.$set.imei_number = imeiNumber;
+
                 await db.collection("agri_daily_energy").updateOne(
-                    {
-                        serial_number: serialNumber,
-                        imei_number: imeiNumber,
-                        user_id: userId,
-                        date: usageDate
-                    },
-                    {
-                        $inc: { energy_kwh: energyValue },
-
-                        $max: {
-                            maxCurrent: item.CURRENT_RMS ?? item.current_rms,
-                            maxVoltage: item.VOLTAGE_RMS ?? item.voltage_rms
-                        },
-
-                        $min: {
-                            minCurrent: item.CURRENT_RMS ?? item.current_rms,
-                            minVoltage: item.VOLTAGE_RMS ?? item.voltage_rms
-                        },
-
-                        $set: { updatedAt: new Date() }
-                    },
+                    dailyEnergyFilter,
+                    dailyEnergyUpdate,
                     { upsert: true }
                 );
 
@@ -313,25 +318,30 @@ client.on("message", async (topic, message) => {
         /* HISTORY LIVE ENERGY UPDATE (TELEMETRY)                 */
         /* ------------------------------------------------------ */
         if (type === "TELEMETRY") {
-            await db.collection("agri_history").updateOne(
-                {
-                    serial_number: serialNumber,
-                    imei_number: imeiNumber,
-                    user_id: userId,
-                    stopAt: null   // only update open sessions
+            const historyFilter = {
+                serial_number: serialNumber,
+                user_id: userId,
+                stopAt: null   // only update open sessions
+            };
+
+            const historyUpdate = {
+                $inc: { energy_kwh: energyValue },
+                $max: { 
+                    maxCurrent: item.CURRENT_RMS ?? item.current_rms, 
+                    maxVoltage: item.VOLTAGE_RMS ?? item.voltage_rms 
                 },
-                {
-                    $inc: { energy_kwh: energyValue },
-                    $max: { 
-                        maxCurrent: item.CURRENT_RMS ?? item.current_rms, 
-                        maxVoltage: item.VOLTAGE_RMS ?? item.voltage_rms 
-                    },
-                    $min: { 
-                        minCurrent: item.CURRENT_RMS ?? item.current_rms, 
-                        minVoltage: item.VOLTAGE_RMS ?? item.voltage_rms 
-                    },
-                    $set: { updatedAt: new Date() }
-                }
+                $min: { 
+                    minCurrent: item.CURRENT_RMS ?? item.current_rms, 
+                    minVoltage: item.VOLTAGE_RMS ?? item.voltage_rms 
+                },
+                $set: { updatedAt: new Date() }
+            };
+
+            if (imeiNumber) historyUpdate.$set.imei_number = imeiNumber;
+
+            await db.collection("agri_history").updateOne(
+                historyFilter,
+                historyUpdate
             );
         }
 

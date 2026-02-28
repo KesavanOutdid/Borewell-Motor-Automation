@@ -90,10 +90,14 @@ const initScheduler = () => {
 };
 
 const executeCommand = async (schedule, isStart) => {
-    const { serial_number, imei_number, user_id } = schedule;
+    let { serial_number, imei_number, user_id } = schedule;
     
     try {
         console.log(`[Scheduler] ${isStart ? 'STARTING' : 'STOPPING'} Device: ${serial_number}`);
+
+        // Fetch device to get latest info and fallback imei_number
+        const device = await Device.findOne({ serial_number });
+        if (!imei_number && device) imei_number = device.imei_number;
 
         // Update Device State in DB
         const updateData = {
@@ -125,10 +129,10 @@ const executeCommand = async (schedule, isStart) => {
         const payload = {
             MESSAGE_TYPE: "COMMAND",
             SERIAL_NUMBER: serial_number,
-            IMEI_NUMBER: imei_number,
             COMMAND: isStart ? "START" : "STOP",
             TIMESTAMP: new Date().toISOString()
         };
+        if (imei_number) payload.IMEI_NUMBER = imei_number;
 
         if (mqttPublisher && mqttPublisher.connected) {
             mqttPublisher.publish(topic, JSON.stringify(payload), { qos: 1 });

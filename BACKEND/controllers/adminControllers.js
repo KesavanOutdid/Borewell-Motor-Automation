@@ -583,7 +583,7 @@ exports.uploadProfileImage = async (req, res, next) => {
 
 exports.createDevice = async (req, res) => {
     try {
-        const { serial_number, createdBy } = req.body;
+        const { serial_number, imei_number, createdBy } = req.body;
 
         // Validate serial number
         if (!serial_number || serial_number.trim().length < 17 || serial_number.length > 20) {
@@ -599,6 +599,7 @@ exports.createDevice = async (req, res) => {
         // Create device
         const device = new Device({
             serial_number,
+            imei_number: imei_number || null,
             device_status: true,
             createdBy: createdBy,
             createdAt: new Date(),
@@ -782,7 +783,7 @@ exports.getDevices = async (req, res) => {
 
 exports.updateDevice = async (req, res) => {
     try {
-        const { id, serial_number, status, updatedBy } = req.body;
+        const { id, serial_number, imei_number, status, updatedBy } = req.body;
 
         const device = await Device.findById(id);
         if (!device) {
@@ -803,6 +804,7 @@ exports.updateDevice = async (req, res) => {
 
         // Update fields
         if (serial_number) device.serial_number = serial_number;
+        if (imei_number !== undefined) device.imei_number = imei_number || null;
         if (status !== undefined) device.status = status;
 
         device.updatedBy = updatedBy;

@@ -248,7 +248,6 @@ router.delete('/deleteProfileImage/:user_id', authMiddleware(), appCtrl.deletePr
  *                 description: motor_hp of the configuration
  *             required:
  *               - serial_number
- *               - imei_number
  *               - user_email
  *               - timestamp
  *               - latitude
@@ -269,7 +268,7 @@ router.post(
     // authMiddleware(),
     [
         body('serial_number').notEmpty().withMessage("Serial number is required"),
-        body('imei_number').notEmpty().withMessage("IMEI number is required"),
+        body('imei_number').optional(),
         body('user_email').isEmail().withMessage("Valid user email is required"),
         body('timestamp').notEmpty().withMessage("Timestamp is required"),
         body('latitude').notEmpty().withMessage("latitude is required"),
