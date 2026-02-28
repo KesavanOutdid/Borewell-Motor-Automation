@@ -409,18 +409,16 @@ exports.configIMEInumber = async (req, res, next) => {
 
         // Prepare update object
         const updateData = {
-            latitude,
-            longitude,
-            motor_hp,
             config_status: true,
             updatedAt: timestamp ? new Date(timestamp) : new Date(),
             updatedBy: user_email
         };
 
-        // Add device_nickname if provided
-        if (device_nickname !== undefined) {
-            updateData.device_nickname = device_nickname;
-        }
+        // Add optional fields if provided
+        if (latitude !== undefined) updateData.latitude = latitude;
+        if (longitude !== undefined) updateData.longitude = longitude;
+        if (motor_hp !== undefined) updateData.motor_hp = motor_hp;
+        if (device_nickname !== undefined) updateData.device_nickname = device_nickname;
 
         // Update device including location
         const updatedDevice = await Device.findOneAndUpdate(
@@ -826,7 +824,7 @@ exports.userAssignDevices = async (req, res) => {
                     ]
                 }
             ];
-        } else if (filter === 'Shared') {
+        } else if (filter === 'Shared' || filter === 'Access') {
             baseMatch.assigned_user_id = { $ne: userIdNum };
         }
 

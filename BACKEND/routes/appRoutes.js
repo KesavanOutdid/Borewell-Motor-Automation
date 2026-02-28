@@ -250,9 +250,6 @@ router.delete('/deleteProfileImage/:user_id', authMiddleware(), appCtrl.deletePr
  *               - serial_number
  *               - user_email
  *               - timestamp
- *               - latitude
- *               - longitude
- *               - motor_hp
  *     responses:
  *       200:
  *         description: IMEI configured successfully
@@ -269,10 +266,7 @@ router.post(
     [
         body('serial_number').notEmpty().withMessage("Serial number is required"),
         body('user_email').isEmail().withMessage("Valid user email is required"),
-        body('timestamp').notEmpty().withMessage("Timestamp is required"),
-        body('latitude').notEmpty().withMessage("latitude is required"),
-        body('longitude').notEmpty().withMessage("longitude is required"),
-        body('motor_hp').notEmpty().withMessage("motor_hp is required")
+        body('timestamp').notEmpty().withMessage("Timestamp is required")
     ],
     appCtrl.configIMEInumber
 );

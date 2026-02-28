@@ -142,7 +142,7 @@ const ManageDevicesView = ({ userInfo, handleLogout }) => {
         
         const diffMs = Math.max(0, stop.getTime() - start.getTime());
         const diffMins = diffMs / (1000 * 60);
-        return `${diffMins.toFixed(1)}mints`;
+        return `${diffMins.toFixed(1)} minutes`;
     };
 
     return (
