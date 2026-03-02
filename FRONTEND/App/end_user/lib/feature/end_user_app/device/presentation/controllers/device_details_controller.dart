@@ -177,7 +177,7 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
 
   Future<void> fetchDeviceDetails({bool silent = false}) async {
     print('🔧 [DETAILS] Fetching latest device details for $serialNumber');
-    if (serialNumber == null || imeiNumber == null) {
+    if (serialNumber == null) {
       _showMessage('Missing device information');
       return;
     }
@@ -196,16 +196,20 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
     print('🔧 [DETAILS] API Request: POST $url');
 
     try {
+      final body = {
+        'serial_number': serialNumber,
+      };
+      if (imeiNumber != null && imeiNumber!.isNotEmpty && imeiNumber != '-') {
+        body['imei_number'] = imeiNumber!;
+      }
+
       final response = await http.post(
         url,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({
-          'serial_number': serialNumber,
-          'imei_number': imeiNumber,
-        }),
+        body: jsonEncode(body),
       );
 
       print('🔧 [DETAILS] API Response: Status ${response.statusCode}');
@@ -327,7 +331,7 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
     final startTime = DateTime.now();
     print('⏱️ [LATENCY] 1. App sending command: ${start ? 'START' : 'STOP'} at ${startTime.toIso8601String()}');
     
-    if (serialNumber == null || imeiNumber == null) {
+    if (serialNumber == null) {
       _showMessage('Missing device information');
       return;
     }
@@ -352,18 +356,22 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
 
       final url = Uri.parse(AppConfig.baseUrl + AppConfig.startStopDeviceEndpoint);
       
+      final body = {
+        'serial_number': serialNumber,
+        'user_email': userEmail,
+        'start_status': start,
+      };
+      if (imeiNumber != null && imeiNumber!.isNotEmpty && imeiNumber != '-') {
+        body['imei_number'] = imeiNumber!;
+      }
+
       final response = await http.post(
         url,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({
-          'serial_number': serialNumber,
-          'imei_number': imeiNumber,
-          'user_email': userEmail,
-          'start_status': start,
-        }),
+        body: jsonEncode(body),
       );
 
       final endTime = DateTime.now();

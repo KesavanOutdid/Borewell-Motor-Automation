@@ -192,7 +192,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
     });
   }
 
-  void _openSharing(DeviceDetailsController controller) {
+  void _openAccess(DeviceDetailsController controller) {
     final serial = controller.liveData['serialNumber']?.toString();
     if (serial == null || serial.trim().isEmpty) {
        if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
@@ -371,10 +371,11 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
           ),
           Expanded(
             child: _QuickActionCard(
-              icon: Icons.share_rounded,
-              label: 'Share',
+              icon: Icons.add,
+              label: 'Access',
+              
               gradient: AppColors.primaryGradient,
-              onTap: () => _openSharing(controller),
+              onTap: () => _openAccess(controller),
             ),
           ),
           Expanded(
@@ -483,23 +484,6 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
               Expanded(
                 child: Text(
                   location,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              const Icon(Icons.info_outline_rounded, size: 24, color: Colors.orange),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  'IMEI $imei',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,

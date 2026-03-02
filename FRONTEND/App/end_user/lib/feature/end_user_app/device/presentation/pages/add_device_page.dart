@@ -68,32 +68,6 @@ class ConfigureDeviceView extends StatelessWidget {
                         ),
                         const SizedBox(height: 32),
                         _buildTextField(
-                          controller: controller.imeiController,
-                          label: 'IMEI Number',
-                          hint: 'Enter 15-digit IMEI',
-                          icon: Icons.phonelink_setup_rounded,
-                          keyboardType: TextInputType.number,
-                          maxLength: 15,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'IMEI is required';
-                            }
-                            if (value.length != 15) {
-                              return 'IMEI must be exactly 15 digits';
-                            }
-                            if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
-                              return 'Only digits are allowed';
-                            }
-                            return null;
-                          },
-                          suffix: IconButton(
-                            icon: const Icon(Icons.qr_code_scanner_rounded, color: AppColors.primaryGreen),
-                            onPressed: () => controller.scanQRCode(),
-                          ),
-                          isDark: isDark,
-                        ),
-                        const SizedBox(height: 20),
-                        _buildTextField(
                           controller: controller.nicknameController,
                           label: 'Device Name',
                           hint: 'e.g., Motor-1',
@@ -109,13 +83,10 @@ class ConfigureDeviceView extends StatelessWidget {
                         const SizedBox(height: 20),
                         _buildTextField(
                           controller: controller.locationController,
-                          label: 'Device Location',
+                          label: 'Device Location (Optional)',
                           hint: 'e.g., Farm Sector A',
                           icon: Icons.location_on_rounded,
                           validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Location is required';
-                            }
                             return null;
                           },
                           suffix: controller.isGettingLocation.value
@@ -144,15 +115,12 @@ class ConfigureDeviceView extends StatelessWidget {
                         const SizedBox(height: 20),
                         _buildTextField(
                           controller: controller.motorHpController,
-                          label: 'Motor Capacity (HP)',
+                          label: 'Motor Capacity (HP) (Optional)',
                           hint: 'e.g., 5.0',
                           icon: Icons.speed_rounded,
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Motor capacity is required';
-                            }
-                            if (double.tryParse(value) == null) {
+                            if (value != null && value.isNotEmpty && double.tryParse(value) == null) {
                               return 'Enter a valid number';
                             }
                             return null;
@@ -244,9 +212,8 @@ class ConfigureDeviceView extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          _instructionRow('1', 'Find the 15-digit IMEI on device label', isDark),
-          _instructionRow('2', 'Use the QR scanner for quick entry', isDark),
-          _instructionRow('3', 'Set accurate location for tracking', isDark),
+          _instructionRow('1', 'Enter a meaningful name for your device', isDark),
+          _instructionRow('2', 'Provide location and motor HP (optional)', isDark),
         ],
       ),
     );

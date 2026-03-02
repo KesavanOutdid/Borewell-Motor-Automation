@@ -720,7 +720,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     }
   }
     
-  Future<void> respondToShare(String serial, String action) async {
+  Future<void> respondToAccess(String serial, String action) async {
     isLoading.value = true;
     try {
       final token = tokenService.getToken();
@@ -740,7 +740,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
-        Get.snackbar('Success', 'Sharing request ${action} successfully');
+        Get.snackbar('Success', 'Access request ${action} successfully');
         fetchDevices();
       } else {
         Get.snackbar('Error', data['message'] ?? 'Failed to respond to request');
@@ -866,9 +866,14 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   }
 
   bool isDeviceConfigured(Map<String, dynamic> device) {
+    final configStatus = device['config_status'] ?? device['configStatus'];
+    if (configStatus is bool) return configStatus;
+    if (configStatus is num) return configStatus == 1;
+    if (configStatus is String) return configStatus.toLowerCase() == 'true';
+    
+    // Fallback to IMEI check if config_status is missing
     final imei = device['imei_number'] ?? device['imeiNumber'];
-    if (imei == null) return false;
-    return imei.toString().trim().isNotEmpty;
+    return imei != null && imei.toString().trim().isNotEmpty;
   }
 
   bool isDeviceRunning(Map<String, dynamic> device) {

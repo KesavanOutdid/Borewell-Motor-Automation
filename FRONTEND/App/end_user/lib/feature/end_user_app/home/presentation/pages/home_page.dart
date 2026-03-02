@@ -160,7 +160,7 @@ class HomeView extends GetView<HomeController> {
                     const SizedBox(width: 8),
                     _buildFilterChip('Offline'),
                     const SizedBox(width: 8),
-                    _buildFilterChip('Shared'),
+                    _buildFilterChip('Access'),
                     const SizedBox(width: 8),
                     _buildFilterChip('Not Configured'),
                   ],
@@ -466,25 +466,26 @@ class HomeView extends GetView<HomeController> {
                         ],
                       ),
                       const SizedBox(height: 2),
-                      RichText(
-                        text: TextSpan(
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey.shade500,
-                          ),
-                          children: [
-                            const TextSpan(
-                              text: 'IMEI ',
-                              style: TextStyle(
-                                color: AppColors.primaryGreen,
-                                fontWeight: FontWeight.bold,
-                              ),
+                      if (imei != 'N/A' && imei.toString().isNotEmpty)
+                        RichText(
+                          text: TextSpan(
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade500,
                             ),
-                            TextSpan(text: imei),
-                          ],
+                            children: [
+                              const TextSpan(
+                                text: 'IMEI ',
+                                style: TextStyle(
+                                  color: AppColors.primaryGreen,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              TextSpan(text: imei),
+                            ],
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -559,7 +560,7 @@ class HomeView extends GetView<HomeController> {
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () => controller.respondToShare(deviceId, 'accepted'),
+                      onPressed: () => controller.respondToAccess(deviceId, 'accepted'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryGreen,
                         foregroundColor: Colors.white,
@@ -574,7 +575,7 @@ class HomeView extends GetView<HomeController> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => controller.respondToShare(deviceId, 'rejected'),
+                      onPressed: () => controller.respondToAccess(deviceId, 'rejected'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red,
                         side: const BorderSide(color: Colors.red),

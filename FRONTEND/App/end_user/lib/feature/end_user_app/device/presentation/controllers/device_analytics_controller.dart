@@ -89,7 +89,7 @@ class DeviceAnalyticsController extends GetxController {
     serialNumber = args['serial_number'] ?? args['serialNumber'];
     imeiNumber = args['imei_number'] ?? args['imeiNumber'];
     
-    if (serialNumber != null && imeiNumber != null) {
+    if (serialNumber != null) {
       fetchAnalytics(selectedMetricType.value);
     }
   }
@@ -101,8 +101,8 @@ class DeviceAnalyticsController extends GetxController {
   }
 
   Future<void> fetchAnalytics(String type) async {
-    if (serialNumber == null || imeiNumber == null) {
-      logger.e('Missing device information: serial=$serialNumber, imei=$imeiNumber');
+    if (serialNumber == null) {
+      logger.e('Missing device information: serial=$serialNumber');
       _showMessage('Missing device information');
       return;
     }
@@ -118,12 +118,16 @@ class DeviceAnalyticsController extends GetxController {
     selectedMetricType.value = type;
 
     try {
+      final queryParams = {
+        'type': type,
+        'serial_number': serialNumber!,
+      };
+      if (imeiNumber != null && imeiNumber!.isNotEmpty && imeiNumber != '-') {
+        queryParams['imei_number'] = imeiNumber!;
+      }
+
       final uri = Uri.parse(AppConfig.baseUrl + AppConfig.analyticsEndpoint).replace(
-        queryParameters: {
-          'type': type,
-          'serial_number': serialNumber,
-          'imei_number': imeiNumber,
-        },
+        queryParameters: queryParams,
       );
 
       logger.i('Fetching analytics from: $uri');

@@ -569,50 +569,10 @@ class ConfigureDeviceController extends GetxController {
       return false;
     }
 
-    if (imeiController.text.trim().length != 15) {
-      Get.snackbar(
-        'Validation Error',
-        'IMEI must be exactly 15 digits',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red[100],
-      );
-      return false;
-    }
-
     if (nicknameController.text.trim().isEmpty) {
       Get.snackbar(
         'Validation Error',
         'Please enter a device nickname',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red[100],
-      );
-      return false;
-    }
-
-    if (!RegExp(r'^[0-9]{15}$').hasMatch(imeiController.text.trim())) {
-      Get.snackbar(
-        'Validation Error',
-        'IMEI must contain only numbers',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red[100],
-      );
-      return false;
-    }
-
-    if (locationController.text.trim().isEmpty) {
-      Get.snackbar(
-        'Validation Error',
-        'Please enter location',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red[100],
-      );
-      return false;
-    }
-
-    if (motorHpController.text.trim().isEmpty) {
-      Get.snackbar(
-        'Validation Error',
-        'Please enter motor HP',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red[100],
       );
@@ -632,22 +592,23 @@ class ConfigureDeviceController extends GetxController {
       final token = tokenService.getToken();
       final userEmail = tokenService.getUserEmail();
 
+      final body = {
+        "serial_number": serialNumber,
+        "device_nickname": nicknameController.text.trim(),
+        "user_email": userEmail,
+        "timestamp": DateTime.now().toIso8601String(),
+        "latitude": selectedLatitude?.toString() ?? "0",
+        "longitude": selectedLongitude?.toString() ?? "0",
+        "motor_hp": motorHpController.text.trim(),
+      };
+
       final response = await http.post(
         url,
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
         },
-        body: jsonEncode({
-          "serial_number": serialNumber,
-          "imei_number": imeiController.text.trim(),
-          "device_nickname": nicknameController.text.trim(),
-          "user_email": userEmail,
-          "timestamp": DateTime.now().toIso8601String(),
-          "latitude": selectedLatitude?.toString() ?? "0",
-          "longitude": selectedLongitude?.toString() ?? "0",
-          "motor_hp": motorHpController.text.trim(),
-        }),
+        body: jsonEncode(body),
       );
 
       isLoading.value = false;
@@ -693,15 +654,6 @@ class ConfigureDeviceController extends GetxController {
                       color: Colors.grey[600],
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'IMEI: ${imeiController.text}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                      fontFamily: 'monospace',
-                    ),
-                  ),
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () {
@@ -738,12 +690,78 @@ class ConfigureDeviceController extends GetxController {
         );
       } else {
         final errorData = jsonDecode(response.body);
-        Get.snackbar(
-          'Error',
-          errorData['message'] ?? 'Failed to configure device',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red[100],
-        );
+        final errorMessage = errorData['message'] ?? 'Failed to configure device';
+        
+        if (errorMessage.contains("imei_number is there")) {
+          Get.dialog(
+            Builder(
+              builder: (context) => Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.red[100],
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.warning_amber_rounded,
+                          size: 40,
+                          color: Colors.red[600],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'IMEI Already Registered',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'This IMEI number (${imeiController.text}) is already assigned to another device. Please provide a unique IMEI number.',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black54,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red[600],
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(double.infinity, 45),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('OK'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        } else {
+          Get.snackbar(
+            'Error',
+            errorMessage,
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red[100],
+          );
+        }
       }
     } catch (e) {
       isLoading.value = false;

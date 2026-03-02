@@ -277,28 +277,35 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
         backgroundColor: Colors.white,
         foregroundColor: AppColors.textPrimary,
       ),
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(child: _buildScheduleForm()),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Row(
-                children: [
-                  const Text(
-                    'Active/Past Schedules',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textPrimary),
-                  ),
-                ],
+      body: RefreshIndicator(
+        color: AppColors.primaryGreen,
+        onRefresh: () async {
+          await controller.fetchSchedules();
+        },
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(child: _buildScheduleForm()),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                child: Row(
+                  children: [
+                    const Text(
+                      'Active/Past Schedules',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textPrimary),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          SliverToBoxAdapter(child: _buildStatusFilters()),
-          SliverPadding(
-            padding: const EdgeInsets.only(bottom: 20),
-            sliver: _buildScheduleList(),
-          ),
-        ],
+            SliverToBoxAdapter(child: _buildStatusFilters()),
+            SliverPadding(
+              padding: const EdgeInsets.only(bottom: 20),
+              sliver: _buildScheduleList(),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -13,20 +13,22 @@ class DeviceSharingView extends GetView<DeviceSharingController> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Device Sharing'),
+        title: const Text('Device Access'),
       ),
-      body: Obx(() {
-        if (controller.isLoading.value && controller.sharedUsers.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
-        }
+      body: RefreshIndicator(
+        color: AppColors.primaryGreen,
+        onRefresh: () async => await controller.fetchSharedUsers(),
+        child: Obx(() {
+          if (controller.isLoading.value && controller.sharedUsers.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          return ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16.0),
             children: [
               Text(
-                'Share device with others',
+                'Add Device Access',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -35,7 +37,7 @@ class DeviceSharingView extends GetView<DeviceSharingController> {
               ),
               const SizedBox(height: 8),
               Text(
-                'You can share this device with up to 3 additional persons. They will be able to start, stop and view readings.',
+                'You can grant access for this device with up to 3 additional persons. They will be able to start, stop and view readings.',
                 style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
               const SizedBox(height: 20),
@@ -83,72 +85,76 @@ class DeviceSharingView extends GetView<DeviceSharingController> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text('Share'),
+                      child: const Text('Add'),
                     ),
                   ],
                 ),
               const SizedBox(height: 32),
               Text(
-                'Shared Users (${controller.sharedUsers.length}/3)',
+                'Access Granted (${controller.sharedUsers.length}/3)',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 16),
-              Expanded(
-                child: controller.sharedUsers.isEmpty
-                    ? Center(
-                        child: Text(
-                          'No users shared yet',
-                          style: TextStyle(color: Colors.grey[400]),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: controller.sharedUsers.length,
-                        itemBuilder: (context, index) {
-                          final user = controller.sharedUsers[index];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: ListTile(
-                              title: Text(user['shared_to_user_name'] ?? 'Unknown'),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(user['shared_to_user_phone']?.toString() ?? ''),
-                                  const SizedBox(height: 4),
-                                  _buildStatusBadge(user['acceptance_status'] ?? 'pending'),
-                                ],
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Switch(
-                                    value: user['status'] ?? false,
-                                    onChanged: (val) => controller.updateStatus(
-                                      user['shared_to_user_id'],
-                                      val,
-                                    ),
-                                    activeColor: AppColors.primaryGreen,
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                    onPressed: () => _confirmDelete(context, user),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
+              if (controller.sharedUsers.isEmpty)
+                SizedBox(
+                  height: 200,
+                  child: Center(
+                    child: Text(
+                      'No access granted yet',
+                      style: TextStyle(color: Colors.grey[400]),
+                    ),
+                  ),
+                )
+              else
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: controller.sharedUsers.length,
+                  itemBuilder: (context, index) {
+                    final user = controller.sharedUsers[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-              ),
+                      child: ListTile(
+                        title: Text(user['shared_to_user_name'] ?? 'Unknown'),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(user['shared_to_user_phone']?.toString() ?? ''),
+                            const SizedBox(height: 4),
+                            _buildStatusBadge(user['acceptance_status'] ?? 'pending'),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Switch(
+                              value: user['status'] ?? false,
+                              onChanged: (val) => controller.updateStatus(
+                                user['shared_to_user_id'],
+                                val,
+                              ),
+                              activeColor: AppColors.primaryGreen,
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Colors.red),
+                              onPressed: () => _confirmDelete(context, user),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
             ],
-          ),
-        );
-      }),
+          );
+        }),
+      ),
     );
   }
 
@@ -156,8 +162,8 @@ class DeviceSharingView extends GetView<DeviceSharingController> {
     Get.dialog(
       Builder(
         builder: (dialogContext) => AlertDialog(
-          title: const Text('Delete Share'),
-          content: Text('Are you sure you want to remove sharing for ${user['shared_to_user_name']}?'),
+          title: const Text('Remove Access'),
+          content: Text('Are you sure you want to remove access for ${user['shared_to_user_name']}?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext, rootNavigator: true).pop(),
@@ -168,7 +174,7 @@ class DeviceSharingView extends GetView<DeviceSharingController> {
                 Navigator.of(dialogContext, rootNavigator: true).pop();
                 controller.deleteShare(user['shared_to_user_id']);
               },
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+              child: const Text('Remove', style: TextStyle(color: Colors.red)),
             ),
           ],
         ),
