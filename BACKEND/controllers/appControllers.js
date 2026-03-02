@@ -861,10 +861,23 @@ exports.userAssignDevices = async (req, res) => {
 
         const totalDevices = await Device.countDocuments(baseMatch);
 
-        const enrichedDevices = devices.map(device => {
+        const enrichedDevices = await Promise.all(devices.map(async (device) => {
             const share = shares.find(s => s.serial_number === device.serial_number);
+            
+            // Find next upcoming schedule (started or pending)
+            const now = new Date();
+            const nextSchedule = await DeviceSchedule.findOne({
+                serial_number: device.serial_number,
+                status: { $in: ['pending', 'started'] },
+                $or: [
+                    { start_time: { $gt: now } }, // Future start
+                    { stop_time: { $gt: now }, status: 'started' } // Currently running but has a stop time
+                ]
+            }).sort({ start_time: 1 }).lean();
+
             return {
                 ...device,
+                next_schedule: nextSchedule,
                 acceptance_status: device.role === 'master' ? 'accepted' : (share ? share.acceptance_status : 'pending'),
                 share_info: device.role === 'shared' && share ? {
                     master_user_id: share.master_user_id,
@@ -882,7 +895,7 @@ exports.userAssignDevices = async (req, res) => {
                     user_phone: device.user_details.user_phone
                 } : null
             };
-        });
+        }));
 
         // 3. Find all device share relationships where this user is involved (as master or shared_to) - exclude rejected shares
         const sharedDeviceRelationships = await DeviceShare.find({
