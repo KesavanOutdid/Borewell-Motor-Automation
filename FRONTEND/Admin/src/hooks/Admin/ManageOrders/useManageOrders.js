@@ -36,7 +36,7 @@ const useManageOrders = () => {
             if (status) params.append('status', status);
 
             const response = await fetch(
-                `${API_BASE}/app/order/getAllOrders?${params.toString()}`,
+                `${API_BASE}/app/order/getAllAdminOrders?${params.toString()}`,
                 {
                     method: 'GET',
                     headers: {

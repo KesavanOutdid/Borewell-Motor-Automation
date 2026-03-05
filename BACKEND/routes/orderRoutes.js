@@ -540,6 +540,12 @@ router.get(
     orderCtrl.getAllOrders
 );
 
+
+router.get(
+    '/getAllAdminOrders',
+    orderCtrl.getAllOrders
+);
+
 /**
 * @swagger
 * /order/updateOrderStatus:
