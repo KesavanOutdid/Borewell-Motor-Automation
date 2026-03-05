@@ -27,7 +27,7 @@ const router = express.Router();
  *       500:
  *         description: Server error
  */
-router.get("/getDeviceSmartHistory", authMiddleware(1), adminCtrl.getDeviceSmartHistory);
+router.get("/getDeviceSmartHistory", adminCtrl.getDeviceSmartHistory);
 
 /**
  * @swagger
@@ -61,7 +61,6 @@ router.get("/getDeviceSmartHistory", authMiddleware(1), adminCtrl.getDeviceSmart
 // ---------------------
 router.post(
     '/createRole',
-    authMiddleware(1),
     [
         body('role_id').isInt().withMessage("role_id must be a number"),
         body('role_name').notEmpty().withMessage("role_name is required"),
@@ -97,7 +96,6 @@ router.post(
  */
 router.post(
     '/editRole',
-    authMiddleware(1),
     [
         body('role_id').isInt().withMessage("role_id required"),
         body('status').isBoolean().withMessage("status must be true/false"),
@@ -144,7 +142,6 @@ router.post(
  */
 router.post(
     '/createUser',
-    authMiddleware(1),
     [
         body('user_name').notEmpty().withMessage("user_name required"),
         body('role_id').isInt().withMessage("role_id must be a number"),
@@ -220,7 +217,7 @@ router.post(
  */
 
 router.get('/getRoles',
-    authMiddleware(1),
+    // authMiddleware('ADMIN'),
     adminCtrl.getRoles);
 
 /**
@@ -274,7 +271,7 @@ router.get('/getRoles',
  */
 
 router.get('/getUsers',
-    authMiddleware(1),
+    // authMiddleware('ADMIN'),
     adminCtrl.getUsers);
 
 /**
@@ -306,7 +303,7 @@ router.get('/getUsers',
  *       500:
  *         description: Server error
  */
-router.post("/createdDevice", authMiddleware(1), adminCtrl.createDevice);
+router.post("/createdDevice", adminCtrl.createDevice);
 
 /**
  * @swagger
@@ -358,7 +355,7 @@ router.post("/createdDevice", authMiddleware(1), adminCtrl.createDevice);
  *                       type: boolean
  */
 
-router.get("/getDevices", authMiddleware(1), adminCtrl.getDevices);
+router.get("/getDevices", adminCtrl.getDevices);
 
 /**
  * @swagger
@@ -385,7 +382,7 @@ router.get("/getDevices", authMiddleware(1), adminCtrl.getDevices);
  *       400:
  *         description: Bad request
  */
-router.post("/updatedDevice", authMiddleware(1), adminCtrl.updateDevice);
+router.post("/updatedDevice", adminCtrl.updateDevice);
 
 /**
  * @swagger
@@ -414,7 +411,7 @@ router.post("/updatedDevice", authMiddleware(1), adminCtrl.updateDevice);
  *       400:
  *         description: Bad request
  */
-router.post("/deviceAssignTouser", authMiddleware(1), adminCtrl.deviceAssignToUser);
+router.post("/deviceAssignTouser", adminCtrl.deviceAssignToUser);
 
 /**
  * @swagger
@@ -445,7 +442,6 @@ router.post("/deviceAssignTouser", authMiddleware(1), adminCtrl.deviceAssignToUs
  */
 router.post(
     "/manageUserUpdated",
-    authMiddleware(1),
     [
         body('user_id').notEmpty().withMessage("user_id required"),
         body('user_name').optional().notEmpty().withMessage("user_name cannot be empty"),
@@ -492,7 +488,7 @@ router.post(
  *       404:
  *         description: User not found
  */
-router.post('/uploadProfileImage/:user_id', authMiddleware(1), uploadImage.single('image'), adminCtrl.uploadProfileImage);
+router.post('/uploadProfileImage/:user_id', uploadImage.single('image'), adminCtrl.uploadProfileImage);
 
 /**
  * @swagger
@@ -517,7 +513,7 @@ router.post('/uploadProfileImage/:user_id', authMiddleware(1), uploadImage.singl
  *       200:
  *         description: List of assigned devices
  */
-router.get("/getAssignDevices", authMiddleware(1), adminCtrl.getAssignDevices);
+router.get("/getAssignDevices", adminCtrl.getAssignDevices);
 
 /**
  * @swagger
@@ -531,7 +527,7 @@ router.get("/getAssignDevices", authMiddleware(1), adminCtrl.getAssignDevices);
  *       200:
  *         description: Analytics data
  */
-router.get("/getAnalasitic", authMiddleware(1), adminCtrl.getAnalasitic);
+router.get("/getAnalasitic", adminCtrl.getAnalasitic);
 
 // ---------------------
 // Product Management
@@ -576,7 +572,6 @@ router.get("/getAnalasitic", authMiddleware(1), adminCtrl.getAnalasitic);
  */
 router.post(
     '/createProduct',
-    authMiddleware(1),
     [
         body('product_name')
             .notEmpty().withMessage("product_name is required")
@@ -606,7 +601,7 @@ router.post(
  *       200:
  *         description: Paginated list of products
  */
-router.get('/getProducts', authMiddleware(1), adminCtrl.getProducts);
+router.get('/getProducts', adminCtrl.getProducts);
 
 /**
  * @swagger
@@ -623,7 +618,7 @@ router.get('/getProducts', authMiddleware(1), adminCtrl.getProducts);
  *       200:
  *         description: Product details
  */
-router.get('/getProductById', authMiddleware(1), adminCtrl.getProductById);
+router.get('/getProductById', adminCtrl.getProductById);
 
 /**
  * @swagger
@@ -643,7 +638,6 @@ router.get('/getProductById', authMiddleware(1), adminCtrl.getProductById);
  */
 router.post(
     '/updateProduct',
-    authMiddleware(1),
     [
         body('product_name')
             .optional()
@@ -654,7 +648,6 @@ router.post(
 
 router.post(
     '/userAssignDevices',
-    authMiddleware(1),
     [
         body('user_id').notEmpty().withMessage("User ID is required"),
     ],
@@ -663,7 +656,6 @@ router.post(
 
 router.post(
     '/userDeviceHistory',
-    authMiddleware(1),
     [
         body('user_id').notEmpty().withMessage("User ID is required"),
     ],
@@ -695,7 +687,7 @@ router.get(
  *       200:
  *         description: Product deleted successfully
  */
-router.post('/deleteProduct', authMiddleware(1), adminCtrl.deleteProduct);
+router.post('/deleteProduct', adminCtrl.deleteProduct);
 
 // ---------------------
 // File Upload Routes
@@ -720,7 +712,7 @@ router.post('/deleteProduct', authMiddleware(1), adminCtrl.deleteProduct);
  *       200:
  *         description: PDF uploaded successfully
  */
-router.post('/uploadPDF', authMiddleware(1), uploadPDF.single('file'), adminCtrl.uploadPDF);
+router.post('/uploadPDF', uploadPDF.single('file'), adminCtrl.uploadPDF);
 
 /**
  * @swagger
@@ -742,7 +734,7 @@ router.post('/uploadPDF', authMiddleware(1), uploadPDF.single('file'), adminCtrl
  *       200:
  *         description: Image uploaded successfully
  */
-router.post('/uploadImage', authMiddleware(1), uploadImage.single('file'), adminCtrl.uploadImage);
+router.post('/uploadImage', uploadImage.single('file'), adminCtrl.uploadImage);
 
 /**
  * @swagger
@@ -766,6 +758,6 @@ router.post('/uploadImage', authMiddleware(1), uploadImage.single('file'), admin
  *       200:
  *         description: Images uploaded successfully
  */
-router.post('/uploadMultipleImages', authMiddleware(1), uploadImage.array('files', 3), adminCtrl.uploadMultipleImages);
+router.post('/uploadMultipleImages', uploadImage.array('files', 3), adminCtrl.uploadMultipleImages);
 
 module.exports = router;

@@ -3,6 +3,7 @@ import '../../../../../core/config/env.dart';
 import '../../../../../core/services/token_service.dart';
 import '../../../../../core/services/notification_storage_service.dart';
 import '../../../home/presentation/controllers/home_controller.dart';
+import '../../../../../utils/ui_utils.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -175,6 +176,10 @@ class AuthController extends GetxController {
         } else {
           return responseData['message'] ?? "Login failed";
         }
+      } else if (response.statusCode == 403) {
+        final msg = responseData['message'] ?? "User is deactivated";
+        UIUtils.showErrorDialog(title: "Account Alert", message: msg);
+        return msg;
       } else {
         return responseData['message'] ?? "Invalid credentials";
       }
