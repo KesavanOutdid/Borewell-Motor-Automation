@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:intl/intl.dart';
 import '../controllers/home_controller.dart';
 import '../../../../../core/services/notification_storage_service.dart';
 import '../../../../../utils/theme/app_colors.dart';
@@ -371,15 +372,20 @@ class HomeView extends GetView<HomeController> {
     final deviceName = (deviceNickname != null && deviceNickname.toString().isNotEmpty) ? deviceNickname : deviceId;
     final lat = device['latitude'];
     final lng = device['longitude'];
+    final latStr = lat?.toString();
+    final lngStr = lng?.toString();
+    final isZeroLocation = (latStr == '0' && lngStr == '0') || (latStr == '0.0' && lngStr == '0.0');
+    
     final location = (device['location'] != null && device['location'].toString().isNotEmpty && device['location'] != 'No Location')
         ? device['location'].toString()
-        : (lat != null && lng != null ? "$lat, $lng" : "No Location");
+        : (lat != null && lng != null && !isZeroLocation ? "$lat, $lng" : "No Location");
+    final hasLocation = location != 'No Location';
     final imei = device['imei_number'] ?? device['imeiNumber'] ?? 'N/A';
     final isOnline = controller.isOnline(device);
     
     final deviceStatus = !isConfigured 
         ? 'Not Configured' 
-        : (isRunning ? 'Running' : (isOnline ? 'Stopped' : 'Offline'));
+        : (isRunning ? 'Running' : (isOnline ? 'Idle' : 'Offline'));
     
     final statusColor = !isConfigured 
         ? AppColors.primaryOrange 
@@ -387,6 +393,23 @@ class HomeView extends GetView<HomeController> {
     
     final acceptanceStatus = device['acceptance_status'] ?? 'accepted';
     final isPending = acceptanceStatus == 'pending';
+    
+    final nextSchedule = device['next_schedule'];
+    String? nextStartTime;
+    String? nextStopTime;
+    if (nextSchedule != null) {
+      try {
+        if (nextSchedule['status'] == 'started' && nextSchedule['stop_time'] != null) {
+          final stopTime = DateTime.parse(nextSchedule['stop_time'].toString()).toLocal();
+          nextStopTime = DateFormat('hh:mm a').format(stopTime);
+        } else if (nextSchedule['start_time'] != null) {
+          final startTime = DateTime.parse(nextSchedule['start_time'].toString()).toLocal();
+          nextStartTime = DateFormat('hh:mm a').format(startTime);
+        }
+      } catch (e) {
+        print('Error parsing next schedule: $e');
+      }
+    }
     
     return GestureDetector(
       onTap: isPending ? null : () => _navigateDevice(device),
@@ -447,45 +470,79 @@ class HomeView extends GetView<HomeController> {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Icons.location_on_rounded, size: 14, color: AppColors.primaryGreen),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              location,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.grey.shade600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      if (imei != 'N/A' && imei.toString().isNotEmpty)
-                        RichText(
-                          text: TextSpan(
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey.shade500,
-                            ),
-                            children: [
-                              const TextSpan(
-                                text: 'IMEI ',
+                      if (hasLocation)
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on_rounded, size: 14, color: AppColors.primaryGreen),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                location,
                                 style: TextStyle(
-                                  color: AppColors.primaryGreen,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey.shade600,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              TextSpan(text: imei),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
+                      const SizedBox(height: 2),
+                      RichText(
+                        text: TextSpan(
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey.shade500,
+                          ),
+                          children: [
+                            const TextSpan(
+                              text: 'SN ',
+                              style: TextStyle(
+                                color: AppColors.primaryGreen,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            TextSpan(text: deviceId),
+                          ],
+                        ),
+                      ),
+                      if (nextStartTime != null && !isRunning) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(Icons.schedule_rounded, size: 12, color: AppColors.primaryOrange),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Starts at $nextStartTime',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryOrange,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (nextStopTime != null && isRunning) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(Icons.timer_rounded, size: 12, color: AppColors.primaryGreen),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Stops at $nextStopTime',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryGreen,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),

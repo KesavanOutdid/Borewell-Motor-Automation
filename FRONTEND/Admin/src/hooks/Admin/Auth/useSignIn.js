@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { sanitizeEmail, sanitizePassword } from '../../../utils/validation';
+import { showAccountDeactivated } from '../../../utils/alert';
 
 const useSignIn = (handleSignIn) => {
     const API_BASE = process.env.REACT_APP_SERVER_URL;
@@ -61,6 +62,10 @@ const useSignIn = (handleSignIn) => {
                 setLoadingSubmit(false);
             } else {
                 const responseData = await response.json();
+                
+                if (response.status === 403) {
+                    showAccountDeactivated(responseData.message);
+                }
 
                 setErrorMessage(responseData.message || 'Sign-in failed.');
                 setSuccessMessage('');

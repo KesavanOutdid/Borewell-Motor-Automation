@@ -22,7 +22,7 @@ function authMiddleware(requiredRole) {
 
             // if role required, check
             if (requiredRole) {
-                if (payload.role_id !== requiredRole && payload.role_id !== 'ADMIN') {
+                if (payload.role_id !== requiredRole && payload.role_id !== 1) {
                     return res.status(403).json({ success: false, message: 'Forbidden: insufficient role' });
                 }
             }

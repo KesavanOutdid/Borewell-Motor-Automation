@@ -786,56 +786,53 @@ class HomeController extends GetxController with WidgetsBindingObserver {
 
   List<Map<String, dynamic>> get displayDevices {
     if (selectedFilter.value == 'Running') {
-      return devices.where((d) => isDeviceAccessible(d) && isDeviceRunning(d)).toList();
+      var filtered = devices.where((d) => isDeviceAccessible(d) && isDeviceRunning(d)).toList();
+      filtered.sort((a, b) => _getCreatedAt(b).compareTo(_getCreatedAt(a)));
+      return filtered;
     } else if (selectedFilter.value == 'Stopped') {
-      return devices.where((d) => isDeviceAccessible(d) && isDeviceConfigured(d) && !isDeviceRunning(d)).toList();
+      var filtered = devices.where((d) => isDeviceAccessible(d) && isDeviceConfigured(d) && !isDeviceRunning(d)).toList();
+      filtered.sort((a, b) => _getCreatedAt(b).compareTo(_getCreatedAt(a)));
+      return filtered;
     } else if (selectedFilter.value == 'Online') {
       var filtered = devices.where((d) => isDeviceAccessible(d) && isOnline(d)).toList();
       filtered.sort((a, b) {
-        bool runningA = isDeviceRunning(a);
-        bool runningB = isDeviceRunning(b);
-        if (runningA != runningB) return runningA ? -1 : 1;
-        return _getUpdatedAt(b).compareTo(_getUpdatedAt(a));
+        return _getCreatedAt(b).compareTo(_getCreatedAt(a));
       });
       return filtered;
     } else if (selectedFilter.value == 'Offline') {
       var filtered = devices.where((d) => isDeviceAccessible(d) && !isOnline(d)).toList();
       filtered.sort((a, b) {
-        bool runningA = isDeviceRunning(a);
-        bool runningB = isDeviceRunning(b);
-        if (runningA != runningB) return runningA ? -1 : 1;
-        return _getUpdatedAt(b).compareTo(_getUpdatedAt(a));
+        return _getCreatedAt(b).compareTo(_getCreatedAt(a));
       });
       return filtered;
     } else if (selectedFilter.value == 'Recently') {
-      // Sort by isRunning first, then by updatedAt timestamp
       var sorted = devices.where((d) => isDeviceAccessible(d)).toList();
       sorted.sort((a, b) {
-        // Running devices first
-        bool runningA = isDeviceRunning(a);
-        bool runningB = isDeviceRunning(b);
-        if (runningA != runningB) {
-          return runningA ? -1 : 1;
-        }
-        
-        // Then by updatedAt
-        DateTime timeA = _getUpdatedAt(a);
-        DateTime timeB = _getUpdatedAt(b);
-        return timeB.compareTo(timeA); // Descending (newest first)
+        return _getCreatedAt(b).compareTo(_getCreatedAt(a));
       });
       return sorted.take(5).toList();
     } else {
-      // 'All' - return all devices sorted by running status first
+      // 'All'
       var sorted = devices.where((d) => isDeviceAccessible(d)).toList();
       sorted.sort((a, b) {
-        bool runningA = isDeviceRunning(a);
-        bool runningB = isDeviceRunning(b);
-        if (runningA != runningB) {
-          return runningA ? -1 : 1;
-        }
-        return _getUpdatedAt(b).compareTo(_getUpdatedAt(a));
+        return _getCreatedAt(b).compareTo(_getCreatedAt(a));
       });
       return sorted;
+    }
+  }
+
+  DateTime _getCreatedAt(Map<String, dynamic> device) {
+    final created = device['createdAt'] ?? 
+                  device['created_at'] ?? 
+                  device['timestamp'] ??
+                  device['updatedAt'] ??
+                  device['updated_at'];
+    if (created == null) return DateTime(2000);
+    if (created is DateTime) return created;
+    try {
+      return DateTime.parse(created.toString());
+    } catch (e) {
+      return DateTime(2000);
     }
   }
 

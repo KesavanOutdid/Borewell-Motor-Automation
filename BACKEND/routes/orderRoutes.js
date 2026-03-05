@@ -1,6 +1,7 @@
 const express = require('express');
 const { body } = require('express-validator');
 const orderCtrl = require('../controllers/orderControllers');
+const authMiddleware = require('../middlewares/authMiddleware');
 const router = express.Router();
 
 /**
@@ -137,6 +138,7 @@ const router = express.Router();
 */
 router.post(
     '/createOrder',
+    authMiddleware(),
     [
         body('user_id').isInt().withMessage("user_id must be an integer"),
         body('cart_items').isArray({ min: 1 }).withMessage("cart_items must be a non-empty array"),
@@ -207,6 +209,7 @@ router.post(
 */
 router.post(
     '/verifyPayment',
+    authMiddleware(),
     [
         body('user_id').isInt().withMessage("user_id must be an integer"),
         body('razorpay_order_id').notEmpty().withMessage("razorpay_order_id is required"),
@@ -271,6 +274,7 @@ router.post(
 */
 router.post(
     '/cancelOrder',
+    authMiddleware(),
     [
         body('user_id').isInt().withMessage("user_id must be an integer"),
         body('order_id').notEmpty().withMessage("order_id is required"),
@@ -341,6 +345,7 @@ router.post(
 */
 router.post(
     '/getOrders',
+    authMiddleware(),
     [
         body('user_id').isInt().withMessage("user_id must be an integer")
     ],
@@ -417,6 +422,7 @@ router.post(
 */
 router.post(
     '/getOrderById',
+    authMiddleware(),
     [
         body('user_id').isInt().withMessage("user_id must be an integer"),
         body('order_id').notEmpty().withMessage("order_id is required")
@@ -479,6 +485,7 @@ router.post(
 */
 router.post(
     '/confirmCODOrder',
+    authMiddleware(),
     [
         body('user_id').isInt().withMessage("user_id must be an integer"),
         body('order_id').notEmpty().withMessage("order_id is required")
@@ -529,6 +536,7 @@ router.post(
 */
 router.get(
     '/getAllOrders',
+    authMiddleware(1),
     orderCtrl.getAllOrders
 );
 
@@ -584,6 +592,7 @@ router.get(
 */
 router.post(
     '/updateOrderStatus',
+    authMiddleware(1),
     [
         body('order_id').notEmpty().withMessage("order_id is required"),
         body('order_status').isIn(['created', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled']).withMessage("Invalid order status"),

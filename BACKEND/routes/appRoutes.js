@@ -262,7 +262,7 @@ router.delete('/deleteProfileImage/:user_id', authMiddleware(), appCtrl.deletePr
  */
 router.post(
     '/configIMEInumber',
-    // authMiddleware(),
+    authMiddleware(),
     [
         body('serial_number').notEmpty().withMessage("Serial number is required"),
         body('user_email').isEmail().withMessage("Valid user email is required"),
@@ -465,6 +465,7 @@ router.get('/getProducts', appCtrl.getProducts);
  */
 router.post(
     '/startStopDevice',
+    authMiddleware(),
     [
         body('serial_number').notEmpty().withMessage("Serial number is required"),
         body('imei_number').notEmpty().withMessage("IMEI number is required"),
@@ -538,6 +539,7 @@ router.post(
 
 router.post(
     '/userAssignDevices',
+    authMiddleware(),
     [
         body('user_id').notEmpty().withMessage("User ID is required"),
     ],
@@ -690,6 +692,7 @@ router.post(
 */
 router.post(
     '/userDeviceHistory',
+    authMiddleware(),
     [
         body('user_id').notEmpty().withMessage("User ID is required"),
     ],
@@ -732,7 +735,7 @@ router.post(
  *       500:
  *         description: Server error
  */
-router.post("/analytics", appCtrl.getTelemetryAnalytics);
+router.post("/analytics", authMiddleware(), appCtrl.getTelemetryAnalytics);
 
 /**
 * @swagger
@@ -786,6 +789,7 @@ router.post("/analytics", appCtrl.getTelemetryAnalytics);
 */
 router.post(
     '/addCart',
+    authMiddleware(),
     [
         body('user_id').isInt().withMessage("user_id must be an integer"),
         body('product_id').isInt().withMessage("product_id must be an integer"),
@@ -872,6 +876,7 @@ router.post(
 */
 router.post(
     '/fetchCart',
+    authMiddleware(),
     [
         body('user_id').isInt().withMessage("user_id must be an integer")
     ],
@@ -930,6 +935,7 @@ router.post(
 */
 router.post(
     '/updatedCart',
+    authMiddleware(),
     [
         body('user_id').isInt().withMessage("user_id must be an integer"),
         body('product_id').isInt().withMessage("product_id must be an integer"),
@@ -985,6 +991,7 @@ router.post(
 */
 router.post(
     '/productDelete',
+    authMiddleware(),
     [
         body('user_id').isInt().withMessage("user_id must be an integer"),
         body('product_id').isInt().withMessage("product_id must be an integer")
@@ -1047,6 +1054,7 @@ router.post(
 */
 router.post(
     '/allProductDelete',
+    authMiddleware(),
     [
         body('user_id').isInt().withMessage("user_id must be an integer")
     ],
@@ -1115,6 +1123,7 @@ router.post(
  */
 router.post(
     '/validateVoucher',
+    authMiddleware(),
     [
         body('user_id').isInt().withMessage("user_id must be an integer"),
         body('voucher_code').notEmpty().withMessage("voucher_code is required")

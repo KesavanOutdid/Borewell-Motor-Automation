@@ -1,6 +1,17 @@
 // alert.js
 import Swal from 'sweetalert2';
 
+// Function to show account deactivated alert
+export const showAccountDeactivated = (message) => {
+    return Swal.fire({
+        title: 'Account Alert',
+        text: message || 'Your account has been deactivated. Please contact admin.',
+        icon: 'error',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#dc3545',
+    });
+};
+
 // Function to show the logout confirmation alert
 export const showLogoutConfirmation = async () => {
     return Swal.fire({
