@@ -668,6 +668,17 @@ router.get(
     adminCtrl.getAllVouchers
 );
 
+
+router.post(
+    '/userDeviceDetails',
+    authMiddleware(),
+    [
+        body('serial_number').notEmpty().withMessage("Serial number is required"),
+        // body('imei_number').notEmpty().withMessage("IMEI number is required"),
+    ],
+    adminCtrl.userDeviceDetails
+);
+
 /**
  * @swagger
  * /admin/deleteProduct:

@@ -598,7 +598,7 @@ router.get(
 */
 router.post(
     '/updateOrderStatus',
-    authMiddleware(1),
+    // authMiddleware(1),
     [
         body('order_id').notEmpty().withMessage("order_id is required"),
         body('order_status').isIn(['created', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled']).withMessage("Invalid order status"),

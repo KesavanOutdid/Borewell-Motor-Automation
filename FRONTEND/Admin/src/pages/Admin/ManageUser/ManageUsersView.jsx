@@ -72,7 +72,7 @@ const ManageUsersView = ({ userInfo, handleLogout }) => {
                     const masterUserIds = [...new Set(sharedDevices.map(d => d.master_user_id))];
                     
                     for (const masterId of masterUserIds) {
-                        const response = await fetch(`${API_BASE}/app/userDeviceHistory`, {
+                        const response = await fetch(`${API_BASE}/admin/userDeviceHistory`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -115,7 +115,7 @@ const ManageUsersView = ({ userInfo, handleLogout }) => {
             const API_BASE = process.env.REACT_APP_SERVER_URL;
 
             // Fetch device details first to pass to history page
-            const response = await fetch(`${API_BASE}/app/userDeviceDetails`, {
+            const response = await fetch(`${API_BASE}/admin/userDeviceDetails`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

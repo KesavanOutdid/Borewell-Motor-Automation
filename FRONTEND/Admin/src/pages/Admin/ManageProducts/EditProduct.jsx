@@ -323,7 +323,7 @@ const EditProduct = ({ userInfo, handleLogout }) => {
 
                                             <div className="col-md-3">
                                                 <div style={{ marginBottom: '20px' }}>
-                                                    <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>Box Size</label>
+                                                    <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>Box Size *</label>
                                                     <input
                                                         type="text"
                                                         className="form-control"
@@ -335,7 +335,7 @@ const EditProduct = ({ userInfo, handleLogout }) => {
 
                                             <div className="col-md-3">
                                                 <div style={{ marginBottom: '20px' }}>
-                                                    <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>Status</label>
+                                                    <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>Status *</label>
                                                     <select
                                                         className="form-control"
                                                         value={status ? 'true' : 'false'}
@@ -374,7 +374,7 @@ const EditProduct = ({ userInfo, handleLogout }) => {
                                             <div className="row">
                                                 <div className="col-md-3">
                                                     <div style={{ marginBottom: '15px' }}>
-                                                        <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>Price (₹)</label>
+                                                        <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>Price (₹) *</label>
                                                         <input
                                                             type="number"
                                                             className="form-control"
@@ -398,7 +398,7 @@ const EditProduct = ({ userInfo, handleLogout }) => {
                                                 </div>
                                                 <div className="col-md-3">
                                                     <div style={{ marginBottom: '15px' }}>
-                                                        <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>GST (%)</label>
+                                                        <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>GST (%) *</label>
                                                         <input
                                                             type="number"
                                                             className="form-control"
@@ -430,7 +430,7 @@ const EditProduct = ({ userInfo, handleLogout }) => {
                                                 </div>
                                                 <div className="col-md-3">
                                                     <div style={{ marginBottom: '15px' }}>
-                                                        <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>Shipping Cost (₹)</label>
+                                                        <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>Shipping Cost (₹) *</label>
                                                         <input
                                                             type="number"
                                                             className="form-control"
@@ -454,7 +454,7 @@ const EditProduct = ({ userInfo, handleLogout }) => {
                                                 </div>
                                                 <div className="col-md-3">
                                                     <div style={{ marginBottom: '15px' }}>
-                                                        <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>Quantity</label>
+                                                        <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>Quantity *</label>
                                                         <input
                                                             type="number"
                                                             className="form-control"
@@ -482,7 +482,7 @@ const EditProduct = ({ userInfo, handleLogout }) => {
                                         <div className="row">
                                             <div className="col-md-2">
                                                 <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px', border: '1px solid #dee2e6' }}>
-                                                    <label style={{ fontWeight: '600', marginBottom: '12px', display: 'block', color: '#333', fontSize: '13px' }}>Description PDF (Optional)</label>
+                                                    <label style={{ fontWeight: '600', marginBottom: '12px', display: 'block', color: '#333', fontSize: '13px' }}>Description PDF (Optional) *</label>
                                                     <input
                                                         type="file"
                                                         className="form-control"

@@ -1668,6 +1668,75 @@ exports.userDeviceHistory = async (req, res) => {
     }
 };
 
+exports.userDeviceDetails = async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty())
+            return res.status(400).json({ success: false, errors: errors.array() });
+
+        const { serial_number, imei_number } = req.body;
+
+        const query = { serial_number };
+        if (imei_number) {
+            query.imei_number = imei_number;
+        }
+
+        const device = await Device.findOne(query);
+
+        if (!device) {
+            return res.status(404).json({
+                success: false,
+                message: "Device not found"
+            });
+        }
+
+        // Determine role
+        let role = 'shared';
+        let acceptance_status = 'accepted'; // Default for master
+        if (device.assigned_user_id && req.user && req.user.user_id) {
+            if (Number(device.assigned_user_id) === Number(req.user.user_id)) {
+                role = 'master';
+            } else {
+                // If shared, check acceptance status
+                const share = await DeviceShare.findOne({
+                    serial_number,
+                    shared_to_user_id: req.user.user_id
+                });
+                if (share) {
+                    acceptance_status = share.acceptance_status;
+                }
+            }
+        }
+
+        // Fetch latest telemetry
+        const telemetryCollection = mongoose.connection.db.collection("agri_telemetry");
+        const latestTelemetry = await telemetryCollection
+            .find({ serial_number })
+            .sort({ timestamp: -1 })
+            .limit(1)
+            .toArray();
+
+        const response = {
+            success: true,
+            data: {
+                ...device.toObject(),
+                role,
+                acceptance_status,
+                telemetry: latestTelemetry.length > 0 ? latestTelemetry[0] : null
+            }
+        };
+
+        return res.status(200).json(response);
+
+    } catch (error) {
+        console.error("userDeviceDetails Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Server error"
+        });
+    }
+};
+
 exports.deleteProduct = async (req, res, next) => {
     try {
         const { id } = req.body;

@@ -20,7 +20,7 @@ const useManageUsersDeviceHistory = () => {
             setLoadingHistory(true);
             setErrorHistory('');
 
-            const response = await fetch(`${API_BASE}/app/userDeviceHistory`, {
+            const response = await fetch(`${API_BASE}/admin/userDeviceHistory`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
