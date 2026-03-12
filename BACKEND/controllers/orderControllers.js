@@ -85,6 +85,33 @@ exports.createOrder = async (req, res, next) => {
         if (!order_summary)
             return res.status(400).json({ success: false, message: "Order summary is required" });
 
+        // Validate voucher if provided
+        if (order_summary.voucher_code) {
+            const voucher = await Voucher.findOne({ voucher_code: order_summary.voucher_code.toUpperCase() });
+            
+            if (!voucher) {
+                return res.status(400).json({ success: false, message: "Invalid voucher code" });
+            }
+
+            const now = new Date();
+
+            if (!voucher.status) {
+                return res.status(400).json({ success: false, message: "Voucher is inactive" });
+            }
+
+            if (now < new Date(voucher.start_date)) {
+                return res.status(400).json({ success: false, message: "Voucher is not yet valid" });
+            }
+
+            if (now > new Date(voucher.end_date)) {
+                return res.status(400).json({ success: false, message: "Voucher has expired" });
+            }
+
+            if (voucher.max_usage && voucher.used_count >= voucher.max_usage) {
+                return res.status(400).json({ success: false, message: "Voucher usage limit exceeded" });
+            }
+        }
+
         // Create order ID
         const orderId = generateOrderId();
 

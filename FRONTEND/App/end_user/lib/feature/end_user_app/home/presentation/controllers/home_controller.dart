@@ -7,6 +7,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:geocoding/geocoding.dart';
 import '../../../../../core/config/env.dart';
 import '../../../../../core/services/token_service.dart';
+import '../../../../../utils/ui_utils.dart';
 import '../../../device/presentation/pages/qr_scanner_page.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -332,6 +333,9 @@ class HomeController extends GetxController with WidgetsBindingObserver {
         }
       } else if (response.statusCode == 401) {
         Get.offAllNamed('/login');
+      } else if (response.statusCode == 403) {
+        final body = jsonDecode(response.body);
+        UIUtils.handleAccountDeactivated(body['message']);
       } else {
         if (!silent && !loadMore) errorMessage.value = "Failed to fetch devices";
       }
@@ -449,6 +453,9 @@ class HomeController extends GetxController with WidgetsBindingObserver {
             Get.snackbar("Error", "Session expired. Please login again");
           }
         });
+      } else if (response.statusCode == 403) {
+        final body = jsonDecode(response.body);
+        UIUtils.handleAccountDeactivated(body['message']);
       } else {
         final body = jsonDecode(response.body);
         Future.delayed(Duration.zero, () {
@@ -543,6 +550,9 @@ class HomeController extends GetxController with WidgetsBindingObserver {
         print('❌ Unauthorized - Session expired');
         print('🔴 ERROR DIALOG OPENED: Session expired');
         Get.offAllNamed('/login');
+      } else if (response.statusCode == 403) {
+        final body = jsonDecode(response.body);
+        UIUtils.handleAccountDeactivated(body['message']);
       } else if (response.statusCode == 404) {
         print('❌ Device not found');
         print('🔴 ERROR DIALOG OPENED: Device not found');
@@ -742,6 +752,8 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       if (response.statusCode == 200 && data['success'] == true) {
         Get.snackbar('Success', 'Access request ${action} successfully');
         fetchDevices();
+      } else if (response.statusCode == 403) {
+        UIUtils.handleAccountDeactivated(data['message']);
       } else {
         Get.snackbar('Error', data['message'] ?? 'Failed to respond to request');
       }

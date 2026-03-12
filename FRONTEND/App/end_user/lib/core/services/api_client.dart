@@ -36,22 +36,7 @@ class ApiClient {
 
           if (e.response?.statusCode == 403) {
             final message = e.response?.data['message'] ?? "Forbidden access";
-            
-            UIUtils.showErrorDialog(
-              title: 'Account Alert',
-              message: message,
-            );
-
-            if (message.toString().toLowerCase().contains("disabled") || 
-                message.toString().toLowerCase().contains("deactivated")) {
-              try {
-                final authController = Get.find<AuthController>();
-                authController.logout();
-                Get.offAllNamed('/login');
-              } catch (err) {
-                logger.e("Error during logout: $err");
-              }
-            }
+            UIUtils.handleAccountDeactivated(message);
           }
         }
         return handler.next(e);

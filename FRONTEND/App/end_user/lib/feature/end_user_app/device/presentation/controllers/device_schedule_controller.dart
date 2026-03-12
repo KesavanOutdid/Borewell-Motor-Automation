@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../../../../core/config/env.dart';
 import '../../../../../core/services/token_service.dart';
+import '../../../../../utils/ui_utils.dart';
 
 class DeviceScheduleController extends GetxController {
   final tokenService = Get.find<TokenService>();
@@ -64,6 +65,8 @@ class DeviceScheduleController extends GetxController {
         if (data['success']) {
           schedules.assignAll(List<Map<String, dynamic>>.from(data['data']));
         }
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
       }
     } catch (e) {
       print('Error fetching schedules: $e');
@@ -120,6 +123,9 @@ class DeviceScheduleController extends GetxController {
         }
         fetchSchedules();
         return true;
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
+        return false;
       } else {
         _showErrorDialog(data['message'] ?? 'Failed to create schedule');
         return false;
@@ -171,9 +177,15 @@ class DeviceScheduleController extends GetxController {
           );
         }
         fetchSchedules();
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
       }
     } catch (e) {
       print('Error cancelling schedule: $e');
     }
+  }
+
+  void _handleDeactivated() {
+    UIUtils.handleAccountDeactivated();
   }
 }

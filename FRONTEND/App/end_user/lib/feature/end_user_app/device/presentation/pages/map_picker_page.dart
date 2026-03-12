@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class MapPickerView extends StatefulWidget {
@@ -11,7 +13,7 @@ class MapPickerView extends StatefulWidget {
   State<MapPickerView> createState() => _MapPickerViewState();
 }
 
-class _MapPickerViewState extends State<MapPickerView> {
+class _MapPickerViewState extends State<MapPickerView> with WidgetsBindingObserver {
   GoogleMapController? mapController;
   LatLng? selectedLocation;
   LatLng initialLocation = const LatLng(20.5937, 78.9629);
@@ -19,26 +21,36 @@ class _MapPickerViewState extends State<MapPickerView> {
   bool isLoading = true;
   bool isMapMoved = false;
   bool isLocatingNow = false;
+  bool _shouldAutoFetch = false;
+  String? _selectedAddress;
+  bool _isGettingAddress = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _getCurrentLocation();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    mapController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _shouldAutoFetch) {
+      _shouldAutoFetch = false;
+      _getCurrentLocation();
+    }
   }
 
 
 
   Future<void> _getCurrentLocation() async {
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        setState(() {
-          isLoading = false;
-        });
-        _showLocationServiceDialog();
-        return;
-      }
-
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -47,6 +59,7 @@ class _MapPickerViewState extends State<MapPickerView> {
       if (permission == LocationPermission.deniedForever) {
         setState(() {
           isLoading = false;
+          _shouldAutoFetch = true;
         });
         _showLocationPermissionDialog();
         return;
@@ -59,9 +72,10 @@ class _MapPickerViewState extends State<MapPickerView> {
         return;
       }
 
+      // On Android, getCurrentPosition triggers the native high-accuracy dialog if needed.
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 10),
+        timeLimit: const Duration(seconds: 15),
       );
 
       setState(() {
@@ -69,15 +83,34 @@ class _MapPickerViewState extends State<MapPickerView> {
         selectedLocation = initialLocation;
         isLoading = false;
       });
+      _fetchAddress(initialLocation);
 
       mapController?.animateCamera(
         CameraUpdate.newLatLngZoom(initialLocation, 15),
       );
     } catch (e) {
       print('Error getting location: $e');
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+        
+        // If user cancels or services are disabled, return to configure page
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().contains('location service') 
+                ? 'Location services are required' 
+                : 'Unable to get current location'),
+            backgroundColor: Colors.orange[800],
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        
+        // Wait a small delay for user to see snackbar then go back
+        Future.delayed(const Duration(milliseconds: 1500), () {
+          if (mounted) Navigator.pop(context);
+        });
+      }
     }
   }
 
@@ -89,6 +122,47 @@ class _MapPickerViewState extends State<MapPickerView> {
     setState(() {
       selectedLocation = location;
     });
+    _fetchAddress(location);
+  }
+
+  Future<void> _fetchAddress(LatLng location) async {
+    setState(() {
+      _isGettingAddress = true;
+    });
+    try {
+      final List<Placemark> placemarks = await placemarkFromCoordinates(
+        location.latitude,
+        location.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        final Placemark place = placemarks[0];
+        final List<String> addressParts = [];
+
+        if (place.subLocality != null && place.subLocality!.isNotEmpty) {
+          addressParts.add(place.subLocality!);
+        }
+        if (place.locality != null && place.locality!.isNotEmpty) {
+          addressParts.add(place.locality!);
+        }
+        if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
+          addressParts.add(place.administrativeArea!);
+        }
+
+        setState(() {
+          _selectedAddress = addressParts.isNotEmpty ? addressParts.join(', ') : 'Address not found';
+        });
+      }
+    } catch (e) {
+      print('Error fetching address: $e');
+      setState(() {
+        _selectedAddress = 'Unable to fetch address';
+      });
+    } finally {
+      setState(() {
+        _isGettingAddress = false;
+      });
+    }
   }
 
   Future<void> _locateMe() async {
@@ -97,39 +171,28 @@ class _MapPickerViewState extends State<MapPickerView> {
     });
 
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Location services are disabled'),
-            backgroundColor: Colors.orange[400],
-            duration: const Duration(seconds: 2),
-          ),
-        );
-        setState(() {
-          isLocatingNow = false;
-        });
-        return;
-      }
-
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Location permission not available'),
-            backgroundColor: Colors.red[400],
-            duration: const Duration(seconds: 2),
-          ),
-        );
-        setState(() {
-          isLocatingNow = false;
-        });
-        return;
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Location permission not available'),
+              backgroundColor: Colors.red[400],
+              duration: const Duration(seconds: 2),
+            ),
+          );
+          setState(() {
+            isLocatingNow = false;
+          });
+          return;
+        }
       }
 
+      // On Android, getCurrentPosition triggers the native high-accuracy dialog if needed.
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 10),
+        timeLimit: const Duration(seconds: 15),
       );
 
       final LatLng currentLocation = LatLng(position.latitude, position.longitude);
@@ -138,6 +201,7 @@ class _MapPickerViewState extends State<MapPickerView> {
         selectedLocation = currentLocation;
         isLocatingNow = false;
       });
+      _fetchAddress(currentLocation);
 
       mapController?.animateCamera(
         CameraUpdate.newLatLngZoom(currentLocation, 17),
@@ -152,22 +216,30 @@ class _MapPickerViewState extends State<MapPickerView> {
       );
     } catch (e) {
       print('Error locating: $e');
-      setState(() {
-        isLocatingNow = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Failed to get location'),
-          backgroundColor: Colors.red[400],
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      if (mounted) {
+        setState(() {
+          isLocatingNow = false;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().contains('location service') 
+                ? 'Location services are disabled' 
+                : 'Failed to get location'),
+            backgroundColor: Colors.red[400],
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
   void _confirmLocation() {
     if (selectedLocation != null) {
-      Navigator.of(context).pop(selectedLocation);
+      Navigator.of(context).pop({
+        'location': selectedLocation,
+        'address': _selectedAddress,
+      });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -177,47 +249,6 @@ class _MapPickerViewState extends State<MapPickerView> {
         ),
       );
     }
-  }
-
-  void _showLocationServiceDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: Row(
-          children: [
-            Icon(Icons.location_off, color: Colors.orange[700]),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text('Location Disabled', overflow: TextOverflow.ellipsis, maxLines: 2),
-            ),
-          ],
-        ),
-        content: const Text(
-          'Please enable location services in your device settings to use this feature',
-          style: TextStyle(fontSize: 14),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Geolocator.openLocationSettings();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green[600],
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Open Settings'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showLocationPermissionDialog() {
@@ -248,6 +279,7 @@ class _MapPickerViewState extends State<MapPickerView> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
+              setState(() => _shouldAutoFetch = true);
               openAppSettings();
             },
             style: ElevatedButton.styleFrom(
@@ -300,63 +332,32 @@ class _MapPickerViewState extends State<MapPickerView> {
             right: 0,
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
-                child: Column(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                child: Row(
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
-                          child: IconButton(
-                            icon: const Icon(Icons.arrow_back, color: Colors.black87),
-                            onPressed: () => Navigator.pop(context),
-                            tooltip: 'Back',
-                          ),
-                        ),
-                        const Spacer(),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: IconButton(
-                            icon: isLocatingNow
-                                ? SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.green[600]!),
-                                    ),
-                                  )
-                                : Icon(Icons.my_location, color: Colors.green[700], size: 22),
-                            onPressed: isLocatingNow ? null : _locateMe,
-                            tooltip: 'Current Location',
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                        onPressed: () => Navigator.pop(context),
+                        tooltip: 'Back',
+                      ),
                     ),
+                    const SizedBox(width: 12),
                     if (!isLoading)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 12),
+                      Expanded(
                         child: Container(
+                          height: 48,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(14),
@@ -369,26 +370,19 @@ class _MapPickerViewState extends State<MapPickerView> {
                             ],
                           ),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Row(
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue[50],
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Icon(Icons.info_outline, color: Colors.blue[700], size: 20),
-                                ),
-                                const SizedBox(width: 12),
+                                Icon(Icons.info_outline, color: Colors.blue[700], size: 20),
+                                const SizedBox(width: 10),
                                 const Expanded(
                                   child: Text(
-                                    'Tap on map to select location',
+                                    'Tap on map to select',
                                     style: TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 13,
                                       color: Colors.black87,
                                       fontWeight: FontWeight.w500,
-                                      height: 1.4,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ),
@@ -402,6 +396,38 @@ class _MapPickerViewState extends State<MapPickerView> {
               ),
             ),
           ),
+          if (!isLoading)
+            Positioned(
+              bottom: (selectedLocation != null) ? 280 : 20,
+              right: 16,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: isLocatingNow
+                      ? SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.green[600]!),
+                          ),
+                        )
+                      : Icon(Icons.my_location, color: Colors.green[700], size: 24),
+                  onPressed: isLocatingNow ? null : _locateMe,
+                  tooltip: 'Current Location',
+                ),
+              ),
+            ),
           if (!isLoading && selectedLocation != null)
             Positioned(
               bottom: 0,
@@ -447,39 +473,109 @@ class _MapPickerViewState extends State<MapPickerView> {
                                 const Text(
                                   'Selected Location',
                                   style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
                                     color: Colors.black87,
                                   ),
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 8),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                   decoration: BoxDecoration(
-                                    color: Colors.grey[100],
-                                    borderRadius: BorderRadius.circular(6),
+                                    color: Colors.grey[50],
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.grey[200]!),
                                   ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        'Latitude: ${selectedLocation!.latitude.toStringAsFixed(6)}',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.blue[700],
-                                          fontFamily: 'monospace',
-                                          fontWeight: FontWeight.w600,
+                                      if (_isGettingAddress)
+                                        const Padding(
+                                          padding: EdgeInsets.only(bottom: 8),
+                                          child: SizedBox(
+                                            height: 14,
+                                            width: 14,
+                                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.blue),
+                                          ),
+                                        )
+                                      else if (_selectedAddress != null)
+                                        Padding(
+                                          padding: const EdgeInsets.only(bottom: 8),
+                                          child: Text(
+                                            _selectedAddress!,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.grey[800],
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        'Longitude: ${selectedLocation!.longitude.toStringAsFixed(6)}',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.green[700],
-                                          fontFamily: 'monospace',
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              alignment: Alignment.centerLeft,
+                                              child: Row(
+                                                children: [
+                                                  Text(
+                                                    'Lat: ',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.grey[600],
+                                                      fontWeight: FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    selectedLocation!.latitude.toStringAsFixed(3),
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.blue[700],
+                                                      fontFamily: 'monospace',
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          Container(
+                                            width: 1,
+                                            height: 12,
+                                            color: Colors.grey[300],
+                                            margin: const EdgeInsets.symmetric(horizontal: 6),
+                                          ),
+                                          Expanded(
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              alignment: Alignment.centerLeft,
+                                              child: Row(
+                                                children: [
+                                                  Text(
+                                                    'Long: ',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.grey[600],
+                                                      fontWeight: FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    selectedLocation!.longitude.toStringAsFixed(3),
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.green[700],
+                                                      fontFamily: 'monospace',
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
@@ -487,13 +583,27 @@ class _MapPickerViewState extends State<MapPickerView> {
                               ],
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.blue[50],
-                              borderRadius: BorderRadius.circular(8),
+                          InkWell(
+                            onTap: () {
+                              final text = 'Lat: ${selectedLocation!.latitude.toStringAsFixed(6)}, Long: ${selectedLocation!.longitude.toStringAsFixed(6)}';
+                              Clipboard.setData(ClipboardData(text: text));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Location copied to clipboard'),
+                                  duration: Duration(seconds: 1),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.blue[50],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(Icons.copy, color: Colors.blue[700], size: 18),
                             ),
-                            child: Icon(Icons.copy, color: Colors.blue[700], size: 18),
                           ),
                         ],
                       ),
@@ -510,21 +620,25 @@ class _MapPickerViewState extends State<MapPickerView> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             elevation: 2,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Icon(Icons.check_circle_outline, size: 20),
-                              SizedBox(width: 8),
-                              Text(
-                                'CONFIRM LOCATION',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.5,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.check_circle_outline, size: 20),
+                                SizedBox(width: 8),
+                                Text(
+                                  'CONFIRM LOCATION',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.5,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),

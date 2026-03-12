@@ -7,6 +7,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 import '../../../../../core/config/env.dart';
 import '../../../../../core/services/token_service.dart';
+import '../../../../../utils/ui_utils.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:http_parser/http_parser.dart';
@@ -177,6 +178,10 @@ class ProfileController extends GetxController {
         Get.offAllNamed('/login');
         errorMessage.value = "Session expired";
         return;
+      } else if (response.statusCode == 403) {
+        isLoading.value = false;
+        UIUtils.handleAccountDeactivated();
+        return;
       } else {
         isLoading.value = false;
         errorMessage.value = "Failed to fetch profile";
@@ -310,6 +315,10 @@ class ProfileController extends GetxController {
         isUpdating.value = false;
         Get.offAllNamed('/login');
         return "Session expired";
+      } else if (response.statusCode == 403) {
+        isUpdating.value = false;
+        UIUtils.handleAccountDeactivated();
+        return "Account Deactivated";
       } else {
         isUpdating.value = false;
         return "Failed to update profile";
@@ -441,6 +450,9 @@ class ProfileController extends GetxController {
         } else {
           _showSafeSnackbar("Error", responseData['message'] ?? "Upload failed");
         }
+      } else if (response.statusCode == 403) {
+        isUpdating.value = false;
+        UIUtils.handleAccountDeactivated();
       } else {
         _showSafeSnackbar("Error", "Failed to upload image: ${response.statusCode}");
       }
@@ -491,6 +503,9 @@ class ProfileController extends GetxController {
         } else {
           _showSafeSnackbar("Error", responseData['message'] ?? "Removal failed");
         }
+      } else if (response.statusCode == 403) {
+        isUpdating.value = false;
+        UIUtils.handleAccountDeactivated();
       } else {
         _showSafeSnackbar("Error", "Failed to remove image: ${response.statusCode}");
       }

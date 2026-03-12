@@ -157,6 +157,8 @@ class CheckoutController extends GetxController {
             message: responseData['message'] ?? 'Order creation failed',
           );
         }
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
       } else {
         logger.e('❌ HTTP Error: ${response.statusCode}');
         try {
@@ -313,6 +315,8 @@ class CheckoutController extends GetxController {
             message: responseData['message'] ?? 'Payment verification failed',
           );
         }
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
       } else {
         UIUtils.showErrorSnackbar(
           title: 'Error',
@@ -450,5 +454,9 @@ class CheckoutController extends GetxController {
       ),
       barrierDismissible: false,
     );
+  }
+
+  void _handleDeactivated() {
+    UIUtils.handleAccountDeactivated();
   }
 }

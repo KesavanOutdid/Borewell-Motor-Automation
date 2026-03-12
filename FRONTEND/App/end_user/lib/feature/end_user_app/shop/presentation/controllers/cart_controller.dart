@@ -108,6 +108,9 @@ class CartController extends GetxController {
           cart.value = CartModel.fromJson(responseData['cart']);
           return true;
         }
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
+        return false;
       } else {
         cart.value = previousCart;
         final Map<String, dynamic> responseData = jsonDecode(response.body);
@@ -157,6 +160,8 @@ class CartController extends GetxController {
           cart.value = CartModel.fromJson(responseData['cart']);
           logger.i('✅ Cart fetched - Items: ${cart.value?.items.length}');
         }
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
       } else {
         errorMessage.value = 'Failed to fetch cart (${response.statusCode})';
       }
@@ -245,6 +250,9 @@ class CartController extends GetxController {
           cart.value = CartModel.fromJson(responseData['cart']);
           return true;
         }
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
+        return false;
       } else {
         // Rollback on error
         cart.value = previousCart;
@@ -319,6 +327,9 @@ class CartController extends GetxController {
           cart.value = CartModel.fromJson(responseData['cart']);
           return true;
         }
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
+        return false;
       } else {
         cart.value = previousCart;
       }
@@ -366,6 +377,9 @@ class CartController extends GetxController {
 
       if (response.statusCode == 200) {
         return true;
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
+        return false;
       } else {
         cart.value = previousCart;
         return false;
@@ -388,5 +402,9 @@ class CartController extends GetxController {
     if (imagePath == null || imagePath.isEmpty) return '';
     if (imagePath.startsWith('http')) return imagePath;
     return '$baseUrl$imagePath';
+  }
+
+  void _handleDeactivated() {
+    UIUtils.handleAccountDeactivated();
   }
 }

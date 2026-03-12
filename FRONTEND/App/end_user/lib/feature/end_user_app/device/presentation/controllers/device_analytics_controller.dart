@@ -14,6 +14,7 @@ import 'package:printing/printing.dart';
 
 import '../../../../../core/config/env.dart';
 import '../../../../../core/services/token_service.dart';
+import '../../../../../utils/ui_utils.dart';
 import '../../domain/models/analytics_data.dart';
 
 class DeviceAnalyticsController extends GetxController {
@@ -161,6 +162,9 @@ class DeviceAnalyticsController extends GetxController {
       } else if (response.statusCode == 401) {
         logger.e('Unauthorized: ${response.body}');
         _handleUnauthorized();
+      } else if (response.statusCode == 403) {
+        logger.e('Deactivated: ${response.body}');
+        _handleDeactivated();
       } else if (response.statusCode == 400) {
         logger.e('Bad request: ${response.body}');
         _showMessage('Invalid parameters');
@@ -200,6 +204,10 @@ class DeviceAnalyticsController extends GetxController {
       snackPosition: SnackPosition.BOTTOM,
       duration: const Duration(seconds: 3),
     );
+  }
+
+  void _handleDeactivated() {
+    UIUtils.handleAccountDeactivated();
   }
 
   void _useMockData() {

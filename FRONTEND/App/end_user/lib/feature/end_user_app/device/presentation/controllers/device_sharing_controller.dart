@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import '../../../../../core/config/env.dart';
 import '../../../../../core/services/token_service.dart';
+import '../../../../../utils/ui_utils.dart';
 
 class DeviceSharingController extends GetxController {
   var sharedUsers = <Map<String, dynamic>>[].obs;
@@ -42,6 +43,8 @@ class DeviceSharingController extends GetxController {
         if (data['success'] == true) {
           sharedUsers.value = List<Map<String, dynamic>>.from(data['data']);
         }
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
       }
     } catch (e) {
       Get.dialog(
@@ -119,6 +122,8 @@ class DeviceSharingController extends GetxController {
             ),
           ),
         );
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
       } else {
         String errorMessage = data['message'] ?? 'Failed to share device';
         // Handle "not registered" case with custom message if needed
@@ -179,6 +184,8 @@ class DeviceSharingController extends GetxController {
 
       if (response.statusCode == 200) {
         fetchSharedUsers();
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
       }
     } catch (e) {
       Get.dialog(
@@ -232,6 +239,8 @@ class DeviceSharingController extends GetxController {
             ),
           ),
         );
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
       }
     } catch (e) {
       Get.dialog(
@@ -287,6 +296,8 @@ class DeviceSharingController extends GetxController {
         );
         if (serialNumber != null) fetchSharedUsers();
         // If it's the current user accepting/rejecting from home, they might need a refresh
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
       } else {
         Get.dialog(
           Builder(
@@ -321,5 +332,9 @@ class DeviceSharingController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void _handleDeactivated() {
+    UIUtils.handleAccountDeactivated();
   }
 }

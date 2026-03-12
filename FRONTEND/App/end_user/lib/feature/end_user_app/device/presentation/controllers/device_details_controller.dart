@@ -11,6 +11,7 @@ import 'package:geocoding/geocoding.dart';
 
 import '../../../../../core/config/env.dart';
 import '../../../../../core/services/token_service.dart';
+import '../../../../../utils/ui_utils.dart';
 // import '../../../../../core/services/notification_service.dart';
 
 class DeviceDetailsController extends GetxController with WidgetsBindingObserver {
@@ -92,7 +93,7 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
     final deviceChanged = previousSerial != serialNumber || previousImei != imeiNumber;
     
     // Check initial connection status from args
-    final lastSeenStr = args['updatedAt'] ?? args['lastUpdate'] ?? args['timestamp'];
+    final lastSeenStr = args['updatedAt'] ?? args['lastUpdate'] ?? args['timestamp'] ?? args['last_heartbeat'];
     if (lastSeenStr != null) {
       try {
         final lastSeen = DateTime.parse(lastSeenStr.toString()).toUtc();
@@ -117,6 +118,8 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
       locationText = await _getAddressFromCoordinates(latitude, longitude);
     }
 
+    final isRunningInitial = _getMotorRunning(args);
+
     liveData.assignAll({
       'serialNumber': serialNumber ?? '-',
       'nickname': args['device_nickname'] ?? args['nickname'] ?? (deviceChanged ? '-' : (liveData['nickname'] ?? '-')),
@@ -126,19 +129,19 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
       'location': locationText ?? _formatCoordinate(latitude, longitude),
       'latitude': latitude ?? 28.6139,
       'longitude': longitude ?? 77.2090,
-      'motorStatus': deviceChanged ? '-' : (liveData['motorStatus'] ?? '-'),
-      'deviceStatus': deviceChanged ? 'Offline' : (liveData['deviceStatus'] ?? 'Offline'),
-      'lastStart': deviceChanged ? '-' : (liveData['lastStart'] ?? '-'),
-      'lastStop': deviceChanged ? '-' : (liveData['lastStop'] ?? '-'),
-      'lastUpdate': deviceChanged ? '-' : (liveData['lastUpdate'] ?? '-'),
-      'motorFrequency': deviceChanged ? '-' : (liveData['motorFrequency'] ?? '-'),
-      'motorEnergy': deviceChanged ? '-' : (liveData['motorEnergy'] ?? '-'),
-      'alert': deviceChanged ? '-' : (liveData['alert'] ?? '-'),
-      'deviceTemperature': deviceChanged ? '-' : (liveData['deviceTemperature'] ?? '-'),
-      'motorPower': deviceChanged ? '-' : (liveData['motorPower'] ?? '-'),
-      'flowRate': deviceChanged ? '-' : (liveData['flowRate'] ?? '-'),
-      'motorSpeed': deviceChanged ? '-' : (liveData['motorSpeed'] ?? '-'),
-      'signalStrength': deviceChanged ? '-' : (liveData['signalStrength'] ?? '-'),
+      'motorStatus': isRunningInitial ? 'Running' : 'Stopped',
+      'deviceStatus': isRunningInitial ? 'Running' : (isConnected.value ? 'Ready' : 'Offline'),
+      'lastStart': args['startAt'] ?? (deviceChanged ? '-' : (liveData['lastStart'] ?? '-')),
+      'lastStop': args['stopAt'] ?? (deviceChanged ? '-' : (liveData['lastStop'] ?? '-')),
+      'lastUpdate': lastSeenStr ?? (deviceChanged ? '-' : (liveData['lastUpdate'] ?? '-')),
+      'motorFrequency': args['motor_frequency_hz'] ?? (deviceChanged ? '-' : (liveData['motorFrequency'] ?? '-')),
+      'motorEnergy': args['energy_kwh'] ?? (deviceChanged ? '-' : (liveData['motorEnergy'] ?? '-')),
+      'alert': args['alert'] ?? (deviceChanged ? '-' : (liveData['alert'] ?? '-')),
+      'deviceTemperature': args['device_temp_c'] ?? (deviceChanged ? '-' : (liveData['deviceTemperature'] ?? '-')),
+      'motorPower': args['power_kw'] ?? (deviceChanged ? '-' : (liveData['motorPower'] ?? '-')),
+      'flowRate': args['flow_lpm'] ?? (deviceChanged ? '-' : (liveData['flowRate'] ?? '-')),
+      'motorSpeed': args['motor_rpm'] ?? (deviceChanged ? '-' : (liveData['motorSpeed'] ?? '-')),
+      'signalStrength': args['signal_strength'] ?? (deviceChanged ? '-' : (liveData['signalStrength'] ?? '-')),
     });
 
     _ensureSocketConnection();
@@ -224,6 +227,8 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
         }
       } else if (response.statusCode == 401) {
         _handleUnauthorized();
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
       } else {
         final json = jsonDecode(response.body);
         _showMessage(json['message'] ?? 'Failed to load device (${response.statusCode})');
@@ -315,6 +320,10 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
         } else {
           _showMessage(json['message'] ?? 'Failed to update nickname');
         }
+      } else if (response.statusCode == 401) {
+        _handleUnauthorized();
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
       } else {
         _showMessage('Update failed (${response.statusCode})');
       }
@@ -407,6 +416,8 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
         _showMessage(body['message'] ?? 'Please wait a moment before sending another command');
       } else if (response.statusCode == 401) {
         _handleUnauthorized();
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
       } else if (response.statusCode == 404) {
         _showMessage('Device not found');
       } else {
@@ -588,10 +599,18 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
     final motorRunning = payload['motor_running'] ?? 
                          payload['MOTOR_RUNNING'] ?? 
                          payload['start_status'] ??
-                         payload['START_STATUS'];
+                         payload['START_STATUS'] ??
+                         payload['motor_status'] ??
+                         payload['motorStatus'] ??
+                         payload['status'];
     
     if (motorRunning != null) {
-      return motorRunning == true || motorRunning.toString().toLowerCase() == 'true';
+      final normalized = motorRunning.toString().toLowerCase();
+      return motorRunning == true || 
+             normalized == 'true' || 
+             normalized == 'running' || 
+             normalized == 'on' || 
+             normalized == '1';
     }
 
     // 2. RPM Heuristic: Use only as a fallback if explicit status is missing
@@ -1123,5 +1142,9 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
         Get.snackbar('Session expired', 'Please login again', snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 2));
       }
     });
+  }
+
+  void _handleDeactivated() {
+    UIUtils.handleAccountDeactivated();
   }
 }

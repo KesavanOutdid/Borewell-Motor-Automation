@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../../../core/config/env.dart';
 import '../../../../../core/services/token_service.dart';
+import '../../../../../utils/ui_utils.dart';
 
 class DeviceHistoryController extends GetxController {
   final isLoading = false.obs;
@@ -93,6 +94,8 @@ class DeviceHistoryController extends GetxController {
         }
       } else if (response.statusCode == 401) {
         _handleUnauthorized();
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
       } else {
         _showMessage('Failed to load history (${response.statusCode})');
       }
@@ -219,5 +222,9 @@ class DeviceHistoryController extends GetxController {
   void _handleUnauthorized() {
     Get.offAllNamed('/login');
     Get.snackbar('Session expired', 'Please login again', snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 2));
+  }
+
+  void _handleDeactivated() {
+    UIUtils.handleAccountDeactivated();
   }
 }

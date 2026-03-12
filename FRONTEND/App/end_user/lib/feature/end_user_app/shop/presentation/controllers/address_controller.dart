@@ -66,6 +66,8 @@ class AddressController extends GetxController {
             selectedAddress.value = defaultAddress;
           }
         }
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
       } else {
         logger.e('❌ HTTP Error: ${response.statusCode}');
       }
@@ -117,6 +119,9 @@ class AddressController extends GetxController {
           await fetchAddresses();
           return true;
         }
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
+        return false;
       }
       
       UIUtils.showErrorSnackbar(
@@ -173,6 +178,9 @@ class AddressController extends GetxController {
           await fetchAddresses();
           return true;
         }
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
+        return false;
       }
       
       UIUtils.showErrorSnackbar(
@@ -237,6 +245,9 @@ class AddressController extends GetxController {
           await fetchAddresses();
           return true;
         }
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
+        return false;
       }
       
       UIUtils.showErrorSnackbar(
@@ -296,6 +307,9 @@ class AddressController extends GetxController {
           await fetchAddresses();
           return true;
         }
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
+        return false;
       }
       
       UIUtils.showErrorSnackbar(
@@ -317,5 +331,9 @@ class AddressController extends GetxController {
 
   AddressModel? get defaultAddress {
     return addresses.firstWhereOrNull((addr) => addr.isDefault);
+  }
+
+  void _handleDeactivated() {
+    UIUtils.handleAccountDeactivated();
   }
 }

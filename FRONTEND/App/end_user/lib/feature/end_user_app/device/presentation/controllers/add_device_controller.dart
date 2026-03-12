@@ -8,10 +8,11 @@ import 'dart:convert';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../../../core/config/env.dart';
 import '../../../../../core/services/token_service.dart';
+import '../../../../../utils/ui_utils.dart';
 import '../pages/map_picker_page.dart';
 import '../pages/qr_scanner_page.dart';
 
-class ConfigureDeviceController extends GetxController {
+class ConfigureDeviceController extends GetxController with WidgetsBindingObserver {
   final formKey = GlobalKey<FormState>();
   final imeiController = TextEditingController();
   final nicknameController = TextEditingController();
@@ -28,9 +29,12 @@ class ConfigureDeviceController extends GetxController {
   double? selectedLatitude;
   double? selectedLongitude;
 
+  bool _shouldAutoFetchLocation = false;
+
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     final args = Get.arguments;
     if (args is Map<String, dynamic>) {
       serialNumber = (args['serial_number'] ?? args['serialNumber'] ?? '').toString();
@@ -53,6 +57,7 @@ class ConfigureDeviceController extends GetxController {
 
   @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     imeiController.dispose();
     nicknameController.dispose();
     locationController.dispose();
@@ -60,103 +65,26 @@ class ConfigureDeviceController extends GetxController {
     super.onClose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _shouldAutoFetchLocation) {
+      _shouldAutoFetchLocation = false;
+      _checkAndFetchLocation();
+    }
+  }
+
+  Future<void> _checkAndFetchLocation() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (serviceEnabled) {
+      getCurrentLocation();
+    }
+  }
+
   Future<void> getCurrentLocation() async {
     print('📍 Getting current location...');
     isGettingLocation.value = true;
 
     try {
-      print('📍 Checking if location service is enabled...');
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      print('📍 Location service enabled: $serviceEnabled');
-      
-      if (!serviceEnabled) {
-        print('❌ Location services are disabled');
-        isGettingLocation.value = false;
-        
-        Future.delayed(Duration.zero, () {
-          Get.dialog(
-            Builder(
-              builder: (context) => Dialog(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 320),
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.location_off,
-                          size: 60,
-                          color: Colors.orange[400],
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Location Services Disabled',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Please enable GPS/Location in your device settings to use this feature',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.black54,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 24),
-                        SizedBox(
-                          width: double.infinity,
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: () => Navigator.of(context).pop(),
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  ),
-                                  child: const Text('Cancel', overflow: TextOverflow.ellipsis),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    Get.back();
-                                    Geolocator.openLocationSettings();
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green[600],
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  ),
-                                  child: const Text('Settings', overflow: TextOverflow.ellipsis),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        });
-        return;
-      }
-
       print('📍 Checking location permission...');
       LocationPermission permission = await Geolocator.checkPermission();
       print('📍 Current permission: $permission');
@@ -186,6 +114,7 @@ class ConfigureDeviceController extends GetxController {
       if (permission == LocationPermission.deniedForever) {
         print('❌ Location permission denied forever');
         isGettingLocation.value = false;
+        _shouldAutoFetchLocation = true;
         
         Future.delayed(Duration.zero, () {
           Get.dialog(
@@ -223,38 +152,42 @@ class ConfigureDeviceController extends GetxController {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () => Navigator.of(context).pop(),
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                                child: const Text('Cancel', overflow: TextOverflow.ellipsis),
-                              ),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        alignment: WrapAlignment.center,
+                        children: [
+                          OutlinedButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              minimumSize: const Size(120, 48),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Get.back();
-                                  openAppSettings();
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green[600],
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                                child: const Text('Settings', overflow: TextOverflow.ellipsis),
-                              ),
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                             ),
-                          ],
-                        ),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              Get.back();
+                              openAppSettings();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green[600],
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              minimumSize: const Size(120, 48),
+                              elevation: 0,
+                            ),
+                            child: const Text(
+                              'Settings',
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -266,7 +199,9 @@ class ConfigureDeviceController extends GetxController {
         return;
       }
 
-      print('📍 Getting current position...');
+      print('📍 Getting current position (triggers native dialog if needed)...');
+      // On Android, getCurrentPosition triggers the native Google Location Accuracy dialog
+      // if location services are off or in battery saving mode.
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
         timeLimit: const Duration(seconds: 15),
@@ -374,62 +309,40 @@ class ConfigureDeviceController extends GetxController {
   Future<void> pickLocationOnMap() async {
     print('🗺️ Opening map picker...');
     
-    LatLng? result = await Get.to(() => const MapPickerView());
+    final dynamic result = await Get.to(() => const MapPickerView());
     
     if (result != null) {
-      print('✅ Location picked: ${result.latitude}, ${result.longitude}');
-      
-      selectedLatitude = result.latitude;
-      selectedLongitude = result.longitude;
-      
-      try {
-        List<Placemark> placemarks = await placemarkFromCoordinates(
-          result.latitude,
-          result.longitude,
-        );
-        
-        if (placemarks.isNotEmpty) {
-          Placemark place = placemarks[0];
-          List<String> addressParts = [];
-          
-          if (place.name != null && place.name!.isNotEmpty) {
-            addressParts.add(place.name!);
-          }
-          if (place.street != null && place.street!.isNotEmpty && place.street != place.name) {
-            addressParts.add(place.street!);
-          }
-          if (place.subLocality != null && place.subLocality!.isNotEmpty) {
-            addressParts.add(place.subLocality!);
-          }
-          if (place.locality != null && place.locality!.isNotEmpty) {
-            addressParts.add(place.locality!);
-          }
-          if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
-            addressParts.add(place.administrativeArea!);
-          }
-          if (place.postalCode != null && place.postalCode!.isNotEmpty) {
-            addressParts.add(place.postalCode!);
-          }
-          
-          String address = addressParts.join(', ');
-          locationController.text = address.isNotEmpty ? address : 'Lat: ${result.latitude.toStringAsFixed(6)}, Long: ${result.longitude.toStringAsFixed(6)}';
-        } else {
-          locationController.text = 'Lat: ${result.latitude.toStringAsFixed(6)}, Long: ${result.longitude.toStringAsFixed(6)}';
-        }
-      } catch (e) {
-        print('❌ Error geocoding: $e');
-        locationController.text = 'Lat: ${result.latitude.toStringAsFixed(6)}, Long: ${result.longitude.toStringAsFixed(6)}';
+      LatLng? location;
+      String? address;
+
+      if (result is Map) {
+        location = result['location'];
+        address = result['address'];
+      } else if (result is LatLng) {
+        location = result;
       }
-      
-      Future.delayed(Duration.zero, () {
-        Get.snackbar(
-          'Location Selected',
-          'Lat: ${result.latitude.toStringAsFixed(6)}\nLong: ${result.longitude.toStringAsFixed(6)}',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green[100],
-          duration: const Duration(seconds: 2),
-        );
-      });
+
+      if (location != null) {
+        print('✅ Location picked: ${location.latitude}, ${location.longitude}');
+        selectedLatitude = location.latitude;
+        selectedLongitude = location.longitude;
+        
+        if (address != null && address.isNotEmpty) {
+          locationController.text = address;
+        } else {
+          locationController.text = 'Lat: ${location.latitude.toStringAsFixed(3)}, Long: ${location.longitude.toStringAsFixed(3)}';
+        }
+
+        Future.delayed(Duration.zero, () {
+          Get.snackbar(
+            'Location Selected',
+            'Lat: ${location!.latitude.toStringAsFixed(3)}\nLong: ${location.longitude.toStringAsFixed(3)}',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green[100],
+            duration: const Duration(seconds: 2),
+          );
+        });
+      }
     } else {
       print('❌ Map picker cancelled');
     }
@@ -488,38 +401,42 @@ class ConfigureDeviceController extends GetxController {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Get.back(),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            child: const Text('Cancel', overflow: TextOverflow.ellipsis),
-                          ),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      OutlinedButton(
+                        onPressed: () => Get.back(),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          minimumSize: const Size(120, 48),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                              openAppSettings();
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green[600],
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            child: const Text('Settings', overflow: TextOverflow.ellipsis),
-                          ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                         ),
-                      ],
-                    ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          openAppSettings();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green[600],
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          minimumSize: const Size(120, 48),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Settings',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -681,6 +598,8 @@ class ConfigureDeviceController extends GetxController {
           backgroundColor: Colors.red[100],
         );
         Get.offAllNamed('/login');
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
       } else if (response.statusCode == 404) {
         Get.snackbar(
           'Error',
@@ -772,5 +691,9 @@ class ConfigureDeviceController extends GetxController {
         backgroundColor: Colors.red[100],
       );
     }
+  }
+
+  void _handleDeactivated() {
+    UIUtils.handleAccountDeactivated();
   }
 }

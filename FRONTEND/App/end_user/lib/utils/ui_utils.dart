@@ -1,9 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'theme/app_colors.dart';
+import '../feature/end_user_app/auth/presentation/controllers/auth_controller.dart';
 
 class UIUtils {
   static bool _isDialogShowing = false;
+
+  static void handleAccountDeactivated([String? message]) {
+    if (_isDialogShowing || (Get.isDialogOpen ?? false)) return;
+    
+    final msg = message ?? "Your account has been deactivated. Please contact admin.";
+    
+    showErrorDialog(
+      title: 'Account Alert',
+      message: msg,
+    );
+
+    // Logout after a small delay to allow the user to see the dialog
+    Future.delayed(const Duration(seconds: 1), () {
+      try {
+        final authController = Get.find<AuthController>();
+        authController.logout();
+        Get.offAllNamed('/login');
+      } catch (e) {
+        print('Error during logout: $e');
+        Get.offAllNamed('/login');
+      }
+    });
+  }
 
   static void showErrorDialog({String title = 'Error', required String message}) {
     if (_isDialogShowing || (Get.isDialogOpen ?? false)) return;

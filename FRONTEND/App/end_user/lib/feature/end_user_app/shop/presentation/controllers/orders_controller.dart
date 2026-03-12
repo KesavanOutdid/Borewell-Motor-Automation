@@ -100,6 +100,8 @@ class OrdersController extends GetxController {
           
           logger.i('✅ Orders fetched - Current: ${orders.length}, Total: $totalFetched');
         }
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
       } else {
         logger.e('❌ HTTP Error: ${response.statusCode}');
         errorMessage.value = 'Failed to fetch orders (${response.statusCode})';
@@ -227,6 +229,8 @@ class OrdersController extends GetxController {
             message: responseData['message'] ?? 'Failed to cancel order',
           );
         }
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
       } else {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         UIUtils.showErrorSnackbar(
@@ -317,5 +321,9 @@ class OrdersController extends GetxController {
       default:
         return Colors.grey;
     }
+  }
+
+  void _handleDeactivated() {
+    UIUtils.handleAccountDeactivated();
   }
 }

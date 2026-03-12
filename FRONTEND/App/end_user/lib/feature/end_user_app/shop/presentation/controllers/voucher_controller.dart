@@ -68,6 +68,8 @@ class VoucherController extends GetxController {
         }
       } else if (response.statusCode == 401) {
         Get.offAllNamed('/login');
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
       } else {
         errorMessage.value = 'Failed to load vouchers';
       }
@@ -122,6 +124,8 @@ class VoucherController extends GetxController {
           title: 'Invalid Voucher',
           message: jsonData['message'] ?? 'Voucher is invalid or expired',
         );
+      } else if (response.statusCode == 403) {
+        _handleDeactivated();
       } else if (response.statusCode == 404) {
         UIUtils.showErrorDialog(
           title: 'Not Found',
@@ -142,5 +146,9 @@ class VoucherController extends GetxController {
 
   List<VoucherModel> getActiveVouchers() {
     return vouchers.where((v) => v.isActive).toList();
+  }
+
+  void _handleDeactivated() {
+    UIUtils.handleAccountDeactivated();
   }
 }
