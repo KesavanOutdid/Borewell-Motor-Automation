@@ -1,28 +1,19 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'core/routes/app_routes.dart';
 import 'core/services/token_service.dart';
 import 'core/services/permission_service.dart';
 import 'core/services/notification_storage_service.dart';
+import 'core/services/notification_service.dart';
 import 'utils/theme/theme_controller.dart';
 import 'utils/theme/app_theme.dart';
 import 'feature/end_user_app/home/presentation/controllers/home_controller.dart';
 import 'feature/end_user_app/auth/presentation/controllers/auth_controller.dart';
-
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
-
-const AndroidNotificationChannel channel = AndroidNotificationChannel(
-  'high_importance_channel', // id
-  'High Importance Notifications', // title
-  description: 'This channel is used for important notifications.', // description
-  importance: Importance.max,
-);
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -69,18 +60,9 @@ void main() async {
     );
     print('🔔 [Firebase] User granted permission: ${settings.authorizationStatus}');
 
-    // Initialize Local Notifications
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(channel);
-
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    const InitializationSettings initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-    );
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    // Initialize Local Notifications via NotificationService
+    final notificationService = NotificationService();
+    await notificationService.initialize();
 
     // Handle foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
@@ -92,19 +74,11 @@ void main() async {
 
       // If `onMessage` is triggered with a notification, show it manually
       if (notification != null && android != null) {
-        flutterLocalNotificationsPlugin.show(
-          notification.hashCode,
-          notification.title,
-          notification.body,
-          NotificationDetails(
-            android: AndroidNotificationDetails(
-              channel.id,
-              channel.name,
-              channelDescription: channel.description,
-              icon: android.smallIcon,
-              // other properties...
-            ),
-          ),
+        notificationService.showNotification(
+          id: notification.hashCode,
+          title: notification.title,
+          body: notification.body,
+          payload: jsonEncode(message.data),
         );
       }
       
@@ -139,6 +113,9 @@ void main() async {
             backgroundColor: Colors.white.withOpacity(0.9),
             margin: const EdgeInsets.all(10),
             duration: const Duration(seconds: 4),
+            onTap: (_) {
+              notificationService.handleNotificationClick(jsonEncode(message.data));
+            },
           );
         }
       }
@@ -147,7 +124,18 @@ void main() async {
     // Handle interaction when app is in background but opened via notification
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       print('🖱️ [FCM Interaction] Notification caused app to open: ${message.data}');
+      notificationService.handleNotificationClick(jsonEncode(message.data));
     });
+
+    // Check if the app was opened from a terminated state via FCM notification
+    RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    if (initialMessage != null) {
+      print('🖱️ [FCM Interaction] App opened from terminated state: ${initialMessage.data}');
+      // Wait a bit for the app to settle before navigating
+      Future.delayed(const Duration(seconds: 1), () {
+        notificationService.handleNotificationClick(jsonEncode(initialMessage.data));
+      });
+    }
 
   } catch (e) {
     print("❌ [Firebase] Initialization failed: $e");

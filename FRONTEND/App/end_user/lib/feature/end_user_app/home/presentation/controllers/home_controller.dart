@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import '../../../../../core/config/app_constants.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geocoding/geocoding.dart';
 import '../../../../../core/config/env.dart';
@@ -95,12 +96,36 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   void _loadCachedDevices() {
     try {
       final cached = _storage.read('assigned_devices');
+      final detailsCache = _storage.read('device_details_cache') ?? {};
+      
       if (cached != null) {
         final List<Map<String, dynamic>> list = List<Map<String, dynamic>>.from(
           (cached as List).map((i) => Map<String, dynamic>.from(i))
         );
+        
         if (list.isNotEmpty) {
-          print('🏠 [HOME] Loaded ${list.length} devices from cache');
+          // Merge with detailed telemetry cache if motor is running
+          for (var i = 0; i < list.length; i++) {
+            final serial = list[i]['serial_number'] ?? list[i]['serialNumber'];
+            if (serial != null && detailsCache[serial] != null) {
+              final details = Map<String, dynamic>.from(detailsCache[serial]);
+              final isRunning = list[i]['start_status'] == true || 
+                                list[i]['motor_status'] == 'Running' ||
+                                details['motorStatus'] == 'Running';
+              
+              if (isRunning) {
+                // Apply cached telemetry fields
+                list[i].addAll(details);
+              } else {
+                // Ensure telemetry is cleared if stopped
+                for (final field in AppConstants.telemetryFields) {
+                  list[i][field] = '-';
+                }
+              }
+            }
+          }
+          
+          print('🏠 [HOME] Loaded ${list.length} devices from cache (with telemetry merge)');
           devices.assignAll(list);
         }
       }
@@ -217,11 +242,56 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     int index = devices.indexWhere((d) => (d['serial_number'] ?? d['serialNumber']) == serial);
     if (index != -1) {
       var device = Map<String, dynamic>.from(devices[index]);
+      final wasRunning = device['start_status'] == true;
       device['start_status'] = isRunning;
       device['updatedAt'] = DateTime.now().toUtc().toIso8601String();
       device['last_heartbeat'] = DateTime.now().toUtc().toIso8601String();
       devices[index] = device;
       devices.refresh();
+
+      // Only clear cache on the transition from running → stopped to avoid redundant I/O
+      if (!isRunning && wasRunning) {
+        _clearDeviceCache(serial);
+      }
+    }
+  }
+
+  void _clearDeviceCache(String serial) {
+    try {
+      // Clear persistent disk cache
+      final cache = _storage.read('device_details_cache') ?? {};
+      final Map<String, dynamic> deviceCache = Map<String, dynamic>.from(cache);
+      if (deviceCache.containsKey(serial)) {
+        deviceCache.remove(serial);
+        _storage.write('device_details_cache', deviceCache);
+        print('🏠 [HOME] Cleared $serial from persistent cache (Motor Stopped)');
+      }
+
+      // Reset telemetry and status in local devices list
+      int index = devices.indexWhere((d) => (d['serial_number'] ?? d['serialNumber']) == serial);
+      if (index != -1) {
+        var device = Map<String, dynamic>.from(devices[index]);
+        
+        bool changed = false;
+        for (final field in AppConstants.telemetryFields) {
+          if (device[field] != '-') {
+            device[field] = '-';
+            changed = true;
+          }
+        }
+        
+        if (device['start_status'] != false) {
+          device['start_status'] = false;
+          changed = true;
+        }
+
+        if (changed) {
+          devices[index] = device;
+          devices.refresh();
+        }
+      }
+    } catch (e) {
+      print('🏠 [HOME] Cache clear error: $e');
     }
   }
 

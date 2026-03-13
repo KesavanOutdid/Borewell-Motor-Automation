@@ -4,6 +4,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import '../../../../../core/config/app_constants.dart';
 import '../../../home/presentation/controllers/home_controller.dart';
 import 'package:http/http.dart' as http;
 import 'package:socket_io_client/socket_io_client.dart' as IO;
@@ -20,6 +22,7 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
   final isLoading = false.obs;
   final isProcessing = false.obs;
   final errorMessage = "".obs;
+  final _storage = GetStorage();
 
   late TokenService tokenService;
   // removed NotificationService as per user request to use only FCM
@@ -37,6 +40,8 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
   Timer? _commandTimeoutTimer;
   DateTime? _lastCommandTime;
   bool? _lastCommandStatus;
+
+  bool get running => liveData['motorStatus'] == 'Running';
 
   bool get isPoorSignal {
     final sig = liveData['signalStrength']?.toString() ?? '0';
@@ -134,17 +139,26 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
       'lastStart': args['startAt'] ?? (deviceChanged ? '-' : (liveData['lastStart'] ?? '-')),
       'lastStop': args['stopAt'] ?? (deviceChanged ? '-' : (liveData['lastStop'] ?? '-')),
       'lastUpdate': lastSeenStr ?? (deviceChanged ? '-' : (liveData['lastUpdate'] ?? '-')),
-      'motorFrequency': args['motor_frequency_hz'] ?? (deviceChanged ? '-' : (liveData['motorFrequency'] ?? '-')),
-      'motorEnergy': args['energy_kwh'] ?? (deviceChanged ? '-' : (liveData['motorEnergy'] ?? '-')),
-      'alert': args['alert'] ?? (deviceChanged ? '-' : (liveData['alert'] ?? '-')),
-      'deviceTemperature': args['device_temp_c'] ?? (deviceChanged ? '-' : (liveData['deviceTemperature'] ?? '-')),
-      'motorPower': args['power_kw'] ?? (deviceChanged ? '-' : (liveData['motorPower'] ?? '-')),
-      'flowRate': args['flow_lpm'] ?? (deviceChanged ? '-' : (liveData['flowRate'] ?? '-')),
-      'motorSpeed': args['motor_rpm'] ?? (deviceChanged ? '-' : (liveData['motorSpeed'] ?? '-')),
-      'signalStrength': args['signal_strength'] ?? (deviceChanged ? '-' : (liveData['signalStrength'] ?? '-')),
+      'motorFrequency': _formatMetric(args['motor_frequency_hz'], suffix: ' Hz') ?? (deviceChanged ? '-' : (liveData['motorFrequency'] ?? '-')),
+      'motorEnergy': _formatMetric(args['energy_kwh'], suffix: ' kWh') ?? (deviceChanged ? '-' : (liveData['motorEnergy'] ?? '-')),
+      'alert': _formatMetric(args['alert']) ?? (deviceChanged ? '-' : (liveData['alert'] ?? '-')),
+      'deviceTemperature': _formatMetric(args['device_temp_c'], suffix: '°C') ?? (deviceChanged ? '-' : (liveData['deviceTemperature'] ?? '-')),
+      'motorPower': _formatMetric(args['power_kw'], suffix: ' kW') ?? (deviceChanged ? '-' : (liveData['motorPower'] ?? '-')),
+      'flowRate': _formatMetric(args['flow_lpm'], suffix: ' LPM') ?? (deviceChanged ? '-' : (liveData['flowRate'] ?? '-')),
+      'motorSpeed': _formatMetric(args['motor_rpm'], suffix: ' RPM') ?? (deviceChanged ? '-' : (liveData['motorSpeed'] ?? '-')),
+      'signalStrength': _formatMetric(args['signal_strength']) ?? (deviceChanged ? '-' : (liveData['signalStrength'] ?? '-')),
     });
 
     _ensureSocketConnection();
+    
+    // Load from cache if we have a serial number and the motor is NOT stopped
+    // This allows showing last received data immediately on open if it was running
+    if (serialNumber != null && isRunningInitial) {
+      _loadFromCache();
+    } else if (serialNumber != null && !isRunningInitial) {
+      // If we know it's stopped, ensure cache is clear for this device
+      clearDeviceCache();
+    }
 
     if (!_initialized || deviceChanged) {
       _initialized = true;
@@ -390,6 +404,11 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
         final body = jsonDecode(response.body);
         final message = body['message']?.toString() ?? 'Command sent to device';
         _showMessage(message);
+        
+        // Clear cache if motor is stopped
+        if (!start) {
+          clearDeviceCache();
+        }
         
         // Start timeout timer for confirmation
         _commandTimeoutTimer?.cancel();
@@ -692,7 +711,7 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
 
     if (payload['signal_strength'] != null) {
       final newSignal = _formatMetric(payload['signal_strength']);
-      if (liveData['signalStrength'] != newSignal) {
+      if (newSignal != null && liveData['signalStrength'] != newSignal) {
         liveData['signalStrength'] = newSignal;
         changed = true;
       }
@@ -717,6 +736,11 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
     
     if (changed) {
       liveData.refresh();
+      if (!running) {
+        clearDeviceCache();
+      } else {
+        _saveToCache();
+      }
     }
   }
 
@@ -799,7 +823,7 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
 
     if (telemetry['fault_code'] != null) {
       final faultCode = _formatMetric(telemetry['fault_code']);
-      if (faultCode != '-' && faultCode.isNotEmpty && liveData['alert'] != faultCode) {
+      if (faultCode != null && faultCode != '-' && faultCode.isNotEmpty && liveData['alert'] != faultCode) {
         liveData['alert'] = faultCode;
         changed = true;
       }
@@ -813,6 +837,12 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
 
     if (changed) {
       liveData.refresh();
+      // Only clear cache on the transition from running → stopped
+      if (!running && (_previousMotorRunning == true)) {
+        clearDeviceCache();
+      } else if (running) {
+        _saveToCache();
+      }
     }
   }
 
@@ -821,6 +851,30 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
     _startHeartbeatTimer();
     
     bool changed = false;
+    
+    // Only update motor status if the alert payload explicitly carries it
+    final hasStatusField = payload.containsKey('motor_running') ||
+        payload.containsKey('MOTOR_RUNNING') ||
+        payload.containsKey('start_status') ||
+        payload.containsKey('START_STATUS') ||
+        payload.containsKey('motor_status') ||
+        payload.containsKey('motorStatus');
+
+    if (hasStatusField) {
+      final runningFromPayload = _getMotorRunning(payload);
+      final newMotorStatus = runningFromPayload ? 'Running' : 'Stopped';
+      if (liveData['motorStatus'] != newMotorStatus) {
+        liveData['motorStatus'] = newMotorStatus;
+        changed = true;
+      }
+      final newDeviceStatus = runningFromPayload ? 'Running' : 'Ready';
+      if (liveData['deviceStatus'] != newDeviceStatus) {
+        liveData['deviceStatus'] = newDeviceStatus;
+        changed = true;
+      }
+      _previousMotorRunning = runningFromPayload;
+    }
+
     final alertMessage = _extractAlertMessage(payload);
     if (alertMessage != '-' && alertMessage.isNotEmpty && liveData['alert'] != alertMessage) {
       liveData['alert'] = alertMessage;
@@ -834,6 +888,12 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
     
     if (changed) {
       liveData.refresh();
+      // Only clear cache on the transition from running → stopped
+      if (!running && (_previousMotorRunning == true)) {
+        clearDeviceCache();
+      } else if (running) {
+        _saveToCache();
+      }
     }
   }
 
@@ -913,6 +973,12 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
 
     if (changed) {
       liveData.refresh();
+      // Only clear cache on the transition from running → stopped
+      if (!running && (_previousMotorRunning == true)) {
+        clearDeviceCache();
+      } else if (running) {
+        _saveToCache();
+      }
     }
   }
 
@@ -980,7 +1046,7 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
     }
 
     final alertValue = _formatMetric(data['alert'] ?? telemetry['alert']);
-    final persistAlert = (alertValue == '-' || alertValue.isEmpty) 
+    final persistAlert = (alertValue == null || alertValue == '-' || alertValue.isEmpty) 
         ? (liveData['alert'] ?? '-') 
         : alertValue;
 
@@ -998,14 +1064,14 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
       'lastStart': _formatDate(data['startAt']) ?? liveData['lastStart'] ?? '-',
       'lastStop': _formatDate(data['stopAt']) ?? liveData['lastStop'] ?? '-',
       'lastUpdate': _formatDate(data['updatedAt'] ?? data['timestamp']) ?? liveData['lastUpdate'] ?? '-',
-      'motorFrequency': _formatMetric(telemetry['motor_frequency_hz'], suffix: ' Hz'),
-      'motorEnergy': _formatMetric(telemetry['energy_kwh'], suffix: ' kWh'),
+      'motorFrequency': _formatMetric(telemetry['motor_frequency_hz'], suffix: ' Hz') ?? liveData['motorFrequency'] ?? '-',
+      'motorEnergy': _formatMetric(telemetry['energy_kwh'], suffix: ' kWh') ?? liveData['motorEnergy'] ?? '-',
       'alert': persistAlert,
-      'deviceTemperature': _formatMetric(telemetry['device_temp_c'], suffix: '°C'),
-      'motorPower': _formatMetric(telemetry['power_kw'], suffix: ' kW'),
-      'flowRate': _formatMetric(telemetry['flow_lpm'], suffix: ' LPM'),
-      'motorSpeed': _formatMetric(telemetry['motor_rpm'], suffix: ' RPM'),
-      'signalStrength': _formatMetric(telemetry['signal_strength']),
+      'deviceTemperature': _formatMetric(telemetry['device_temp_c'], suffix: '°C') ?? liveData['deviceTemperature'] ?? '-',
+      'motorPower': _formatMetric(telemetry['power_kw'], suffix: ' kW') ?? liveData['motorPower'] ?? '-',
+      'flowRate': _formatMetric(telemetry['flow_lpm'], suffix: ' LPM') ?? liveData['flowRate'] ?? '-',
+      'motorSpeed': _formatMetric(telemetry['motor_rpm'], suffix: ' RPM') ?? liveData['motorSpeed'] ?? '-',
+      'signalStrength': _formatMetric(telemetry['signal_strength']) ?? liveData['signalStrength'] ?? '-',
     };
 
     bool dataChanged = false;
@@ -1018,6 +1084,12 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
 
     if (dataChanged) {
       liveData.refresh();
+      // Only clear cache on the transition from running → stopped
+      if (!isRunning && (_previousMotorRunning == true)) {
+        clearDeviceCache();
+      } else if (isRunning) {
+        _saveToCache();
+      }
     }
 
     if (shouldUpdateStatus) {
@@ -1060,8 +1132,8 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
     }
   }
 
-  String _formatMetric(dynamic value, {String suffix = ''}) {
-    if (value == null) return '-';
+  String? _formatMetric(dynamic value, {String suffix = ''}) {
+    if (value == null) return null;
     final str = _formatNumericValue(value);
     return suffix.isEmpty ? str : '$str$suffix';
   }
@@ -1146,5 +1218,104 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
 
   void _handleDeactivated() {
     UIUtils.handleAccountDeactivated();
+  }
+
+  void _saveToCache() {
+    if (serialNumber == null) return;
+    try {
+      final cache = _storage.read('device_details_cache') ?? {};
+      final Map<String, dynamic> deviceCache = Map<String, dynamic>.from(cache);
+      
+      // Save all telemetry and status fields
+      deviceCache[serialNumber!] = {
+        'motorFrequency': liveData['motorFrequency'],
+        'motorEnergy': liveData['motorEnergy'],
+        'alert': liveData['alert'],
+        'deviceTemperature': liveData['deviceTemperature'],
+        'motorPower': liveData['motorPower'],
+        'flowRate': liveData['flowRate'],
+        'motorSpeed': liveData['motorSpeed'],
+        'signalStrength': liveData['signalStrength'],
+        'lastUpdate': liveData['lastUpdate'],
+        'motorStatus': liveData['motorStatus'],
+        'deviceStatus': liveData['deviceStatus'],
+        'lastStart': liveData['lastStart'],
+        'lastStop': liveData['lastStop'],
+        'location': liveData['location'],
+        'latitude': liveData['latitude'],
+        'longitude': liveData['longitude'],
+        'nickname': liveData['nickname'],
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+      
+      _storage.write('device_details_cache', deviceCache);
+      print('💾 [DETAILS] Saved $serialNumber to persistent cache');
+    } catch (e) {
+      print('💾 [DETAILS] Cache save error: $e');
+    }
+  }
+
+  void _loadFromCache() {
+    if (serialNumber == null) return;
+    try {
+      final cache = _storage.read('device_details_cache');
+      if (cache != null && cache[serialNumber!] != null) {
+        final data = Map<String, dynamic>.from(cache[serialNumber!]);
+        print('💾 [DETAILS] Loading $serialNumber from persistent cache');
+        
+        // Only apply if the current value is empty/default
+        data.forEach((key, value) {
+          if (value != null && (liveData[key] == null || liveData[key] == '-' || liveData[key] == '')) {
+            liveData[key] = value;
+          }
+        });
+        liveData.refresh();
+      }
+    } catch (e) {
+      print('💾 [DETAILS] Cache load error: $e');
+    }
+  }
+
+  void clearDeviceCache() {
+    if (serialNumber == null) return;
+    try {
+      // Clear persistent cache
+      final cache = _storage.read('device_details_cache') ?? {};
+      final Map<String, dynamic> deviceCache = Map<String, dynamic>.from(cache);
+      if (deviceCache.containsKey(serialNumber)) {
+        deviceCache.remove(serialNumber);
+        _storage.write('device_details_cache', deviceCache);
+        print('💾 [DETAILS] Cleared $serialNumber from persistent cache (Motor Stopped)');
+      }
+      
+      // Also clear current liveData telemetry fields if stopped
+      bool reset = false;
+      for (final field in AppConstants.telemetryFields) {
+        if (liveData[field] != '-') {
+          liveData[field] = '-';
+          reset = true;
+        }
+      }
+      
+      // Update status as well for instant feedback
+      if (liveData['motorStatus'] != 'Stopped') {
+        liveData['motorStatus'] = 'Stopped';
+        reset = true;
+      }
+      
+      final newDeviceStatus = isConnected.value ? 'Ready' : 'Offline';
+      if (liveData['deviceStatus'] != newDeviceStatus) {
+        liveData['deviceStatus'] = newDeviceStatus;
+        reset = true;
+      }
+      
+      _previousMotorRunning = false;
+      
+      if (reset) {
+        liveData.refresh();
+      }
+    } catch (e) {
+      print('💾 [DETAILS] Cache clear error: $e');
+    }
   }
 }

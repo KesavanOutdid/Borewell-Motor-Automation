@@ -259,11 +259,18 @@ class BackgroundNotificationService {
     final title = '🟢 Motor Running';
     final body = 'Device: $serialNumber\nStarted: ${DateTime.now().toString().substring(0, 19)}';
 
+    final payload = jsonEncode({
+      'type': 'motor_running',
+      'serial_number': serialNumber,
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+
     await plugin.show(
       serialNumber.hashCode,
       title,
       body,
       details,
+      payload: payload,
     );
 
     await _saveNotification(storage, 'motor_running', title, body, serialNumber);
@@ -292,11 +299,18 @@ class BackgroundNotificationService {
     final title = '🔴 Motor Stopped';
     final body = 'Device: $serialNumber\nStopped: ${DateTime.now().toString().substring(0, 19)}';
 
+    final payload = jsonEncode({
+      'type': 'motor_stopped',
+      'serial_number': serialNumber,
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+
     await plugin.show(
       serialNumber.hashCode + 1,
       title,
       body,
       details,
+      payload: payload,
     );
 
     await _saveNotification(storage, 'motor_stopped', title, body, serialNumber);
@@ -337,11 +351,19 @@ class BackgroundNotificationService {
     final title = '$statusEmoji Device Alert - $serialNumber';
     final body = '$alertMessage\nTime: ${DateTime.now().toString().substring(0, 19)}';
 
+    final payload = jsonEncode({
+      'type': 'alert',
+      'serial_number': serialNumber,
+      'timestamp': DateTime.now().toIso8601String(),
+      'status': deviceStatus,
+    });
+
     await plugin.show(
       serialNumber.hashCode + 999,
       title,
       body,
       details,
+      payload: payload,
     );
 
     await _saveNotification(storage, 'alert', title, body, serialNumber);

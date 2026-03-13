@@ -2367,6 +2367,18 @@ exports.assignDeviceToOther = async (req, res, next) => {
         sendEmail(masterUser.user_email, subject, ownerBody).catch(e => console.error("Owner share email failed:", e));
         sendEmail(sharedUser.user_email, subject, sharedBody).catch(e => console.error("Shared user email failed:", e));
 
+        // 5. Send FCM Notification to Shared User
+        if (sharedUser.fcm_tokens && sharedUser.fcm_tokens.length > 0) {
+            const fcmTitle = "🔑 New Device Access Request";
+            const fcmBody = `${masterUser.user_name} has shared access to device ${serial_number} with you. Click to accept or reject.`;
+            
+            sendPushNotification(sharedUser.fcm_tokens, { title: fcmTitle, body: fcmBody }, {
+                type: "ACCESS_REQUEST",
+                serial_number,
+                master_user_name: masterUser.user_name
+            }).catch(e => console.error("Share FCM notification failed:", e));
+        }
+
         res.status(200).json({ success: true, message: "Device shared successfully", data: share });
 
     } catch (err) {
@@ -2445,6 +2457,21 @@ exports.respondToDeviceShare = async (req, res, next) => {
         // The requirement says "accept or reject", usually it stays as record
 
         await share.save();
+
+        // Notify Master Owner of Response
+        const masterOwner = await User.findOne({ user_id: share.master_user_id });
+        if (masterOwner && masterOwner.fcm_tokens && masterOwner.fcm_tokens.length > 0) {
+            const fcmTitle = `🔑 Share Request ${action.charAt(0).toUpperCase() + action.slice(1)}`;
+            const fcmBody = `${sharedUser.user_name} has ${action} your request to share device ${serial_number}.`;
+            
+            const notificationHelper = require('../utils/notificationHelper');
+            notificationHelper.sendPushNotification(masterOwner.fcm_tokens, { title: fcmTitle, body: fcmBody }, {
+                type: "SHARE_RESPONSE",
+                serial_number,
+                action,
+                shared_user_name: sharedUser.user_name
+            }).catch(e => console.error("Share response FCM notification failed:", e));
+        }
 
         res.status(200).json({
             success: true,
