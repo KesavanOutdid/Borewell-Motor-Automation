@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../controllers/device_schedule_controller.dart';
 import '../../../../../utils/theme/app_colors.dart';
-import '../../../../../utils/widgets/gradient_widgets.dart';
 
 class DeviceSchedulePage extends StatefulWidget {
   const DeviceSchedulePage({super.key});

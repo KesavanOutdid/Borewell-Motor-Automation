@@ -614,7 +614,7 @@ router.post(
     authMiddleware(),
     [
         body('serial_number').notEmpty().withMessage("Serial number is required"),
-        body('imei_number').notEmpty().withMessage("IMEI number is required"),
+        // body('imei_number').notEmpty().withMessage("IMEI number is required"),
     ],
     appCtrl.userDeviceDetails
 );

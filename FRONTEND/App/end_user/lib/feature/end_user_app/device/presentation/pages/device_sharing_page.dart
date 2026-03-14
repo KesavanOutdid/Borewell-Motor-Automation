@@ -5,7 +5,7 @@ import '../controllers/device_sharing_controller.dart';
 import '../../../../../utils/theme/app_colors.dart';
 
 class DeviceSharingView extends GetView<DeviceSharingController> {
-  const DeviceSharingView({Key? key}) : super(key: key);
+  const DeviceSharingView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -139,7 +139,7 @@ class DeviceSharingView extends GetView<DeviceSharingController> {
                                 user['shared_to_user_id'],
                                 val,
                               ),
-                              activeColor: AppColors.primaryGreen,
+                              activeThumbColor: AppColors.primaryGreen,
                             ),
                             IconButton(
                               icon: const Icon(Icons.delete_outline, color: Colors.red),

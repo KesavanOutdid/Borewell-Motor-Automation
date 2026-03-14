@@ -11,7 +11,7 @@ import '../../../../../utils/widgets/gradient_widgets.dart';
 import '../../../../../utils/widgets/ui_components.dart';
 
 class DeviceDetailsView extends GetView<DeviceDetailsController> {
-  const DeviceDetailsView({Key? key}) : super(key: key);
+  const DeviceDetailsView({super.key});
 
   @override
   Widget build(BuildContext context) {

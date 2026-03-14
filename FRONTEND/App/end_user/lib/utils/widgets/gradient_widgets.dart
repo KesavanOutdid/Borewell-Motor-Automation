@@ -11,7 +11,7 @@ class GradientButton extends StatelessWidget {
   final Gradient? gradient;
 
   const GradientButton({
-    Key? key,
+    super.key,
     required this.text,
     this.onPressed,
     this.isLoading = false,
@@ -19,7 +19,7 @@ class GradientButton extends StatelessWidget {
     this.height = 56,
     this.icon,
     this.gradient,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -80,13 +80,13 @@ class GradientCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   const GradientCard({
-    Key? key,
+    super.key,
     required this.child,
     this.padding,
     this.width,
     this.height,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -121,13 +121,13 @@ class GlassmorphicCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   const GlassmorphicCard({
-    Key? key,
+    super.key,
     required this.child,
     this.padding,
     this.width,
     this.height,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -172,11 +172,11 @@ class StatusBadge extends StatelessWidget {
   final IconData? icon;
 
   const StatusBadge({
-    Key? key,
+    super.key,
     required this.text,
     required this.isActive,
     this.icon,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -226,12 +226,12 @@ class AnimatedIconButton extends StatefulWidget {
   final double size;
 
   const AnimatedIconButton({
-    Key? key,
+    super.key,
     required this.icon,
     required this.onPressed,
     this.color,
     this.size = 24,
-  }) : super(key: key);
+  });
 
   @override
   State<AnimatedIconButton> createState() => _AnimatedIconButtonState();
@@ -288,12 +288,12 @@ class MetricCard extends StatelessWidget {
   final Gradient gradient;
 
   const MetricCard({
-    Key? key,
+    super.key,
     required this.label,
     required this.value,
     required this.icon,
     required this.gradient,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -394,11 +394,11 @@ class ShimmerLoading extends StatefulWidget {
   final BorderRadius? borderRadius;
 
   const ShimmerLoading({
-    Key? key,
+    super.key,
     required this.width,
     required this.height,
     this.borderRadius,
-  }) : super(key: key);
+  });
 
   @override
   State<ShimmerLoading> createState() => _ShimmerLoadingState();

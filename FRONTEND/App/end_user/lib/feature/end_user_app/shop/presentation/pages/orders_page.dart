@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../../utils/theme/app_colors.dart';
 import '../controllers/orders_controller.dart';
-import '../../../dashboard/presentation/controllers/dashboard_controller.dart';
 import '../../../../../utils/widgets/ui_components.dart';
 
 class OrdersPage extends StatefulWidget {

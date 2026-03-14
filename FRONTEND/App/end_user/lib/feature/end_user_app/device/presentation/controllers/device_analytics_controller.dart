@@ -213,11 +213,11 @@ class DeviceAnalyticsController extends GetxController {
   void _useMockData() {
     final mockData = {
       'hourly': List.generate(24, (i) => {
-        'label': '${i}:00',
+        'label': '$i:00',
         'value': 1400.0 + (i * 15) + (i % 3 == 0 ? 50 : -30),
       }),
       'today': List.generate(24, (i) => {
-        'label': '${i}:00',
+        'label': '$i:00',
         'value': 1420.0 + (i * 20) + (i % 2 == 0 ? 80 : -40),
       }),
       'weekly': List.generate(7, (i) => {
@@ -250,7 +250,7 @@ class DeviceAnalyticsController extends GetxController {
       if (performanceScore < 50) {
         Get.snackbar(
           '⚠️ Critical Alert',
-          'Performance score is critically low (${performanceScore}%). ${overallStats.totalAnomalies} anomalies detected.',
+          'Performance score is critically low ($performanceScore%). ${overallStats.totalAnomalies} anomalies detected.',
           snackPosition: SnackPosition.TOP,
           backgroundColor: const Color(0xFFEF4444),
           colorText: const Color(0xFFFFFFFF),
@@ -260,7 +260,7 @@ class DeviceAnalyticsController extends GetxController {
       } else if (performanceScore < 70) {
         Get.snackbar(
           '⚠️ Warning',
-          'Performance score is below optimal (${performanceScore}%). ${overallStats.totalAnomalies} anomalies detected.',
+          'Performance score is below optimal ($performanceScore%). ${overallStats.totalAnomalies} anomalies detected.',
           snackPosition: SnackPosition.TOP,
           backgroundColor: const Color(0xFFF59E0B),
           colorText: const Color(0xFFFFFFFF),
@@ -726,7 +726,7 @@ class DeviceAnalyticsController extends GetxController {
               ),
             ],
           );
-        }).toList(),
+        }),
       ],
     );
   }

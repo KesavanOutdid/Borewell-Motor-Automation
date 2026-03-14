@@ -934,12 +934,10 @@ exports.userDeviceDetails = async (req, res) => {
         if (!errors.isEmpty())
             return res.status(400).json({ success: false, errors: errors.array() });
 
-        const { serial_number, imei_number } = req.body;
+        const { serial_number } = req.body;
 
         const query = { serial_number };
-        if (imei_number) {
-            query.imei_number = imei_number;
-        }
+        
 
         const device = await Device.findOne(query);
 

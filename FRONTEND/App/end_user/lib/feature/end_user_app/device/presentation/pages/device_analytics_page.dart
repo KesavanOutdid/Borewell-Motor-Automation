@@ -718,7 +718,7 @@ class DeviceAnalyticsView extends StatelessWidget {
                 final index = value.toInt();
                 if (index >= 0 && index < data.length) {
                   return SideTitleWidget(
-                    axisSide: meta.axisSide,
+                    meta: meta,
                     space: 12,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
@@ -757,7 +757,7 @@ class DeviceAnalyticsView extends StatelessWidget {
                 }
                 
                 return SideTitleWidget(
-                  axisSide: meta.axisSide,
+                  meta: meta,
                   space: 12,
                   child: SizedBox(
                     width: 45,

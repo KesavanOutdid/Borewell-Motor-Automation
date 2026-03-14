@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class MapPickerView extends StatefulWidget {
-  const MapPickerView({Key? key}) : super(key: key);
+  const MapPickerView({super.key});
 
   @override
   State<MapPickerView> createState() => _MapPickerViewState();

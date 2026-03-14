@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -362,7 +361,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       final dateTime = value is DateTime ? value : DateTime.parse(value.toString());
       // IST Offset: +5:30
       final istTime = dateTime.toUtc().add(const Duration(hours: 5, minutes: 30));
-      final twoDigits = (int v) => v.toString().padLeft(2, '0');
+      String twoDigits(int v) => v.toString().padLeft(2, '0');
       final hour = istTime.hour == 0 ? 12 : (istTime.hour > 12 ? istTime.hour - 12 : istTime.hour);
       final period = istTime.hour >= 12 ? 'PM' : 'AM';
       return '${twoDigits(istTime.day)}/${twoDigits(istTime.month)}/${istTime.year} ${twoDigits(hour)}:${twoDigits(istTime.minute)} $period IST';
@@ -950,7 +949,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
-        Get.snackbar('Success', 'Access request ${action} successfully');
+        Get.snackbar('Success', 'Access request $action successfully');
         fetchDevices();
       } else if (response.statusCode == 403) {
         UIUtils.handleAccountDeactivated(data['message']);

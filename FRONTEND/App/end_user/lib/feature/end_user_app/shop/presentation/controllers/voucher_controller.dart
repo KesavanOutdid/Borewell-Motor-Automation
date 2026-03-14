@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:agri_plus/utils/ui_utils.dart';
@@ -30,7 +29,7 @@ class VoucherController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
 
-      final token = await tokenService.getToken();
+      final token = tokenService.getToken();
       if (token == null) {
         Get.offAllNamed('/login');
         return;
@@ -84,7 +83,7 @@ class VoucherController extends GetxController {
     if (isLoading.value) return null;
     try {
       isLoading.value = true;
-      final token = await tokenService.getToken();
+      final token = tokenService.getToken();
       if (token == null) {
         Get.offAllNamed('/login');
         return null;

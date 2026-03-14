@@ -133,7 +133,7 @@ void main() async {
 
     // Initialize Local Notifications via NotificationService
     final notificationService = NotificationService();
-    await notificationService.initialize();
+    await notificationService.setupNotifications();
 
     // Handle foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {

@@ -410,8 +410,9 @@ class ProfileController extends GetxController {
       // Determine content type from file extension
       String extension = imageFile.path.split('.').last.toLowerCase();
       String mimeType = 'image/jpeg'; // default
-      if (extension == 'png') mimeType = 'image/png';
-      else if (extension == 'jpg' || extension == 'jpeg') mimeType = 'image/jpeg';
+      if (extension == 'png') {
+        mimeType = 'image/png';
+      } else if (extension == 'jpg' || extension == 'jpeg') mimeType = 'image/jpeg';
       else if (extension == 'gif') mimeType = 'image/gif';
       else if (extension == 'webp') mimeType = 'image/webp';
 

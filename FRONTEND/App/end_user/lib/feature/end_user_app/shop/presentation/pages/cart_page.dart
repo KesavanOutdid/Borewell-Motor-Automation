@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:agri_plus/utils/ui_utils.dart';
 import '../../../../../utils/theme/app_colors.dart';
-import '../../../../../utils/widgets/gradient_widgets.dart';
 import '../controllers/cart_controller.dart';
 import '../controllers/shop_controller.dart';
 import '../controllers/voucher_controller.dart';
 import '../../../../../utils/widgets/ui_components.dart';
-import '../../../dashboard/presentation/controllers/dashboard_controller.dart';
 import 'product_details_page.dart';
 
 class CartPage extends StatefulWidget {
@@ -165,7 +162,7 @@ class _CartPageState extends State<CartPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    ...cart.items.map((item) => _buildCartItem(context, item, controller)).toList(),
+                    ...cart.items.map((item) => _buildCartItem(context, item, controller)),
                     const SizedBox(height: 12),
                     _buildPriceSummarySection(cart, controller),
                     const SizedBox(height: 32),

@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import '../controllers/home_controller.dart';
 import '../../../../../core/services/notification_storage_service.dart';
 import '../../../../../utils/theme/app_colors.dart';
-import '../../../../../utils/widgets/swipe_button.dart';
 import '../../../../../utils/widgets/ui_components.dart';
 
 class HomeView extends GetView<HomeController> {

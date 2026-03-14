@@ -4,7 +4,7 @@ import '../controllers/add_device_controller.dart';
 import '../../../../../utils/theme/app_colors.dart';
 
 class ConfigureDeviceView extends StatelessWidget {
-  ConfigureDeviceView({Key? key}) : super(key: key);
+  const ConfigureDeviceView({super.key});
 
   @override
   Widget build(BuildContext context) {

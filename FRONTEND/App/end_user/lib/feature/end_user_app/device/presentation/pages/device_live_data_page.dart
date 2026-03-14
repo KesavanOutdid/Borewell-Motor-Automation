@@ -193,7 +193,7 @@ class DeviceLiveDataView extends GetView<DeviceLiveDataController> {
                 onChanged: (value) {
                   controller.toggleMotor();
                 },
-                activeColor: Colors.green,
+                activeThumbColor: Colors.green,
               ),
             ],
           ),

@@ -1191,7 +1191,7 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
     try {
       final dateTime = value is DateTime ? value : DateTime.parse(value.toString());
       final istTime = _convertToIst(dateTime);
-      final twoDigits = (int v) => v.toString().padLeft(2, '0');
+      String twoDigits(int v) => v.toString().padLeft(2, '0');
       final hour = istTime.hour == 0 ? 12 : (istTime.hour > 12 ? istTime.hour - 12 : istTime.hour);
       final period = istTime.hour >= 12 ? 'PM' : 'AM';
       return '${twoDigits(istTime.day)}/${twoDigits(istTime.month)}/${istTime.year} ${twoDigits(hour)}:${twoDigits(istTime.minute)} $period IST';
@@ -1202,7 +1202,7 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
 
   String _formattedNow() {
     final now = _convertToIst(DateTime.now());
-    final twoDigits = (int v) => v.toString().padLeft(2, '0');
+    String twoDigits(int v) => v.toString().padLeft(2, '0');
     final hour = now.hour == 0 ? 12 : (now.hour > 12 ? now.hour - 12 : now.hour);
     final period = now.hour >= 12 ? 'PM' : 'AM';
     return '${twoDigits(now.day)}/${twoDigits(now.month)}/${now.year} ${twoDigits(hour)}:${twoDigits(now.minute)} $period IST';

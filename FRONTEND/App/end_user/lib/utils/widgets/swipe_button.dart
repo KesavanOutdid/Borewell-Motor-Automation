@@ -12,7 +12,7 @@ class SwipeButton extends StatefulWidget {
   final SwipeDirection direction;
 
   const SwipeButton({
-    Key? key,
+    super.key,
     required this.onSwipe,
     required this.label,
     required this.icon,
@@ -20,7 +20,7 @@ class SwipeButton extends StatefulWidget {
     this.isEnabled = true,
     this.disabledLabel,
     this.direction = SwipeDirection.right,
-  }) : super(key: key);
+  });
 
   @override
   State<SwipeButton> createState() => _SwipeButtonState();

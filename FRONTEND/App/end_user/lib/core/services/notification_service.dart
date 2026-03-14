@@ -15,14 +15,14 @@ class NotificationService {
   final NotificationStorageService _storageService = NotificationStorageService();
   bool _initialized = false;
 
-  Future<void> initialize() async {
+  Future<void> setupNotifications() async {
     if (_initialized) return;
 
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const initSettings = InitializationSettings(android: androidSettings);
 
     await _notifications.initialize(
-      initSettings,
+      settings: initSettings,
       onDidReceiveNotificationResponse: (details) {
         if (details.payload != null) {
           handleNotificationClick(details.payload!);
@@ -134,7 +134,7 @@ class NotificationService {
     String channelId = 'high_importance_channel',
     String channelName = 'High Importance Notifications',
   }) async {
-    await initialize();
+    await setupNotifications();
 
     final androidDetails = AndroidNotificationDetails(
       channelId,
@@ -146,10 +146,10 @@ class NotificationService {
     final details = NotificationDetails(android: androidDetails);
 
     await _notifications.show(
-      id,
-      title,
-      body,
-      details,
+      id: id,
+      title: title,
+      body: body,
+      notificationDetails: details,
       payload: payload,
     );
   }
@@ -158,7 +158,7 @@ class NotificationService {
     required String serialNumber,
     String? startTime,
   }) async {
-    await initialize();
+    await setupNotifications();
 
     final androidDetails = AndroidNotificationDetails(
       'motor_status',
@@ -188,10 +188,10 @@ class NotificationService {
     });
 
     await _notifications.show(
-      serialNumber.hashCode,
-      title,
-      body,
-      details,
+      id: serialNumber.hashCode,
+      title: title,
+      body: body,
+      notificationDetails: details,
       payload: payload,
     );
 
@@ -208,7 +208,7 @@ class NotificationService {
     required String serialNumber,
     String? stopTime,
   }) async {
-    await initialize();
+    await setupNotifications();
 
     await cancelNotification(serialNumber);
 
@@ -238,10 +238,10 @@ class NotificationService {
     });
 
     await _notifications.show(
-      serialNumber.hashCode + 1,
-      title,
-      body,
-      details,
+      id: serialNumber.hashCode + 1,
+      title: title,
+      body: body,
+      notificationDetails: details,
       payload: payload,
     );
 
@@ -260,7 +260,7 @@ class NotificationService {
     String? timestamp,
     String? deviceStatus,
   }) async {
-    await initialize();
+    await setupNotifications();
 
     final androidDetails = AndroidNotificationDetails(
       'device_alerts',
@@ -302,10 +302,10 @@ class NotificationService {
     });
 
     await _notifications.show(
-      serialNumber.hashCode + 999,
-      title,
-      body,
-      details,
+      id: serialNumber.hashCode + 999,
+      title: title,
+      body: body,
+      notificationDetails: details,
       payload: payload,
     );
 
@@ -319,7 +319,7 @@ class NotificationService {
   }
 
   Future<void> cancelNotification(String serialNumber) async {
-    await _notifications.cancel(serialNumber.hashCode);
+    await _notifications.cancel(id: serialNumber.hashCode);
   }
 
   Future<void> cancelAllNotifications() async {

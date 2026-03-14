@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class QRScannerView extends StatefulWidget {
-  const QRScannerView({Key? key}) : super(key: key);
+  const QRScannerView({super.key});
 
   @override
   State<QRScannerView> createState() => _QRScannerViewState();

@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
@@ -100,7 +99,9 @@ class BackgroundNotificationService {
 
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const initSettings = InitializationSettings(android: androidSettings);
-    await flutterLocalNotificationsPlugin.initialize(initSettings);
+    await flutterLocalNotificationsPlugin.initialize(
+      settings: initSettings,
+    );
 
     Map<String, IO.Socket> sockets = {};
     Map<String, bool> previousMotorStates = {};
@@ -266,10 +267,10 @@ class BackgroundNotificationService {
     });
 
     await plugin.show(
-      serialNumber.hashCode,
-      title,
-      body,
-      details,
+      id: serialNumber.hashCode,
+      title: title,
+      body: body,
+      notificationDetails: details,
       payload: payload,
     );
 
@@ -281,7 +282,7 @@ class BackgroundNotificationService {
     String serialNumber,
     GetStorage storage,
   ) async {
-    await plugin.cancel(serialNumber.hashCode);
+    await plugin.cancel(id: serialNumber.hashCode);
 
     final androidDetails = AndroidNotificationDetails(
       'motor_status',
@@ -306,10 +307,10 @@ class BackgroundNotificationService {
     });
 
     await plugin.show(
-      serialNumber.hashCode + 1,
-      title,
-      body,
-      details,
+      id: serialNumber.hashCode + 1,
+      title: title,
+      body: body,
+      notificationDetails: details,
       payload: payload,
     );
 
@@ -359,10 +360,10 @@ class BackgroundNotificationService {
     });
 
     await plugin.show(
-      serialNumber.hashCode + 999,
-      title,
-      body,
-      details,
+      id: serialNumber.hashCode + 999,
+      title: title,
+      body: body,
+      notificationDetails: details,
       payload: payload,
     );
 

@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../../../../utils/theme/app_colors.dart';
-import '../../../../../utils/widgets/gradient_widgets.dart';
 import '../../data/models/order_model.dart';
 import '../../data/models/cart_model.dart';
 import '../../data/models/address_model.dart';

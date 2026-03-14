@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -7,7 +6,6 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:logger/logger.dart';
 import '../../../../../core/services/token_service.dart';
-import '../../../../../utils/ui_utils.dart';
 import '../../../../../core/config/env.dart';
 
 class ShopController extends GetxController {
@@ -187,6 +185,7 @@ class ShopController extends GetxController {
     }
   }
 
+  @override
   Future<void> refresh() async {
     logger.i('🔄 Refresh called');
     await fetchProducts(isRefresh: true);

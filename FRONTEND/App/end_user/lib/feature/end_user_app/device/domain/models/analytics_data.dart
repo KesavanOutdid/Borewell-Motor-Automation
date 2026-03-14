@@ -56,7 +56,7 @@ class AnalyticsData {
 
   static List<ChartDataPoint> _fillHourlyData(List<ChartDataPoint> data) {
     if (data.isEmpty) {
-      return List.generate(12, (i) => ChartDataPoint(label: '${i}', value: 0));
+      return List.generate(12, (i) => ChartDataPoint(label: '$i', value: 0));
     }
     
     return data;
@@ -64,7 +64,7 @@ class AnalyticsData {
 
   static List<ChartDataPoint> _fillTodayData(List<ChartDataPoint> data) {
     if (data.isEmpty) {
-      return List.generate(24, (i) => ChartDataPoint(label: '${i}', value: 0));
+      return List.generate(24, (i) => ChartDataPoint(label: '$i', value: 0));
     }
     
     return data;
@@ -72,7 +72,7 @@ class AnalyticsData {
 
   static List<ChartDataPoint> _fillWeeklyData(List<ChartDataPoint> data) {
     if (data.isEmpty) {
-      return List.generate(7, (i) => ChartDataPoint(label: '${i}', value: 0));
+      return List.generate(7, (i) => ChartDataPoint(label: '$i', value: 0));
     }
     
     return data;
