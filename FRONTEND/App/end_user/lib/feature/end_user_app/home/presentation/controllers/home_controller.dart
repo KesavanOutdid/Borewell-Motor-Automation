@@ -195,6 +195,10 @@ class HomeController extends GetxController with WidgetsBindingObserver {
         if (data != null && data['serial_number'] != null) {
           final serial = data['serial_number'];
           _updateDeviceLastSeen(serial, silent: true);
+          
+          if (data['telemetry'] is Map) {
+            _updateDeviceTelemetry(serial, Map<String, dynamic>.from(data['telemetry']));
+          }
         }
       });
 
@@ -252,7 +256,118 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       // Only clear cache on the transition from running → stopped to avoid redundant I/O
       if (!isRunning && wasRunning) {
         _clearDeviceCache(serial);
+      } else if (isRunning) {
+        // Persist the status change for running devices
+        _saveDeviceToCache(serial, device);
       }
+    }
+  }
+
+  void _updateDeviceTelemetry(String serial, Map<String, dynamic> telemetry) {
+    int index = devices.indexWhere((d) => (d['serial_number'] ?? d['serialNumber']) == serial);
+    if (index != -1) {
+      var device = Map<String, dynamic>.from(devices[index]);
+      
+      // Merge telemetry fields directly into device map
+      device.addAll(telemetry);
+      
+      // Infer motor status from telemetry (e.g. RPM) if status is not explicitly present
+      final running = _getMotorRunning(device);
+      if (running != null) {
+        device['start_status'] = running;
+      }
+      
+      // Update nested telemetry object if it exists (for compatibility)
+      if (device['telemetry'] is Map) {
+        var existingTelemetry = Map<String, dynamic>.from(device['telemetry']);
+        existingTelemetry.addAll(telemetry);
+        device['telemetry'] = existingTelemetry;
+      } else {
+        device['telemetry'] = telemetry;
+      }
+      
+      device['last_heartbeat'] = DateTime.now().toUtc().toIso8601String();
+      devices[index] = device;
+      devices.refresh();
+      
+      // Update persistent cache for this device
+      _saveDeviceToCache(serial, device);
+    }
+  }
+
+  void _saveDeviceToCache(String serial, Map<String, dynamic> deviceData) {
+    try {
+      final cache = _storage.read('device_details_cache') ?? {};
+      final Map<String, dynamic> deviceCache = Map<String, dynamic>.from(cache);
+      
+      // Save in the format DeviceDetailsController expects
+      final telemetryData = <String, dynamic>{};
+      
+      // Helper to format metric with same logic as DeviceDetailsController
+      String? format(dynamic val, {String suffix = ''}) {
+        if (val == null) return null;
+        String str;
+        if (val is num) {
+          str = _stripTrailingZeros(val.toStringAsFixed(3));
+        } else {
+          final parsed = double.tryParse(val.toString());
+          str = parsed != null ? _stripTrailingZeros(parsed.toStringAsFixed(3)) : val.toString();
+        }
+        return suffix.isEmpty ? str : '$str$suffix';
+      }
+
+      // Map raw keys to display keys
+      telemetryData['motorFrequency'] = format(deviceData['motor_frequency_hz'] ?? deviceData['motorFrequency'], suffix: ' Hz');
+      telemetryData['motorEnergy'] = format(deviceData['energy_kwh'] ?? deviceData['motorEnergy'], suffix: ' kWh');
+      telemetryData['deviceTemperature'] = format(deviceData['device_temp_c'] ?? deviceData['deviceTemperature'], suffix: '°C');
+      telemetryData['motorPower'] = format(deviceData['power_kw'] ?? deviceData['motorPower'], suffix: ' kW');
+      telemetryData['flowRate'] = format(deviceData['flow_lpm'] ?? deviceData['flowRate'], suffix: ' LPM');
+      telemetryData['motorSpeed'] = format(deviceData['motor_rpm'] ?? deviceData['motorSpeed'], suffix: ' RPM');
+      telemetryData['signalStrength'] = format(deviceData['signal_strength'] ?? deviceData['signalStrength']);
+      
+      // Extract alert/fault code
+      final fault = deviceData['fault_code'] ?? deviceData['alert'];
+      if (fault != null) {
+        telemetryData['alert'] = format(fault);
+      }
+
+      // Add status and timestamps
+      telemetryData['motorStatus'] = (deviceData['start_status'] == true) ? 'Running' : 'Stopped';
+      telemetryData['deviceStatus'] = (deviceData['start_status'] == true) ? 'Running' : 'Ready';
+      telemetryData['lastUpdate'] = _formatDate(deviceData['last_heartbeat'] ?? deviceData['updatedAt'] ?? deviceData['timestamp']);
+      
+      // Optional: keep raw fields too
+      telemetryData.addAll(deviceData);
+      
+      deviceCache[serial] = telemetryData;
+      _storage.write('device_details_cache', deviceCache);
+      print('🏠 [HOME] Updated persistent cache for $serial');
+    } catch (e) {
+      print('🏠 [HOME] Cache save error: $e');
+    }
+  }
+
+  String _stripTrailingZeros(String value) {
+    if (!value.contains('.')) return value;
+    var trimmed = value.replaceAll(RegExp(r'0+$'), '');
+    if (trimmed.endsWith('.')) {
+      trimmed = trimmed.substring(0, trimmed.length - 1);
+    }
+    return trimmed.isEmpty ? '0' : trimmed;
+  }
+
+  String? _formatDate(dynamic value) {
+    if (value == null) return null;
+    try {
+      final dateTime = value is DateTime ? value : DateTime.parse(value.toString());
+      // IST Offset: +5:30
+      final istTime = dateTime.toUtc().add(const Duration(hours: 5, minutes: 30));
+      final twoDigits = (int v) => v.toString().padLeft(2, '0');
+      final hour = istTime.hour == 0 ? 12 : (istTime.hour > 12 ? istTime.hour - 12 : istTime.hour);
+      final period = istTime.hour >= 12 ? 'PM' : 'AM';
+      return '${twoDigits(istTime.day)}/${twoDigits(istTime.month)}/${istTime.year} ${twoDigits(hour)}:${twoDigits(istTime.minute)} $period IST';
+    } catch (_) {
+      return value.toString();
     }
   }
 

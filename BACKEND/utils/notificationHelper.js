@@ -226,24 +226,38 @@ exports.notifyUser = async (db, userId, type, payload) => {
             
             title = running ? "🟢 Motor Started" : "🔴 Motor Stopped";
             body = `Device ${serial_number} was ${running ? 'started' : 'stopped'} by ${actionBy}`;
+        } else if (type === "TELEMETRY") {
+            // SILENT UPDATE: No title/body, just data payload for cache sync
+            title = null;
+            body = null;
         } else {
             console.log(`[Notification] Skipping notification for type: ${type}`);
             return;
         }
 
-        console.log(`[Notification] Sending: "${title}" to ${tokensArray.length} targets`);
+        console.log(`[Notification] Sending ${title ? 'Visible' : 'Silent'} update: "${title || 'TELEMETRY'}" to ${tokensArray.length} targets`);
 
         const dataPayload = {
             type,
-            serial_number,
-            timestamp: String(payload.timestamp || Date.now())
+            serial_number: String(serial_number),
+            timestamp: String(payload.timestamp || Date.now()),
+            motor_running: String(payload.motor_running !== undefined ? payload.motor_running : ''),
+            motor_rpm: String(payload.motor_rpm || ''),
+            voltage_rms: String(payload.voltage_rms || ''),
+            current_rms: String(payload.current_rms || ''),
+            energy_kwh: String(payload.energy_kwh || ''),
+            power_kw: String(payload.power_kw || ''),
+            device_temp_c: String(payload.device_temp_c || ''),
+            flow_lpm: String(payload.flow_lpm || ''),
+            signal_strength: String(payload.signal_strength || '')
         };
 
         if (type === "STATUS") {
             dataPayload.action = payload.motor_running === true ? 'START' : 'STOP';
         }
 
-        await this.sendPushNotification(tokensArray, { title, body }, dataPayload);
+        const notificationPayload = title ? { title, body } : null;
+        await this.sendPushNotification(tokensArray, notificationPayload, dataPayload);
 
     } catch (error) {
         console.error("[Notification] Error in notifyUser:", error);

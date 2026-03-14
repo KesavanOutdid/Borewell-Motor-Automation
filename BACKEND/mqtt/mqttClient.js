@@ -400,6 +400,9 @@ client.on("message", async (topic, message) => {
                     payload: entry
                 });
             } else if (type === "TELEMETRY") {
+                // Send silent FCM for background cache sync
+                notifyUser(db, userId, "TELEMETRY", item).catch(err => console.error("Telemetry FCM failed:", err));
+
                 global.io.emit("LIVE_TELEMETRY", {
                     serial_number: serialNumber,
                     imei_number: imeiNumber,

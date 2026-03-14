@@ -132,8 +132,8 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
       'role': args['role'] ?? 'master',
       'motorHp': args['motor_hp']?.toString() ?? args['motorHp']?.toString() ?? '-',
       'location': locationText ?? _formatCoordinate(latitude, longitude),
-      'latitude': latitude ?? 28.6139,
-      'longitude': longitude ?? 77.2090,
+      'latitude': latitude ?? 0.0,
+      'longitude': longitude ?? 0.0,
       'motorStatus': isRunningInitial ? 'Running' : 'Stopped',
       'deviceStatus': isRunningInitial ? 'Running' : (isConnected.value ? 'Ready' : 'Offline'),
       'lastStart': args['startAt'] ?? (deviceChanged ? '-' : (liveData['lastStart'] ?? '-')),
@@ -1057,8 +1057,8 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
       'role': data['role'] ?? liveData['role'] ?? 'master',
       'motorHp': data['motor_hp']?.toString() ?? liveData['motorHp'] ?? '-',
       'location': locationText ?? liveData['location'] ?? '-',
-      'latitude': latitude ?? 28.6139,
-      'longitude': longitude ?? 77.2090,
+      'latitude': latitude ?? 0.0,
+      'longitude': longitude ?? 0.0,
       'motorStatus': shouldUpdateStatus ? (isRunning ? 'Running' : 'Stopped') : liveData['motorStatus'],
       'deviceStatus': shouldUpdateStatus ? (isRunning ? 'Running' : 'Ready') : liveData['deviceStatus'],
       'lastStart': _formatDate(data['startAt']) ?? liveData['lastStart'] ?? '-',
@@ -1166,8 +1166,8 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
   }
 
   String _formatCoordinate(double? latitude, double? longitude) {
-    if (latitude == null || longitude == null) return '-';
-    return 'Lat: ${latitude.toStringAsFixed(4)}, Long: ${longitude.toStringAsFixed(4)}';
+    if (latitude == null || longitude == null || (latitude == 0.0 && longitude == 0.0)) return '-';
+    return 'Lat: ${latitude.toStringAsFixed(4)}   Long: ${longitude.toStringAsFixed(4)}';
   }
 
   String? _formatDate(dynamic value) {

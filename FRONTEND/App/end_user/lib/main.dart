@@ -15,6 +15,87 @@ import 'utils/theme/app_theme.dart';
 import 'feature/end_user_app/home/presentation/controllers/home_controller.dart';
 import 'feature/end_user_app/auth/presentation/controllers/auth_controller.dart';
 
+Future<void> _updateLocalCache(Map<String, dynamic> data) async {
+  if (data['serial_number'] == null) return;
+  final serial = data['serial_number'].toString();
+  final storage = GetStorage();
+  
+  // Update Device Details Cache for sync
+  final cache = storage.read('device_details_cache') ?? {};
+  final Map<String, dynamic> deviceCache = Map<String, dynamic>.from(cache);
+  
+  final telemetryData = Map<String, dynamic>.from(deviceCache[serial] ?? {});
+  
+  // Helper to format metric with same logic as Controller
+  String stripTrailingZeros(String value) {
+    if (!value.contains('.')) return value;
+    var trimmed = value.replaceAll(RegExp(r'0+$'), '');
+    if (trimmed.endsWith('.')) {
+      trimmed = trimmed.substring(0, trimmed.length - 1);
+    }
+    return trimmed.isEmpty ? '0' : trimmed;
+  }
+
+  String? format(dynamic val, {String suffix = ''}) {
+    if (val == null || val.toString().isEmpty) return null;
+    final parsed = double.tryParse(val.toString());
+    if (parsed == null) return val.toString();
+    final str = stripTrailingZeros(parsed.toStringAsFixed(3));
+    return suffix.isEmpty ? str : '$str$suffix';
+  }
+
+  // Update with new data from FCM
+  if (data['motor_rpm'] != null && data['motor_rpm'].toString().isNotEmpty) {
+    telemetryData['motorSpeed'] = format(data['motor_rpm'], suffix: ' RPM');
+  }
+  if (data['voltage_rms'] != null && data['voltage_rms'].toString().isNotEmpty) {
+    telemetryData['motorVoltage'] = format(data['voltage_rms'], suffix: ' V');
+  }
+  if (data['energy_kwh'] != null && data['energy_kwh'].toString().isNotEmpty) {
+    telemetryData['motorEnergy'] = format(data['energy_kwh'], suffix: ' kWh');
+  }
+  if (data['power_kw'] != null && data['power_kw'].toString().isNotEmpty) {
+    telemetryData['motorPower'] = format(data['power_kw'], suffix: ' kW');
+  }
+  if (data['device_temp_c'] != null && data['device_temp_c'].toString().isNotEmpty) {
+    telemetryData['deviceTemperature'] = format(data['device_temp_c'], suffix: '°C');
+  }
+  if (data['flow_lpm'] != null && data['flow_lpm'].toString().isNotEmpty) {
+    telemetryData['flowRate'] = format(data['flow_lpm'], suffix: ' LPM');
+  }
+  if (data['signal_strength'] != null && data['signal_strength'].toString().isNotEmpty) {
+    telemetryData['signalStrength'] = format(data['signal_strength']);
+  }
+
+  if (data['motor_running'] != null && data['motor_running'].toString().isNotEmpty) {
+    final isRunning = data['motor_running'].toString().toLowerCase() == 'true' || data['action'] == 'START';
+    telemetryData['motorStatus'] = isRunning ? 'Running' : 'Stopped';
+    telemetryData['deviceStatus'] = isRunning ? 'Running' : 'Ready';
+  }
+
+  telemetryData['lastUpdate'] = data['timestamp'] != null ? data['timestamp'].toString() : DateTime.now().toIso8601String();
+  
+  deviceCache[serial] = telemetryData;
+  await storage.write('device_details_cache', deviceCache);
+
+  // Update assigned_devices list for Home Page
+  final devicesData = storage.read('assigned_devices');
+  if (devicesData != null) {
+    List<dynamic> devices = List.from(devicesData);
+    int idx = devices.indexWhere((d) => (d['serial_number'] ?? d['serialNumber']) == serial);
+    if (idx != -1) {
+      var device = Map<String, dynamic>.from(devices[idx]);
+      device.addAll(telemetryData);
+      if (data['motor_running'] != null && data['motor_running'].toString().isNotEmpty) {
+        device['start_status'] = data['motor_running'].toString().toLowerCase() == 'true' || data['action'] == 'START';
+      }
+      devices[idx] = device;
+      await storage.write('assigned_devices', devices);
+    }
+  }
+  print("✅ [FCM Cache] Updated cache for $serial");
+}
+
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -22,12 +103,13 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("🔥 [FCM Background] Got message: ${message.notification?.title}");
   print("🔥 [FCM Background] Data payload: ${message.data}");
   
-  if (message.data['serial_number'] != null) {
+  final data = message.data;
+  if (data['serial_number'] != null) {
     // Map type for better UI icon/color
     String type = 'notification';
-    if (message.data['type'] == 'STATUS') {
-      type = message.data['action'] == 'START' ? 'motor_running' : 'motor_stopped';
-    } else if (message.data['type'] == 'ALERT') {
+    if (data['type'] == 'STATUS') {
+      type = data['action'] == 'START' ? 'motor_running' : 'motor_stopped';
+    } else if (data['type'] == 'ALERT') {
       type = 'alert';
     }
 
@@ -35,10 +117,11 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       type: type,
       title: message.notification?.title ?? "Notification",
       body: message.notification?.body ?? "",
-      serialNumber: message.data['serial_number'],
-      timestamp: message.data['timestamp'],
+      serialNumber: data['serial_number'].toString(),
+      timestamp: data['timestamp'],
     );
-    print("✅ [FCM Background] Notification saved successfully");
+    
+    await _updateLocalCache(data);
   }
 }
 
@@ -97,10 +180,20 @@ void main() async {
           type: type,
           title: message.notification?.title ?? "Notification",
           body: message.notification?.body ?? "",
-          serialNumber: message.data['serial_number'],
+          serialNumber: message.data['serial_number'].toString(),
           timestamp: message.data['timestamp'],
         );
-        print("✅ [FCM Foreground] Notification saved successfully");
+        
+        await _updateLocalCache(message.data);
+        
+        // Refresh Home/Details if active
+        try {
+          if (Get.isRegistered<HomeController>()) {
+            Get.find<HomeController>().devices.refresh();
+          }
+        } catch (_) {}
+        
+        print("✅ [FCM Foreground] Notification saved and cache updated");
       }
 
       if (message.notification != null) {

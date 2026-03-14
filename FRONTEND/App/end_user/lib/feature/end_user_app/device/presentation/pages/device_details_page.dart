@@ -23,30 +23,6 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
           final displayTitle = (nickname != '-' && nickname.isNotEmpty) ? nickname : serial;
           return Text(displayTitle, style: const TextStyle(fontWeight: FontWeight.bold));
         }),
-        actions: [
-          Obx(() {
-            final isConnected = controller.isConnected.value;
-            return Row(
-              children: [
-                Icon(
-                  Icons.wifi_rounded,
-                  size: 18,
-                  color: isConnected ? AppColors.primaryGreen : Colors.grey,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  isConnected ? 'Connected' : 'Disconnected',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isConnected ? AppColors.primaryGreen : Colors.grey,
-                  ),
-                ),
-                const SizedBox(width: 16),
-              ],
-            );
-          }),
-        ],
       ),
       body: RefreshIndicator(
         color: AppColors.primaryGreen,
@@ -369,15 +345,19 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
               onTap: () => _openAnalytics(controller),
             ),
           ),
-          Expanded(
-            child: _QuickActionCard(
-              icon: Icons.add,
-              label: 'Access',
-              
-              gradient: AppColors.primaryGradient,
-              onTap: () => _openAccess(controller),
-            ),
-          ),
+          Obx(() {
+            final isMaster = controller.liveData['role'] == 'master';
+            if (!isMaster) return const SizedBox.shrink();
+            
+            return Expanded(
+              child: _QuickActionCard(
+                icon: Icons.add,
+                label: 'Access',
+                gradient: AppColors.primaryGradient,
+                onTap: () => _openAccess(controller),
+              ),
+            );
+          }),
           Expanded(
             child: _QuickActionCard(
               icon: Icons.timer_rounded,
@@ -469,11 +449,16 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                   ],
                 ),
               ),
-              IconButton(
-                onPressed: () => _showEditNicknameDialog(context, controller),
-                icon: const Icon(Icons.edit_outlined, color: AppColors.primaryGreen, size: 22),
-                tooltip: 'Edit Device Name',
-              ),
+              Obx(() {
+                final isMaster = controller.liveData['role'] == 'master';
+                if (!isMaster) return const SizedBox.shrink();
+                
+                return IconButton(
+                  onPressed: () => _showEditNicknameDialog(context, controller),
+                  icon: const Icon(Icons.edit_outlined, color: AppColors.primaryGreen, size: 22),
+                  tooltip: 'Edit Device Name',
+                );
+              }),
             ],
           ),
           const SizedBox(height: 24),
