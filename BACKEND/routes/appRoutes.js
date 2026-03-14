@@ -468,7 +468,7 @@ router.post(
     authMiddleware(),
     [
         body('serial_number').notEmpty().withMessage("Serial number is required"),
-        body('imei_number').notEmpty().withMessage("IMEI number is required"),
+        // body('imei_number').notEmpty().withMessage("IMEI number is required"),
         body('user_email').isEmail().withMessage("Valid user email is required"),
         body('start_status').isBoolean().withMessage("start_status must be boolean"),
     ],
