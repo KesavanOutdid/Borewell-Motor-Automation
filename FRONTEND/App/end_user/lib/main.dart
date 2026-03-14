@@ -44,28 +44,16 @@ Future<void> _updateLocalCache(Map<String, dynamic> data) async {
     return suffix.isEmpty ? str : '$str$suffix';
   }
 
-  // Update with new data from FCM
-  if (data['motor_rpm'] != null && data['motor_rpm'].toString().isNotEmpty) {
-    telemetryData['motorSpeed'] = format(data['motor_rpm'], suffix: ' RPM');
-  }
-  if (data['voltage_rms'] != null && data['voltage_rms'].toString().isNotEmpty) {
-    telemetryData['motorVoltage'] = format(data['voltage_rms'], suffix: ' V');
-  }
-  if (data['energy_kwh'] != null && data['energy_kwh'].toString().isNotEmpty) {
-    telemetryData['motorEnergy'] = format(data['energy_kwh'], suffix: ' kWh');
-  }
-  if (data['power_kw'] != null && data['power_kw'].toString().isNotEmpty) {
-    telemetryData['motorPower'] = format(data['power_kw'], suffix: ' kW');
-  }
-  if (data['device_temp_c'] != null && data['device_temp_c'].toString().isNotEmpty) {
-    telemetryData['deviceTemperature'] = format(data['device_temp_c'], suffix: '°C');
-  }
-  if (data['flow_lpm'] != null && data['flow_lpm'].toString().isNotEmpty) {
-    telemetryData['flowRate'] = format(data['flow_lpm'], suffix: ' LPM');
-  }
-  if (data['signal_strength'] != null && data['signal_strength'].toString().isNotEmpty) {
-    telemetryData['signalStrength'] = format(data['signal_strength']);
-  }
+  // Update with new data from FCM - store raw values for consistent formatting
+  if (data['motor_rpm'] != null) telemetryData['motor_rpm'] = data['motor_rpm'];
+  if (data['motor_frequency_hz'] != null) telemetryData['motor_frequency_hz'] = data['motor_frequency_hz'];
+  if (data['voltage_rms'] != null) telemetryData['motor_voltage'] = data['voltage_rms'];
+  if (data['energy_kwh'] != null) telemetryData['energy_kwh'] = data['energy_kwh'];
+  if (data['power_kw'] != null) telemetryData['power_kw'] = data['power_kw'];
+  if (data['device_temp_c'] != null) telemetryData['device_temp_c'] = data['device_temp_c'];
+  if (data['flow_lpm'] != null) telemetryData['flow_lpm'] = data['flow_lpm'];
+  if (data['signal_strength'] != null) telemetryData['signal_strength'] = data['signal_strength'];
+  if (data['alert'] != null) telemetryData['alert'] = data['alert'];
 
   if (data['motor_running'] != null && data['motor_running'].toString().isNotEmpty) {
     final isRunning = data['motor_running'].toString().toLowerCase() == 'true' || data['action'] == 'START';

@@ -467,12 +467,27 @@ class HomeController extends GetxController with WidgetsBindingObserver {
           totalPages.value = jsonData['totalPages'] ?? 1;
           
           final List<Map<String, dynamic>> processedData = [];
+          final detailsCache = _storage.read('device_details_cache') ?? {};
+          
           for (var device in data) {
             final mapDevice = Map<String, dynamic>.from(device);
             final serial = mapDevice['serial_number'] ?? mapDevice['serialNumber'];
 
             if (mapDevice['telemetry'] is Map) {
               mapDevice.addAll(Map<String, dynamic>.from(mapDevice['telemetry']));
+            }
+            
+            // Merge with local telemetry cache to preserve FCM updates received while app was closed
+            if (serial != null && detailsCache[serial] != null) {
+              final cachedData = Map<String, dynamic>.from(detailsCache[serial]);
+              // Only merge if the motor is supposed to be running (telemetry is valid)
+              final isRunning = mapDevice['start_status'] == true || 
+                                mapDevice['motor_status'] == 'Running' ||
+                                cachedData['motorStatus'] == 'Running';
+              
+              if (isRunning) {
+                mapDevice.addAll(cachedData);
+              }
             }
             
             mapDevice['start_status'] = _getMotorRunning(mapDevice);

@@ -249,7 +249,9 @@ exports.notifyUser = async (db, userId, type, payload) => {
             power_kw: String(payload.power_kw || ''),
             device_temp_c: String(payload.device_temp_c || ''),
             flow_lpm: String(payload.flow_lpm || ''),
-            signal_strength: String(payload.signal_strength || '')
+            signal_strength: String(payload.signal_strength || ''),
+            motor_frequency_hz: String(payload.motor_frequency_hz || ''),
+            alert: String(payload.alert || payload.alert_type || payload.ALERT_TYPE || '')
         };
 
         if (type === "STATUS") {

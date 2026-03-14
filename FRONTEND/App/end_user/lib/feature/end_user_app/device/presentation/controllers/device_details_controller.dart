@@ -151,13 +151,11 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
 
     _ensureSocketConnection();
     
-    // Load from cache if we have a serial number and the motor is NOT stopped
-    // This allows showing last received data immediately on open if it was running
-    if (serialNumber != null && isRunningInitial) {
-      _loadFromCache();
-    } else if (serialNumber != null && !isRunningInitial) {
-      // If we know it's stopped, ensure cache is clear for this device
-      clearDeviceCache();
+    // Load from cache if we have a serial number
+    // We always load from cache to ensure background FCM updates are applied
+    // over potentially stale data from the Home Page API
+    if (serialNumber != null) {
+      _loadFromCache(force: true);
     }
 
     if (!_initialized || deviceChanged) {
@@ -1029,6 +1027,24 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
     if (data['telemetry'] is Map) {
       combinedData.addAll(Map<String, dynamic>.from(data['telemetry']));
     }
+    
+    // Merge with local cache to preserve FCM updates received while app was backgrounded/closed
+    if (serialNumber != null) {
+      final cache = _storage.read('device_details_cache');
+      if (cache != null && cache[serialNumber!] != null) {
+        final cachedData = Map<String, dynamic>.from(cache[serialNumber!]);
+        // Priority: Use cached data if it's more recent or the API data is missing fields
+        cachedData.forEach((key, value) {
+          if (value != null && value != '-') {
+            // Logic to prefer cache: if API field is missing or default
+            if (combinedData[key] == null || combinedData[key] == '-' || combinedData[key] == '') {
+              combinedData[key] = value;
+            }
+          }
+        });
+      }
+    }
+
     final isRunning = _getMotorRunning(combinedData);
 
     // Ignore status updates that contradict a recent command (last window) OR while processing
@@ -1063,15 +1079,15 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
       'deviceStatus': shouldUpdateStatus ? (isRunning ? 'Running' : 'Ready') : liveData['deviceStatus'],
       'lastStart': _formatDate(data['startAt']) ?? liveData['lastStart'] ?? '-',
       'lastStop': _formatDate(data['stopAt']) ?? liveData['lastStop'] ?? '-',
-      'lastUpdate': _formatDate(data['updatedAt'] ?? data['timestamp']) ?? liveData['lastUpdate'] ?? '-',
-      'motorFrequency': _formatMetric(telemetry['motor_frequency_hz'], suffix: ' Hz') ?? liveData['motorFrequency'] ?? '-',
-      'motorEnergy': _formatMetric(telemetry['energy_kwh'], suffix: ' kWh') ?? liveData['motorEnergy'] ?? '-',
+      'lastUpdate': _formatDate(combinedData['lastUpdate'] ?? data['updatedAt'] ?? data['timestamp']) ?? liveData['lastUpdate'] ?? '-',
+      'motorFrequency': _formatMetric(combinedData['motor_frequency_hz'] ?? combinedData['motorFrequency'], suffix: ' Hz') ?? liveData['motorFrequency'] ?? '-',
+      'motorEnergy': _formatMetric(combinedData['energy_kwh'] ?? combinedData['motorEnergy'], suffix: ' kWh') ?? liveData['motorEnergy'] ?? '-',
       'alert': persistAlert,
-      'deviceTemperature': _formatMetric(telemetry['device_temp_c'], suffix: '°C') ?? liveData['deviceTemperature'] ?? '-',
-      'motorPower': _formatMetric(telemetry['power_kw'], suffix: ' kW') ?? liveData['motorPower'] ?? '-',
-      'flowRate': _formatMetric(telemetry['flow_lpm'], suffix: ' LPM') ?? liveData['flowRate'] ?? '-',
-      'motorSpeed': _formatMetric(telemetry['motor_rpm'], suffix: ' RPM') ?? liveData['motorSpeed'] ?? '-',
-      'signalStrength': _formatMetric(telemetry['signal_strength']) ?? liveData['signalStrength'] ?? '-',
+      'deviceTemperature': _formatMetric(combinedData['device_temp_c'] ?? combinedData['deviceTemperature'], suffix: '°C') ?? liveData['deviceTemperature'] ?? '-',
+      'motorPower': _formatMetric(combinedData['power_kw'] ?? combinedData['motorPower'], suffix: ' kW') ?? liveData['motorPower'] ?? '-',
+      'flowRate': _formatMetric(combinedData['flow_lpm'] ?? combinedData['flowRate'], suffix: ' LPM') ?? liveData['flowRate'] ?? '-',
+      'motorSpeed': _formatMetric(combinedData['motor_rpm'] ?? combinedData['motorSpeed'], suffix: ' RPM') ?? liveData['motorSpeed'] ?? '-',
+      'signalStrength': _formatMetric(combinedData['signal_strength'] ?? combinedData['signalStrength']) ?? liveData['signalStrength'] ?? '-',
     };
 
     bool dataChanged = false;
@@ -1255,18 +1271,41 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
     }
   }
 
-  void _loadFromCache() {
+  void _loadFromCache({bool force = false}) {
     if (serialNumber == null) return;
     try {
       final cache = _storage.read('device_details_cache');
       if (cache != null && cache[serialNumber!] != null) {
         final data = Map<String, dynamic>.from(cache[serialNumber!]);
-        print('💾 [DETAILS] Loading $serialNumber from persistent cache');
+        print('💾 [DETAILS] Loading $serialNumber from persistent cache (force: $force)');
         
-        // Only apply if the current value is empty/default
-        data.forEach((key, value) {
-          if (value != null && (liveData[key] == null || liveData[key] == '-' || liveData[key] == '')) {
-            liveData[key] = value;
+        final Map<String, String> mappedData = {
+          'motorFrequency': _formatMetric(data['motor_frequency_hz'], suffix: ' Hz') ?? data['motorFrequency'] ?? '',
+          'motorEnergy': _formatMetric(data['energy_kwh'], suffix: ' kWh') ?? data['motorEnergy'] ?? '',
+          'deviceTemperature': _formatMetric(data['device_temp_c'], suffix: '°C') ?? data['deviceTemperature'] ?? '',
+          'motorPower': _formatMetric(data['power_kw'], suffix: ' kW') ?? data['motorPower'] ?? '',
+          'flowRate': _formatMetric(data['flow_lpm'], suffix: ' LPM') ?? data['flowRate'] ?? '',
+          'motorSpeed': _formatMetric(data['motor_rpm'], suffix: ' RPM') ?? data['motorSpeed'] ?? '',
+          'signalStrength': _formatMetric(data['signal_strength']) ?? data['signalStrength'] ?? '',
+          'alert': _formatMetric(data['alert']) ?? data['alert'] ?? '',
+          'motorStatus': data['motorStatus'] ?? '',
+          'deviceStatus': data['deviceStatus'] ?? '',
+          'lastUpdate': _formatDate(data['lastUpdate']) ?? data['lastUpdate'] ?? '',
+        };
+
+        mappedData.forEach((key, value) {
+          if (value.isNotEmpty) {
+            bool shouldApply = force || liveData[key] == null || liveData[key] == '-' || liveData[key] == '';
+            
+            if (key == 'motorStatus' || key == 'deviceStatus') {
+              if (!force && liveData[key] == 'Running') {
+                shouldApply = false;
+              }
+            }
+
+            if (shouldApply) {
+              liveData[key] = value;
+            }
           }
         });
         liveData.refresh();
