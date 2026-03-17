@@ -801,7 +801,7 @@ exports.userAssignDevices = async (req, res) => {
             baseMatch.start_status = true;
         } else if (filter === 'Stopped') {
             baseMatch.start_status = false;
-            baseMatch.imei_number = { $ne: null, $not: /^\s*$/ }; // Configured
+            baseMatch.config_status = true; // Configured
         } else if (filter === 'Online') {
             baseMatch.last_heartbeat = { $gte: onlineThreshold };
         } else if (filter === 'Offline') {
@@ -816,14 +816,7 @@ exports.userAssignDevices = async (req, res) => {
         } else if (filter === 'Not Configured') {
             baseMatch.assigned_user_id = userIdNum; // Only show MY devices
             delete baseMatch.$or;
-            baseMatch.$and = [
-                {
-                    $or: [
-                        { imei_number: null },
-                        { imei_number: "" }
-                    ]
-                }
-            ];
+            baseMatch.config_status = false;
         } else if (filter === 'Shared' || filter === 'Access') {
             baseMatch.assigned_user_id = { $ne: userIdNum };
         }
