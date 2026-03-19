@@ -625,19 +625,6 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       if (response.statusCode == 200) {
         // Update local state immediately for better UX and sorting
         _updateDeviceStatus(serialNumber, status);
-        
-        // Use WidgetsBinding to ensure the overlay is available
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (Get.overlayContext != null) {
-            Get.snackbar(
-              "Success", 
-              "Motor ${status ? 'Started' : 'Stopped'} Successfully",
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.green.withOpacity(0.8),
-              colorText: Colors.white,
-            );
-          }
-        });
       } else if (response.statusCode == 429) {
         final body = jsonDecode(response.body);
         WidgetsBinding.instance.addPostFrameCallback((_) {

@@ -583,8 +583,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
               disabledLabel: 'OFFLINE',
               direction: isRunning ? SwipeDirection.left : SwipeDirection.right,
             ),
-            const SizedBox(height: 20),
-            _buildInfoRow('Device Status', controller.liveData['deviceStatus'] ?? 'Ready'),
+
           ],
         ),
       );

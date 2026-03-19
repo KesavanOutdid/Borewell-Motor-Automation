@@ -78,14 +78,14 @@ class NotificationService {
       final String? type = data['type'];
       final String? serialNumber = data['serial_number'] ?? data['serialNumber'];
 
-      if (type == 'ACCESS_REQUEST') {
-        // Redirect to Home with Access filter
+      // 1. Access Related Notifications -> Home Page with "Access" Filter
+      if (type == 'ACCESS_REQUEST' || type == 'SHARE_RESPONSE') {
         Get.offAllNamed(AppRoutes.home);
-        // Robustly wait for HomeController to be ready
         _retrySetFilter('Access');
         return;
       }
 
+      // 2. Scheduler Related Notifications -> Device Schedule Page
       if (type == 'SCHEDULE' || type == 'SCHEDULE_CANCEL') {
         if (serialNumber != null && serialNumber.isNotEmpty) {
           Get.toNamed(AppRoutes.deviceSchedule, arguments: {
@@ -96,15 +96,7 @@ class NotificationService {
         }
       }
 
-      if (type == 'SHARE_RESPONSE') {
-        if (serialNumber != null && serialNumber.isNotEmpty) {
-          Get.toNamed(AppRoutes.deviceSharing, arguments: {
-            'serial_number': serialNumber,
-          });
-          return;
-        }
-      }
-
+      // 3. Motor Status (Run/Stop) or General Device Notifications -> Device Details Page
       if (serialNumber != null && serialNumber.isNotEmpty) {
         Get.toNamed(AppRoutes.deviceDetails, arguments: {
           'serial_number': serialNumber,

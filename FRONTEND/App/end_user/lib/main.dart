@@ -143,7 +143,6 @@ void main() async {
       RemoteNotification? notification = message.notification;
       AndroidNotification? android = message.notification?.android;
 
-      // If `onMessage` is triggered with a notification, show it manually
       if (notification != null && android != null) {
         notificationService.showNotification(
           id: notification.hashCode,
@@ -152,7 +151,7 @@ void main() async {
           payload: jsonEncode(message.data),
         );
       }
-      
+
       if (message.data['serial_number'] != null) {
         // Map type for better UI icon/color
         String type = 'notification';
@@ -184,22 +183,7 @@ void main() async {
         print("✅ [FCM Foreground] Notification saved and cache updated");
       }
 
-      if (message.notification != null) {
-        // Safe check for Overlay before showing snackbar
-        if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
-          Get.snackbar(
-            message.notification!.title ?? "Notification",
-            message.notification!.body ?? "",
-            snackPosition: SnackPosition.TOP,
-            backgroundColor: Colors.white.withOpacity(0.9),
-            margin: const EdgeInsets.all(10),
-            duration: const Duration(seconds: 4),
-            onTap: (_) {
-              notificationService.handleNotificationClick(jsonEncode(message.data));
-            },
-          );
-        }
-      }
+
     });
 
     // Handle interaction when app is in background but opened via notification

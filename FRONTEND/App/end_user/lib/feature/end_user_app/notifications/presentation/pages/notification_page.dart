@@ -20,12 +20,6 @@ class NotificationPage extends StatelessWidget {
                 tooltip: 'Mark all as read',
                 onPressed: () {
                   controller.markAllAsRead();
-                  Get.snackbar(
-                    'Success',
-                    'All notifications marked as read',
-                    snackPosition: SnackPosition.BOTTOM,
-                    duration: const Duration(seconds: 2),
-                  );
                 },
               )
             : const SizedBox.shrink()),
