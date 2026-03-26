@@ -7,6 +7,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'core/routes/app_routes.dart';
 import 'core/services/token_service.dart';
+import 'core/services/socket_service.dart';
 import 'core/services/permission_service.dart';
 import 'core/services/notification_storage_service.dart';
 import 'core/services/notification_service.dart';
@@ -217,11 +218,18 @@ void main() async {
 
   // 3. Setup Services & Controllers
   Get.put(TokenService()); // No need to await if init() just returns this
+  Get.put(SocketService()); // Centralized socket — single connection for all controllers
   Get.lazyPut(() => ThemeController());
 
   // 🔥 REQUIRED — Fix for Null Check Crash
   Get.lazyPut(() => AuthController(), fenix: true);
   Get.lazyPut(() => HomeController(), fenix: true);
+
+  // Auto-connect socket if user is already logged in (returning user)
+  final tokenService = Get.find<TokenService>();
+  if (tokenService.getToken() != null && tokenService.getToken()!.isNotEmpty) {
+    Get.find<SocketService>().connect();
+  }
 
   runApp(
     GetMaterialApp(

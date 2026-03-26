@@ -111,20 +111,23 @@ class HomeView extends GetView<HomeController> {
                                         child: Container(
                                           padding: const EdgeInsets.all(4),
                                           decoration: BoxDecoration(
-                                            color: Colors.green,
+                                            color: Colors.red,
                                             shape: BoxShape.circle,
-                                            border: Border.all(color: Colors.white, width: 0.8),
+                                            border: Border.all(color: Colors.white, width: 1.5),
+                                            boxShadow: [
+                                              BoxShadow(color: Colors.red.withOpacity(0.4), blurRadius: 6),
+                                            ],
                                           ),
                                           constraints: const BoxConstraints(
-                                            minWidth: 16,
-                                            minHeight: 16,
+                                            minWidth: 18,
+                                            minHeight: 18,
                                           ),
                                           child: Text(
                                             unreadCount > 99 ? '99+' : unreadCount.toString(),
                                             style: const TextStyle(
                                               color: Colors.white,
-                                              fontSize: 7,
-                                              fontWeight: FontWeight.w400,
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w800,
                                             ),
                                             textAlign: TextAlign.center,
                                           ),
@@ -302,8 +305,16 @@ class HomeView extends GetView<HomeController> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: BoxDecoration(
-                color: AppColors.primaryGreen,
+                gradient: AppColors.primaryGradient,
                 borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryGreen.withOpacity(0.4),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                    spreadRadius: -2,
+                  ),
+                ],
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -341,7 +352,9 @@ class HomeView extends GetView<HomeController> {
     
     return GestureDetector(
       onTap: () => controller.setFilter(label),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primaryGreen : Colors.white,
@@ -350,7 +363,15 @@ class HomeView extends GetView<HomeController> {
             color: isSelected ? AppColors.primaryGreen : Colors.grey.shade300,
             width: 1,
           ),
-          boxShadow: null,
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primaryGreen.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           label,
@@ -413,12 +434,19 @@ class HomeView extends GetView<HomeController> {
     return GestureDetector(
       onTap: isPending ? null : () => _navigateDevice(device),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border(
-            bottom: BorderSide(color: Colors.grey.shade100, width: 1),
-          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 4),
+              spreadRadius: -2,
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -461,11 +489,14 @@ class HomeView extends GetView<HomeController> {
                             ),
                           ),
                           const SizedBox(width: 6),
-                          Icon(
-                            Icons.wifi_rounded,
-                            size: 14,
-                            color: isOnline ? AppColors.primaryGreen : Colors.grey.shade400,
-                          ),
+                          if (isRunning)
+                            const _PulsingDot(color: AppColors.primaryGreen)
+                          else
+                            Icon(
+                              Icons.wifi_rounded,
+                              size: 14,
+                              color: isOnline ? AppColors.primaryGreen : Colors.grey.shade400,
+                            ),
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -551,19 +582,34 @@ class HomeView extends GetView<HomeController> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        color: statusColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: statusColor.withOpacity(0.2)),
                       ),
-                      child: Text(
-                        deviceStatus,
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w800,
-                          color: statusColor,
-                          letterSpacing: 0.3,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: statusColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            deviceStatus,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: statusColor,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     // if (isConfigured) ...[
@@ -738,6 +784,56 @@ class HomeView extends GetView<HomeController> {
                   ),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PulsingDot extends StatefulWidget {
+  final Color color;
+  const _PulsingDot({required this.color});
+
+  @override
+  State<_PulsingDot> createState() => _PulsingDotState();
+}
+
+class _PulsingDotState extends State<_PulsingDot>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (_, __) => Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(
+          color: widget.color,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: widget.color.withOpacity(0.2 + _controller.value * 0.5),
+              blurRadius: 4 + _controller.value * 8,
+              spreadRadius: _controller.value * 3,
             ),
           ],
         ),

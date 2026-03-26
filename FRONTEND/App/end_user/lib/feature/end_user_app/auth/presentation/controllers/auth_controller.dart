@@ -7,6 +7,7 @@ import '../../../../../utils/ui_utils.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import '../../../../../core/services/socket_service.dart';
 
 class AuthController extends GetxController {
   var email = "".obs;
@@ -76,6 +77,11 @@ class AuthController extends GetxController {
     roleId.value = 0;
     
     await tokenService.clearToken();
+    
+    // Disconnect centralized socket
+    try {
+      Get.find<SocketService>().disconnect();
+    } catch (_) {}
     
     final notificationService = NotificationStorageService();
     await notificationService.clearAllNotifications();
@@ -164,6 +170,11 @@ class AuthController extends GetxController {
           
           // Update FCM Token on successful login
           await updateFcmToken();
+          
+          // Connect centralized socket
+          try {
+            Get.find<SocketService>().connect();
+          } catch (_) {}
           
           Get.offAllNamed('/home');
           

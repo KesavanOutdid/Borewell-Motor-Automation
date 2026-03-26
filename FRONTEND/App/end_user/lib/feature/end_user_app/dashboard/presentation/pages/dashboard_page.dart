@@ -105,43 +105,86 @@ class _ModernDrawer extends StatelessWidget {
     final profileController = Get.find<ProfileController>();
     
     return SizedBox(
-      width: MediaQuery.of(context).size.width * 0.7,
+      width: MediaQuery.of(context).size.width * 0.75,
       child: Drawer(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        backgroundColor: isDark ? AppColors.backgroundDark : Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.horizontal(right: Radius.circular(24)),
+        ),
         child: SafeArea(
           child: Column(
             children: [
-              const SizedBox(height: 24),
-              Image.asset(
-                'assets/images/image.png',
-                height: 80,
-              ),
-              const Text(
-                'AgriPlus',
-                style: TextStyle(
-                  color: AppColors.primaryGreen,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.5,
+              // ── Header: Logo + Profile ──
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryGreen.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Image.asset(
+                          'assets/images/image.png',
+                          errorBuilder: (_, __, ___) =>
+                              const Icon(Icons.water_drop, color: AppColors.primaryGreen, size: 24),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'AgriPlus',
+                      style: TextStyle(
+                        color: AppColors.primaryGreen,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 20),
+
+              // ── Profile Card ──
               Obx(() => Container(
-                margin: const EdgeInsets.symmetric(horizontal: 12),
+                margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryGreen,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF059669), Color(0xFF10B981)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryGreen.withOpacity(0.3),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                      spreadRadius: -2,
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
                     Container(
-                      width: 50,
-                      height: 50,
+                      width: 52,
+                      height: 52,
                       decoration: BoxDecoration(
-                        color: Colors.white24,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1),
+                        border: Border.all(color: Colors.white.withOpacity(0.5), width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.15),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: ClipOval(
                         child: profileController.userProfileImage.value.isNotEmpty
@@ -149,12 +192,18 @@ class _ModernDrawer extends StatelessWidget {
                                 "${AppConfig.baseUrl}${profileController.userProfileImage.value}",
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) => 
-                                  const Icon(Icons.person, color: Colors.white, size: 30),
+                                  Container(
+                                    color: Colors.white24,
+                                    child: const Icon(Icons.person, color: Colors.white, size: 28),
+                                  ),
                               )
-                            : const Icon(Icons.person, color: Colors.white, size: 30),
+                            : Container(
+                                color: Colors.white24,
+                                child: const Icon(Icons.person, color: Colors.white, size: 28),
+                              ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -162,38 +211,67 @@ class _ModernDrawer extends StatelessWidget {
                           Text(
                             profileController.userName.value.isNotEmpty 
                                 ? profileController.userName.value 
-                                : 'AgriPlus',
+                                : 'AgriPlus User',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -0.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.3,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
+                          const SizedBox(height: 2),
                           if (profileController.userPhone.value.isNotEmpty)
-                            Text(
-                              "+91 ${profileController.userPhone.value}",
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            Row(
+                              children: [
+                                Icon(Icons.phone_rounded, size: 12, color: Colors.white.withOpacity(0.7)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  "+91 ${profileController.userPhone.value}",
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.8),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
                         ],
                       ),
                     ),
+                    Icon(Icons.chevron_right_rounded, color: Colors.white.withOpacity(0.5), size: 22),
                   ],
                 ),
               )),
-              const SizedBox(height: 32),
+
+              const SizedBox(height: 28),
+
+              // ── Section Label ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'MENU',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.5,
+                      color: isDark ? Colors.grey.shade500 : Colors.grey.shade400,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // ── Menu Items ──
               Expanded(
                 child: Obx(
                   () => ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     children: [
                       _DrawerItem(
                         icon: Icons.home_rounded,
@@ -203,9 +281,9 @@ class _ModernDrawer extends StatelessWidget {
                           controller.changePage(0);
                           Navigator.of(context).pop();
                         },
-                        color: AppColors.primaryGreen,
+                        color: const Color(0xFF059669),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
                       _DrawerItem(
                         icon: Icons.store_rounded,
                         label: 'Shop',
@@ -214,9 +292,9 @@ class _ModernDrawer extends StatelessWidget {
                           controller.changePage(1);
                           Navigator.of(context).pop();
                         },
-                        color: AppColors.primaryGreen,
+                        color: const Color(0xFF3B82F6),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
                       _DrawerItem(
                         icon: Icons.shopping_bag_rounded,
                         label: 'Orders',
@@ -225,9 +303,9 @@ class _ModernDrawer extends StatelessWidget {
                           controller.changePage(2);
                           Navigator.of(context).pop();
                         },
-                        color: AppColors.primaryGreen,
+                        color: const Color(0xFFFF8A00),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
                       _DrawerItem(
                         icon: Icons.person_rounded,
                         label: 'Profile',
@@ -236,11 +314,34 @@ class _ModernDrawer extends StatelessWidget {
                           controller.changePage(3);
                           Navigator.of(context).pop();
                         },
-                        color: AppColors.primaryGreen,
+                        color: const Color(0xFF9D4EDD),
                       ),
-                      const SizedBox(height: 24),
-                      const Divider(),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 16),
+
+                      // ── Section Divider ──
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          children: [
+                            Expanded(child: Divider(color: isDark ? Colors.grey.shade700 : Colors.grey.shade200)),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              child: Text(
+                                'MORE',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.5,
+                                  color: isDark ? Colors.grey.shade500 : Colors.grey.shade400,
+                                ),
+                              ),
+                            ),
+                            Expanded(child: Divider(color: isDark ? Colors.grey.shade700 : Colors.grey.shade200)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
                       _DrawerItem(
                         icon: Icons.info_outline_rounded,
                         label: 'About AgriPlus',
@@ -249,13 +350,14 @@ class _ModernDrawer extends StatelessWidget {
                           Navigator.of(context).pop();
                           Get.to(() => const AboutAgriPlusPage());
                         },
-                        color: AppColors.primaryGreen,
+                        color: const Color(0xFF14B8A6),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
                       _DrawerItem(
                         icon: Icons.logout_rounded,
                         label: 'Logout',
                         isSelected: false,
+                        isDestructive: true,
                         onTap: () async {
                           Navigator.of(context).pop();
                           try {
@@ -274,6 +376,35 @@ class _ModernDrawer extends StatelessWidget {
                   ),
                 ),
               ),
+
+              // ── Bottom: Version ──
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                child: Column(
+                  children: [
+                    Divider(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+                    const SizedBox(height: 8),
+                    Text(
+                      'AgriPlus • Smart Motor Automation',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'v1.0.0',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.grey.shade700 : Colors.grey.shade400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -288,6 +419,7 @@ class _DrawerItem extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
   final Color color;
+  final bool isDestructive;
 
   const _DrawerItem({
     required this.icon,
@@ -295,6 +427,7 @@ class _DrawerItem extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
     required this.color,
+    this.isDestructive = false,
   });
 
   @override
@@ -303,31 +436,82 @@ class _DrawerItem extends StatelessWidget {
     
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 250),
         curve: Curves.easeOut,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: isSelected ? color : (isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.02)),
-          borderRadius: BorderRadius.circular(16),
+          color: isSelected
+              ? color.withOpacity(0.1)
+              : (isDestructive
+                  ? AppColors.error.withOpacity(0.04)
+                  : Colors.transparent),
+          borderRadius: BorderRadius.circular(14),
+          border: isDestructive && !isSelected
+              ? Border.all(color: AppColors.error.withOpacity(0.15))
+              : null,
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: isSelected ? Colors.white : (isDark ? Colors.white70 : AppColors.textSecondary),
-              size: 26,
-            ),
-            const SizedBox(width: 16),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                color: isSelected ? Colors.white : (isDark ? Colors.white : AppColors.textPrimary),
+            // Left accent bar for selected
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              width: 4,
+              height: isSelected ? 28 : 0,
+              decoration: BoxDecoration(
+                color: isSelected ? color : Colors.transparent,
+                borderRadius: BorderRadius.circular(4),
               ),
             ),
+            SizedBox(width: isSelected ? 12 : 0),
+            // Icon with tinted background
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? color.withOpacity(0.15)
+                    : (isDark ? Colors.white.withOpacity(0.06) : color.withOpacity(0.08)),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: isSelected ? color : (isDark ? Colors.white70 : color.withOpacity(0.7)),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isDestructive
+                      ? AppColors.error
+                      : (isSelected
+                          ? (isDark ? Colors.white : AppColors.textPrimary)
+                          : (isDark ? Colors.white70 : AppColors.textSecondary)),
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ),
+            if (isSelected)
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.4),
+                      blurRadius: 6,
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),

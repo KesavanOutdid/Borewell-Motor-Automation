@@ -12,7 +12,7 @@ import '../../../device/presentation/pages/qr_scanner_page.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import '../../../../../core/services/socket_service.dart';
 
 class HomeController extends GetxController with WidgetsBindingObserver {
   var devices = <Map<String, dynamic>>[].obs;
@@ -31,7 +31,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
 
   late TokenService tokenService;
   final _storage = GetStorage();
-  IO.Socket? _socket;
+  List<StreamSubscription> _socketSubs = [];
   Timer? _offlineCheckTimer;
   Timer? _pendingRefreshTimer;
 
@@ -87,7 +87,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       print('🏠 [HOME] App resumed, refreshing device states...');
-      _socket?.connect(); // Ensure socket is connected
+      Get.find<SocketService>().ensureConnected(); // Ensure socket is connected
       fetchDevices(silent: true);
     }
   }
@@ -137,28 +137,23 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
     scrollController.dispose();
-    _socket?.dispose();
+    for (var sub in _socketSubs) sub.cancel();
+    _socketSubs.clear();
     _offlineCheckTimer?.cancel();
     super.onClose();
   }
 
-  void _initSocket() {
-    print('🏠 [HOME] Initializing Socket.IO connection...');
+  void _subscribeToSocket() {
+    // Cancel any previous subscriptions
+    for (var sub in _socketSubs) sub.cancel();
+    _socketSubs.clear();
+
+    print('🏠 [HOME] Subscribing to centralized SocketService...');
     try {
-      final token = tokenService.getToken();
-      _socket = IO.io(AppConfig.socketIOUrl, <String, dynamic>{
-        'transports': ['websocket'],
-        'autoConnect': true,
-        'forceNew': true,
-        'query': {'token': token}
-      });
+      final socketService = Get.find<SocketService>();
 
-      _socket!.onConnect((_) => print('🏠 [HOME] Socket Connected successfully'));
-      _socket!.onDisconnect((_) => print('🏠 [HOME] Socket Disconnected'));
-      _socket!.onConnectError((err) => print('🏠 [HOME] Socket Connection Error: $err'));
-
-      _socket!.on('LIVE_STATUS', (data) {
-        if (data != null && data['serial_number'] != null) {
+      _socketSubs.add(socketService.onStatus.listen((data) {
+        if (data['serial_number'] != null) {
           final serial = data['serial_number'];
           final payload = data['payload'];
           _updateDeviceLastSeen(serial, silent: true);
@@ -188,10 +183,10 @@ class HomeController extends GetxController with WidgetsBindingObserver {
             _updateDeviceStatus(serial, newStatus);
           }
         }
-      });
+      }));
 
-      _socket!.on('LIVE_TELEMETRY', (data) {
-        if (data != null && data['serial_number'] != null) {
+      _socketSubs.add(socketService.onTelemetry.listen((data) {
+        if (data['serial_number'] != null) {
           final serial = data['serial_number'];
           _updateDeviceLastSeen(serial, silent: true);
           
@@ -199,10 +194,10 @@ class HomeController extends GetxController with WidgetsBindingObserver {
             _updateDeviceTelemetry(serial, Map<String, dynamic>.from(data['telemetry']));
           }
         }
-      });
+      }));
 
-      _socket!.on('LIVE_HEARTBEAT', (data) {
-        if (data != null && data['serial_number'] != null) {
+      _socketSubs.add(socketService.onHeartbeat.listen((data) {
+        if (data['serial_number'] != null) {
           final serial = data['serial_number'];
           _updateDeviceLastSeen(serial, silent: true);
           
@@ -223,9 +218,9 @@ class HomeController extends GetxController with WidgetsBindingObserver {
           }
           _updateDeviceStatus(serial, newStatus);
         }
-      });
+      }));
     } catch (e) {
-      print('🏠 [HOME] Socket initialization Error: $e');
+      print('🏠 [HOME] Socket subscription Error: $e');
     }
   }
 
@@ -416,7 +411,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   @override
   void onReady() {
     super.onReady();
-    _initSocket();
+    _subscribeToSocket();
     fetchDevices();
     
     // Periodically refresh the UI to update Online/Offline status (last seen text)
