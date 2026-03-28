@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../controllers/signup_controller.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../utils/theme/app_colors.dart';
+import '../widgets/language_selector.dart';
 
 class SignupView extends StatelessWidget {
   final controller = Get.put(SignupController());
@@ -41,6 +42,11 @@ class SignupView extends StatelessWidget {
                         ),
                       ),
                     ),
+                    const Positioned(
+                      top: 0,
+                      right: 16,
+                      child: LanguageSelector(),
+                    ),
                     Column(
                       children: [
                         Align(
@@ -51,8 +57,8 @@ class SignupView extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Create Account',
+                        Text(
+                          'create_account'.tr,
                           style: TextStyle(
                             fontSize: 26,
                             fontWeight: FontWeight.w900,
@@ -62,7 +68,7 @@ class SignupView extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Join AgriPlus today',
+                          'join_agriplus'.tr,
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.white.withOpacity(0.8),
@@ -95,8 +101,8 @@ class SignupView extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
-                      'Create Account',
+                    Text(
+                      'create_account'.tr,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 28,
@@ -107,7 +113,7 @@ class SignupView extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Sign up to get started',
+                      'signup_to_get_started'.tr,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 15,
@@ -124,7 +130,7 @@ class SignupView extends StatelessWidget {
                         fontSize: 15,
                       ),
                       decoration: InputDecoration(
-                        hintText: "Enter your full name",
+                        hintText: "full_name_hint".tr,
                         counterText: "",
                         hintStyle: TextStyle(
                           color: Colors.grey.shade400,
@@ -161,7 +167,7 @@ class SignupView extends StatelessWidget {
                         fontSize: 15,
                       ),
                       decoration: InputDecoration(
-                        hintText: "Enter your email",
+                        hintText: "email_hint".tr,
                         hintStyle: TextStyle(
                           color: Colors.grey.shade400,
                           fontSize: 15,
@@ -198,7 +204,7 @@ class SignupView extends StatelessWidget {
                         fontSize: 15,
                       ),
                       decoration: InputDecoration(
-                        hintText: "Enter phone number",
+                        hintText: "phone_hint".tr,
                         hintStyle: TextStyle(
                           color: Colors.grey.shade400,
                           fontSize: 15,
@@ -237,7 +243,7 @@ class SignupView extends StatelessWidget {
                         fontSize: 15,
                       ),
                       decoration: InputDecoration(
-                        hintText: "Enter 6-digit PIN",
+                        hintText: "pin_hint".tr,
                         hintStyle: TextStyle(
                           color: Colors.grey.shade400,
                           fontSize: 15,
@@ -306,8 +312,8 @@ class SignupView extends StatelessWidget {
                                     strokeWidth: 2.5,
                                   ),
                                 )
-                              : const Text(
-                                  'Create Account',
+                              : Text(
+                                  'create_account'.tr,
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -324,7 +330,7 @@ class SignupView extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          "Already have an account? ",
+                          "already_have_account".tr,
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey.shade600,
@@ -332,8 +338,8 @@ class SignupView extends StatelessWidget {
                         ),
                         GestureDetector(
                           onTap: () => Get.toNamed(AppRoutes.login),
-                          child: const Text(
-                            "Login",
+                          child: Text(
+                            "login".tr,
                             style: TextStyle(
                               fontSize: 14,
                               color: AppColors.primaryGreen,

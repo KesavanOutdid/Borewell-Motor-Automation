@@ -4,6 +4,7 @@ import '../controllers/auth_controller.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../utils/theme/app_colors.dart';
 import '../../../../../utils/ui_utils.dart';
+import '../widgets/language_selector.dart';
 
 class LoginView extends GetView<AuthController> {
   const LoginView({super.key});
@@ -57,6 +58,11 @@ class LoginView extends GetView<AuthController> {
                         ],
                       ),
                     ),
+                    const Positioned(
+                      top: 16,
+                      right: 16,
+                      child: LanguageSelector(),
+                    ),
                   ],
                 ),
               ),
@@ -109,7 +115,7 @@ class _Logo extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        const Text(
+        Text(
           "AgriPlus",
           textAlign: TextAlign.center,
           style: TextStyle(
@@ -183,8 +189,8 @@ class _FormContentState extends State<_FormContent> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Welcome',
+                Text(
+                  'welcome'.tr,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 28,
@@ -195,7 +201,7 @@ class _FormContentState extends State<_FormContent> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Login to continue',
+                  'login_to_continue'.tr,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 15,
@@ -212,19 +218,19 @@ class _FormContentState extends State<_FormContent> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter email';
+                      return 'please_enter_email'.tr;
                     }
                     bool emailValid = RegExp(
                       r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
                     ).hasMatch(value);
                     if (!emailValid) {
-                      return 'Please enter valid email';
+                      return 'invalid_email'.tr;
                     }
                     return null;
                   },
                   onChanged: (value) => controller.email.value = value,
                   decoration: InputDecoration(
-                    hintText: 'Enter your email',
+                    hintText: 'email_hint'.tr,
                     hintStyle: TextStyle(
                       color: Colors.grey.shade400,
                       fontSize: 15,
@@ -271,7 +277,7 @@ class _FormContentState extends State<_FormContent> {
                       fontSize: 15,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Enter 6-digit PIN',
+                      hintText: 'pin_hint'.tr,
                       hintStyle: TextStyle(
                         color: Colors.grey.shade400,
                         fontSize: 15,
@@ -328,9 +334,9 @@ class _FormContentState extends State<_FormContent> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () => Get.toNamed(AppRoutes.forgotPassword),
-                    child: const Text(
-                      "Forgot Password?",
-                      style: TextStyle(
+                    child: Text(
+                      'forgot_password'.tr,
+                      style: const TextStyle(
                         color: AppColors.primaryGreen,
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
@@ -353,7 +359,7 @@ class _FormContentState extends State<_FormContent> {
                                     UIUtils.showErrorDialog(message: errorMessage);
                                   }
                                 } else {
-                                  UIUtils.showErrorDialog(message: "Please enter 6-digit password");
+                                  UIUtils.showErrorDialog(message: "please_enter_6_digit_password".tr);
                                 }
                               }
                             },
@@ -392,9 +398,9 @@ class _FormContentState extends State<_FormContent> {
                                 strokeWidth: 2.5,
                               ),
                             )
-                              : const Text(
-                                  'Login',
-                                  style: TextStyle(
+                              : Text(
+                                  'login'.tr,
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 0.5,
@@ -410,7 +416,7 @@ class _FormContentState extends State<_FormContent> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Don't have an account? ",
+                      'dont_have_account'.tr,
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey.shade600,
@@ -418,8 +424,8 @@ class _FormContentState extends State<_FormContent> {
                     ),
                     GestureDetector(
                       onTap: () => Get.toNamed(AppRoutes.signup),
-                      child: const Text(
-                        "Signup",
+                      child: Text(
+                        'signup'.tr,
                         style: TextStyle(
                           fontSize: 14,
                           color: AppColors.primaryGreen,

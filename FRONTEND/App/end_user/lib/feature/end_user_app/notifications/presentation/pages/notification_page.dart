@@ -13,7 +13,7 @@ class NotificationPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications', style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+        title: Text('Notifications', style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.5)),
         actions: [
           Obx(() => controller.notifications.isNotEmpty 
             ? IconButton(
@@ -31,12 +31,12 @@ class NotificationPage extends StatelessWidget {
                     Get.dialog(
                       Builder(
                         builder: (context) => AlertDialog(
-                          title: const Text('Clear All Notifications'),
-                          content: const Text('Are you sure you want to clear all notifications?'),
+                          title: Text('Clear All Notifications'),
+                          content: Text('Are you sure you want to clear all notifications?'),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-                              child: const Text('No'),
+                              child: Text('no'.tr),
                             ),
                             TextButton(
                               onPressed: () async {
@@ -49,7 +49,7 @@ class NotificationPage extends StatelessWidget {
                                   duration: const Duration(seconds: 2),
                                 );
                               },
-                              child: const Text('Yes', style: TextStyle(color: Colors.red)),
+                              child: Text('yes'.tr, style: TextStyle(color: Colors.red)),
                             ),
                           ],
                         ),
@@ -58,13 +58,13 @@ class NotificationPage extends StatelessWidget {
                   }
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'clear_all',
                     child: Row(
                       children: [
-                        Icon(Icons.delete_sweep, color: Colors.red),
-                        SizedBox(width: 8),
-                        Text('Clear All'),
+                        const Icon(Icons.delete_sweep, color: Colors.red),
+                        const SizedBox(width: 8),
+                        Text('clear_all'.tr),
                       ],
                     ),
                   ),
@@ -97,7 +97,7 @@ class NotificationPage extends StatelessWidget {
                         size: 80,
                         color: AppColors.primaryGreen.withOpacity(0.3),
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       Text(
                         'No notifications yet',
                         style: TextStyle(
@@ -106,7 +106,7 @@ class NotificationPage extends StatelessWidget {
                           color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[600],
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Text(
                         'Notifications older than 7 days are auto-deleted',
                         style: TextStyle(
@@ -185,7 +185,7 @@ class NotificationPage extends StatelessWidget {
                               size: 24,
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,7 +218,7 @@ class NotificationPage extends StatelessWidget {
                                       ),
                                   ],
                                 ),
-                                const SizedBox(height: 4),
+                                SizedBox(height: 4),
                                 Text(
                                   body,
                                   style: TextStyle(
@@ -229,7 +229,7 @@ class NotificationPage extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 if (timestamp.isNotEmpty) ...[
-                                  const SizedBox(height: 8),
+                                  SizedBox(height: 8),
                                   Text(
                                     timestamp,
                                     style: TextStyle(
@@ -281,7 +281,7 @@ class NotificationPage extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,7 +294,7 @@ class NotificationPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Container(
                       width: double.infinity,
                       height: 14,
@@ -303,7 +303,7 @@ class NotificationPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Container(
                       width: 200,
                       height: 14,
@@ -312,7 +312,7 @@ class NotificationPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Container(
                       width: 80,
                       height: 12,

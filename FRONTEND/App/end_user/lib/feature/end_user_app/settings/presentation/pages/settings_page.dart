@@ -16,14 +16,14 @@ class SettingsView extends StatelessWidget {
         return AlertDialog(
           backgroundColor: Theme.of(context).dialogTheme.backgroundColor ?? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text('Choose Theme', style: TextStyle(fontWeight: FontWeight.w800)),
+          title: Text('choose_theme'.tr, style: TextStyle(fontWeight: FontWeight.w800)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildThemeOption(
                 context,
                 icon: Icons.light_mode_rounded,
-                label: 'Light',
+                label: 'light'.tr,
                 color: const Color(0xFFFF8A00),
                 isSelected: themeController.themeMode == ThemeMode.light,
                 onTap: () {
@@ -31,11 +31,11 @@ class SettingsView extends StatelessWidget {
                   Navigator.pop(context);
                 },
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               _buildThemeOption(
                 context,
                 icon: Icons.dark_mode_rounded,
-                label: 'Dark',
+                label: 'dark'.tr,
                 color: const Color(0xFF6366F1),
                 isSelected: themeController.themeMode == ThemeMode.dark,
                 onTap: () {
@@ -43,11 +43,11 @@ class SettingsView extends StatelessWidget {
                   Navigator.pop(context);
                 },
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               _buildThemeOption(
                 context,
                 icon: Icons.brightness_auto_rounded,
-                label: 'System Default',
+                label: 'system_default'.tr,
                 color: AppColors.primaryGreen,
                 isSelected: themeController.themeMode == ThemeMode.system,
                 onTap: () {
@@ -91,7 +91,7 @@ class SettingsView extends StatelessWidget {
               ),
               child: Icon(icon, color: color, size: 20),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: 14),
             Expanded(
               child: Text(
                 label,
@@ -125,14 +125,14 @@ class SettingsView extends StatelessWidget {
         return AlertDialog(
           backgroundColor: Theme.of(context).dialogTheme.backgroundColor ?? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w800)),
-          content: const Text('Are you sure you want to logout?'),
+          title: Text('logout'.tr, style: TextStyle(fontWeight: FontWeight.w800)),
+          content: Text('logout_confirmation'.tr),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('No'),
+              child: Text('no'.tr),
             ),
             TextButton(
               onPressed: () async {
@@ -149,8 +149,7 @@ class SettingsView extends StatelessWidget {
                 await Future.delayed(const Duration(milliseconds: 200));
                 Get.offAllNamed('/login');
               },
-              child: const Text(
-                'Yes',
+              child: Text('yes'.tr,
                 style: TextStyle(color: Colors.red),
               ),
             ),
@@ -166,7 +165,7 @@ class SettingsView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings', style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+        title: Text('settings'.tr, style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.5)),
         centerTitle: true,
       ),
       body: ListView(
@@ -182,17 +181,17 @@ class SettingsView extends StatelessWidget {
               color: isDark ? Colors.grey.shade500 : Colors.grey.shade400,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           _SettingsTile(
             icon: Icons.palette_rounded,
-            label: 'Theme',
-            subtitle: 'Light, Dark, or System Default',
+            label: 'theme'.tr,
+            subtitle: 'theme_subtitle'.tr,
             color: const Color(0xFF6366F1),
             onTap: () => _showThemeDialog(context),
             isDark: isDark,
           ),
 
-          const SizedBox(height: 28),
+          SizedBox(height: 28),
 
           // Section: Legal
           Text(
@@ -204,16 +203,16 @@ class SettingsView extends StatelessWidget {
               color: isDark ? Colors.grey.shade500 : Colors.grey.shade400,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           _SettingsTile(
             icon: Icons.shield_rounded,
-            label: 'Privacy Policy',
+            label: 'privacy_policy'.tr,
             color: const Color(0xFF9D4EDD),
             onTap: () {},
             isDark: isDark,
           ),
 
-          const SizedBox(height: 28),
+          SizedBox(height: 28),
 
           // Section: Account
           Text(
@@ -225,10 +224,10 @@ class SettingsView extends StatelessWidget {
               color: isDark ? Colors.grey.shade500 : Colors.grey.shade400,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           _SettingsTile(
             icon: Icons.logout_rounded,
-            label: 'Logout',
+            label: 'logout'.tr,
             color: Colors.redAccent,
             isDestructive: true,
             onTap: () => _showLogoutConfirmation(context),
@@ -298,7 +297,7 @@ class _SettingsTile extends StatelessWidget {
                   ),
                   child: Icon(icon, color: color, size: 22),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

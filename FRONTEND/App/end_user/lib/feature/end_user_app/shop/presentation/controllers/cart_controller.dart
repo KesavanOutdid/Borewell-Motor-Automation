@@ -118,7 +118,7 @@ class CartController extends GetxController {
     } catch (e) {
       cart.value = previousCart;
       logger.e('❌ Exception: $e');
-      UIUtils.showErrorSnackbar(title: 'Error', message: 'Failed to add product to cart');
+      UIUtils.showErrorSnackbar(title: 'error'.tr, message: 'Failed to add product to cart');
     } finally {
       updatingProductIds.remove(productId);
     }
@@ -264,7 +264,7 @@ class CartController extends GetxController {
       cart.value = previousCart;
       logger.e('❌ Exception: $e');
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'Failed to update cart',
       );
     } finally {
@@ -336,7 +336,7 @@ class CartController extends GetxController {
       cart.value = previousCart;
       logger.e('❌ Exception: $e');
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'Failed to remove product from cart',
       );
     } finally {
@@ -387,7 +387,7 @@ class CartController extends GetxController {
       cart.value = previousCart;
       logger.e('❌ Exception: $e');
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'Failed to clear cart',
       );
     } finally {

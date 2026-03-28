@@ -577,8 +577,8 @@ class HomeController extends GetxController with WidgetsBindingObserver {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (Get.overlayContext != null) {
             Get.snackbar(
-              "Info", 
-              "Motor is already ${status ? 'running' : 'stopped'}",
+              "info".tr, 
+              status ? 'motor_already_running'.tr : 'motor_already_stopped'.tr,
               snackPosition: SnackPosition.BOTTOM,
               duration: const Duration(seconds: 2),
             );
@@ -624,14 +624,14 @@ class HomeController extends GetxController with WidgetsBindingObserver {
         final body = jsonDecode(response.body);
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (Get.overlayContext != null) {
-            Get.snackbar("Error", body['message'] ?? "Please wait a moment");
+            Get.snackbar("error".tr, body['message'] ?? 'please_wait_moment'.tr);
           }
         });
       } else if (response.statusCode == 401) {
         Get.offAllNamed('/login');
         Future.delayed(Duration.zero, () {
           if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
-            Get.snackbar("Error", "Session expired. Please login again");
+            Get.snackbar("error".tr, 'session_expired'.tr);
           }
         });
       } else if (response.statusCode == 403) {
@@ -714,12 +714,12 @@ class HomeController extends GetxController with WidgetsBindingObserver {
         Get.dialog(
           Builder(
             builder: (context) => AlertDialog(
-              title: const Text('Success'),
-              content: Text(jsonData['message'] ?? "Device assigned successfully"),
+              title: Text('success'.tr),
+              content: Text(jsonData['message'] ?? 'device_assigned_success'.tr),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
+                  child: Text('OK'),
                 ),
               ],
             ),
@@ -740,12 +740,12 @@ class HomeController extends GetxController with WidgetsBindingObserver {
         Get.dialog(
           Builder(
             builder: (context) => AlertDialog(
-              title: const Text('Error'),
-              content: const Text('Device not found'),
+              title: Text('error'.tr),
+              content: Text('device_not_found'.tr),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
+                  child: Text('OK'),
                 ),
               ],
             ),
@@ -755,17 +755,17 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       } else if (response.statusCode == 400) {
         print('❌ Bad request');
         final jsonData = jsonDecode(response.body);
-        final errorMsg = jsonData['message'] ?? "Invalid request";
+        final errorMsg = jsonData['message'] ?? 'invalid_request'.tr;
         print('🔴 ERROR DIALOG OPENED: $errorMsg');
         Get.dialog(
           Builder(
             builder: (context) => AlertDialog(
-              title: const Text('Error'),
+              title: Text('error'.tr),
               content: Text(errorMsg),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
+                  child: Text('OK'),
                 ),
               ],
             ),
@@ -775,17 +775,17 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       } else {
         print('❌ Failed with status: ${response.statusCode}');
         final jsonData = jsonDecode(response.body);
-        final errorMsg = jsonData['message'] ?? "Failed to assign device";
+        final errorMsg = jsonData['message'] ?? 'failed_to_assign_device'.tr;
         print('🔴 ERROR DIALOG OPENED: $errorMsg');
         Get.dialog(
           Builder(
             builder: (context) => AlertDialog(
-              title: const Text('Error'),
+              title: Text('error'.tr),
               content: Text(errorMsg),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
+                  child: Text('OK'),
                 ),
               ],
             ),
@@ -801,12 +801,12 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       Get.dialog(
         Builder(
           builder: (context) => AlertDialog(
-            title: const Text('Error'),
+            title: Text('error'.tr),
             content: Text('Connection failed: $e'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('OK'),
+                child: Text('OK'),
               ),
             ],
           ),
@@ -852,8 +852,8 @@ class HomeController extends GetxController with WidgetsBindingObserver {
                     size: 60,
                     color: Colors.orange[400],
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
+                  SizedBox(height: 16),
+                  Text(
                     'Camera Permission Required',
                     style: TextStyle(
                       fontSize: 18,
@@ -861,8 +861,8 @@ class HomeController extends GetxController with WidgetsBindingObserver {
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
+                  SizedBox(height: 12),
+                  Text(
                     'Please enable camera permission in app settings to scan device QR codes',
                     style: TextStyle(
                       fontSize: 14,
@@ -870,16 +870,16 @@ class HomeController extends GetxController with WidgetsBindingObserver {
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   Row(
                     children: [
                       Expanded(
                         child: OutlinedButton(
                           onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('Cancel'),
+                          child: Text('cancel'.tr),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
@@ -890,7 +890,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
                             backgroundColor: Colors.green[600],
                             foregroundColor: Colors.white,
                           ),
-                          child: const Text('Settings'),
+                          child: Text('settings'.tr),
                         ),
                       ),
                     ],

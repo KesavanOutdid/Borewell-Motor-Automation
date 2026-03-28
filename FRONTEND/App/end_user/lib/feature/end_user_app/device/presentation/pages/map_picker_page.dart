@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -176,7 +177,7 @@ class _MapPickerViewState extends State<MapPickerView> with WidgetsBindingObserv
         if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Location permission not available'),
+              content: Text('location_permission_not_available'.tr),
               backgroundColor: Colors.red[400],
               duration: const Duration(seconds: 2),
             ),
@@ -208,7 +209,7 @@ class _MapPickerViewState extends State<MapPickerView> with WidgetsBindingObserv
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Location updated'),
+          content: Text('location_updated'.tr),
           backgroundColor: Colors.green[600],
           duration: const Duration(seconds: 1),
         ),
@@ -242,7 +243,7 @@ class _MapPickerViewState extends State<MapPickerView> with WidgetsBindingObserv
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Please select a location on the map'),
+          content: Text('select_location_on_map'.tr),
           backgroundColor: Colors.red[300],
           duration: const Duration(seconds: 2),
         ),
@@ -260,20 +261,20 @@ class _MapPickerViewState extends State<MapPickerView> with WidgetsBindingObserv
         title: Row(
           children: [
             Icon(Icons.location_off, color: Colors.red[700]),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text('Permission Required', overflow: TextOverflow.ellipsis, maxLines: 2),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text('permission_required'.tr, overflow: TextOverflow.ellipsis, maxLines: 2),
             ),
           ],
         ),
-        content: const Text(
+        content: Text(
           'Please enable location permission in app settings to use this feature',
           style: TextStyle(fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text('cancel'.tr),
           ),
           ElevatedButton(
             onPressed: () {
@@ -285,7 +286,7 @@ class _MapPickerViewState extends State<MapPickerView> with WidgetsBindingObserv
               backgroundColor: Colors.green[600],
               foregroundColor: Colors.white,
             ),
-            child: const Text('Open Settings'),
+            child: Text('open_settings'.tr),
           ),
         ],
       ),
@@ -298,7 +299,7 @@ class _MapPickerViewState extends State<MapPickerView> with WidgetsBindingObserv
       body: Stack(
         children: [
           if (isLoading)
-            const Center(
+            Center(
               child: CircularProgressIndicator(),
             )
           else
@@ -352,7 +353,7 @@ class _MapPickerViewState extends State<MapPickerView> with WidgetsBindingObserv
                         tooltip: 'Back',
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     if (!isLoading)
                       Expanded(
                         child: Container(
@@ -373,8 +374,8 @@ class _MapPickerViewState extends State<MapPickerView> with WidgetsBindingObserv
                             child: Row(
                               children: [
                                 Icon(Icons.info_outline, color: Colors.blue[700], size: 20),
-                                const SizedBox(width: 10),
-                                const Expanded(
+                                SizedBox(width: 10),
+                                Expanded(
                                   child: Text(
                                     'Tap on map to select',
                                     style: TextStyle(
@@ -464,12 +465,12 @@ class _MapPickerViewState extends State<MapPickerView> with WidgetsBindingObserv
                             ),
                             child: Icon(Icons.location_on, color: Colors.green[700], size: 24),
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Selected Location',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
@@ -477,7 +478,7 @@ class _MapPickerViewState extends State<MapPickerView> with WidgetsBindingObserv
                                     color: Colors.black87,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
+                                SizedBox(height: 8),
                                 Container(
                                   width: double.infinity,
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -490,7 +491,7 @@ class _MapPickerViewState extends State<MapPickerView> with WidgetsBindingObserv
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       if (_isGettingAddress)
-                                        const Padding(
+                                        Padding(
                                           padding: EdgeInsets.only(bottom: 8),
                                           child: SizedBox(
                                             height: 14,
@@ -587,9 +588,9 @@ class _MapPickerViewState extends State<MapPickerView> with WidgetsBindingObserv
                               final text = 'Lat: ${selectedLocation!.latitude.toStringAsFixed(6)}, Long: ${selectedLocation!.longitude.toStringAsFixed(6)}';
                               Clipboard.setData(ClipboardData(text: text));
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Location copied to clipboard'),
-                                  duration: Duration(seconds: 1),
+                                SnackBar(
+                                  content: Text('location_copied'.tr),
+                                  duration: const Duration(seconds: 1),
                                   behavior: SnackBarBehavior.floating,
                                 ),
                               );
@@ -606,7 +607,7 @@ class _MapPickerViewState extends State<MapPickerView> with WidgetsBindingObserv
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      SizedBox(height: 20),
                       SizedBox(
                         width: double.infinity,
                         height: 48,

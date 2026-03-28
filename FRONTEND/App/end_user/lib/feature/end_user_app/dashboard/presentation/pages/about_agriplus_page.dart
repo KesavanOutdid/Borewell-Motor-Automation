@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../../../utils/theme/app_colors.dart';
 
 class AboutAgriPlusPage extends StatelessWidget {
@@ -94,7 +95,7 @@ class AboutAgriPlusPage extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'Smart Automation for Smart Farming',
+                            'smart_farming_subtitle'.tr,
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
@@ -108,9 +109,9 @@ class AboutAgriPlusPage extends StatelessWidget {
                   ],
                 ),
               ),
-              title: const Text(
-                'About AgriPlus',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+              title: Text(
+                'about_agriplus'.tr,
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
               ),
             ),
           ),
@@ -121,36 +122,36 @@ class AboutAgriPlusPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionTitle('Our Mission'),
-                  const Text(
-                    'AgriPlus is dedicated to empowering farmers through innovative smart automation solutions. We aim to optimize resource usage, improve crop yields, and make farming more sustainable and efficient.',
-                    style: TextStyle(fontSize: 15, height: 1.6),
+                  _buildSectionTitle('our_mission'.tr),
+                  Text(
+                    'mission_description'.tr,
+                    style: const TextStyle(fontSize: 15, height: 1.6),
                   ),
                   const SizedBox(height: 28),
-                  _buildSectionTitle('Key Features'),
+                  _buildSectionTitle('key_features'.tr),
                   const SizedBox(height: 4),
                   _buildFeatureItem(
                     Icons.settings_remote_rounded,
-                    'Remote Motor Control',
-                    'Manage your Smart motors from anywhere.',
+                    'remote_motor_control'.tr,
+                    'remote_motor_desc'.tr,
                     const Color(0xFF3B82F6),
                   ),
                   _buildFeatureItem(
                     Icons.timer_rounded,
-                    'Automated Scheduling',
-                    'Set timers and schedules for efficient irrigation.',
+                    'automated_scheduling'.tr,
+                    'scheduling_desc'.tr,
                     const Color(0xFF9D4EDD),
                   ),
                   _buildFeatureItem(
                     Icons.bolt_rounded,
-                    'Power Monitoring',
-                    'Real-time updates on power status and voltage.',
+                    'power_monitoring'.tr,
+                    'power_monitoring_desc'.tr,
                     const Color(0xFFFF8A00),
                   ),
                   _buildFeatureItem(
                     Icons.warning_amber_rounded,
-                    'Instant Alerts',
-                    'Get notified about faults and issues immediately.',
+                    'instant_alerts'.tr,
+                    'instant_alerts_desc'.tr,
                     AppColors.error,
                   ),
                   const SizedBox(height: 32),
@@ -158,7 +159,7 @@ class AboutAgriPlusPage extends StatelessWidget {
                   const SizedBox(height: 16),
                   Center(
                     child: Text(
-                      'Version 1.0.0',
+                      'v1.0.0',
                       style: TextStyle(
                         color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
                         fontWeight: FontWeight.w600,
@@ -168,7 +169,7 @@ class AboutAgriPlusPage extends StatelessWidget {
                   const SizedBox(height: 4),
                   Center(
                     child: Text(
-                      '© 2024 AgriPlus Smart Automation',
+                      'copyright'.tr,
                       style: TextStyle(
                         color: isDark ? Colors.grey.shade700 : Colors.grey.shade400,
                         fontSize: 12,

@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../../utils/theme/app_colors.dart';
@@ -32,8 +33,7 @@ class ContactView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Contact Us',
+        title: Text('contact_us'.tr,
           style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.5),
         ),
         centerTitle: true,
@@ -66,8 +66,8 @@ class ContactView extends StatelessWidget {
                   color: Colors.white,
                 ),
               ),
-              const SizedBox(height: 24),
-              const Text(
+              SizedBox(height: 24),
+              Text(
                 'Get in Touch',
                 style: TextStyle(
                   fontSize: 24,
@@ -75,7 +75,7 @@ class ContactView extends StatelessWidget {
                   letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 "We're here to help. Reach out to us with any questions, concerns, or feedback.",
                 textAlign: TextAlign.center,
@@ -85,7 +85,7 @@ class ContactView extends StatelessWidget {
                   height: 1.5,
                 ),
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               Row(
                 children: [
                   Expanded(
@@ -98,7 +98,7 @@ class ContactView extends StatelessWidget {
                       onTap: () => _launchPhone('+1-800-123-4567'),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: _buildContactCard(
                       context,
@@ -111,7 +111,7 @@ class ContactView extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -124,8 +124,8 @@ class ContactView extends StatelessWidget {
                       onTap: () => _launchEmail('contact@gmail.com'),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  const Expanded(child: SizedBox()),
+                  SizedBox(width: 12),
+                  Expanded(child: SizedBox()),
                 ],
               ),
             ],
@@ -175,7 +175,7 @@ class ContactView extends StatelessWidget {
               ),
               child: Icon(icon, color: color, size: 26),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
             Text(
               title,
               style: const TextStyle(
@@ -184,7 +184,7 @@ class ContactView extends StatelessWidget {
                 letterSpacing: -0.2,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               subtitle,
               textAlign: TextAlign.center,

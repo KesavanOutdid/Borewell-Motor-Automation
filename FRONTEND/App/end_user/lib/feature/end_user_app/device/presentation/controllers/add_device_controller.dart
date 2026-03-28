@@ -133,8 +133,8 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
                         size: 60,
                         color: Colors.red[400],
                       ),
-                      const SizedBox(height: 16),
-                      const Text(
+                      SizedBox(height: 16),
+                      Text(
                         'Location Permission Required',
                         style: TextStyle(
                           fontSize: 18,
@@ -142,8 +142,8 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 12),
-                      const Text(
+                      SizedBox(height: 12),
+                      Text(
                         'Please enable location permission in app settings to use this feature',
                         style: TextStyle(
                           fontSize: 14,
@@ -151,7 +151,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 24),
+                      SizedBox(height: 24),
                       Wrap(
                         spacing: 12,
                         runSpacing: 12,
@@ -164,8 +164,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               minimumSize: const Size(120, 48),
                             ),
-                            child: const Text(
-                              'Cancel',
+                            child: Text('cancel'.tr,
                               style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -182,8 +181,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
                               minimumSize: const Size(120, 48),
                               elevation: 0,
                             ),
-                            child: const Text(
-                              'Settings',
+                            child: Text('settings'.tr,
                               style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -382,8 +380,8 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
                     size: 60,
                     color: Colors.orange[400],
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
+                  SizedBox(height: 16),
+                  Text(
                     'Camera Permission Required',
                     style: TextStyle(
                       fontSize: 18,
@@ -391,8 +389,8 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
+                  SizedBox(height: 12),
+                  Text(
                     'Please enable camera permission in app settings to scan QR codes',
                     style: TextStyle(
                       fontSize: 14,
@@ -400,7 +398,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   Wrap(
                     spacing: 12,
                     runSpacing: 12,
@@ -413,8 +411,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           minimumSize: const Size(120, 48),
                         ),
-                        child: const Text(
-                          'Cancel',
+                        child: Text('cancel'.tr,
                           style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -431,8 +428,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
                           minimumSize: const Size(120, 48),
                           elevation: 0,
                         ),
-                        child: const Text(
-                          'Settings',
+                        child: Text('settings'.tr,
                           style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -554,8 +550,8 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
                       color: Colors.green[600],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
+                  SizedBox(height: 16),
+                  Text(
                     'Device Configured Successfully!',
                     style: TextStyle(
                       fontSize: 18,
@@ -563,7 +559,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     'Serial: $serialNumber',
                     style: TextStyle(
@@ -571,7 +567,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
                       color: Colors.grey[600],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () {
                       Get.back();
@@ -582,7 +578,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
                       foregroundColor: Colors.white,
                       minimumSize: const Size(double.infinity, 45),
                     ),
-                    child: const Text('Back to Devices'),
+                    child: Text('Back to Devices'),
                   ),
                 ],
               ),
@@ -636,8 +632,8 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
                           color: Colors.red[600],
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      const Text(
+                      SizedBox(height: 16),
+                      Text(
                         'IMEI Already Registered',
                         style: TextStyle(
                           fontSize: 18,
@@ -645,7 +641,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       Text(
                         'This IMEI number (${imeiController.text}) is already assigned to another device. Please provide a unique IMEI number.',
                         style: const TextStyle(
@@ -654,7 +650,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 24),
+                      SizedBox(height: 24),
                       ElevatedButton(
                         onPressed: () => Navigator.of(context).pop(),
                         style: ElevatedButton.styleFrom(
@@ -665,7 +661,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text('OK'),
+                        child: Text('OK'),
                       ),
                     ],
                   ),

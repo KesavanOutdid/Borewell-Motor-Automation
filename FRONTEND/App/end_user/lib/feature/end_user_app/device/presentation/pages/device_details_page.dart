@@ -51,7 +51,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Obx(() => _buildDevicePlacementCard(context, controller)),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Obx(() {
                   final lastStart = controller.liveData['lastStart']?.toString() ?? '-';
                   final lastStop = controller.liveData['lastStop']?.toString() ?? '-';
@@ -66,7 +66,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                           color: AppColors.primaryGreen,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         child: _TimeChip(
                           icon: Icons.stop_circle_rounded,
@@ -78,9 +78,9 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                     ],
                   );
                 }),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 _buildQuickActionsRow(context, controller),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 Obx(() => Row(
                   children: [
                     Container(
@@ -91,8 +91,8 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                       ),
                       child: const Icon(Icons.sensors_rounded, size: 18, color: AppColors.primaryGreen),
                     ),
-                    const SizedBox(width: 12),
-                    const Text(
+                    SizedBox(width: 12),
+                    Text(
                       'Live Readings',
                       style: TextStyle(
                         fontSize: 18,
@@ -120,7 +120,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                               shape: BoxShape.circle,
                             ),
                           ),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           Text(
                             controller.isConnected.value ? 'LIVE' : 'CACHED',
                             style: TextStyle(
@@ -135,11 +135,11 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                     ),
                   ],
                 )),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 Obx(() => _buildLiveDataGrid(context, controller)),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 Obx(() => _buildLocationMapCard(controller)),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 _buildStatusControlCard(controller),
               ],
             ),
@@ -165,7 +165,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             Container(
               height: 100,
               decoration: BoxDecoration(
@@ -173,7 +173,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                 borderRadius: BorderRadius.circular(24),
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -287,7 +287,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Edit Device Name',
                 style: TextStyle(
                   fontSize: 20,
@@ -295,7 +295,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                   letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 'Serial $serial',
                 style: TextStyle(
@@ -304,7 +304,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               TextField(
                 controller: textController,
                 autofocus: true,
@@ -326,7 +326,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                 ),
                 textCapitalization: TextCapitalization.words,
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               Row(
                 children: [
                   Expanded(
@@ -338,13 +338,12 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: Text(
-                        'Cancel',
+                      child: Text('cancel'.tr,
                         style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
@@ -372,7 +371,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Save Name',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
@@ -425,7 +424,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
             return Expanded(
               child: _QuickActionCard(
                 icon: Icons.group_add_rounded,
-                label: 'Access',
+                label: 'access'.tr,
                 gradient: AppColors.sunsetGradient,
                 onTap: () => _openAccess(controller),
               ),
@@ -493,7 +492,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                     ],
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Text(
                   isRunning ? 'MOTOR RUNNING' : (isOnline ? 'DEVICE ONLINE' : 'DEVICE OFFLINE'),
                   style: const TextStyle(
@@ -532,7 +531,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                       ),
                       child: const Icon(Icons.settings_input_component_rounded, size: 28, color: AppColors.primaryGreen),
                     ),
-                    const SizedBox(width: 16),
+                    SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -578,11 +577,11 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                     }),
                   ],
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 Row(
                   children: [
                     const Icon(Icons.location_on_rounded, size: 24, color: Colors.blue),
-                    const SizedBox(width: 16),
+                    SizedBox(width: 16),
                     Expanded(
                       child: Text(
                         location,
@@ -638,11 +637,11 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Row(
                       children: [
                         if (controller.isProcessing.value)
-                          const SizedBox(
+                          SizedBox(
                             width: 10,
                             height: 10,
                             child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryGreen),
@@ -665,7 +664,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                                   : null,
                             ),
                           ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text(
                           controller.isProcessing.value ? 'CONFIRMING...' : (isRunning ? 'MOTOR RUNNING' : 'MOTOR STOPPED'),
                           style: TextStyle(
@@ -683,7 +682,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                         child: Row(
                           children: [
                             const Icon(Icons.warning_amber_rounded, size: 12, color: Colors.orange),
-                            const SizedBox(width: 4),
+                            SizedBox(width: 4),
                             Text(
                               'Poor Signal: Commands may be delayed',
                               style: TextStyle(fontSize: 10, color: Colors.orange.shade800, fontWeight: FontWeight.w600),
@@ -695,7 +694,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             SwipeButton(
               onSwipe: () {
                 if (controller.isProcessing.value) return;
@@ -746,14 +745,14 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                 Row(
                   children: [
                     Icon(Icons.location_on_rounded, color: AppColors.primaryGreen, size: 20),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Text(
                       'Device Location',
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
                 Text(
                   controller.liveData['location']?.toString() ?? 'Location not available',
                   style: TextStyle(fontSize: 13, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
@@ -889,27 +888,27 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
         Row(
           children: [
             Expanded(child: _buildMetricCard(metrics[0])),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(child: _buildMetricCard(metrics[1])),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(child: _buildMetricCard(metrics[6])),
           ],
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Row(
           children: [
             Expanded(child: _buildMetricCard(metrics[3])),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(child: _buildMetricCard(metrics[4])),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(child: _buildMetricCard(metrics[5])),
           ],
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Row(
           children: [
             Expanded(child: _buildMetricCard(metrics[2])),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(child: _buildMetricCard(metrics[7])),
           ],
         ),
@@ -960,7 +959,7 @@ class _QuickActionCard extends StatelessWidget {
                 ),
                 child: Icon(icon, color: Colors.white, size: 24),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               Text(
                 label,
                 style: TextStyle(
@@ -1006,7 +1005,7 @@ class _TimeChip extends StatelessWidget {
           Row(
             children: [
               Icon(icon, size: 14, color: color),
-              const SizedBox(width: 6),
+              SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
@@ -1017,7 +1016,7 @@ class _TimeChip extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             value,
             style: const TextStyle(

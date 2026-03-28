@@ -29,20 +29,20 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: const Text('Order Details'),
+        title: Text('order_details'.tr),
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: AppColors.textPrimary,
       ),
       body: Obx(() {
         if (controller.isLoading.value && controller.selectedOrder.value == null) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(child: CircularProgressIndicator());
         }
 
         final order = controller.selectedOrder.value;
         if (order == null) {
-          return const Center(
-            child: Text('Order not found'),
+          return Center(
+            child: Text('order_not_found'.tr),
           );
         }
 
@@ -53,18 +53,18 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             children: [
               _buildDeliveryStatus(order),
               if (order.orderTimeline.isNotEmpty) ...[
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 _buildOrderTimeline(order.orderTimeline),
               ],
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               _buildShippingAddress(order.shippingAddress),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               _buildOrderItems(order.cartItems),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               _buildOrderInfo(order),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               _buildPriceSummary(order.orderSummary),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
             ],
           ),
         );
@@ -104,7 +104,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               size: 28,
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,7 +117,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     color: statusColor,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   'Order #${order.orderId.substring(0, 12).toUpperCase()}',
                   style: TextStyle(
@@ -170,8 +170,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Items',
+              Text('items'.tr,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -187,7 +186,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           ...items.asMap().entries.map((entry) {
             final index = entry.key;
             final item = entry.value;
@@ -249,7 +248,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     ),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,7 +264,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -327,13 +326,13 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           _buildPriceRow('Price', '₹${summary.totalPrice.toStringAsFixed(2)}'),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           _buildPriceRow('GST', '₹${summary.totalGst.toStringAsFixed(2)}'),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           _buildPriceRow('Delivery Charges', '₹${summary.totalShippingCost.toStringAsFixed(2)}'),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: BoxDecoration(
@@ -343,8 +342,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Total Amount',
+                Text('total_amount'.tr,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -416,13 +414,13 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           _buildInfoRow('Order Date', dateFormat.format(order.createdAt.toLocal())),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           _buildInfoRow('Order ID', '#${order.orderId.substring(0, 16).toUpperCase()}'),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           _buildInfoRow('Payment Method', order.paymentMethod.toUpperCase()),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -502,7 +500,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Delivery Address',
             style: TextStyle(
               fontSize: 16,
@@ -510,7 +508,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             address.fullName,
             style: const TextStyle(
@@ -519,7 +517,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             '${address.street}, ${address.city}',
             style: TextStyle(
@@ -536,11 +534,11 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               height: 1.4,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
             children: [
               Icon(Icons.phone, size: 16, color: Colors.grey.shade600),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 address.phone,
                 style: TextStyle(
@@ -551,11 +549,11 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             ],
           ),
           if (address.email.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Row(
               children: [
                 Icon(Icons.email, size: 16, color: Colors.grey.shade600),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Text(
                   address.email,
                   style: TextStyle(
@@ -590,7 +588,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Order Updates',
             style: TextStyle(
               fontSize: 16,
@@ -598,7 +596,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           ...List.generate(timeline.length, (index) {
             final item = timeline[index];
             final isLast = index == timeline.length - 1;
@@ -630,7 +628,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                       ),
                   ],
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
@@ -645,7 +643,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                             color: AppColors.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           dateFormat.format(item.timestamp.toLocal()),
                           style: TextStyle(
@@ -654,7 +652,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                           ),
                         ),
                         if (item.message.isNotEmpty) ...[
-                          const SizedBox(height: 4),
+                          SizedBox(height: 4),
                           Text(
                             item.message,
                             style: TextStyle(

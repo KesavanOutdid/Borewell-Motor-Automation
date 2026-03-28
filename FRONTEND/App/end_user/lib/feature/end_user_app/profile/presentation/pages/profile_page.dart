@@ -33,14 +33,14 @@ class ProfileView extends GetView<ProfileController> {
       Builder(
         builder: (dialogContext) => AlertDialog(
           backgroundColor: Theme.of(context).dialogTheme.backgroundColor ?? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white),
-          title: const Text('Logout'),
-          content: const Text('Are you sure you want to logout?'),
+          title: Text('logout'.tr),
+          content: Text('logout_confirmation'.tr),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext, rootNavigator: true).pop();
               },
-              child: const Text('No'),
+              child: Text('no'.tr),
             ),
             TextButton(
               onPressed: () async {
@@ -57,8 +57,7 @@ class ProfileView extends GetView<ProfileController> {
                 await Future.delayed(const Duration(milliseconds: 200));
                 Get.offAllNamed('/login');
               },
-              child: const Text(
-                'Yes',
+              child: Text('yes'.tr,
                 style: TextStyle(color: Colors.red),
               ),
             ),
@@ -80,7 +79,7 @@ class ProfileView extends GetView<ProfileController> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Container(
               width: 40,
               height: 4,
@@ -89,22 +88,22 @@ class ProfileView extends GetView<ProfileController> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: 20),
-            const Text(
+            SizedBox(height: 20),
+            Text(
               'Profile Photo',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _buildSourceOption(
                   context,
                   icon: Icons.camera_alt_rounded,
-                  label: 'Camera',
+                  label: 'camera'.tr,
                   onTap: () {
                     Navigator.of(context).pop();
                     controller.pickAndUploadImage(ImageSource.camera);
@@ -113,7 +112,7 @@ class ProfileView extends GetView<ProfileController> {
                 _buildSourceOption(
                   context,
                   icon: Icons.photo_library_rounded,
-                  label: 'Gallery',
+                  label: 'gallery'.tr,
                   onTap: () {
                     Navigator.of(context).pop();
                     controller.pickAndUploadImage(ImageSource.gallery);
@@ -123,7 +122,7 @@ class ProfileView extends GetView<ProfileController> {
                   _buildSourceOption(
                     context,
                     icon: Icons.delete_outline_rounded,
-                    label: 'Remove',
+                    label: 'remove'.tr,
                     onTap: () {
                       Navigator.of(context).pop();
                       _showRemoveImageConfirmation(context);
@@ -132,7 +131,7 @@ class ProfileView extends GetView<ProfileController> {
                   ),
               ],
             ),
-            const SizedBox(height: 30),
+            SizedBox(height: 30),
           ],
         ),
       ),
@@ -144,20 +143,19 @@ class ProfileView extends GetView<ProfileController> {
       Builder(
         builder: (dialogContext) => AlertDialog(
           backgroundColor: Theme.of(context).dialogTheme.backgroundColor ?? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white),
-          title: const Text('Remove Photo'),
-          content: const Text('Are you sure you want to remove your profile photo?'),
+          title: Text('remove_photo'.tr),
+          content: Text('remove_photo_confirmation'.tr),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext, rootNavigator: true).pop(),
-              child: const Text('Cancel'),
+              child: Text('cancel'.tr),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext, rootNavigator: true).pop();
                 controller.removeProfileImage();
               },
-              child: const Text(
-                'Remove',
+              child: Text('remove'.tr,
                 style: TextStyle(color: Colors.red),
               ),
             ),
@@ -191,7 +189,7 @@ class ProfileView extends GetView<ProfileController> {
               size: 30,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             label,
             style: const TextStyle(
@@ -306,9 +304,8 @@ class ProfileView extends GetView<ProfileController> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 16),
-                              const Text(
-                                'Profile',
+                              SizedBox(width: 16),
+                              Text('profile'.tr,
                                 style: TextStyle(
                                   fontSize: 26,
                                   fontWeight: FontWeight.w900,
@@ -318,7 +315,7 @@ class ProfileView extends GetView<ProfileController> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 40),
+                          SizedBox(height: 40),
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -373,7 +370,7 @@ class ProfileView extends GetView<ProfileController> {
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 20),
+                            SizedBox(width: 20),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -388,12 +385,12 @@ class ProfileView extends GetView<ProfileController> {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: 8),
+                                  SizedBox(height: 8),
                                   if (controller.userEmail.value.isNotEmpty)
                                     Row(
                                       children: [
                                         Icon(Icons.email_rounded, color: Colors.white.withOpacity(0.9), size: 14),
-                                        const SizedBox(width: 8),
+                                        SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
                                             controller.userEmail.value,
@@ -405,12 +402,12 @@ class ProfileView extends GetView<ProfileController> {
                                         ),
                                       ],
                                     ),
-                                  const SizedBox(height: 4),
+                                  SizedBox(height: 4),
                                   if (controller.userPhone.value.isNotEmpty)
                                     Row(
                                       children: [
                                         Icon(Icons.phone_iphone_rounded, color: Colors.white.withOpacity(0.9), size: 14),
-                                        const SizedBox(width: 8),
+                                        SizedBox(width: 8),
                                         Text(
                                           controller.userPhone.value,
                                           style: TextStyle(
@@ -459,7 +456,7 @@ class ProfileView extends GetView<ProfileController> {
                             Expanded(
                               child: _QuickActionCard(
                                 icon: Icons.shopping_bag_rounded,
-                                label: 'All Orders',
+                                label: 'all_orders'.tr,
                                 gradient: const LinearGradient(colors: [Color(0xFF3B82F6), Color(0xFF60A5FA)]),
                                 onTap: () => Get.toNamed('/orders'),
                               ),
@@ -467,7 +464,7 @@ class ProfileView extends GetView<ProfileController> {
                             Expanded(
                               child: _QuickActionCard(
                                 icon: Icons.local_offer_rounded,
-                                label: 'Vouchers',
+                                label: 'vouchers'.tr,
                                 gradient: const LinearGradient(colors: [Color(0xFFFF8A00), Color(0xFFFBBF24)]),
                                 onTap: () => Get.toNamed('/vouchers'),
                               ),
@@ -475,7 +472,7 @@ class ProfileView extends GetView<ProfileController> {
                             Expanded(
                               child: _QuickActionCard(
                                 icon: Icons.location_on,
-                                label: 'Address',
+                                label: 'address'.tr,
                                 gradient: const LinearGradient(colors: [Color(0xFF9D4EDD), Color(0xFFC084FC)]),
                                 onTap: () => Get.toNamed('/addresses'),
                               ),
@@ -483,34 +480,34 @@ class ProfileView extends GetView<ProfileController> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      SizedBox(height: 24),
                       _buildMenuSection(context, [
                         _MenuItemData(
                           icon: Icons.notifications_rounded,
-                          title: 'Notification',
+                          title: 'notification'.tr,
                           color: const Color(0xFFFF8A00),
                           onTap: () => Get.toNamed('/notifications'),
                         ),
                         _MenuItemData(
                           icon: Icons.headset_mic_rounded,
-                          title: 'Contact Us',
+                          title: 'contact_us'.tr,
                           color: const Color(0xFF3B82F6),
                           onTap: () => Get.toNamed('/contact'),
                         ),
                         _MenuItemData(
                           icon: Icons.verified_user_rounded,
-                          title: 'Privacy Policy',
+                          title: 'privacy_policy'.tr,
                           color: const Color(0xFF9D4EDD),
                           onTap: () => Get.toNamed('/privacyPolicy'),
                         ),
                         _MenuItemData(
                           icon: Icons.logout_rounded,
-                          title: 'Logout',
+                          title: 'logout'.tr,
                           color: Colors.redAccent,
                           onTap: () => _showLogoutConfirmation(context),
                         ),
                       ]),
-                      const SizedBox(height: 30),
+                      SizedBox(height: 30),
                     ],
                   ),
                 ),
@@ -557,7 +554,7 @@ class ProfileView extends GetView<ProfileController> {
                         borderRadius: BorderRadius.circular(24),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                     ...List.generate(
                       4,
                       (index) => Padding(
@@ -644,7 +641,7 @@ class _ProfileMenuTile extends StatelessWidget {
                   ),
                   child: Icon(item.icon, color: item.color, size: 22),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(
                   child: Text(
                     item.title,
@@ -703,7 +700,7 @@ class _QuickActionCard extends StatelessWidget {
                 ),
                 child: Icon(icon, color: Colors.white, size: 24),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               Text(
                 label,
                 style: TextStyle(

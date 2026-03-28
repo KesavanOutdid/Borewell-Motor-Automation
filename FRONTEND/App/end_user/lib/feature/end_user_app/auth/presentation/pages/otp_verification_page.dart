@@ -64,8 +64,8 @@ class OtpVerificationView extends GetView<ForgotPasswordController> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        const Text(
-                          'Verify OTP',
+                        Text(
+                          'verify_otp'.tr,
                           style: TextStyle(
                             fontSize: 26,
                             fontWeight: FontWeight.w900,
@@ -87,7 +87,7 @@ class OtpVerificationView extends GetView<ForgotPasswordController> {
                     children: [
                       const SizedBox(height: 20),
                       Text(
-                        "Verify your email",
+                        "verify_your_email".tr,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -96,7 +96,7 @@ class OtpVerificationView extends GetView<ForgotPasswordController> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        "Enter the 4-digit code sent to ${controller.email.value}",
+                        "${'enter_otp_sent_to'.tr} ${controller.email.value}",
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey.shade600,
@@ -118,8 +118,8 @@ class OtpVerificationView extends GetView<ForgotPasswordController> {
                               : () => controller.sendOtp(),
                           child: Text(
                             controller.timerSeconds.value > 0
-                                ? "Resend OTP in ${controller.timerSeconds.value}s"
-                                : "Resend OTP",
+                                ? "${'resend_otp_in'.tr} ${controller.timerSeconds.value}s"
+                                : "resend_otp".tr,
                             style: TextStyle(
                               color: controller.timerSeconds.value > 0
                                   ? Colors.grey
@@ -184,7 +184,7 @@ class OtpVerificationView extends GetView<ForgotPasswordController> {
                                   child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                                 )
                               : Text(
-                                  'Verify & Continue',
+                                  'verify_and_continue'.tr,
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,

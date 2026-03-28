@@ -63,8 +63,8 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        const Text(
-                          'Forgot Password',
+                        Text(
+                          'forgot_password_title'.tr,
                           style: TextStyle(
                             fontSize: 26,
                             fontWeight: FontWeight.w900,
@@ -74,7 +74,7 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Enter your email to receive a reset code',
+                          'enter_email_to_receive_reset_code'.tr,
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.white.withOpacity(0.8),
@@ -103,13 +103,13 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
                           color: controller.isOtpSent.value ? Colors.grey : Colors.black,
                         ),
                         decoration: InputDecoration(
-                          labelText: "Enter Email",
+                          labelText: "enter_email_label".tr,
                           labelStyle: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w500),
                           prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primaryGreen),
                           suffixIcon: controller.isOtpSent.value ? IconButton(
                             icon: const Icon(Icons.refresh, color: AppColors.primaryGreen),
                             onPressed: () => controller.resetState(),
-                            tooltip: "Change Email",
+                            tooltip: "change_email_tooltip".tr,
                           ) : null,
                           filled: true,
                           fillColor: controller.isOtpSent.value ? Colors.grey.shade50 : Colors.white,
@@ -132,8 +132,8 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
                           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                         ),
                         validator: (value) {
-                          if (value == null || value.isEmpty) return "Please enter email";
-                          if (!controller.isValidEmail(value)) return "Please enter a valid email";
+                          if (value == null || value.isEmpty) return "please_enter_email".tr;
+                          if (!controller.isValidEmail(value)) return "invalid_email".tr;
                           return null;
                         },
                       )),
@@ -187,7 +187,7 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
                                   child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                                 )
                               : Text(
-                                  'Send OTP',
+                                  'send_otp'.tr,
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,

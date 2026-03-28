@@ -20,16 +20,16 @@ class DashboardView extends GetView<DashboardController> {
   Future<bool> _showExitDialog(BuildContext context) async {
     final result = await Get.dialog<bool>(
       AlertDialog(
-        title: const Text('Exit App'),
-        content: const Text('Are you sure you want to exit?'),
+        title: Text('exit_app'.tr),
+        content: Text('exit_confirmation'.tr),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context, rootNavigator: true).pop(false),
-            child: const Text('No'),
+            child: Text('no'.tr),
           ),
           TextButton(
             onPressed: () => Navigator.of(context, rootNavigator: true).pop(true),
-            child: const Text('Yes'),
+            child: Text('yes'.tr),
           ),
         ],
       ),
@@ -211,7 +211,7 @@ class _ModernDrawer extends StatelessWidget {
                           Text(
                             profileController.userName.value.isNotEmpty 
                                 ? profileController.userName.value 
-                                : 'AgriPlus User',
+                                : 'agriplus_user'.tr,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
@@ -255,7 +255,7 @@ class _ModernDrawer extends StatelessWidget {
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'MENU',
+                    'menu'.tr,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
@@ -275,7 +275,7 @@ class _ModernDrawer extends StatelessWidget {
                     children: [
                       _DrawerItem(
                         icon: Icons.home_rounded,
-                        label: 'Home',
+                        label: 'home'.tr,
                         isSelected: controller.selectedIndex.value == 0,
                         onTap: () {
                           controller.changePage(0);
@@ -286,7 +286,7 @@ class _ModernDrawer extends StatelessWidget {
                       const SizedBox(height: 4),
                       _DrawerItem(
                         icon: Icons.store_rounded,
-                        label: 'Shop',
+                        label: 'shop'.tr,
                         isSelected: controller.selectedIndex.value == 1,
                         onTap: () {
                           controller.changePage(1);
@@ -297,7 +297,7 @@ class _ModernDrawer extends StatelessWidget {
                       const SizedBox(height: 4),
                       _DrawerItem(
                         icon: Icons.shopping_bag_rounded,
-                        label: 'Orders',
+                        label: 'orders'.tr,
                         isSelected: controller.selectedIndex.value == 2,
                         onTap: () {
                           controller.changePage(2);
@@ -308,7 +308,7 @@ class _ModernDrawer extends StatelessWidget {
                       const SizedBox(height: 4),
                       _DrawerItem(
                         icon: Icons.person_rounded,
-                        label: 'Profile',
+                        label: 'profile'.tr,
                         isSelected: controller.selectedIndex.value == 3,
                         onTap: () {
                           controller.changePage(3);
@@ -327,7 +327,7 @@ class _ModernDrawer extends StatelessWidget {
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 12),
                               child: Text(
-                                'MORE',
+                                'more'.tr,
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w800,
@@ -344,7 +344,7 @@ class _ModernDrawer extends StatelessWidget {
 
                       _DrawerItem(
                         icon: Icons.info_outline_rounded,
-                        label: 'About AgriPlus',
+                        label: 'about_agriplus'.tr,
                         isSelected: false,
                         onTap: () {
                           Navigator.of(context).pop();
@@ -355,7 +355,7 @@ class _ModernDrawer extends StatelessWidget {
                       const SizedBox(height: 4),
                       _DrawerItem(
                         icon: Icons.logout_rounded,
-                        label: 'Logout',
+                        label: 'logout'.tr,
                         isSelected: false,
                         isDestructive: true,
                         onTap: () async {
@@ -385,7 +385,7 @@ class _ModernDrawer extends StatelessWidget {
                     Divider(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
                     const SizedBox(height: 8),
                     Text(
-                      'AgriPlus • Smart Motor Automation',
+                      'smart_motor_automation'.tr,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,

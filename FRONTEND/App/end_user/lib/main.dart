@@ -15,6 +15,7 @@ import 'utils/theme/theme_controller.dart';
 import 'utils/theme/app_theme.dart';
 import 'feature/end_user_app/home/presentation/controllers/home_controller.dart';
 import 'feature/end_user_app/auth/presentation/controllers/auth_controller.dart';
+import 'core/localization/app_translations.dart';
 
 Future<void> _updateLocalCache(Map<String, dynamic> data) async {
   if (data['serial_number'] == null) return;
@@ -239,6 +240,9 @@ void main() async {
       themeMode: Get.find<ThemeController>().themeMode,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
+      translations: AppTranslations(),
+      locale: const Locale('en', 'US'),
+      fallbackLocale: const Locale('en', 'US'),
     ),
   );
 }

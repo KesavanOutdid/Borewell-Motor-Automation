@@ -110,7 +110,7 @@ class OrdersController extends GetxController {
       logger.e('❌ Exception: $e');
       errorMessage.value = 'Network connection failed. Please check your internet.';
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'Failed to fetch orders',
       );
     } finally {
@@ -125,7 +125,7 @@ class OrdersController extends GetxController {
     
     if (userId == null || token == null) {
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'User not logged in',
       );
       return;
@@ -160,14 +160,14 @@ class OrdersController extends GetxController {
         }
       } else {
         UIUtils.showErrorSnackbar(
-          title: 'Error',
+          title: 'error'.tr,
           message: 'Failed to fetch order details',
         );
       }
     } catch (e) {
       logger.e('❌ Exception: $e');
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'Failed to fetch order details',
       );
     } finally {
@@ -181,7 +181,7 @@ class OrdersController extends GetxController {
     
     if (userId == null || token == null) {
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'User not logged in',
       );
       return;
@@ -225,7 +225,7 @@ class OrdersController extends GetxController {
           }
         } else {
           UIUtils.showErrorSnackbar(
-            title: 'Error',
+            title: 'error'.tr,
             message: responseData['message'] ?? 'Failed to cancel order',
           );
         }
@@ -234,14 +234,14 @@ class OrdersController extends GetxController {
       } else {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         UIUtils.showErrorSnackbar(
-          title: 'Error',
+          title: 'error'.tr,
           message: responseData['message'] ?? 'Failed to cancel order',
         );
       }
     } catch (e) {
       logger.e('❌ Exception: $e');
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'Failed to cancel order',
       );
     } finally {

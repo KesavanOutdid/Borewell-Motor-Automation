@@ -10,6 +10,7 @@ import '../../feature/end_user_app/auth/presentation/pages/otp_verification_page
 import '../../feature/end_user_app/auth/presentation/pages/reset_password_page.dart';
 import '../../feature/end_user_app/dashboard/presentation/pages/dashboard_page.dart';
 import '../../feature/end_user_app/dashboard/presentation/pages/dashboard_binding.dart';
+import '../../feature/end_user_app/auth/presentation/pages/language_selection_page.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_page.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_binding.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_details_page.dart';
@@ -38,6 +39,7 @@ class AppRoutes {
   static const splash = '/';
   static const login = '/login';
   static const signup = '/signup';
+  static const languageSelection = '/language-selection';
   static const home = '/home';
   static const device = '/device';
   static const deviceDetails = '/device/details';
@@ -96,6 +98,10 @@ class AppRoutes {
       name: home,
       page: () => const DashboardView(),
       binding: DashboardBinding(),
+    ),
+    GetPage(
+      name: languageSelection,
+      page: () => LanguageSelectionPage(),
     ),
     GetPage(
       name: device,

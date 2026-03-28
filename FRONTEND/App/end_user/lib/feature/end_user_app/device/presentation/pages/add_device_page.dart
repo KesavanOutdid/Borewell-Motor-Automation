@@ -14,7 +14,7 @@ class ConfigureDeviceView extends StatelessWidget {
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Configure Device', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('configure_device'.tr, style: TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: isDark ? Colors.white : AppColors.textPrimary,
@@ -48,12 +48,12 @@ class ConfigureDeviceView extends StatelessWidget {
                               ),
                               child: const Icon(Icons.settings_input_component_rounded, color: AppColors.primaryGreen, size: 24),
                             ),
-                            const SizedBox(width: 16),
+                            SizedBox(width: 16),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'Device Hardware',
                                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                                   ),
@@ -66,10 +66,10 @@ class ConfigureDeviceView extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 32),
+                        SizedBox(height: 32),
                         _buildTextField(
                           controller: controller.nicknameController,
-                          label: 'Device Name',
+                          label: 'device_name'.tr,
                           hint: 'e.g., Motor-1',
                           icon: Icons.drive_file_rename_outline_rounded,
                           validator: (value) {
@@ -80,42 +80,42 @@ class ConfigureDeviceView extends StatelessWidget {
                           },
                           isDark: isDark,
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: 20),
                         _buildTextField(
                           controller: controller.locationController,
-                          label: 'Device Location (Optional)',
+                          label: 'device_location_optional'.tr,
                           hint: 'e.g., Farm Sector A',
                           icon: Icons.location_on_rounded,
                           validator: (value) {
                             return null;
                           },
                           suffix: controller.isGettingLocation.value
-                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                              ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                               : IconButton(
                                   icon: const Icon(Icons.my_location_rounded, color: AppColors.primaryGreen),
                                   onPressed: () => controller.getCurrentLocation(),
                                 ),
                           isDark: isDark,
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         InkWell(
                           onTap: () => controller.pickLocationOnMap(),
                           borderRadius: BorderRadius.circular(12),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             child: Row(
-                              children: const [
-                                Icon(Icons.map_rounded, size: 18, color: AppColors.primaryGreen),
-                                SizedBox(width: 8),
-                                Text('Pick from map', style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.w600, fontSize: 13)),
+                              children: [
+                                const Icon(Icons.map_rounded, size: 18, color: AppColors.primaryGreen),
+                                const SizedBox(width: 8),
+                                Text('pick_from_map'.tr, style: const TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.w600, fontSize: 13)),
                               ],
                             ),
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: 20),
                         _buildTextField(
                           controller: controller.motorHpController,
-                          label: 'Motor Capacity (HP) (Optional)',
+                          label: 'motor_capacity_hp_optional'.tr,
                           hint: 'e.g., 5.0',
                           icon: Icons.speed_rounded,
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -130,9 +130,9 @@ class ConfigureDeviceView extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   _buildInstructions(isDark),
-                  const SizedBox(height: 32),
+                  SizedBox(height: 32),
                   _buildActionButtons(controller),
                 ],
               ),
@@ -156,7 +156,7 @@ class ConfigureDeviceView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.grey[400] : Colors.grey[600])),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
@@ -207,11 +207,11 @@ class ConfigureDeviceView extends StatelessWidget {
           Row(
             children: [
               Icon(Icons.info_outline_rounded, color: AppColors.primaryGreen, size: 20),
-              const SizedBox(width: 8),
-              Text('Configuration Guide', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryGreen)),
+              SizedBox(width: 8),
+              Text('configuration_guide'.tr, style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryGreen)),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           _instructionRow('1', 'Enter a meaningful name for your device', isDark),
           _instructionRow('2', 'Provide location and motor HP (optional)', isDark),
         ],
@@ -233,7 +233,7 @@ class ConfigureDeviceView extends StatelessWidget {
             ),
             child: Center(child: Text(step, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryGreen))),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(child: Text(text, style: TextStyle(fontSize: 13, color: isDark ? Colors.grey[400] : Colors.grey[700]))),
         ],
       ),
@@ -253,8 +253,8 @@ class ConfigureDeviceView extends StatelessWidget {
                   controller.configureDevice();
                 } else {
                   Get.rawSnackbar(
-                    title: 'Validation Error',
-                    message: 'Please check the IMEI and other fields',
+                    title: 'validation_error'.tr,
+                    message: 'check_imei_error'.tr,
                     backgroundColor: Colors.red.withOpacity(0.8),
                     snackPosition: SnackPosition.BOTTOM,
                     margin: const EdgeInsets.all(16),
@@ -269,8 +269,8 @@ class ConfigureDeviceView extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
         child: controller.isLoading.value
-            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
-            : const Text('CONFIGURE DEVICE', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1)),
+            ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
+            : Text('configure_device_caps'.tr, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1)),
       ),
     );
   }

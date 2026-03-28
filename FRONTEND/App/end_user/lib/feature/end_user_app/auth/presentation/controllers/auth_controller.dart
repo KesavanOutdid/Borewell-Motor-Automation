@@ -120,11 +120,11 @@ class AuthController extends GetxController {
 
   Future<String?> login() async {
     if (email.value.isEmpty || !isValidEmail(email.value)) {
-      return "Please enter valid email";
+      return 'invalid_email'.tr;
     }
 
     if (password.value.isEmpty || password.value.length != 6) {
-      return "Password must be 6 numbers";
+      return 'password_must_be_6_numbers_error'.tr;
     }
 
     isLoading.value = true;
@@ -176,7 +176,7 @@ class AuthController extends GetxController {
             Get.find<SocketService>().connect();
           } catch (_) {}
           
-          Get.offAllNamed('/home');
+          Get.offAllNamed('/language-selection');
           
           try {
             final homeController = Get.find<HomeController>();

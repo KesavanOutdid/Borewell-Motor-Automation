@@ -21,18 +21,18 @@ class DeviceScheduleController extends GetxController {
     showDialog(
       context: Get.context!,
       builder: (context) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
             Icon(Icons.error_outline, color: Colors.red),
             SizedBox(width: 10),
-            Text('Error'),
+            Text('error'.tr),
           ],
         ),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            child: Text('OK', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -104,18 +104,18 @@ class DeviceScheduleController extends GetxController {
           showDialog(
             context: Get.context!,
             builder: (context) => AlertDialog(
-              title: const Row(
+              title: Row(
                 children: [
                   Icon(Icons.check_circle, color: Colors.green),
                   SizedBox(width: 10),
                   Text('Success'),
                 ],
               ),
-              content: const Text('Motor schedule has been created successfully.'),
+              content: Text('Motor schedule has been created successfully.'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                  child: Text('OK', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -159,18 +159,18 @@ class DeviceScheduleController extends GetxController {
           showDialog(
             context: Get.context!,
             builder: (context) => AlertDialog(
-              title: const Row(
+              title: Row(
                 children: [
                   Icon(Icons.check_circle, color: Colors.green),
                   SizedBox(width: 10),
                   Text('Cancelled'),
                 ],
               ),
-              content: const Text('Schedule has been cancelled successfully.'),
+              content: Text('Schedule has been cancelled successfully.'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                  child: Text('OK', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),

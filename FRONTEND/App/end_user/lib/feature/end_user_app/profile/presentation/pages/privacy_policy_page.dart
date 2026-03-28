@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 
 class PrivacyPolicyView extends StatelessWidget {
@@ -7,7 +8,7 @@ class PrivacyPolicyView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Privacy Policy'),
+        title: Text('privacy_policy'.tr),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -62,14 +63,14 @@ class PrivacyPolicyView extends StatelessWidget {
                 'Contact Us',
                 'If you have any questions about this Privacy Policy, please contact us at contact@gmail.com',
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               Text(
                 'Last Updated: November 2025',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).textTheme.bodySmall?.color,
                     ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
             ],
           ),
         ),
@@ -88,12 +89,12 @@ class PrivacyPolicyView extends StatelessWidget {
                 color: Theme.of(context).brightness == Brightness.dark ? Colors.green.shade400 : Colors.green[700],
               ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Text(
           content,
           style: Theme.of(context).textTheme.bodyMedium,
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
       ],
     );
   }

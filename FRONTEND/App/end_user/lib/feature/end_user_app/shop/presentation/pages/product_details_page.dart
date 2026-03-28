@@ -64,7 +64,7 @@ class _ProductDetailsViewState extends State<ProductDetailsView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Product Details'),
+        title: Text('product_details_label'.tr),
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
@@ -121,7 +121,7 @@ class _ProductDetailsViewState extends State<ProductDetailsView> {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                'GST: $productGstPercent%',
+                                '${'gst'.tr}: $productGstPercent%',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: AppColors.success,
@@ -133,7 +133,7 @@ class _ProductDetailsViewState extends State<ProductDetailsView> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'GST Amount: ₹${gstAmount.toStringAsFixed(2)}',
+                          '${'gst_amount'.tr}: ₹${gstAmount.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey.shade600,
@@ -141,7 +141,7 @@ class _ProductDetailsViewState extends State<ProductDetailsView> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Shipping: ₹$productShipping',
+                          '${'shipping'.tr}: ₹$productShipping',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey.shade600,
@@ -150,9 +150,9 @@ class _ProductDetailsViewState extends State<ProductDetailsView> {
                         const SizedBox(height: 20),
                         const Divider(),
                         const SizedBox(height: 12),
-                        const Text(
-                          'Description',
-                          style: TextStyle(
+                        Text(
+                          'description'.tr,
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: AppColors.textPrimary,
@@ -170,7 +170,7 @@ class _ProductDetailsViewState extends State<ProductDetailsView> {
                         if (productPdf != null && productPdf.toString().isNotEmpty) ...[
                           const SizedBox(height: 16),
                           GradientButton(
-                            text: 'View Product Brochure (PDF)',
+                            text: 'view_pdf_brochure'.tr,
                             icon: Icons.picture_as_pdf,
                             onPressed: () => _openPdf(controller.getImageUrl(productPdf.toString())),
                             height: 48,
@@ -180,18 +180,18 @@ class _ProductDetailsViewState extends State<ProductDetailsView> {
                           const SizedBox(height: 20),
                           const Divider(),
                           const SizedBox(height: 12),
-                          const Text(
-                            'Product Details',
-                            style: TextStyle(
+                          Text(
+                            'product_details_label'.tr,
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 12),
-                          _buildDetailRow('Box Size', productQuality['box_size']?.toString() ?? 'N/A'),
+                          _buildDetailRow('box_size'.tr, productQuality['box_size']?.toString() ?? 'N/A'),
                           const SizedBox(height: 8),
-                          _buildDetailRow('Details', productQuality['extra_details']?.toString() ?? 'N/A'),
+                          _buildDetailRow('details'.tr, productQuality['extra_details']?.toString() ?? 'N/A'),
                         ],
                         const SizedBox(height: 24),
                       ],
@@ -210,8 +210,8 @@ class _ProductDetailsViewState extends State<ProductDetailsView> {
   Future<void> _openPdf(String pdfUrl) async {
     if (pdfUrl.isEmpty) {
       UIUtils.showErrorSnackbar(
-        title: 'Error',
-        message: 'PDF not available',
+        title: 'error'.tr,
+        message: 'pdf_not_available'.tr,
       );
       return;
     }
@@ -225,14 +225,14 @@ class _ProductDetailsViewState extends State<ProductDetailsView> {
         );
       } else {
         UIUtils.showErrorSnackbar(
-          title: 'Error',
-          message: 'Cannot open PDF',
+          title: 'error'.tr,
+          message: 'cannot_open_pdf'.tr,
         );
       }
     } catch (e) {
       UIUtils.showErrorSnackbar(
-        title: 'Error',
-        message: 'Failed to open PDF: $e',
+        title: 'error'.tr,
+        message: '${'cannot_open_pdf'.tr}: $e',
       );
     }
   }
@@ -254,8 +254,8 @@ Get yours now from our app!
       );
     } catch (e) {
       UIUtils.showErrorSnackbar(
-        title: 'Error',
-        message: 'Failed to share product',
+        title: 'error'.tr,
+        message: 'failed_to_share_product'.tr,
       );
     }
   }
@@ -298,19 +298,19 @@ Get yours now from our app!
                 height: 300,
                 width: double.infinity,
                 color: Colors.black.withValues(alpha: 0.6),
-                child: const Center(
+                child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.remove_shopping_cart,
                         size: 60,
                         color: Colors.white,
                       ),
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
                       Text(
-                        'OUT OF STOCK',
-                        style: TextStyle(
+                        'out_of_stock'.tr,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 24,
@@ -419,9 +419,9 @@ Get yours now from our app!
           children: [
             Row(
               children: [
-                const Text(
-                  'Quantity',
-                  style: TextStyle(
+                Text(
+                  'quantity'.tr,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
@@ -496,7 +496,7 @@ Get yours now from our app!
             ),
             const SizedBox(height: 8),
             Text(
-              'Available Stock: $availableStock units',
+              '${'available_stock'.tr}: $availableStock units',
               style: TextStyle(
                 fontSize: 13,
                 color: availableStock < 5 ? Colors.red : Colors.grey.shade600,
@@ -532,7 +532,7 @@ Get yours now from our app!
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Currently Unavailable',
+                    'currently_unavailable'.tr,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -541,7 +541,7 @@ Get yours now from our app!
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'This product is currently out of stock. Please check back later.',
+                    'out_of_stock_desc'.tr,
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.red.shade600,
@@ -579,7 +579,7 @@ Get yours now from our app!
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Total Price',
+                      'total_price'.tr,
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
@@ -616,7 +616,7 @@ Get yours now from our app!
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Out of Stock',
+                              'out_of_stock'.tr,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -634,7 +634,7 @@ Get yours now from our app!
                       final bool isNoChange = isInCart && cartItem.quantity == _quantity;
                       
                       return GradientButton(
-                        text: isInCart ? (isNoChange ? 'View Cart' : 'Update Cart') : 'Add to Cart',
+                        text: isInCart ? (isNoChange ? 'view_cart'.tr : 'update_cart'.tr) : 'add_to_cart'.tr,
                         icon: isInCart ? Icons.shopping_cart_checkout : Icons.shopping_cart,
                         onPressed: () async {
                           if (isNoChange) {
@@ -700,7 +700,7 @@ Get yours now from our app!
               ),
               const SizedBox(height: 16),
               Text(
-                isUpdate ? 'Cart Updated!' : 'Added to Cart!',
+                isUpdate ? 'cart_updated'.tr : 'added_to_cart'.tr,
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -709,7 +709,7 @@ Get yours now from our app!
               ),
               const SizedBox(height: 8),
               Text(
-                isUpdate ? 'Product quantity updated in cart' : 'Product successfully added',
+                isUpdate ? 'cart_updated_desc'.tr : 'added_to_cart_desc'.tr,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -732,13 +732,13 @@ Get yours now from our app!
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.shopping_bag_outlined, size: 18),
-                          SizedBox(width: 6),
-                          Text('Continue', style: TextStyle(fontSize: 13)),
+                          const Icon(Icons.shopping_bag_outlined, size: 18),
+                          const SizedBox(width: 6),
+                          Text('continue'.tr, style: const TextStyle(fontSize: 13)),
                         ],
                       ),
                     ),
@@ -758,13 +758,13 @@ Get yours now from our app!
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.shopping_cart, size: 18),
-                          SizedBox(width: 6),
-                          Text('View Cart', style: TextStyle(fontSize: 13)),
+                          const Icon(Icons.shopping_cart, size: 18),
+                          const SizedBox(width: 6),
+                          Text('view_cart'.tr, style: const TextStyle(fontSize: 13)),
                         ],
                       ),
                     ),

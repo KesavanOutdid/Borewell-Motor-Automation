@@ -98,17 +98,17 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
           children: [
             _buildTextField(
               controller: fullNameController,
-              label: 'Full Name',
+              label: 'full_name'.tr,
               icon: Icons.person,
               onChanged: (_) => _onFieldChanged(),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter full name';
+                  return 'please_enter_full_name'.tr;
                 }
                 return null;
               },
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             _buildTextField(
               controller: phoneController,
               label: 'Phone',
@@ -117,15 +117,15 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
               onChanged: (_) => _onFieldChanged(),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter phone number';
+                  return 'please_enter_phone_number'.tr;
                 }
                 if (value.length != 10) {
-                  return 'Phone number must be 10 digits';
+                  return 'phone_number_must_be_10_digits'.tr;
                 }
                 return null;
               },
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             _buildTextField(
               controller: emailController,
               label: 'Email',
@@ -134,35 +134,35 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
               onChanged: (_) => _onFieldChanged(),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter email';
+                  return 'please_enter_email'.tr;
                 }
                 if (!GetUtils.isEmail(value)) {
-                  return 'Please enter valid email';
+                  return 'invalid_email'.tr;
                 }
                 return null;
               },
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             _buildTextField(
               controller: streetController,
-              label: 'Street Address',
+              label: 'street_address'.tr,
               icon: Icons.home,
               maxLines: 2,
               onChanged: (_) => _onFieldChanged(),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter street address';
+                  return 'please_enter_street_address'.tr;
                 }
                 return null;
               },
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
                   child: _buildTextField(
                     controller: pincodeController,
-                    label: 'Pincode',
+                    label: 'pincode'.tr,
                     icon: Icons.pin_drop,
                     keyboardType: TextInputType.number,
                     onChanged: (value) {
@@ -173,22 +173,22 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
                     },
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Enter valid pincode';
+                        return 'enter_valid_pincode'.tr;
                       }
                       if (!RegExp(r'^\d{6}$').hasMatch(value)) {
-                        return 'Enter valid pincode';
+                        return 'enter_valid_pincode'.tr;
                       }
                       return null;
                     },
                   ),
                 ),
                 if (isLoadingPincode) ...[
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   const CircularProgressIndicator(),
                 ],
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             _buildTextField(
               controller: cityController,
               label: 'City/District',
@@ -196,32 +196,32 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
               onChanged: (_) => _onFieldChanged(),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Enter valid city name';
+                  return 'enter_valid_city'.tr;
                 }
                 if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
-                  return 'Enter valid city name';
+                  return 'enter_valid_city'.tr;
                 }
                 return null;
               },
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             _buildTextField(
               controller: stateController,
-              label: 'State',
+              label: 'state'.tr,
               icon: Icons.map,
               onChanged: (_) => _onFieldChanged(),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Enter valid state name';
+                  return 'enter_valid_state'.tr;
                 }
                 if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
-                  return 'Enter valid state name';
+                  return 'enter_valid_state'.tr;
                 }
                 return null;
               },
             ),
-            const SizedBox(height: 24),
-            const SizedBox(height: 32),
+            SizedBox(height: 24),
+            SizedBox(height: 32),
             Obx(() {
               final isButtonDisabled = isEditMode && !hasChanges;
               
@@ -234,7 +234,7 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
                   ),
                 ),
                 child: controller.isLoading.value
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),

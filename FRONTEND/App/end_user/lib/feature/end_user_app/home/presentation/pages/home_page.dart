@@ -66,9 +66,9 @@ class HomeView extends GetView<HomeController> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Home',
-                                style: TextStyle(
+                              Text(
+                                'home'.tr,
+                                style: const TextStyle(
                                   fontSize: 26,
                                   fontWeight: FontWeight.w900,
                                   color: Colors.white,
@@ -151,21 +151,21 @@ class HomeView extends GetView<HomeController> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    _buildFilterChip('Recently'),
+                    _buildFilterChip('recently'.tr, 'Recently'),
                     const SizedBox(width: 8),
-                    _buildFilterChip('All'),
+                    _buildFilterChip('all'.tr, 'All'),
                     const SizedBox(width: 8),
-                    _buildFilterChip('Running'),
+                    _buildFilterChip('running'.tr, 'Running'),
                     const SizedBox(width: 8),
-                    _buildFilterChip('Stopped'),
+                    _buildFilterChip('stopped'.tr, 'Stopped'),
                     const SizedBox(width: 8),
-                    _buildFilterChip('Online'),
+                    _buildFilterChip('online'.tr, 'Online'),
                     const SizedBox(width: 8),
-                    _buildFilterChip('Offline'),
+                    _buildFilterChip('offline'.tr, 'Offline'),
                     const SizedBox(width: 8),
-                    _buildFilterChip('Access'),
+                    _buildFilterChip('access'.tr, 'Access'),
                     const SizedBox(width: 8),
-                    _buildFilterChip('Not Configured'),
+                    _buildFilterChip('not_configured'.tr, 'Not Configured'),
                   ],
                 ),
               )),
@@ -220,7 +220,7 @@ class HomeView extends GetView<HomeController> {
                               ),
                               const SizedBox(height: 24),
                               Text(
-                                'No devices assigned',
+                                'no_devices_assigned'.tr,
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -229,7 +229,7 @@ class HomeView extends GetView<HomeController> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Contact admin to assign devices',
+                                'contact_admin_to_assign_devices'.tr,
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -255,7 +255,7 @@ class HomeView extends GetView<HomeController> {
                             child: Padding(
                               padding: const EdgeInsets.all(24),
                               child: Text(
-                                'No devices found',
+                                'no_devices_found'.tr,
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: Colors.grey.shade600,
@@ -318,12 +318,12 @@ class HomeView extends GetView<HomeController> {
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 24),
-                  SizedBox(width: 8),
+                children: [
+                  const Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 24),
+                  const SizedBox(width: 8),
                   Text(
-                    'Add',
-                    style: TextStyle(
+                    'add'.tr,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
                       fontSize: 14,
@@ -347,11 +347,11 @@ class HomeView extends GetView<HomeController> {
     controller.fetchDevices();
   }
 
-  Widget _buildFilterChip(String label) {
-    final isSelected = controller.selectedFilter.value == label;
+  Widget _buildFilterChip(String label, String value) {
+    final isSelected = controller.selectedFilter.value == value;
     
     return GestureDetector(
-      onTap: () => controller.setFilter(label),
+      onTap: () => controller.setFilter(value),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
@@ -404,8 +404,8 @@ class HomeView extends GetView<HomeController> {
     final isOnline = controller.isOnline(device);
     
     final deviceStatus = !isConfigured 
-        ? 'Not Configured' 
-        : (isRunning ? 'Running' : (isOnline ? 'Idle' : 'Offline'));
+        ? 'not_configured'.tr 
+        : (isRunning ? 'running'.tr : (isOnline ? 'idle'.tr : 'offline'.tr));
     
     final statusColor = !isConfigured 
         ? AppColors.primaryOrange 
@@ -528,9 +528,9 @@ class HomeView extends GetView<HomeController> {
                             color: Colors.grey.shade500,
                           ),
                           children: [
-                            const TextSpan(
-                              text: 'SN ',
-                              style: TextStyle(
+                            TextSpan(
+                              text: '${'sn_label'.tr} ',
+                              style: const TextStyle(
                                 color: AppColors.primaryGreen,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -546,7 +546,7 @@ class HomeView extends GetView<HomeController> {
                             const Icon(Icons.schedule_rounded, size: 12, color: AppColors.primaryOrange),
                             const SizedBox(width: 4),
                             Text(
-                              'Starts at $nextStartTime',
+                              '${'starts_at'.tr} $nextStartTime',
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
@@ -563,7 +563,7 @@ class HomeView extends GetView<HomeController> {
                             const Icon(Icons.timer_rounded, size: 12, color: AppColors.primaryGreen),
                             const SizedBox(width: 4),
                             Text(
-                              'Stops at $nextStopTime',
+                              '${'stops_at'.tr} $nextStopTime',
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
@@ -671,7 +671,7 @@ class HomeView extends GetView<HomeController> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      child: const Text('Accept', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      child: Text('accept'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -686,7 +686,7 @@ class HomeView extends GetView<HomeController> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      child: const Text('Reject', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      child: Text('reject'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     ),
                   ),
                 ],

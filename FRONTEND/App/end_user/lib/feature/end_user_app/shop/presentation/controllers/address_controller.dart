@@ -73,7 +73,7 @@ class AddressController extends GetxController {
     } catch (e) {
       logger.e('❌ Exception: $e');
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'Failed to fetch addresses',
       );
     } finally {
@@ -87,7 +87,7 @@ class AddressController extends GetxController {
     
     if (userId == null || token == null) {
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'User not logged in',
       );
       return false;
@@ -124,14 +124,14 @@ class AddressController extends GetxController {
       }
       
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'Failed to create address',
       );
       return false;
     } catch (e) {
       logger.e('❌ Exception: $e');
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'Failed to create address',
       );
       return false;
@@ -146,7 +146,7 @@ class AddressController extends GetxController {
     
     if (userId == null || token == null) {
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'User not logged in',
       );
       return false;
@@ -183,14 +183,14 @@ class AddressController extends GetxController {
       }
       
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'Failed to update address',
       );
       return false;
     } catch (e) {
       logger.e('❌ Exception: $e');
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'Failed to update address',
       );
       return false;
@@ -205,7 +205,7 @@ class AddressController extends GetxController {
     
     if (userId == null || token == null) {
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'User not logged in',
       );
       return false;
@@ -250,14 +250,14 @@ class AddressController extends GetxController {
       }
       
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'Failed to delete address',
       );
       return false;
     } catch (e) {
       logger.e('❌ Exception: $e');
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'Failed to delete address',
       );
       return false;
@@ -272,7 +272,7 @@ class AddressController extends GetxController {
     
     if (userId == null || token == null) {
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'User not logged in',
       );
       return false;
@@ -312,14 +312,14 @@ class AddressController extends GetxController {
       }
       
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'Failed to set default address',
       );
       return false;
     } catch (e) {
       logger.e('❌ Exception: $e');
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'Failed to set default address',
       );
       return false;

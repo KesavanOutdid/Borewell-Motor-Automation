@@ -13,14 +13,14 @@ class DeviceSharingView extends GetView<DeviceSharingController> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Device Access'),
+        title: Text('device_access'.tr),
       ),
       body: RefreshIndicator(
         color: AppColors.primaryGreen,
         onRefresh: () async => await controller.fetchSharedUsers(),
         child: Obx(() {
           if (controller.isLoading.value && controller.sharedUsers.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator());
           }
 
           return ListView(
@@ -35,12 +35,12 @@ class DeviceSharingView extends GetView<DeviceSharingController> {
                   color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 'You can grant access for this device with up to 3 additional persons. They will be able to start, stop and view readings.',
                 style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               if (controller.sharedUsers.length < 3)
                 Row(
                   children: [
@@ -53,7 +53,7 @@ class DeviceSharingView extends GetView<DeviceSharingController> {
                           LengthLimitingTextInputFormatter(10),
                         ],
                         decoration: InputDecoration(
-                          hintText: 'Enter phone number',
+                          hintText: 'phone_hint'.tr,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -61,7 +61,7 @@ class DeviceSharingView extends GetView<DeviceSharingController> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     ElevatedButton(
                       onPressed: () {
                         if (phoneController.text.length == 10) {
@@ -85,11 +85,11 @@ class DeviceSharingView extends GetView<DeviceSharingController> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text('Add'),
+                      child: Text('add'.tr),
                     ),
                   ],
                 ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               Text(
                 'Access Granted (${controller.sharedUsers.length}/3)',
                 style: const TextStyle(
@@ -97,7 +97,7 @@ class DeviceSharingView extends GetView<DeviceSharingController> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               if (controller.sharedUsers.isEmpty)
                 SizedBox(
                   height: 200,
@@ -126,7 +126,7 @@ class DeviceSharingView extends GetView<DeviceSharingController> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(user['shared_to_user_phone']?.toString() ?? ''),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
                             _buildStatusBadge(user['acceptance_status'] ?? 'pending'),
                           ],
                         ),
@@ -162,19 +162,19 @@ class DeviceSharingView extends GetView<DeviceSharingController> {
     Get.dialog(
       Builder(
         builder: (dialogContext) => AlertDialog(
-          title: const Text('Remove Access'),
+          title: Text('remove_access'.tr),
           content: Text('Are you sure you want to remove access for ${user['shared_to_user_name']}?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext, rootNavigator: true).pop(),
-              child: const Text('Cancel'),
+              child: Text('cancel'.tr),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext, rootNavigator: true).pop();
                 controller.deleteShare(user['shared_to_user_id']);
               },
-              child: const Text('Remove', style: TextStyle(color: Colors.red)),
+              child: Text('remove'.tr, style: TextStyle(color: Colors.red)),
             ),
           ],
         ),
