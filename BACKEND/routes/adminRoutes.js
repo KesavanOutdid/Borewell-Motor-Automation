@@ -771,4 +771,94 @@ router.post('/uploadImage', uploadImage.single('file'), adminCtrl.uploadImage);
  */
 router.post('/uploadMultipleImages', uploadImage.array('files', 3), adminCtrl.uploadMultipleImages);
 
+// ---------------------
+// Manage Help (Admin)
+// ---------------------
+
+/**
+ * @swagger
+ * /admin/getAllHelp:
+ *   get:
+ *     summary: Get all help requests with pagination
+ *     tags: [Admin]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: status_filter
+ *         schema:
+ *           type: string
+ *           enum: [all, pending, solved, rejected, re-solved]
+ *     responses:
+ *       200:
+ *         description: Help requests retrieved successfully
+ */
+router.get('/getAllHelp', authMiddleware(), adminCtrl.getAllHelp);
+
+/**
+ * @swagger
+ * /admin/getHelpById:
+ *   get:
+ *     summary: Get help request by ID
+ *     tags: [Admin]
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: Help request details
+ */
+router.get('/getHelpById', authMiddleware(), adminCtrl.getHelpById);
+
+/**
+ * @swagger
+ * /admin/updateHelpStatus:
+ *   post:
+ *     summary: Update help request status
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *                 enum: [pending, solved, rejected, re-solved]
+ *               admin_remarks:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Help status updated successfully
+ */
+router.post(
+    '/updateHelpStatus',
+    authMiddleware(),
+    [
+        body('id').notEmpty().withMessage("Help ID is required"),
+        body('status').notEmpty().withMessage("Status is required")
+    ],
+    adminCtrl.updateHelpStatus
+);
+
 module.exports = router;

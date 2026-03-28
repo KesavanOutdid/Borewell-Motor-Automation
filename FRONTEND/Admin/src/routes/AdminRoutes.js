@@ -24,6 +24,8 @@ const ViewOrder = lazy(() => import('../pages/Admin/ManageOrders/ViewOrder'));
 const ManageVouchers = lazy(() => import('../pages/Admin/ManageVouchers/ManageVouchers'));
 const AddVoucher = lazy(() => import('../pages/Admin/ManageVouchers/AddVoucher'));
 const EditVoucher = lazy(() => import('../pages/Admin/ManageVouchers/EditVoucher'));
+const ManageHelp = lazy(() => import('../pages/Admin/ManageHelp/ManageHelp'));
+const ViewHelp = lazy(() => import('../pages/Admin/ManageHelp/ViewHelp'));
 
 const AdminRoutes = () => {
     const storedUser = JSON.parse(sessionStorage.getItem('adminUser'));
@@ -225,6 +227,22 @@ const AdminRoutes = () => {
                     path="edit-voucher"
                     element={loggedIn ? (
                         <EditVoucher userInfo={userInfo} handleLogout={handleLogout} />
+                    ) : (
+                        <Navigate to="/" />
+                    )}
+                />
+                <Route
+                    path="manage-help"
+                    element={loggedIn ? (
+                        <ManageHelp userInfo={userInfo} handleLogout={handleLogout} />
+                    ) : (
+                        <Navigate to="/" />
+                    )}
+                />
+                <Route
+                    path="view-help"
+                    element={loggedIn ? (
+                        <ViewHelp userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
                         <Navigate to="/" />
                     )}

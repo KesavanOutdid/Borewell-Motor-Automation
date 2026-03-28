@@ -34,7 +34,7 @@ const ManageProducts = ({ userInfo, handleLogout }) => {
     // Handle search with debounce
     const handleSearch = (query) => {
         setSearchQuery(query);
-        
+
         if (searchTimeoutRef.current) {
             clearTimeout(searchTimeoutRef.current);
         }

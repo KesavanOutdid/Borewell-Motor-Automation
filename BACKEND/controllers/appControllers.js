@@ -10,6 +10,7 @@ const mongoose = require('mongoose');
 const Telemetry = require("../models/Telemetry");
 const DeviceShare = require("../models/DeviceShare");
 const DeviceSchedule = require("../models/DeviceSchedule");
+const ManageHelp = require("../models/ManageHelp");
 const { sendPushNotification } = require('../utils/notificationHelper');
 const { sendEmail } = require('../utils/emailHelper');
 const { cacheDeletePattern } = require('../middlewares/cacheMiddleware');
@@ -582,18 +583,18 @@ exports.startStopDevice = async (req, res) => {
         // If user manually stops, find any active schedule for this device and mark it as stopped
         if (start_status === false) {
             await DeviceSchedule.updateMany(
-                { 
-                    serial_number, 
+                {
+                    serial_number,
                     status: 'started',
-                    stop_executed: false 
+                    stop_executed: false
                 },
-                { 
-                    $set: { 
+                {
+                    $set: {
                         status: 'stopped',
                         stopped_by: user.user_name,
                         stop_executed: true,
                         updated_at: new Date()
-                    } 
+                    }
                 }
             );
         }
@@ -856,7 +857,7 @@ exports.userAssignDevices = async (req, res) => {
 
         const enrichedDevices = await Promise.all(devices.map(async (device) => {
             const share = shares.find(s => s.serial_number === device.serial_number);
-            
+
             // Find next upcoming schedule (started or pending)
             const now = new Date();
             const nextSchedule = await DeviceSchedule.findOne({
@@ -930,7 +931,7 @@ exports.userDeviceDetails = async (req, res) => {
         const { serial_number } = req.body;
 
         const query = { serial_number };
-        
+
 
         const device = await Device.findOne(query);
 
@@ -1013,8 +1014,8 @@ exports.userDeviceHistory = async (req, res) => {
         if (serial_number) {
             // Verify if user has access to this serial
             const hasAccess = await Device.findOne({ serial_number, assigned_user_id: user.user_id, status: true }) ||
-                              await DeviceShare.findOne({ serial_number, shared_to_user_id: user.user_id, status: true, acceptance_status: 'accepted' });
-            
+                await DeviceShare.findOne({ serial_number, shared_to_user_id: user.user_id, status: true, acceptance_status: 'accepted' });
+
             if (!hasAccess) {
                 return res.status(403).json({ success: false, message: "No access to this device" });
             }
@@ -1126,30 +1127,30 @@ exports.getTelemetryAnalytics = async (req, res) => {
         // build query filter - support both lowercase/UPPERCASE for device and timestamp fields
         const filter = {
             $and: [
-                { 
+                {
                     $or: [
-                        { timestamp: { $exists: true } }, 
+                        { timestamp: { $exists: true } },
                         { TIMESTAMP: { $exists: true } },
                         { receivedAt: { $exists: true } }
-                    ] 
+                    ]
                 }
             ]
         };
-        
+
         if (serial_number) {
-            filter.$and.push({ 
+            filter.$and.push({
                 $or: [
-                    { serial_number: serial_number.trim() }, 
+                    { serial_number: serial_number.trim() },
                     { SERIAL_NUMBER: serial_number.trim() }
-                ] 
+                ]
             });
         }
         if (imei_number) {
-            filter.$and.push({ 
+            filter.$and.push({
                 $or: [
-                    { imei_number: imei_number.trim() }, 
+                    { imei_number: imei_number.trim() },
                     { IMEI_NUMBER: imei_number.trim() }
-                ] 
+                ]
             });
         }
 
@@ -1165,9 +1166,9 @@ exports.getTelemetryAnalytics = async (req, res) => {
                     // Support both timestamp/TIMESTAMP/receivedAt and normalize to 'ts'
                     ts: { $toDate: { $ifNull: ["$timestamp", "$TIMESTAMP", "$receivedAt"] } },
                     // Support both lowercase and uppercase field names, plus common variations
-                    val: { 
+                    val: {
                         $ifNull: [
-                            `$${type}`, 
+                            `$${type}`,
                             `$${type.toUpperCase()}`,
                             // Handle special hardware-specific mappings
                             type === "motor_frequency_hz" ? "$FREQUENCY_HZ" : null,
@@ -1177,7 +1178,7 @@ exports.getTelemetryAnalytics = async (req, res) => {
                             type === "power_kw" ? "$POWER" : null,
                             type === "energy_kwh" ? "$ENERGY" : null,
                             0 // Default to 0 if not found
-                        ] 
+                        ]
                     }
                 }
             },
@@ -1208,7 +1209,7 @@ exports.getTelemetryAnalytics = async (req, res) => {
                         {
                             $project: {
                                 _id: 0,
-                                label: { 
+                                label: {
                                     $concat: [
                                         { $dateToString: { format: "%d %b ", date: "$timestamp" } },
                                         { $dateToString: { format: "%H:%M", date: "$timestamp" } }
@@ -2362,7 +2363,7 @@ exports.assignDeviceToOther = async (req, res, next) => {
         if (sharedUser.fcm_tokens && sharedUser.fcm_tokens.length > 0) {
             const fcmTitle = "🔑 New Device Access Request";
             const fcmBody = `${masterUser.user_name} has shared access to device ${serial_number} with you. Click to accept or reject.`;
-            
+
             sendPushNotification(sharedUser.fcm_tokens, { title: fcmTitle, body: fcmBody }, {
                 type: "ACCESS_REQUEST",
                 serial_number,
@@ -2454,7 +2455,7 @@ exports.respondToDeviceShare = async (req, res, next) => {
         if (masterOwner && masterOwner.fcm_tokens && masterOwner.fcm_tokens.length > 0) {
             const fcmTitle = `🔑 Share Request ${action.charAt(0).toUpperCase() + action.slice(1)}`;
             const fcmBody = `${sharedUser.user_name} has ${action} your request to share device ${serial_number}.`;
-            
+
             const notificationHelper = require('../utils/notificationHelper');
             notificationHelper.sendPushNotification(masterOwner.fcm_tokens, { title: fcmTitle, body: fcmBody }, {
                 type: "SHARE_RESPONSE",
@@ -2555,41 +2556,41 @@ exports.createSchedule = async (req, res) => {
         // 0. Ensure start date is not in the past (before today's start)
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         if (start < todayStart) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Start date cannot be in the past" 
+            return res.status(400).json({
+                success: false,
+                message: "Start date cannot be in the past"
             });
         }
 
         // 1. Start time must be at least 5 minutes after current time
         const minStartTime = new Date(now.getTime() + 5 * 60 * 1000);
         if (start < minStartTime) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Start time must be at least 5 minutes from now" 
+            return res.status(400).json({
+                success: false,
+                message: "Start time must be at least 5 minutes from now"
             });
         }
 
         // 2. Start date must be up to 7 days from now
         const maxStartTime = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
         if (start > maxStartTime) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Start date can only be up to 7 days in the future" 
+            return res.status(400).json({
+                success: false,
+                message: "Start date can only be up to 7 days in the future"
             });
         }
 
         // 3. Stop time must be after start time
         if (stop <= start) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Stop time must be after start time" 
+            return res.status(400).json({
+                success: false,
+                message: "Stop time must be after start time"
             });
         }
 
         // Check for overlapping schedules (pending or started)
-        const overlappingSchedule = await DeviceSchedule.findOne({ 
-            serial_number, 
+        const overlappingSchedule = await DeviceSchedule.findOne({
+            serial_number,
             status: { $in: ['pending', 'started'] },
             start_time: { $lt: stop },
             stop_time: { $gt: start }
@@ -2597,9 +2598,9 @@ exports.createSchedule = async (req, res) => {
 
         if (overlappingSchedule) {
             const type = overlappingSchedule.status === 'started' ? 'active' : 'pending';
-            return res.status(400).json({ 
-                success: false, 
-                message: `This time overlaps with an ${type} schedule (${new Date(overlappingSchedule.start_time).toLocaleTimeString()} - ${new Date(overlappingSchedule.stop_time).toLocaleTimeString()}).` 
+            return res.status(400).json({
+                success: false,
+                message: `This time overlaps with an ${type} schedule (${new Date(overlappingSchedule.start_time).toLocaleTimeString()} - ${new Date(overlappingSchedule.stop_time).toLocaleTimeString()}).`
             });
         }
 
@@ -2620,20 +2621,20 @@ exports.createSchedule = async (req, res) => {
             try {
                 // 1. Get Owner
                 const owner = await User.findOne({ user_id });
-                
+
                 // 2. Get Shared Users
                 const sharedEntries = await DeviceShare.find({ serial_number, status: true });
                 const sharedEmails = sharedEntries.map(s => s.shared_to_user_email).filter(e => e);
-                
+
                 const allEmails = [owner.user_email, ...sharedEmails];
                 const uniqueEmails = [...new Set(allEmails)];
 
                 const subject = `New Schedule Created - ${serial_number}`;
                 const body = `Hello,\n\nA new motor schedule has been created for device ${serial_number}.\n\n` +
-                             `Start Time: ${start.toLocaleString()}\n` +
-                             `Stop Time: ${stop.toLocaleString()}\n` +
-                             `Created by: ${user_name}\n\n` +
-                             `The motor will run continuously during this period.`;
+                    `Start Time: ${start.toLocaleString()}\n` +
+                    `Stop Time: ${stop.toLocaleString()}\n` +
+                    `Created by: ${user_name}\n\n` +
+                    `The motor will run continuously during this period.`;
 
                 for (const email of uniqueEmails) {
                     sendEmail(email, subject, body).catch(e => console.error(`Schedule email failed for ${email}:`, e));
@@ -2680,7 +2681,7 @@ exports.getSchedules = async (req, res) => {
         const query = {};
         if (serial_number) query.serial_number = serial_number;
         if (user_id) query.user_id = user_id;
-        
+
         // Add status filtering
         if (status && status !== 'All') {
             query.status = status.toLowerCase();
@@ -2731,9 +2732,9 @@ exports.cancelSchedule = async (req, res) => {
         }
 
         if (schedule.status !== 'pending') {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Only pending schedules can be cancelled" 
+            return res.status(400).json({
+                success: false,
+                message: "Only pending schedules can be cancelled"
             });
         }
 
@@ -2748,15 +2749,15 @@ exports.cancelSchedule = async (req, res) => {
                 const owner = await User.findOne({ user_id: schedule.user_id });
                 const sharedEntries = await DeviceShare.find({ serial_number: schedule.serial_number, status: true });
                 const sharedEmails = sharedEntries.map(s => s.shared_to_user_email).filter(e => e);
-                
+
                 const allEmails = [owner.user_email, ...sharedEmails];
                 const uniqueEmails = [...new Set(allEmails)];
 
                 const subject = `Schedule Cancelled - ${schedule.serial_number}`;
                 const body = `Hello,\n\nA motor schedule has been cancelled for device ${schedule.serial_number}.\n\n` +
-                             `Original Start Time: ${new Date(schedule.start_time).toLocaleString()}\n` +
-                             `Cancelled by: ${user_name || 'System'}\n` +
-                             `Cancellation Time: ${new Date().toLocaleString()}`;
+                    `Original Start Time: ${new Date(schedule.start_time).toLocaleString()}\n` +
+                    `Cancelled by: ${user_name || 'System'}\n` +
+                    `Cancellation Time: ${new Date().toLocaleString()}`;
 
                 for (const email of uniqueEmails) {
                     sendEmail(email, subject, body).catch(e => console.error(`Cancel email failed for ${email}:`, e));
@@ -2936,5 +2937,142 @@ exports.resetPassword = async (req, res, next) => {
 
     } catch (error) {
         next(error);
+    }
+};
+
+// =====================
+// Manage Help
+// =====================
+
+exports.createHelp = async (req, res, next) => {
+    try {
+        const { user_id, user_name, user_mobile, subject, description, createdBy } = req.body;
+
+        if (!user_id) return res.status(400).json({ success: false, message: "User ID is required" });
+        if (!user_name || !user_name.trim()) return res.status(400).json({ success: false, message: "User name is required" });
+        if (!user_mobile || !user_mobile.trim()) return res.status(400).json({ success: false, message: "User mobile is required" });
+        if (!subject || !subject.trim()) return res.status(400).json({ success: false, message: "Subject is required" });
+        if (!description || !description.trim()) return res.status(400).json({ success: false, message: "Description is required" });
+
+        const newHelp = new ManageHelp({
+            user_id,
+            user_name: user_name.trim(),
+            user_mobile: user_mobile.trim(),
+            subject: subject.trim(),
+            description: description.trim(),
+            status: 'pending',
+            createdBy: createdBy || null,
+            createdAt: new Date()
+        });
+
+        await newHelp.save();
+
+        res.status(201).json({
+            success: true,
+            message: "Help request created successfully",
+            data: newHelp
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.getAllHelpByUser = async (req, res, next) => {
+    try {
+        const { user_id, page = 1, limit = 10 } = req.query;
+
+        if (!user_id) return res.status(400).json({ success: false, message: "User ID is required" });
+
+        const skip = (page - 1) * limit;
+
+        const helpRequests = await ManageHelp.find({ user_id: parseInt(user_id) })
+            .skip(skip)
+            .limit(parseInt(limit))
+            .sort({ createdAt: -1 });
+
+        const total = await ManageHelp.countDocuments({ user_id: parseInt(user_id) });
+
+        res.status(200).json({
+            success: true,
+            data: helpRequests,
+            pagination: {
+                currentPage: parseInt(page),
+                totalPages: Math.ceil(total / limit),
+                totalHelp: total,
+                limit: parseInt(limit),
+                hasNextPage: page * limit < total,
+                hasPrevPage: page > 1
+            }
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.getHelpById = async (req, res, next) => {
+    try {
+        const { id } = req.query;
+
+        if (!id) return res.status(400).json({ success: false, message: "Help ID is required" });
+
+        const help = await ManageHelp.findById(id);
+        if (!help) return res.status(404).json({ success: false, message: "Help request not found" });
+
+        res.status(200).json({
+            success: true,
+            data: help
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.updateHelp = async (req, res, next) => {
+    try {
+        const { id, subject, description, updatedBy } = req.body;
+
+        if (!id) return res.status(400).json({ success: false, message: "Help ID is required" });
+
+        const help = await ManageHelp.findById(id);
+        if (!help) return res.status(404).json({ success: false, message: "Help request not found" });
+
+        const updateData = {};
+        if (subject) updateData.subject = subject.trim();
+        if (description) updateData.description = description.trim();
+        updateData.updatedBy = updatedBy || null;
+        updateData.updatedAt = new Date();
+
+        const updatedHelp = await ManageHelp.findByIdAndUpdate(id, updateData, { new: true });
+
+        res.status(200).json({
+            success: true,
+            message: "Help request updated successfully",
+            data: updatedHelp
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.deleteHelp = async (req, res, next) => {
+    try {
+        const { id } = req.body;
+
+        if (!id) return res.status(400).json({ success: false, message: "Help ID is required" });
+
+        const help = await ManageHelp.findByIdAndDelete(id);
+        if (!help) return res.status(404).json({ success: false, message: "Help request not found" });
+
+        res.status(200).json({
+            success: true,
+            message: "Help request deleted successfully"
+        });
+
+    } catch (err) {
+        next(err);
     }
 };

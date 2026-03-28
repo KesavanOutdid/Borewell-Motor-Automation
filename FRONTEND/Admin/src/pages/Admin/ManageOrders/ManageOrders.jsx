@@ -11,7 +11,7 @@ const ManageOrders = ({ userInfo, handleLogout }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
     const searchTimeoutRef = useRef(null);
-    
+
     const {
         orders,
         errorOrders,
@@ -34,7 +34,7 @@ const ManageOrders = ({ userInfo, handleLogout }) => {
     // Debounced search handler
     const handleSearch = useCallback((query) => {
         setSearchQuery(query);
-        
+
         if (searchTimeoutRef.current) {
             clearTimeout(searchTimeoutRef.current);
         }

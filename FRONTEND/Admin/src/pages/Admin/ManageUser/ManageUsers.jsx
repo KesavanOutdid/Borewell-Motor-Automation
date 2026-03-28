@@ -39,7 +39,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
 
     const handleSearch = (query) => {
         setSearchQuery(query);
-        
+
         if (searchTimeoutRef.current) {
             clearTimeout(searchTimeoutRef.current);
         }
@@ -103,18 +103,18 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
             setOriginalDetails(JSON.parse(JSON.stringify(currentUserDetails)));
             setIsFormDirty(false);
         }
-        
+
         // Reset original details when modal is closed
         if (!isModalEdit) {
             setOriginalDetails(null);
             setIsFormDirty(false);
         }
-    }, [isModalEdit, currentUserDetails, originalDetails]); 
+    }, [isModalEdit, currentUserDetails, originalDetails]);
 
     useEffect(() => {
         if (originalDetails && currentUserDetails) {
             // Check if any of the editable fields have changed
-            const isDirty = 
+            const isDirty =
                 originalDetails.user_name !== currentUserDetails.user_name ||
                 String(originalDetails.password) !== String(currentUserDetails.password) ||
                 originalDetails.status !== currentUserDetails.status;
@@ -420,7 +420,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                         gap: "10px"
                                                     }}>
                                                         <button type="button" className="btn btn-secondary mb-0" style={{ padding: '10px' }} onClick={closeModal}>Close</button>
-                                                        <button type="submit" className="btn btn-primary mb-0" style={{ padding: '10px' }} 
+                                                        <button type="submit" className="btn btn-primary mb-0" style={{ padding: '10px' }}
                                                             disabled={!isFormDirty || loadingUpdate || !currentUserDetails?.user_name?.trim() || String(currentUserDetails?.password || '').length !== 6}>
                                                             {loadingUpdate ? "Updating..." : "Update"}
                                                         </button>
@@ -435,7 +435,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                         </div>
                                     )}
                                 </>
-                               
+
                                 <div className="card-body px-0 pt-0 pb-2">
                                     <div className="table-responsive p-0" style={{ maxHeight: '680px', overflowY: 'scroll' }}>
                                         <table className="table align-items-center mb-0" >
@@ -464,7 +464,7 @@ const ManageUsers = ({ userInfo, handleLogout }) => {
                                                         <tr key={`user-${index}`}>
                                                             <td className="align-middle text-center">
                                                                 <span className="text-secondary text-xs font-weight-bold">
-                                                                    {index + 1 || 'N/A'}
+                                                                    {((pagination.currentPage - 1) * pagination.limit) + index + 1}
                                                                 </span>
                                                             </td>
                                                             <td className="align-middle text-center">

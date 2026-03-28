@@ -1,5 +1,5 @@
-import {useState} from 'react';
-import { Link, useLocation  } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import './Sidebar.css';
 import logo from '../../assets/img/AgriPlus.png';
 
@@ -28,17 +28,17 @@ const Sidebar = () => {
             <div className="sidenav-header" style={{ height: 'auto', minHeight: '80px', display: 'flex', alignItems: 'center' }}>
                 <i className="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-xl-none" aria-hidden="true" id="iconSidenav" onClick={toggleSidebar}></i>
                 <a className="navbar-brand m-0 d-flex align-items-center" href="/dashboard" onClick={(e) => { e.preventDefault(); window.location.href = '/dashboard'; }}>
-                    <img src={logo} className="navbar-brand-img" alt="main_logo" style={{ maxHeight: '40px', width: 'auto' }}/>
+                    <img src={logo} className="navbar-brand-img" alt="main_logo" style={{ maxHeight: '40px', width: 'auto' }} />
                     <span className="ms-2 font-weight-bold" style={{ whiteSpace: 'normal', lineHeight: '1.2' }}>Smart Motor Automation</span>
                 </a>
             </div>
-            <hr className="horizontal dark mt-0"/>
+            <hr className="horizontal dark mt-0" />
             <div className="collapse navbar-collapse w-auto" id="sidenav-collapse-main">
                 <ul className="navbar-nav sidebar-nav-content">
                     <li className="nav-item">
                         <Link className={location.pathname === '/dashboard' ? 'nav-link  active' : 'nav-link'} to="/dashboard" onClick={() => handleNavClick('/dashboard')}>
                             <div className="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                                <i className="fas fa-home" style={{fontSize: '12px', color: '#344767', lineHeight: '12px'}}></i>
+                                <i className="fas fa-home" style={{ fontSize: '12px', color: '#344767', lineHeight: '12px' }}></i>
                             </div>
                             <span className="nav-link-text ms-1">Dashboard</span>
                         </Link>
@@ -91,11 +91,19 @@ const Sidebar = () => {
                             <span className="nav-link-text ms-1">Manage Vouchers</span>
                         </Link>
                     </li>
+                    <li className="nav-item">
+                        <Link className={location.pathname === '/manage-help' || location.pathname === '/view-help' ? 'nav-link  active' : 'nav-link'} to="/manage-help" onClick={() => handleNavClick('/manage-help')}>
+                            <div className="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                                <i className="fas fa-headset" style={{ fontSize: '12px', color: '#344767', lineHeight: '12px' }}></i>
+                            </div>
+                            <span className="nav-link-text ms-1">Manage Help</span>
+                        </Link>
+                    </li>
                     <li className="nav-item mt-3">
                         <h6 className="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Account pages</h6>
                     </li>
                     <li className="nav-item">
-                        <Link className={location.pathname === '/profile' ? 'nav-link  active' : 'nav-link'} to="/profile"  onClick={() => handleNavClick('/profile')}>
+                        <Link className={location.pathname === '/profile' ? 'nav-link  active' : 'nav-link'} to="/profile" onClick={() => handleNavClick('/profile')}>
                             <div className="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                                 <svg width="12px" height="12px" viewBox="0 0 46 42" version="1.1" >
                                     <title>customer-support</title>
@@ -146,8 +154,8 @@ const Sidebar = () => {
                     />
                 </div> */}
             </div>
-      </aside>
-  );
+        </aside>
+    );
 };
 
 export default Sidebar;

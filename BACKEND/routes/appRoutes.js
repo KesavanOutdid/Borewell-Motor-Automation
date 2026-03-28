@@ -1702,4 +1702,138 @@ router.post(
     appCtrl.resetPassword
 );
 
+// ---------------------
+// Manage Help
+// ---------------------
+
+/**
+ * @swagger
+ * /app/createHelp:
+ *   post:
+ *     summary: Create a new help request
+ *     tags: [Help]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               user_id:
+ *                 type: integer
+ *               user_name:
+ *                 type: string
+ *               user_mobile:
+ *                 type: string
+ *               subject:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Help request created successfully
+ */
+router.post(
+    '/createHelp',
+    authMiddleware(),
+    [
+        body('user_id').notEmpty().withMessage("User ID is required"),
+        body('subject').notEmpty().withMessage("Subject is required"),
+        body('description').notEmpty().withMessage("Description is required")
+    ],
+    appCtrl.createHelp
+);
+
+/**
+ * @swagger
+ * /app/getAllHelpByUser:
+ *   get:
+ *     summary: Get all help requests for a user
+ *     tags: [Help]
+ *     parameters:
+ *       - in: query
+ *         name: user_id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Help requests retrieved successfully
+ */
+router.get('/getAllHelpByUser', authMiddleware(), appCtrl.getAllHelpByUser);
+
+/**
+ * @swagger
+ * /app/getHelpById:
+ *   get:
+ *     summary: Get help request by ID
+ *     tags: [Help]
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: Help request retrieved successfully
+ */
+router.get('/getHelpById', authMiddleware(), appCtrl.getHelpById);
+
+/**
+ * @swagger
+ * /app/updateHelp:
+ *   put:
+ *     summary: Update a help request
+ *     tags: [Help]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *               subject:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Help request updated successfully
+ */
+router.put('/updateHelp', authMiddleware(), appCtrl.updateHelp);
+
+/**
+ * @swagger
+ * /app/deleteHelp:
+ *   post:
+ *     summary: Delete a help request
+ *     tags: [Help]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Help request deleted successfully
+ */
+router.post('/deleteHelp', authMiddleware(), appCtrl.deleteHelp);
+
 module.exports = router;

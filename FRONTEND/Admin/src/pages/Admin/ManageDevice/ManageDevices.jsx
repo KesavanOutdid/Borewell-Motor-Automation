@@ -13,7 +13,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
     const navigate = useNavigate();
 
     console.log(userInfo, 'profile data');
-    
+
     const { setIsModalCreate, isModalCreate, setIsModalAssign, isModalAssign, serialNumber, setSerialNumber, errorMessage, successMessage, handleDeviceCreate, closeModal,
         isModalEdit, setIsModalEdit, fetchDeviceData, devices, loading, errorDevice, serialNumberUpdate, deviceStatusUpdate, errorMessageEdit, setErrorMessageEdit,
         users, selecteduser, handleuserSelection, selectedDevices, handleDeviceSelection, handleAssign, assignErrorMessage, loadingSubmit, loadingUpdate, setLoadingUpdate,
@@ -42,7 +42,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
     // Handle search with debounce
     const handleSearch = (query) => {
         setSearchQuery(query);
-        
+
         if (searchTimeoutRef.current) {
             clearTimeout(searchTimeoutRef.current);
         }
@@ -68,7 +68,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
             setOriginalDeviceDetails(details);
             setIsFormDirty(false);
         }
-    }, [isModalEdit, serialNumberUpdate, deviceStatusUpdate]); 
+    }, [isModalEdit, serialNumberUpdate, deviceStatusUpdate]);
 
     // Handle input changes
     const handleInputChange = (key, value) => {
@@ -120,7 +120,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                 }),
             });
 
-            const data = await response.json();  
+            const data = await response.json();
 
             if (response.ok) {
                 showAlertSuccess('Device updated successfully!');
@@ -151,26 +151,26 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                         <div className="col-12">
                             <div className="card mb-4">
                                 <div className="card-header pb-2">
-                                        <div className="row g-2 align-items-center mb-3">
-                                            <div className="col-md-2 col-12">
-                                                <div className="d-flex gap-2">
-                                                    <button
-                                                        className="btn btn-primary mb-0 flex-fill"
-                                                        style={{ padding: '10px' }}
-                                                        onClick={() => setIsModalCreate(true)}
-                                                    >
-                                                        <i className="fas fa-plus" aria-hidden="true" style={{ color: 'white' }}></i> Create
-                                                    </button>
+                                    <div className="row g-2 align-items-center mb-3">
+                                        <div className="col-md-2 col-12">
+                                            <div className="d-flex gap-2">
+                                                <button
+                                                    className="btn btn-primary mb-0 flex-fill"
+                                                    style={{ padding: '10px' }}
+                                                    onClick={() => setIsModalCreate(true)}
+                                                >
+                                                    <i className="fas fa-plus" aria-hidden="true" style={{ color: 'white' }}></i> Create
+                                                </button>
 
-                                                    <button
-                                                        className="btn bg-gradient-secondary mb-0 flex-fill"
-                                                        style={{ padding: '10px' }}
-                                                        onClick={() => setIsModalAssign(true)}
-                                                    >
-                                                        <i className="fas fa-user-plus" aria-hidden="true" style={{ color: 'white' }}></i> Assign
-                                                    </button>
-                                                </div>
+                                                <button
+                                                    className="btn bg-gradient-secondary mb-0 flex-fill"
+                                                    style={{ padding: '10px' }}
+                                                    onClick={() => setIsModalAssign(true)}
+                                                >
+                                                    <i className="fas fa-user-plus" aria-hidden="true" style={{ color: 'white' }}></i> Assign
+                                                </button>
                                             </div>
+                                        </div>
                                         <div className="col-md-2 col-12">
                                             <input
                                                 type="text"
@@ -216,7 +216,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                 </div>
                                 {/* Create Modal */}
                                 {isModalCreate && (
@@ -483,7 +483,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                 <tr>
                                                     <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">S.No</th>
                                                     <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Serial Number</th>
-                                                    <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">IMEI Number</th>
+                                                    {/* <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">IMEI Number</th> */}
                                                     <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Device Nickname</th>
                                                     <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Assign Device By</th>
                                                     <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Assign Status</th>
@@ -513,11 +513,11 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                                     {device.serial_number || '-'}
                                                                 </span>
                                                             </td>
-                                                            <td className="align-middle text-center">
+                                                            {/* <td className="align-middle text-center">
                                                                 <span className="text-secondary text-xs font-weight-bold">
                                                                     {device.imei_number || '-'}
                                                                 </span>
-                                                            </td>
+                                                            </td> */}
                                                             <td className="align-middle text-center">
                                                                 <span className="text-secondary text-xs font-weight-bold">
                                                                     {device.device_nickname || '-'}
@@ -577,7 +577,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
 
                                     {/* Pagination */}
                                     {devices && devices.length > 0 && pagination && (
-                                    // {devices && devices.length > 0 && (
+                                        // {devices && devices.length > 0 && (
                                         <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mt-3 px-3 gap-3">
                                             {/* Results info */}
                                             <div className="text-center text-md-start">
@@ -664,7 +664,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                             </div>
                         </div>
                     </div>
-                    
+
                     {/* graph */}
                     <div className="row mt-4">
                         <div className="col-lg-12">
@@ -716,22 +716,22 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
 
                                         {/* Filter buttons */}
                                         <div className="btn-group btn-group-sm w-100 w-md-auto" role="group">
-                                            <button 
-                                                className={`btn ${chartType === "weekly" ? "btn-primary" : "btn-outline-primary"} flex-fill`} 
+                                            <button
+                                                className={`btn ${chartType === "weekly" ? "btn-primary" : "btn-outline-primary"} flex-fill`}
                                                 onClick={() => setChartType("weekly")}
                                                 style={{ textTransform: 'uppercase', fontWeight: 'bold' }}
                                             >
                                                 Weekly
                                             </button>
-                                            <button 
-                                                className={`btn ${chartType === "monthly" ? "btn-primary" : "btn-outline-primary"} flex-fill`} 
+                                            <button
+                                                className={`btn ${chartType === "monthly" ? "btn-primary" : "btn-outline-primary"} flex-fill`}
                                                 onClick={() => setChartType("monthly")}
                                                 style={{ textTransform: 'uppercase', fontWeight: 'bold' }}
                                             >
                                                 Monthly
                                             </button>
-                                            <button 
-                                                className={`btn ${chartType === "yearly" ? "btn-primary" : "btn-outline-primary"} flex-fill`} 
+                                            <button
+                                                className={`btn ${chartType === "yearly" ? "btn-primary" : "btn-outline-primary"} flex-fill`}
                                                 onClick={() => setChartType("yearly")}
                                                 style={{ textTransform: 'uppercase', fontWeight: 'bold' }}
                                             >

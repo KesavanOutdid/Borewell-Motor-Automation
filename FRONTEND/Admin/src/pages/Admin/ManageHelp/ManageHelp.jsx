@@ -4,56 +4,49 @@ import Header from '../../../components/Admin/Header';
 import Sidebar from '../../../components/Admin/Sidebar';
 import Footer from '../../../components/Admin/Footer';
 import TableSkeleton from '../../../components/Common/TableSkeleton';
-import useManageVouchers from '../../../hooks/Admin/ManageVouchers/useManageVouchers';
+import useManageHelp from '../../../hooks/Admin/ManageHelp/useManageHelp';
 
-const ManageVouchers = ({ userInfo, handleLogout }) => {
+const ManageHelp = ({ userInfo, handleLogout }) => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
     const searchTimeoutRef = useRef(null);
     const {
-        vouchers,
-        errorVouchers,
-        loadingVouchers,
+        helpRequests,
+        errorHelp,
+        loadingHelp,
         pagination,
         handlePageChange,
         handleLimitChange,
-        handleVoucherDelete,
-        fetchVoucherData
-    } = useManageVouchers(userInfo);
+        fetchHelpData
+    } = useManageHelp(userInfo);
 
-    const fetchVoucherDataCalled = useRef(false);
+    const fetchHelpDataCalled = useRef(false);
 
     useEffect(() => {
-        if (!fetchVoucherDataCalled.current) {
-            fetchVoucherData();
-            fetchVoucherDataCalled.current = true;
+        if (!fetchHelpDataCalled.current) {
+            fetchHelpData();
+            fetchHelpDataCalled.current = true;
         }
-    }, [fetchVoucherData]);
+    }, [fetchHelpData]);
 
-    // Handle search with debounce
     const handleSearch = (query) => {
         setSearchQuery(query);
-
         if (searchTimeoutRef.current) {
             clearTimeout(searchTimeoutRef.current);
         }
-
         searchTimeoutRef.current = setTimeout(() => {
-            fetchVoucherData(1, pagination.limit, query);
+            fetchHelpData(1, pagination.limit, query, statusFilter);
         }, 500);
     };
 
-    const handleEditVoucher = (voucher) => {
-        navigate('/edit-voucher', { state: { voucher } });
+    const handleStatusFilter = (status) => {
+        setStatusFilter(status);
+        fetchHelpData(1, pagination.limit, searchQuery, status);
     };
 
-    const handleDeleteVoucher = async (e, id, code) => {
-        if (e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-        await handleVoucherDelete(id, code);
-        fetchVoucherData();
+    const handleViewHelp = (help) => {
+        navigate('/view-help', { state: { help } });
     };
 
     const formatDateTime = (date) => {
@@ -67,24 +60,23 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
         });
     };
 
-    const getVoucherStatus = (voucher) => {
-        const now = new Date();
-        const startDate = new Date(voucher.start_date);
-        const endDate = new Date(voucher.end_date);
-
-        if (!voucher.status) return 'Inactive';
-        if (now < startDate) return 'Pending';
-        if (now > endDate) return 'Expired';
-        return 'Valid';
-    };
-
     const getStatusColor = (status) => {
         switch (status) {
-            case 'Valid': return '#15803d';
-            case 'Expired': return '#991b1b';
-            case 'Inactive': return '#6c757d';
-            case 'Pending': return '#d97706';
+            case 'pending': return '#d97706';
+            case 'solved': return '#15803d';
+            case 'rejected': return '#991b1b';
+            case 're-solved': return '#1e40af';
             default: return '#6c757d';
+        }
+    };
+
+    const getStatusLabel = (status) => {
+        switch (status) {
+            case 'pending': return 'Pending';
+            case 'solved': return 'Solved';
+            case 'rejected': return 'Rejected';
+            case 're-solved': return 'Re-Solved';
+            default: return status;
         }
     };
 
@@ -100,38 +92,78 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                 <div className="card-header pb-3">
                                     <div className="row g-2 align-items-center mb-3">
                                         <div className="row g-2 align-items-center">
-                                            <div className="col-md-2 col-6 d-flex align-items-center">
-                                                <button className="btn btn-primary mb-0" style={{ padding: '10px', width: '50%' }} onClick={() => navigate('/add-voucher')}>
-                                                    <i className="fas fa-plus" aria-hidden="true" style={{ color: 'white' }}></i> Create
-                                                </button>
-                                            </div>
-                                            <div className="col-md-7 col-12 d-flex flex-wrap gap-1">
-                                                <div style={{ flex: '1 0 130px', backgroundColor: '#f0f9ff', padding: '12px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div className="col-md-9 col-12 d-flex flex-wrap gap-1">
+                                                <div
+                                                    onClick={() => handleStatusFilter('all')}
+                                                    style={{
+                                                        flex: '1 0 110px', backgroundColor: statusFilter === 'all' ? '#dbeafe' : '#f0f9ff',
+                                                        padding: '12px', borderRadius: '8px',
+                                                        border: statusFilter === 'all' ? '2px solid #3b82f6' : '1px solid #bfdbfe',
+                                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                        cursor: 'pointer', transition: 'all 0.2s'
+                                                    }}
+                                                >
                                                     <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Total</p>
-                                                    <p style={{ fontSize: '18px', color: '#1e40af', fontWeight: '700', margin: 0 }}>{pagination?.totalVouchers || 0}</p>
+                                                    <p style={{ fontSize: '18px', color: '#1e40af', fontWeight: '700', margin: 0 }}>{pagination?.totalHelp || 0}</p>
                                                 </div>
-                                                <div style={{ flex: '1 0 130px', backgroundColor: '#f0fdf4', padding: '12px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Valid</p>
-                                                    <p style={{ fontSize: '18px', color: '#15803d', fontWeight: '700', margin: 0 }}>{pagination?.totalValidVouchers || 0}</p>
-                                                </div>
-                                                <div style={{ flex: '1 0 130px', backgroundColor: '#fffbeb', padding: '12px', borderRadius: '8px', border: '1px solid #fef3c7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div
+                                                    onClick={() => handleStatusFilter('pending')}
+                                                    style={{
+                                                        flex: '1 0 110px', backgroundColor: statusFilter === 'pending' ? '#fef3c7' : '#fffbeb',
+                                                        padding: '12px', borderRadius: '8px',
+                                                        border: statusFilter === 'pending' ? '2px solid #f59e0b' : '1px solid #fef3c7',
+                                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                        cursor: 'pointer', transition: 'all 0.2s'
+                                                    }}
+                                                >
                                                     <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Pending</p>
-                                                    <p style={{ fontSize: '18px', color: '#d97706', fontWeight: '700', margin: 0 }}>{pagination?.totalPendingVouchers || 0}</p>
+                                                    <p style={{ fontSize: '18px', color: '#d97706', fontWeight: '700', margin: 0 }}>{pagination?.totalPending || 0}</p>
                                                 </div>
-                                                <div style={{ flex: '1 0 130px', backgroundColor: '#fef2f2', padding: '12px', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Expired</p>
-                                                    <p style={{ fontSize: '18px', color: '#991b1b', fontWeight: '700', margin: 0 }}>{pagination?.totalExpiredVouchers || 0}</p>
+                                                <div
+                                                    onClick={() => handleStatusFilter('solved')}
+                                                    style={{
+                                                        flex: '1 0 110px', backgroundColor: statusFilter === 'solved' ? '#dcfce7' : '#f0fdf4',
+                                                        padding: '12px', borderRadius: '8px',
+                                                        border: statusFilter === 'solved' ? '2px solid #22c55e' : '1px solid #bbf7d0',
+                                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                        cursor: 'pointer', transition: 'all 0.2s'
+                                                    }}
+                                                >
+                                                    <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Solved</p>
+                                                    <p style={{ fontSize: '18px', color: '#15803d', fontWeight: '700', margin: 0 }}>{pagination?.totalSolved || 0}</p>
                                                 </div>
-                                                <div style={{ flex: '1 0 130px', backgroundColor: '#f9fafb', padding: '12px', borderRadius: '8px', border: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Inactive</p>
-                                                    <p style={{ fontSize: '18px', color: '#4b5563', fontWeight: '700', margin: 0 }}>{pagination?.totalInactiveVouchers || 0}</p>
+                                                <div
+                                                    onClick={() => handleStatusFilter('rejected')}
+                                                    style={{
+                                                        flex: '1 0 110px', backgroundColor: statusFilter === 'rejected' ? '#fecaca' : '#fef2f2',
+                                                        padding: '12px', borderRadius: '8px',
+                                                        border: statusFilter === 'rejected' ? '2px solid #ef4444' : '1px solid #fecaca',
+                                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                        cursor: 'pointer', transition: 'all 0.2s'
+                                                    }}
+                                                >
+                                                    <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Rejected</p>
+                                                    <p style={{ fontSize: '18px', color: '#991b1b', fontWeight: '700', margin: 0 }}>{pagination?.totalRejected || 0}</p>
+                                                </div>
+                                                <div
+                                                    onClick={() => handleStatusFilter('re-solved')}
+                                                    style={{
+                                                        flex: '1 0 110px', backgroundColor: statusFilter === 're-solved' ? '#dbeafe' : '#f0f9ff',
+                                                        padding: '12px', borderRadius: '8px',
+                                                        border: statusFilter === 're-solved' ? '2px solid #3b82f6' : '1px solid #bfdbfe',
+                                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                        cursor: 'pointer', transition: 'all 0.2s'
+                                                    }}
+                                                >
+                                                    <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Re-Solved</p>
+                                                    <p style={{ fontSize: '18px', color: '#1e40af', fontWeight: '700', margin: 0 }}>{pagination?.totalReSolved || 0}</p>
                                                 </div>
                                             </div>
                                             <div className="col-md-3 col-12">
                                                 <input
                                                     type="text"
                                                     className="form-control"
-                                                    placeholder="🔍 Search vouchers..."
+                                                    placeholder="🔍 Search help requests..."
                                                     value={searchQuery}
                                                     onChange={(e) => handleSearch(e.target.value)}
                                                     style={{ borderRadius: '6px', padding: '10px 15px', fontSize: '14px' }}
@@ -142,96 +174,85 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                 </div>
 
                                 <div className="card-body">
-                                    {loadingVouchers ? (
+                                    {loadingHelp ? (
                                         <div style={{ overflowX: 'auto' }}>
                                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                                 <thead>
                                                     <tr style={{ backgroundColor: '#f5f7fa', borderBottom: '2px solid #e0e0e0' }}>
-                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Code</th>
-                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Discount %</th>
-                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Valid From</th>
-                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Valid Until</th>
-                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Usage</th>
-                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Description</th>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>S.No</th>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>User Name</th>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Mobile</th>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Subject</th>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Date/Time</th>
                                                         <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Status</th>
-                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Actions</th>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Options</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <TableSkeleton rows={8} columns={8} />
+                                                    <TableSkeleton rows={8} columns={7} />
                                                 </tbody>
                                             </table>
                                         </div>
-                                    ) : errorVouchers ? (
+                                    ) : errorHelp ? (
                                         <div style={{ textAlign: 'center', color: 'red', padding: '40px' }}>
-                                            <p>{errorVouchers}</p>
+                                            <p>{errorHelp}</p>
                                         </div>
-                                    ) : vouchers && vouchers.length > 0 ? (
+                                    ) : helpRequests && helpRequests.length > 0 ? (
                                         <>
                                             <div style={{ overflowX: 'auto' }}>
                                                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                                     <thead>
                                                         <tr style={{ backgroundColor: '#f5f7fa', borderBottom: '2px solid #e0e0e0' }}>
-                                                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Code</th>
-                                                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Discount %</th>
-                                                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Valid From</th>
-                                                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Valid Until</th>
-                                                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Usage</th>
-                                                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Description</th>
+                                                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>S.No</th>
+                                                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>User Name</th>
+                                                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Mobile</th>
+                                                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Subject</th>
+                                                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Date/Time</th>
                                                             <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Status</th>
-                                                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Actions</th>
+                                                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Options</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {vouchers.map((voucher, index) => (
-                                                            <tr key={`voucher-${index}`} style={{ borderBottom: '1px solid #e0e0e0', hover: { backgroundColor: '#f9f9f9' } }}>
-                                                                <td style={{ padding: '12px', fontWeight: '600', color: '#1e40af' }}>{voucher.voucher_code}</td>
-                                                                <td style={{ padding: '12px', color: '#333' }}>{voucher.discount_percentage}%</td>
-                                                                <td style={{ padding: '12px', color: '#666', fontSize: '11px' }}>{formatDateTime(voucher.start_date)}</td>
-                                                                <td style={{ padding: '12px', color: '#666', fontSize: '11px' }}>{formatDateTime(voucher.end_date)}</td>
-                                                                <td style={{ padding: '12px', color: '#666' }}>{voucher.used_count}{voucher.max_usage ? `/${voucher.max_usage}` : ''}</td>
-                                                                <td style={{ padding: '12px', color: '#666', minWidth: '150px', maxWidth: '250px' }}>
+                                                        {helpRequests.map((help, index) => (
+                                                            <tr key={`help-${index}`} style={{ borderBottom: '1px solid #e0e0e0' }}>
+                                                                <td style={{ padding: '12px', color: '#333' }}>
+                                                                    {((pagination.currentPage - 1) * pagination.limit) + index + 1}
+                                                                </td>
+                                                                <td style={{ padding: '12px', fontWeight: '600', color: '#333' }}>{help.user_name}</td>
+                                                                <td style={{ padding: '12px', color: '#666' }}>{help.user_mobile}</td>
+                                                                <td style={{ padding: '12px', color: '#666', maxWidth: '200px' }}>
                                                                     <div style={{
-                                                                        maxHeight: '100px',
-                                                                        overflowY: 'auto',
-                                                                        whiteSpace: 'normal',
-                                                                        wordBreak: 'break-word',
-                                                                        fontSize: '12px',
-                                                                        lineHeight: '1.5',
-                                                                        paddingRight: '5px'
+                                                                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                                                                        fontSize: '13px'
                                                                     }}>
-                                                                        {voucher.description || 'N/A'}
+                                                                        {help.subject}
                                                                     </div>
+                                                                </td>
+                                                                <td style={{ padding: '12px', color: '#666', fontSize: '11px' }}>
+                                                                    {formatDateTime(help.createdAt)}
                                                                 </td>
                                                                 <td style={{ padding: '12px' }}>
                                                                     <span style={{
-                                                                        backgroundColor: getStatusColor(getVoucherStatus(voucher)),
+                                                                        backgroundColor: getStatusColor(help.status),
                                                                         color: 'white',
                                                                         padding: '4px 0',
                                                                         borderRadius: '4px',
                                                                         fontSize: '11px',
                                                                         fontWeight: '600',
                                                                         display: 'inline-block',
-                                                                        width: '75px',
+                                                                        width: '80px',
                                                                         textAlign: 'center'
                                                                     }}>
-                                                                        {getVoucherStatus(voucher)}
+                                                                        {getStatusLabel(help.status)}
                                                                     </span>
                                                                 </td>
                                                                 <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>
                                                                     <button
-                                                                        className="btn btn-sm btn-info mb-0"
-                                                                        onClick={() => handleEditVoucher(voucher)}
-                                                                        style={{ marginRight: '5px', width: '75px', padding: '6px 0', fontSize: '11px' }}
-                                                                    >
-                                                                        <i className="fas fa-pen" style={{ fontSize: '10px', marginRight: '4px' }}></i> Edit
-                                                                    </button>
-                                                                    <button
-                                                                        className="btn btn-sm btn-danger mb-0"
-                                                                        onClick={(e) => handleDeleteVoucher(e, voucher._id, voucher.voucher_code)}
+                                                                        className="btn btn-sm btn-success mb-0"
+                                                                        onClick={() => handleViewHelp(help)}
                                                                         style={{ width: '75px', padding: '6px 0', fontSize: '11px' }}
                                                                     >
-                                                                        <i className="fas fa-trash" style={{ fontSize: '10px', marginRight: '4px' }}></i> Delete
+                                                                        <i className="fas fa-eye" style={{ fontSize: '10px', marginRight: '4px' }}></i> View
                                                                     </button>
                                                                 </td>
                                                             </tr>
@@ -243,20 +264,18 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                             <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4 px-3">
                                                 <div className="mb-2 mb-md-0">
                                                     <span className="text-sm text-muted">
-                                                        Showing {((pagination.currentPage - 1) * pagination.limit) + 1} to {Math.min(pagination.currentPage * pagination.limit, pagination.totalVouchers)} of {pagination.totalVouchers} Vouchers
+                                                        Showing {((pagination.currentPage - 1) * pagination.limit) + 1} to {Math.min(pagination.currentPage * pagination.limit, pagination.totalHelp)} of {pagination.totalHelp} Help Requests
                                                     </span>
                                                 </div>
 
-                                                {/* Pagination controls */}
                                                 <div className="d-flex flex-column flex-sm-row align-items-center gap-2">
-                                                    {/* Items per page selector */}
                                                     <div className="d-flex align-items-center gap-2">
                                                         <span className="text-sm">Show:</span>
                                                         <select
                                                             className="form-select form-select-sm"
                                                             style={{ width: 'auto', minWidth: '70px' }}
                                                             value={pagination.limit}
-                                                            onChange={(e) => handleLimitChange(parseInt(e.target.value), searchQuery)}
+                                                            onChange={(e) => handleLimitChange(parseInt(e.target.value), searchQuery, statusFilter)}
                                                         >
                                                             <option value={5}>5</option>
                                                             <option value={10}>10</option>
@@ -266,14 +285,12 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                         <span className="text-sm">per page</span>
                                                     </div>
 
-                                                    {/* Page navigation */}
-                                                    <nav aria-label="Order pagination">
+                                                    <nav aria-label="Help pagination">
                                                         <ul className="pagination pagination-sm mb-0">
-                                                            {/* Previous button */}
                                                             <li className={`page-item ${!pagination.hasPrevPage ? 'disabled' : ''}`}>
                                                                 <button
                                                                     className="page-link"
-                                                                    onClick={() => handlePageChange(pagination.currentPage - 1, searchQuery)}
+                                                                    onClick={() => handlePageChange(pagination.currentPage - 1, searchQuery, statusFilter)}
                                                                     disabled={!pagination.hasPrevPage}
                                                                     aria-label="Previous"
                                                                 >
@@ -281,7 +298,6 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                                 </button>
                                                             </li>
 
-                                                            {/* Page numbers */}
                                                             {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
                                                                 let pageNum;
                                                                 if (pagination.totalPages <= 5) {
@@ -298,7 +314,7 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                                     <li key={`page-${pageNum}`} className={`page-item ${pageNum === pagination.currentPage ? 'active' : ''}`}>
                                                                         <button
                                                                             className="page-link"
-                                                                            onClick={() => handlePageChange(pageNum, searchQuery)}
+                                                                            onClick={() => handlePageChange(pageNum, searchQuery, statusFilter)}
                                                                         >
                                                                             {pageNum}
                                                                         </button>
@@ -306,11 +322,10 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                                 );
                                                             })}
 
-                                                            {/* Next button */}
                                                             <li className={`page-item ${!pagination.hasNextPage ? 'disabled' : ''}`}>
                                                                 <button
                                                                     className="page-link"
-                                                                    onClick={() => handlePageChange(pagination.currentPage + 1, searchQuery)}
+                                                                    onClick={() => handlePageChange(pagination.currentPage + 1, searchQuery, statusFilter)}
                                                                     disabled={!pagination.hasNextPage}
                                                                     aria-label="Next"
                                                                 >
@@ -324,7 +339,7 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                         </>
                                     ) : (
                                         <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
-                                            <p>No vouchers found</p>
+                                            <p>No help requests found</p>
                                         </div>
                                     )}
                                 </div>
@@ -338,4 +353,4 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
     );
 };
 
-export default ManageVouchers;
+export default ManageHelp;

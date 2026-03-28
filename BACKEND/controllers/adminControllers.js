@@ -6,6 +6,7 @@ const Device = require("../models/Device");
 const Product = require("../models/Product");
 const Voucher = require('../models/Voucher');
 const DeviceShare = require('../models/DeviceShare');
+const ManageHelp = require('../models/ManageHelp');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const { sendEmail } = require('../utils/emailHelper');
@@ -392,7 +393,7 @@ exports.manageUserUpdated = async (req, res, next) => {
             user.user_phone = Number(user_phone);
             detailsChanged = true;
         }
-       
+
         if (status !== undefined) {
             const newStatus = status === 'true' || status === true;
             if (newStatus !== user.status) {
@@ -667,7 +668,7 @@ exports.getDevices = async (req, res) => {
                 }
             },
             { $unwind: { path: "$user_details", preserveNullAndEmptyArrays: true } },
-            { 
+            {
                 $match: search ? {
                     $or: [
                         { serial_number: { $regex: search, $options: 'i' } },
@@ -1427,7 +1428,7 @@ exports.userAssignDevices = async (req, res) => {
 
         // Define base query for devices where user is master or shared
         // First get shared serials
-        const shares = await DeviceShare.find({ shared_to_user_id: userIdNum});
+        const shares = await DeviceShare.find({ shared_to_user_id: userIdNum });
         const sharedSerials = shares.map(s => s.serial_number);
 
         // Base match criteria
@@ -1586,8 +1587,8 @@ exports.userDeviceHistory = async (req, res) => {
             } else {
                 // Verify if user has access to this serial
                 const hasAccess = await Device.findOne({ serial_number, assigned_user_id: user.user_id }) ||
-                                  await DeviceShare.findOne({ serial_number, shared_to_user_id: user.user_id, status: true, acceptance_status: 'accepted' });
-                
+                    await DeviceShare.findOne({ serial_number, shared_to_user_id: user.user_id, status: true, acceptance_status: 'accepted' });
+
                 if (!hasAccess) {
                     return res.status(403).json({ success: false, message: "No access to this device" });
                 }
@@ -1959,5 +1960,128 @@ exports.getDeviceSmartHistory = async (req, res) => {
             success: false,
             message: "Server error"
         });
+    }
+};
+
+// =====================
+// Manage Help (Admin)
+// =====================
+
+exports.getAllHelp = async (req, res, next) => {
+    try {
+        const { page = 1, limit = 10, search = '', status_filter = '' } = req.query;
+
+        const skip = (page - 1) * limit;
+
+        let searchFilter = {};
+        const conditions = [];
+
+        if (search) {
+            conditions.push({
+                $or: [
+                    { user_name: { $regex: search, $options: 'i' } },
+                    { user_mobile: { $regex: search, $options: 'i' } },
+                    { subject: { $regex: search, $options: 'i' } },
+                    { description: { $regex: search, $options: 'i' } }
+                ]
+            });
+        }
+
+        if (status_filter && status_filter !== 'all') {
+            conditions.push({ status: status_filter });
+        }
+
+        if (conditions.length > 0) {
+            searchFilter = conditions.length === 1 ? conditions[0] : { $and: conditions };
+        }
+
+        const helpRequests = await ManageHelp.find(searchFilter)
+            .skip(skip)
+            .limit(parseInt(limit))
+            .sort({ createdAt: -1 });
+
+        const total = await ManageHelp.countDocuments(searchFilter);
+        const totalPending = await ManageHelp.countDocuments({ ...(search ? conditions[0] : {}), status: 'pending' });
+        const totalSolved = await ManageHelp.countDocuments({ ...(search ? conditions[0] : {}), status: 'solved' });
+        const totalRejected = await ManageHelp.countDocuments({ ...(search ? conditions[0] : {}), status: 'rejected' });
+        const totalReSolved = await ManageHelp.countDocuments({ ...(search ? conditions[0] : {}), status: 're-solved' });
+        const totalAll = await ManageHelp.countDocuments(search ? conditions[0] : {});
+
+        res.status(200).json({
+            success: true,
+            data: helpRequests,
+            pagination: {
+                currentPage: parseInt(page),
+                totalPages: Math.ceil(total / limit),
+                totalHelp: totalAll,
+                totalPending,
+                totalSolved,
+                totalRejected,
+                totalReSolved,
+                limit: parseInt(limit),
+                hasNextPage: page * limit < total,
+                hasPrevPage: page > 1
+            }
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.getHelpById = async (req, res, next) => {
+    try {
+        const { id } = req.query;
+
+        if (!id) return res.status(400).json({ success: false, message: "Help ID is required" });
+
+        const help = await ManageHelp.findById(id);
+        if (!help) return res.status(404).json({ success: false, message: "Help request not found" });
+
+        res.status(200).json({
+            success: true,
+            data: help
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.updateHelpStatus = async (req, res, next) => {
+    try {
+        const { id, status, admin_remarks, updatedBy } = req.body;
+
+        if (!id) return res.status(400).json({ success: false, message: "Help ID is required" });
+        if (!status) return res.status(400).json({ success: false, message: "Status is required" });
+
+        const validStatuses = ['pending', 'rejected', 'solved', 're-solved'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ success: false, message: `Status must be one of: ${validStatuses.join(', ')}` });
+        }
+
+        const help = await ManageHelp.findById(id);
+        if (!help) return res.status(404).json({ success: false, message: "Help request not found" });
+
+        const updateData = {
+            status,
+            updatedBy: updatedBy || null,
+            updatedAt: new Date()
+        };
+
+        if (admin_remarks !== undefined) {
+            updateData.admin_remarks = admin_remarks;
+        }
+
+        const updatedHelp = await ManageHelp.findByIdAndUpdate(id, updateData, { new: true });
+
+        res.status(200).json({
+            success: true,
+            message: "Help status updated successfully",
+            data: updatedHelp
+        });
+
+    } catch (err) {
+        next(err);
     }
 };

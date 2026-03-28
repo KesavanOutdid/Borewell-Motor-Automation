@@ -16,7 +16,7 @@ const ManageDevicesView = ({ userInfo, handleLogout }) => {
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [schedules, setSchedules] = useState([]);
     const [loadingSchedules, setLoadingSchedules] = useState(false);
-    
+
     // Pagination state for Device History
     const [pagination, setPagination] = useState({
         currentPage: 1,
@@ -37,8 +37,8 @@ const ManageDevicesView = ({ userInfo, handleLogout }) => {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ 
-                        user_id: deviceDetails.assigned_user_id || deviceDetails.user_details?.user_id, 
+                    body: JSON.stringify({
+                        user_id: deviceDetails.assigned_user_id || deviceDetails.user_details?.user_id,
                         serial_number: deviceDetails.serial_number,
                         page: page,
                         limit: limit
@@ -117,20 +117,20 @@ const ManageDevicesView = ({ userInfo, handleLogout }) => {
         if (!dateString) return '-';
         const date = new Date(dateString);
         if (isNaN(date.getTime())) return '-';
-        
+
         const pad = (num) => num.toString().padStart(2, '0');
-        
+
         const day = pad(date.getDate());
         const month = pad(date.getMonth() + 1);
         const year = date.getFullYear();
-        
+
         let hours = date.getHours();
         const ampm = hours >= 12 ? 'PM' : 'AM';
         hours = hours % 12;
         hours = hours ? hours : 12; // the hour '0' should be '12'
         const minutes = pad(date.getMinutes());
         const seconds = pad(date.getSeconds());
-        
+
         return `${day}/${month}/${year}, ${pad(hours)}:${minutes}:${seconds} ${ampm}`;
     };
 
@@ -139,7 +139,7 @@ const ManageDevicesView = ({ userInfo, handleLogout }) => {
         const start = new Date(startAt);
         const stop = new Date(stopAt);
         if (isNaN(start.getTime()) || isNaN(stop.getTime())) return '-';
-        
+
         const diffMs = Math.max(0, stop.getTime() - start.getTime());
         const diffMins = diffMs / (1000 * 60);
         return `${diffMins.toFixed(1)} minutes`;
@@ -157,8 +157,8 @@ const ManageDevicesView = ({ userInfo, handleLogout }) => {
                                 <div className="card-header pb-2">
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <h6 style={{ margin: 0 }}>Device Details</h6>
-                                        <button 
-                                            className="btn btn-secondary mb-0" 
+                                        <button
+                                            className="btn btn-secondary mb-0"
                                             style={{ padding: '8px 15px' }}
                                             onClick={handleBackClick}
                                         >
@@ -177,10 +177,10 @@ const ManageDevicesView = ({ userInfo, handleLogout }) => {
                                                     <div style={{ fontSize: '12px', color: '#8f9297', marginBottom: '5px' }}>Serial Number</div>
                                                     <div style={{ fontSize: '14px', fontWeight: '500', color: '#344767' }}>{deviceDetails.serial_number || '-'}</div>
                                                 </div>
-                                                <div className="col-md-4" style={{ marginBottom: '15px' }}>
+                                                {/* <div className="col-md-4" style={{ marginBottom: '15px' }}>
                                                     <div style={{ fontSize: '12px', color: '#8f9297', marginBottom: '5px' }}>IMEI Number</div>
                                                     <div style={{ fontSize: '14px', fontWeight: '500', color: '#344767' }}>{deviceDetails.imei_number || '-'}</div>
-                                                </div>
+                                                </div> */}
                                                 <div className="col-md-4" style={{ marginBottom: '15px' }}>
                                                     <div style={{ fontSize: '12px', color: '#8f9297', marginBottom: '5px' }}>Device Nickname</div>
                                                     <div style={{ fontSize: '14px', fontWeight: '500', color: '#344767' }}>{deviceDetails.device_nickname || '-'}</div>
@@ -246,13 +246,12 @@ const ManageDevicesView = ({ userInfo, handleLogout }) => {
                                                                     <p className="text-xs font-weight-bold mb-0">{index + 1}</p>
                                                                 </td>
                                                                 <td>
-                                                                    <span className={`badge badge-sm ${
-                                                                        schedule.status === 'completed' ? 'bg-gradient-success' : 
-                                                                        schedule.status === 'pending' ? 'bg-gradient-warning' : 
-                                                                        schedule.status === 'started' ? 'bg-gradient-info' : 
-                                                                        schedule.status === 'cancelled' ? 'bg-gradient-danger' : 
-                                                                        'bg-gradient-secondary'
-                                                                    }`} style={{ padding: '6px 12px', textTransform: 'uppercase' }}>
+                                                                    <span className={`badge badge-sm ${schedule.status === 'completed' ? 'bg-gradient-success' :
+                                                                            schedule.status === 'pending' ? 'bg-gradient-warning' :
+                                                                                schedule.status === 'started' ? 'bg-gradient-info' :
+                                                                                    schedule.status === 'cancelled' ? 'bg-gradient-danger' :
+                                                                                        'bg-gradient-secondary'
+                                                                        }`} style={{ padding: '6px 12px', textTransform: 'uppercase' }}>
                                                                         {schedule.status || 'pending'}
                                                                     </span>
                                                                 </td>
@@ -347,7 +346,7 @@ const ManageDevicesView = ({ userInfo, handleLogout }) => {
                                                     </div>
                                                 )}
                                             </div>
-                                            
+
                                             {/* Pagination Controls */}
                                             {history.length > 0 && pagination && (
                                                 <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mt-3 px-3 pb-3">
