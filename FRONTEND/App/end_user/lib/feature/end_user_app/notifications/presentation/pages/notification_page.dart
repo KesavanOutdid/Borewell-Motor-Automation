@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
 import '../controllers/notification_controller.dart';
+import '../../../../../utils/theme/app_colors.dart';
 
 class NotificationPage extends StatelessWidget {
   const NotificationPage({super.key});
@@ -12,7 +13,7 @@ class NotificationPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: const Text('Notifications', style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.5)),
         actions: [
           Obx(() => controller.notifications.isNotEmpty 
             ? IconButton(
@@ -73,7 +74,7 @@ class NotificationPage extends StatelessWidget {
         ],
       ),
       body: RefreshIndicator(
-        color: Colors.green,
+        color: AppColors.primaryGreen,
         onRefresh: () async {
           await controller.loadNotifications();
         },
@@ -92,15 +93,16 @@ class NotificationPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.notifications_off,
+                        Icons.notifications_off_outlined,
                         size: 80,
-                        color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700] : Colors.grey[400],
+                        color: AppColors.primaryGreen.withOpacity(0.3),
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'No notifications',
+                        'No notifications yet',
                         style: TextStyle(
                           fontSize: 18,
+                          fontWeight: FontWeight.w700,
                           color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[600],
                         ),
                       ),
@@ -135,10 +137,14 @@ class NotificationPage extends StatelessWidget {
               return Dismissible(
                 key: Key(notificationId),
                 background: Container(
-                  color: Colors.red,
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 20),
-                  child: const Icon(Icons.delete, color: Colors.white),
+                  child: const Icon(Icons.delete_rounded, color: Colors.white),
                 ),
                 direction: DismissDirection.endToStart,
                 onDismissed: (direction) {
@@ -151,8 +157,10 @@ class NotificationPage extends StatelessWidget {
                   );
                 },
                 child: Card(
-                  elevation: isRead ? 0 : 2,
-                  color: isRead ? null : Colors.blue.withOpacity(0.05),
+                  elevation: isRead ? 0 : 3,
+                  shadowColor: Colors.black.withOpacity(0.08),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  color: isRead ? null : AppColors.primaryGreen.withOpacity(0.04),
                   margin: const EdgeInsets.only(bottom: 8),
                   child: InkWell(
                     onTap: () {
@@ -195,11 +203,17 @@ class NotificationPage extends StatelessWidget {
                                     ),
                                     if (!isRead)
                                       Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.blue,
+                                        width: 10,
+                                        height: 10,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primaryGreen,
                                           shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: AppColors.primaryGreen.withOpacity(0.4),
+                                              blurRadius: 6,
+                                            ),
+                                          ],
                                         ),
                                       ),
                                   ],

@@ -21,34 +21,67 @@ class ResetPasswordView extends GetView<ForgotPasswordController> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 40),
                 decoration: const BoxDecoration(
-                  color: AppColors.primaryGreen,
+                  gradient: AppColors.primaryGradient,
                   borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(40),
                     bottomRight: Radius.circular(40),
                   ),
                 ),
-                child: Column(
+                child: Stack(
                   children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Get.back(),
+                    Positioned(
+                      right: -50,
+                      top: -50,
+                      child: Container(
+                        width: 160,
+                        height: 160,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.08),
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
-                    const Icon(
-                      Icons.security,
-                      size: 80,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      "Reset Password",
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                    Column(
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                            onPressed: () => Get.back(),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.security_rounded,
+                            size: 50,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Reset Password',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Create your new 6-digit PIN',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.white.withOpacity(0.8),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -158,7 +191,7 @@ class ResetPasswordView extends GetView<ForgotPasswordController> {
                                   }
                                 },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryGreen,
+                            backgroundColor: Colors.transparent,
                             foregroundColor: Colors.white,
                             disabledBackgroundColor: Colors.grey.shade200,
                             disabledForegroundColor: Colors.grey.shade500,
@@ -166,17 +199,59 @@ class ResetPasswordView extends GetView<ForgotPasswordController> {
                               borderRadius: BorderRadius.circular(28),
                             ),
                             elevation: 0,
+                            shadowColor: Colors.transparent,
+                            padding: EdgeInsets.zero,
                           ),
-                          child: controller.isLoading.value
+                          child: Ink(
+                            decoration: BoxDecoration(
+                              gradient: (controller.isLoading.value || 
+                                         controller.newPassword.value.length < 6 || 
+                                         controller.confirmPassword.value.length < 6)
+                                  ? null
+                                  : AppColors.primaryGradient,
+                              color: (controller.isLoading.value || 
+                                      controller.newPassword.value.length < 6 || 
+                                      controller.confirmPassword.value.length < 6)
+                                  ? Colors.grey.shade200
+                                  : null,
+                              borderRadius: BorderRadius.circular(28),
+                              boxShadow: (controller.isLoading.value || 
+                                          controller.newPassword.value.length < 6 || 
+                                          controller.confirmPassword.value.length < 6)
+                                  ? null
+                                  : [
+                                      BoxShadow(
+                                        color: AppColors.primaryGreen.withOpacity(0.4),
+                                        blurRadius: 16,
+                                        offset: const Offset(0, 6),
+                                        spreadRadius: -2,
+                                      ),
+                                    ],
+                            ),
+                            child: Container(
+                              alignment: Alignment.center,
+                              height: 56,
+                              child: controller.isLoading.value
                               ? const SizedBox(
                                   width: 24,
                                   height: 24,
                                   child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                                 )
-                              : const Text(
-                                  "Reset Password",
-                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1),
+                              : Text(
+                                  'Reset Password',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1,
+                                    color: (controller.isLoading.value || 
+                                            controller.newPassword.value.length < 6 || 
+                                            controller.confirmPassword.value.length < 6)
+                                        ? Colors.grey.shade500
+                                        : Colors.white,
+                                  ),
                                 ),
+                            ),
+                          ),
                         ),
                       )),
                     ],

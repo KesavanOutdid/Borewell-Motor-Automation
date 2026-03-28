@@ -446,6 +446,13 @@ class ProfileView extends GetView<ProfileController> {
                             color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade800 : Colors.grey.shade200,
                             width: 1,
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.06),
+                              blurRadius: 20,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
                         child: Row(
                           children: [
@@ -453,7 +460,7 @@ class ProfileView extends GetView<ProfileController> {
                               child: _QuickActionCard(
                                 icon: Icons.shopping_bag_rounded,
                                 label: 'All Orders',
-                                gradient: AppColors.primaryGradient,
+                                gradient: const LinearGradient(colors: [Color(0xFF3B82F6), Color(0xFF60A5FA)]),
                                 onTap: () => Get.toNamed('/orders'),
                               ),
                             ),
@@ -461,7 +468,7 @@ class ProfileView extends GetView<ProfileController> {
                               child: _QuickActionCard(
                                 icon: Icons.local_offer_rounded,
                                 label: 'Vouchers',
-                                gradient: AppColors.primaryGradient,
+                                gradient: const LinearGradient(colors: [Color(0xFFFF8A00), Color(0xFFFBBF24)]),
                                 onTap: () => Get.toNamed('/vouchers'),
                               ),
                             ),
@@ -469,7 +476,7 @@ class ProfileView extends GetView<ProfileController> {
                               child: _QuickActionCard(
                                 icon: Icons.location_on,
                                 label: 'Address',
-                                gradient: AppColors.primaryGradient,
+                                gradient: const LinearGradient(colors: [Color(0xFF9D4EDD), Color(0xFFC084FC)]),
                                 onTap: () => Get.toNamed('/addresses'),
                               ),
                             ),
@@ -481,19 +488,19 @@ class ProfileView extends GetView<ProfileController> {
                         _MenuItemData(
                           icon: Icons.notifications_rounded,
                           title: 'Notification',
-                          color: AppColors.primaryGreen,
+                          color: const Color(0xFFFF8A00),
                           onTap: () => Get.toNamed('/notifications'),
                         ),
                         _MenuItemData(
                           icon: Icons.headset_mic_rounded,
                           title: 'Contact Us',
-                          color: AppColors.primaryGreen,
+                          color: const Color(0xFF3B82F6),
                           onTap: () => Get.toNamed('/contact'),
                         ),
                         _MenuItemData(
                           icon: Icons.verified_user_rounded,
                           title: 'Privacy Policy',
-                          color: AppColors.primaryGreen,
+                          color: const Color(0xFF9D4EDD),
                           onTap: () => Get.toNamed('/privacyPolicy'),
                         ),
                         _MenuItemData(
@@ -605,9 +612,20 @@ class _ProfileMenuTile extends StatelessWidget {
         color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
+          color: item.title == 'Logout'
+              ? Colors.redAccent.withOpacity(0.2)
+              : (isDark ? Colors.grey.shade800 : Colors.grey.shade100),
           width: 1,
         ),
+        boxShadow: item.title == 'Logout'
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Material(
         color: Colors.transparent,

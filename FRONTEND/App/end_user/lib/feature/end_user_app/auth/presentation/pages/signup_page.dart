@@ -13,26 +13,72 @@ class SignupView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      appBar: AppBar(
-        title: const Text(
-          "Create Account",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
-            color: Colors.white,
-          ),
-        ),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: AppColors.primaryGreen,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 32),
+                decoration: const BoxDecoration(
+                  gradient: AppColors.primaryGradient,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(40),
+                    bottomRight: Radius.circular(40),
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      right: -50,
+                      top: -50,
+                      child: Container(
+                        width: 160,
+                        height: 160,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.08),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    Column(
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                            onPressed: () => Get.back(),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Create Account',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Join AgriPlus today',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.white.withOpacity(0.8),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Transform.translate(
+                offset: const Offset(0, -24),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 400),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
@@ -86,7 +132,7 @@ class SignupView extends StatelessWidget {
                         ),
                         prefixIcon: Icon(
                           Icons.person_outline,
-                          color: Colors.grey.shade500,
+                          color: AppColors.primaryGreen.withOpacity(0.6),
                           size: 22,
                         ),
                         filled: true,
@@ -122,7 +168,7 @@ class SignupView extends StatelessWidget {
                         ),
                         prefixIcon: Icon(
                           Icons.email_outlined,
-                          color: Colors.grey.shade500,
+                          color: AppColors.primaryGreen.withOpacity(0.6),
                           size: 22,
                         ),
                         filled: true,
@@ -159,7 +205,7 @@ class SignupView extends StatelessWidget {
                         ),
                         prefixIcon: Icon(
                           Icons.phone_outlined,
-                          color: Colors.grey.shade500,
+                          color: AppColors.primaryGreen.withOpacity(0.6),
                           size: 22,
                         ),
                         counterText: "",
@@ -198,7 +244,7 @@ class SignupView extends StatelessWidget {
                         ),
                         prefixIcon: Icon(
                           Icons.lock_outline,
-                          color: Colors.grey.shade500,
+                          color: AppColors.primaryGreen.withOpacity(0.6),
                           size: 22,
                         ),
                         counterText: "",
@@ -226,15 +272,32 @@ class SignupView extends StatelessWidget {
                         child: ElevatedButton(
                           onPressed: controller.isLoading.value ? null : () => controller.signup(),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryGreen,
+                            backgroundColor: Colors.transparent,
                             foregroundColor: Colors.white,
                             elevation: 0,
-                            shadowColor: AppColors.primaryGreen.withOpacity(0.3),
+                            shadowColor: Colors.transparent,
+                            padding: EdgeInsets.zero,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(28),
                             ),
                           ),
-                          child: controller.isLoading.value
+                          child: Ink(
+                            decoration: BoxDecoration(
+                              gradient: AppColors.primaryGradient,
+                              borderRadius: BorderRadius.circular(28),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primaryGreen.withOpacity(0.4),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 6),
+                                  spreadRadius: -2,
+                                ),
+                              ],
+                            ),
+                            child: Container(
+                              alignment: Alignment.center,
+                              height: 56,
+                              child: controller.isLoading.value
                               ? const SizedBox(
                                   width: 24,
                                   height: 24,
@@ -251,6 +314,8 @@ class SignupView extends StatelessWidget {
                                     letterSpacing: 0.5,
                                   ),
                                 ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -282,6 +347,9 @@ class SignupView extends StatelessWidget {
                 ),
               ),
             ),
+          ),
+        ),
+            ],
           ),
         ),
       ),

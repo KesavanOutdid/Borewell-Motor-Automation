@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 class AppTheme {
@@ -8,6 +9,7 @@ class AppTheme {
     brightness: Brightness.light,
     primaryColor: AppColors.primaryGreen,
     scaffoldBackgroundColor: AppColors.backgroundLight,
+    fontFamily: GoogleFonts.poppins().fontFamily,
     colorScheme: ColorScheme.light(
       primary: AppColors.primaryGreen,
       secondary: AppColors.emerald,
@@ -191,6 +193,7 @@ class AppTheme {
     brightness: Brightness.dark,
     primaryColor: AppColors.primaryGreen,
     scaffoldBackgroundColor: AppColors.backgroundDark,
+    fontFamily: GoogleFonts.poppins().fontFamily,
     colorScheme: const ColorScheme.dark(
       primary: AppColors.primaryGreen,
       secondary: AppColors.emerald,

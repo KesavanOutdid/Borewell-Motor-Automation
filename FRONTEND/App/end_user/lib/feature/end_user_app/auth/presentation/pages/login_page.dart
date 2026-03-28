@@ -19,21 +19,44 @@ class LoginView extends GetView<AuthController> {
               Container(
                 width: double.infinity,
                 decoration: const BoxDecoration(
-                  color: AppColors.primaryGreen,
+                  gradient: AppColors.primaryGradient,
                 ),
-                child: Column(
+                child: Stack(
                   children: [
-                    const SizedBox(height: 16),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Navigator.of(context).pop(),
+                    Positioned(
+                      right: -60,
+                      top: -60,
+                      child: Container(
+                        width: 180,
+                        height: 180,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.08),
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    const _Logo(),
-                    const SizedBox(height: 40),
+                    Positioned(
+                      left: -40,
+                      top: 60,
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 50),
+                          const _Logo(),
+                          const SizedBox(height: 40),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -208,7 +231,7 @@ class _FormContentState extends State<_FormContent> {
                     ),
                     prefixIcon: Icon(
                       Icons.email_outlined,
-                      color: Colors.grey.shade500,
+                      color: AppColors.primaryGreen.withOpacity(0.6),
                       size: 22,
                     ),
                     filled: true,
@@ -255,7 +278,7 @@ class _FormContentState extends State<_FormContent> {
                       ),
                       prefixIcon: Icon(
                         Icons.lock_outline,
-                        color: Colors.grey.shade500,
+                        color: AppColors.primaryGreen.withOpacity(0.6),
                         size: 22,
                       ),
                       suffixIcon: IconButton(
@@ -335,15 +358,32 @@ class _FormContentState extends State<_FormContent> {
                               }
                             },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryGreen,
+                        backgroundColor: Colors.transparent,
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        shadowColor: AppColors.primaryGreen.withOpacity(0.3),
+                        shadowColor: Colors.transparent,
+                        padding: EdgeInsets.zero,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(28),
                         ),
                       ),
-                      child: controller.isLoading.value
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          gradient: AppColors.primaryGradient,
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primaryGreen.withOpacity(0.4),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
+                              spreadRadius: -2,
+                            ),
+                          ],
+                        ),
+                        child: Container(
+                          alignment: Alignment.center,
+                          height: 56,
+                          child: controller.isLoading.value
                           ? const SizedBox(
                               width: 24,
                               height: 24,
@@ -352,14 +392,16 @@ class _FormContentState extends State<_FormContent> {
                                 strokeWidth: 2.5,
                               ),
                             )
-                          : const Text(
-                              'Login',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
+                              : const Text(
+                                  'Login',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
