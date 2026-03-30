@@ -66,9 +66,9 @@ class HomeView extends GetView<HomeController> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Home',
-                                style: TextStyle(
+                              Text(
+                                'home'.tr,
+                                style: const TextStyle(
                                   fontSize: 26,
                                   fontWeight: FontWeight.w900,
                                   color: Colors.white,
@@ -111,20 +111,23 @@ class HomeView extends GetView<HomeController> {
                                         child: Container(
                                           padding: const EdgeInsets.all(4),
                                           decoration: BoxDecoration(
-                                            color: Colors.green,
+                                            color: Colors.red,
                                             shape: BoxShape.circle,
-                                            border: Border.all(color: Colors.white, width: 0.8),
+                                            border: Border.all(color: Colors.white, width: 1.5),
+                                            boxShadow: [
+                                              BoxShadow(color: Colors.red.withOpacity(0.4), blurRadius: 6),
+                                            ],
                                           ),
                                           constraints: const BoxConstraints(
-                                            minWidth: 16,
-                                            minHeight: 16,
+                                            minWidth: 18,
+                                            minHeight: 18,
                                           ),
                                           child: Text(
                                             unreadCount > 99 ? '99+' : unreadCount.toString(),
                                             style: const TextStyle(
                                               color: Colors.white,
-                                              fontSize: 7,
-                                              fontWeight: FontWeight.w400,
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w800,
                                             ),
                                             textAlign: TextAlign.center,
                                           ),
@@ -148,21 +151,21 @@ class HomeView extends GetView<HomeController> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    _buildFilterChip('Recently'),
+                    _buildFilterChip('recently'.tr, 'Recently'),
                     const SizedBox(width: 8),
-                    _buildFilterChip('All'),
+                    _buildFilterChip('all'.tr, 'All'),
                     const SizedBox(width: 8),
-                    _buildFilterChip('Running'),
+                    _buildFilterChip('running'.tr, 'Running'),
                     const SizedBox(width: 8),
-                    _buildFilterChip('Stopped'),
+                    _buildFilterChip('stopped'.tr, 'Stopped'),
                     const SizedBox(width: 8),
-                    _buildFilterChip('Online'),
+                    _buildFilterChip('online'.tr, 'Online'),
                     const SizedBox(width: 8),
-                    _buildFilterChip('Offline'),
+                    _buildFilterChip('offline'.tr, 'Offline'),
                     const SizedBox(width: 8),
-                    _buildFilterChip('Access'),
+                    _buildFilterChip('access'.tr, 'Access'),
                     const SizedBox(width: 8),
-                    _buildFilterChip('Not Configured'),
+                    _buildFilterChip('not_configured'.tr, 'Not Configured'),
                   ],
                 ),
               )),
@@ -217,7 +220,7 @@ class HomeView extends GetView<HomeController> {
                               ),
                               const SizedBox(height: 24),
                               Text(
-                                'No devices assigned',
+                                'no_devices_assigned'.tr,
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -226,7 +229,7 @@ class HomeView extends GetView<HomeController> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Contact admin to assign devices',
+                                'contact_admin_to_assign_devices'.tr,
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -252,7 +255,7 @@ class HomeView extends GetView<HomeController> {
                             child: Padding(
                               padding: const EdgeInsets.all(24),
                               child: Text(
-                                'No devices found',
+                                'no_devices_found'.tr,
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: Colors.grey.shade600,
@@ -302,17 +305,25 @@ class HomeView extends GetView<HomeController> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: BoxDecoration(
-                color: AppColors.primaryGreen,
+                gradient: AppColors.primaryGradient,
                 borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryGreen.withOpacity(0.4),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                    spreadRadius: -2,
+                  ),
+                ],
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 24),
-                  SizedBox(width: 8),
+                children: [
+                  const Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 24),
+                  const SizedBox(width: 8),
                   Text(
-                    'Add',
-                    style: TextStyle(
+                    'add'.tr,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
                       fontSize: 14,
@@ -336,12 +347,14 @@ class HomeView extends GetView<HomeController> {
     controller.fetchDevices();
   }
 
-  Widget _buildFilterChip(String label) {
-    final isSelected = controller.selectedFilter.value == label;
+  Widget _buildFilterChip(String label, String value) {
+    final isSelected = controller.selectedFilter.value == value;
     
     return GestureDetector(
-      onTap: () => controller.setFilter(label),
-      child: Container(
+      onTap: () => controller.setFilter(value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primaryGreen : Colors.white,
@@ -350,7 +363,15 @@ class HomeView extends GetView<HomeController> {
             color: isSelected ? AppColors.primaryGreen : Colors.grey.shade300,
             width: 1,
           ),
-          boxShadow: null,
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primaryGreen.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           label,
@@ -383,8 +404,8 @@ class HomeView extends GetView<HomeController> {
     final isOnline = controller.isOnline(device);
     
     final deviceStatus = !isConfigured 
-        ? 'Not Configured' 
-        : (isRunning ? 'Running' : (isOnline ? 'Idle' : 'Offline'));
+        ? 'not_configured'.tr 
+        : (isRunning ? 'running'.tr : (isOnline ? 'idle'.tr : 'offline'.tr));
     
     final statusColor = !isConfigured 
         ? AppColors.primaryOrange 
@@ -413,12 +434,19 @@ class HomeView extends GetView<HomeController> {
     return GestureDetector(
       onTap: isPending ? null : () => _navigateDevice(device),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border(
-            bottom: BorderSide(color: Colors.grey.shade100, width: 1),
-          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 4),
+              spreadRadius: -2,
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -461,11 +489,14 @@ class HomeView extends GetView<HomeController> {
                             ),
                           ),
                           const SizedBox(width: 6),
-                          Icon(
-                            Icons.wifi_rounded,
-                            size: 14,
-                            color: isOnline ? AppColors.primaryGreen : Colors.grey.shade400,
-                          ),
+                          if (isRunning)
+                            const _PulsingDot(color: AppColors.primaryGreen)
+                          else
+                            Icon(
+                              Icons.wifi_rounded,
+                              size: 14,
+                              color: isOnline ? AppColors.primaryGreen : Colors.grey.shade400,
+                            ),
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -497,9 +528,9 @@ class HomeView extends GetView<HomeController> {
                             color: Colors.grey.shade500,
                           ),
                           children: [
-                            const TextSpan(
-                              text: 'SN ',
-                              style: TextStyle(
+                            TextSpan(
+                              text: '${'sn_label'.tr} ',
+                              style: const TextStyle(
                                 color: AppColors.primaryGreen,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -515,7 +546,7 @@ class HomeView extends GetView<HomeController> {
                             const Icon(Icons.schedule_rounded, size: 12, color: AppColors.primaryOrange),
                             const SizedBox(width: 4),
                             Text(
-                              'Starts at $nextStartTime',
+                              '${'starts_at'.tr} $nextStartTime',
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
@@ -532,7 +563,7 @@ class HomeView extends GetView<HomeController> {
                             const Icon(Icons.timer_rounded, size: 12, color: AppColors.primaryGreen),
                             const SizedBox(width: 4),
                             Text(
-                              'Stops at $nextStopTime',
+                              '${'stops_at'.tr} $nextStopTime',
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
@@ -551,19 +582,34 @@ class HomeView extends GetView<HomeController> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        color: statusColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: statusColor.withOpacity(0.2)),
                       ),
-                      child: Text(
-                        deviceStatus,
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w800,
-                          color: statusColor,
-                          letterSpacing: 0.3,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: statusColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            deviceStatus,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: statusColor,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     // if (isConfigured) ...[
@@ -625,7 +671,7 @@ class HomeView extends GetView<HomeController> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      child: const Text('Accept', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      child: Text('accept'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -640,7 +686,7 @@ class HomeView extends GetView<HomeController> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      child: const Text('Reject', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      child: Text('reject'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     ),
                   ),
                 ],
@@ -738,6 +784,56 @@ class HomeView extends GetView<HomeController> {
                   ),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PulsingDot extends StatefulWidget {
+  final Color color;
+  const _PulsingDot({required this.color});
+
+  @override
+  State<_PulsingDot> createState() => _PulsingDotState();
+}
+
+class _PulsingDotState extends State<_PulsingDot>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (_, __) => Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(
+          color: widget.color,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: widget.color.withOpacity(0.2 + _controller.value * 0.5),
+              blurRadius: 4 + _controller.value * 8,
+              spreadRadius: _controller.value * 3,
             ),
           ],
         ),

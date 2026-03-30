@@ -62,6 +62,7 @@ dependencies:
   dio: any
   curl_logger_dio_interceptor: any
   http_parser: any
+  google_fonts: ^8.0.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

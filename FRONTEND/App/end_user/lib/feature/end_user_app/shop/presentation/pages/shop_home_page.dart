@@ -124,14 +124,14 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'Shop',
-                                    style: TextStyle(
+                                  Text(
+                                    'shop'.tr,
+                                    style: const TextStyle(
                                       fontSize: 26,
                                       fontWeight: FontWeight.w900,
                                       color: Colors.white,
@@ -219,8 +219,8 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: SizedBox(
                     height: MediaQuery.of(context).size.height * 0.6,
-                    child: const Center(
-                      child: Text('No products available'),
+                    child: Center(
+                      child: Text('no_products_available'.tr),
                     ),
                   ),
                 ),
@@ -239,7 +239,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                     if (index >= products.length) {
                       if (controller.hasNextPage.value) {
                         controller.loadMore();
-                        return const Center(
+                        return Center(
                           child: Padding(
                             padding: EdgeInsets.all(16.0),
                             child: CircularProgressIndicator(),
@@ -310,7 +310,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                       autofocus: true,
                       onChanged: (value) => controller.updateSearchQuery(value),
                       decoration: InputDecoration(
-                        hintText: 'Search motors, controllers...',
+                        hintText: 'search_hint'.tr,
                         hintStyle: TextStyle(
                           fontSize: 14,
                           color: Colors.grey.shade400,
@@ -347,14 +347,13 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                 final filteredProducts = controller.filteredProducts;
                 
                 if (controller.searchQuery.value.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.search, size: 64, color: Colors.grey),
                         SizedBox(height: 16),
-                        Text(
-                          'Search for products',
+                        Text('search_products'.tr,
                           style: TextStyle(fontSize: 16, color: Colors.grey),
                         ),
                       ],
@@ -363,14 +362,13 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                 }
                 
                 if (filteredProducts.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.search_off, size: 64, color: Colors.grey),
                         SizedBox(height: 16),
-                        Text(
-                          'No products found',
+                        Text('no_products_found'.tr,
                           style: TextStyle(fontSize: 16, color: Colors.grey),
                         ),
                       ],
@@ -396,7 +394,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                             ),
                           ),
                           if (hasSecondProduct) ...[
-                            const SizedBox(width: 16),
+                            SizedBox(width: 16),
                             Expanded(
                               child: _buildProductCard(
                                 filteredProducts[rowIndex + 1],
@@ -465,7 +463,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                           errorBuilder: (context, error, stackTrace) {
                             return Container(
                               color: Colors.grey.shade200,
-                              child: const Center(
+                              child: Center(
                                 child: Icon(
                                   Icons.image_not_supported,
                                   size: 40,
@@ -503,10 +501,10 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                     color: Colors.black.withValues(alpha: 0.6),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Text(
-                      'OUT OF STOCK',
-                      style: TextStyle(
+                      'out_of_stock'.tr,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
@@ -516,7 +514,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                 ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             productName,
             style: const TextStyle(
@@ -528,7 +526,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -546,7 +544,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
               ),
               if (isOutOfStock)
                 Text(
-                  'Out of Stock',
+                  'out_of_stock'.tr,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -610,7 +608,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
                                 color: Colors.grey.shade200,
-                                child: const Center(
+                                child: Center(
                                   child: Icon(
                                     Icons.image_not_supported,
                                     size: 40,
@@ -634,10 +632,10 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                         color: Colors.black.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Text(
-                          'OUT OF STOCK',
-                          style: TextStyle(
+                          'out_of_stock'.tr,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 10,
@@ -648,7 +646,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -667,7 +665,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -688,7 +686,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            'Out of Stock',
+                            'out_of_stock'.tr,
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -711,14 +709,13 @@ class _ShopHomeViewState extends State<ShopHomeView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
+        Padding(
           padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
           child: Row(
             children: [
               Icon(Icons.local_offer, color: AppColors.primaryGreen, size: 20),
               SizedBox(width: 8),
-              Text(
-                'Available Offers',
+              Text('available_offers'.tr,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -741,7 +738,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
             },
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
       ],
     );
   }
@@ -828,7 +825,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        '${voucher.discountPercentage}% OFF',
+                        '${voucher.discountPercentage}% ${'off'.tr}',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
@@ -845,7 +842,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          '${voucher.maxUsage - voucher.usedCount} left',
+                          '${voucher.maxUsage - voucher.usedCount} ${'left'.tr}',
                           style: const TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w600,
@@ -859,21 +856,21 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'Use Code',
-                      style: TextStyle(
+                    Text(
+                      'use_code'.tr,
+                      style: const TextStyle(
                         fontSize: 11,
                         color: Colors.white,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    SizedBox(height: 3),
                     InkWell(
                       onTap: () {
                         Clipboard.setData(ClipboardData(text: voucher.voucherCode));
                         Get.snackbar(
-                          'Copied!',
-                          'Voucher code ${voucher.voucherCode} copied to clipboard',
+                          'copied'.tr,
+                          '${'voucher_copied'.tr}: ${voucher.voucherCode}',
                           snackPosition: SnackPosition.BOTTOM,
                           backgroundColor: Colors.green,
                           colorText: Colors.white,
@@ -905,7 +902,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                                 letterSpacing: 0.8,
                               ),
                             ),
-                            const SizedBox(width: 6),
+                            SizedBox(width: 6),
                             Icon(Icons.copy, size: 13, color: gradient[0]),
                           ],
                         ),
@@ -951,12 +948,12 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         Container(
                           width: double.infinity,
                           height: 16,
@@ -965,7 +962,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         Container(
                           width: 150,
                           height: 16,
@@ -974,7 +971,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         Container(
                           width: 80,
                           height: 24,
@@ -999,14 +996,13 @@ class _ShopHomeViewState extends State<ShopHomeView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
+        Padding(
           padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
           child: Row(
             children: [
               Icon(Icons.local_offer, color: Colors.grey, size: 20),
               SizedBox(width: 8),
-              Text(
-                'Available Offers',
+              Text('available_offers'.tr,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -1039,7 +1035,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
             },
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
       ],
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
 import '../controllers/notification_controller.dart';
+import '../../../../../utils/theme/app_colors.dart';
 
 class NotificationPage extends StatelessWidget {
   const NotificationPage({super.key});
@@ -12,7 +13,7 @@ class NotificationPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text('Notifications', style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.5)),
         actions: [
           Obx(() => controller.notifications.isNotEmpty 
             ? IconButton(
@@ -30,12 +31,12 @@ class NotificationPage extends StatelessWidget {
                     Get.dialog(
                       Builder(
                         builder: (context) => AlertDialog(
-                          title: const Text('Clear All Notifications'),
-                          content: const Text('Are you sure you want to clear all notifications?'),
+                          title: Text('Clear All Notifications'),
+                          content: Text('Are you sure you want to clear all notifications?'),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-                              child: const Text('No'),
+                              child: Text('no'.tr),
                             ),
                             TextButton(
                               onPressed: () async {
@@ -48,7 +49,7 @@ class NotificationPage extends StatelessWidget {
                                   duration: const Duration(seconds: 2),
                                 );
                               },
-                              child: const Text('Yes', style: TextStyle(color: Colors.red)),
+                              child: Text('yes'.tr, style: TextStyle(color: Colors.red)),
                             ),
                           ],
                         ),
@@ -57,13 +58,13 @@ class NotificationPage extends StatelessWidget {
                   }
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'clear_all',
                     child: Row(
                       children: [
-                        Icon(Icons.delete_sweep, color: Colors.red),
-                        SizedBox(width: 8),
-                        Text('Clear All'),
+                        const Icon(Icons.delete_sweep, color: Colors.red),
+                        const SizedBox(width: 8),
+                        Text('clear_all'.tr),
                       ],
                     ),
                   ),
@@ -73,7 +74,7 @@ class NotificationPage extends StatelessWidget {
         ],
       ),
       body: RefreshIndicator(
-        color: Colors.green,
+        color: AppColors.primaryGreen,
         onRefresh: () async {
           await controller.loadNotifications();
         },
@@ -92,19 +93,20 @@ class NotificationPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.notifications_off,
+                        Icons.notifications_off_outlined,
                         size: 80,
-                        color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700] : Colors.grey[400],
+                        color: AppColors.primaryGreen.withOpacity(0.3),
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       Text(
-                        'No notifications',
+                        'No notifications yet',
                         style: TextStyle(
                           fontSize: 18,
+                          fontWeight: FontWeight.w700,
                           color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[600],
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Text(
                         'Notifications older than 7 days are auto-deleted',
                         style: TextStyle(
@@ -135,10 +137,14 @@ class NotificationPage extends StatelessWidget {
               return Dismissible(
                 key: Key(notificationId),
                 background: Container(
-                  color: Colors.red,
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 20),
-                  child: const Icon(Icons.delete, color: Colors.white),
+                  child: const Icon(Icons.delete_rounded, color: Colors.white),
                 ),
                 direction: DismissDirection.endToStart,
                 onDismissed: (direction) {
@@ -151,8 +157,10 @@ class NotificationPage extends StatelessWidget {
                   );
                 },
                 child: Card(
-                  elevation: isRead ? 0 : 2,
-                  color: isRead ? null : Colors.blue.withOpacity(0.05),
+                  elevation: isRead ? 0 : 3,
+                  shadowColor: Colors.black.withOpacity(0.08),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  color: isRead ? null : AppColors.primaryGreen.withOpacity(0.04),
                   margin: const EdgeInsets.only(bottom: 8),
                   child: InkWell(
                     onTap: () {
@@ -177,7 +185,7 @@ class NotificationPage extends StatelessWidget {
                               size: 24,
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,16 +203,22 @@ class NotificationPage extends StatelessWidget {
                                     ),
                                     if (!isRead)
                                       Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.blue,
+                                        width: 10,
+                                        height: 10,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primaryGreen,
                                           shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: AppColors.primaryGreen.withOpacity(0.4),
+                                              blurRadius: 6,
+                                            ),
+                                          ],
                                         ),
                                       ),
                                   ],
                                 ),
-                                const SizedBox(height: 4),
+                                SizedBox(height: 4),
                                 Text(
                                   body,
                                   style: TextStyle(
@@ -215,7 +229,7 @@ class NotificationPage extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 if (timestamp.isNotEmpty) ...[
-                                  const SizedBox(height: 8),
+                                  SizedBox(height: 8),
                                   Text(
                                     timestamp,
                                     style: TextStyle(
@@ -267,7 +281,7 @@ class NotificationPage extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,7 +294,7 @@ class NotificationPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Container(
                       width: double.infinity,
                       height: 14,
@@ -289,7 +303,7 @@ class NotificationPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Container(
                       width: 200,
                       height: 14,
@@ -298,7 +312,7 @@ class NotificationPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Container(
                       width: 80,
                       height: 12,

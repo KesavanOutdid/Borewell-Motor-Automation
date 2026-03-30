@@ -1,5 +1,7 @@
+import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../../utils/theme/app_colors.dart';
 
 class ContactView extends StatelessWidget {
   const ContactView({super.key});
@@ -27,82 +29,112 @@ class ContactView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Contact Us'),
+        title: Text('contact_us'.tr,
+          style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.5),
+        ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(24.0),
           child: Column(
             children: [
-              Center(
-                child: Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Theme.of(context).brightness == Brightness.dark ? Colors.green.shade900.withOpacity(0.3) : Colors.green[100],
+              // Header icon
+              Container(
+                width: 90,
+                height: 90,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF059669), Color(0xFF10B981)],
                   ),
-                  child: Icon(
-                    Icons.headset_mic,
-                    size: 50,
-                    color: Theme.of(context).brightness == Brightness.dark ? Colors.green.shade400 : Colors.green[700],
-                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryGreen.withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.headset_mic_rounded,
+                  size: 42,
+                  color: Colors.white,
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               Text(
                 'Get in Touch',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 "We're here to help. Reach out to us with any questions, concerns, or feedback.",
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 14),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                  height: 1.5,
+                ),
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               Row(
                 children: [
                   Expanded(
                     child: _buildContactCard(
                       context,
-                      icon: Icons.phone,
+                      icon: Icons.phone_rounded,
                       title: 'Call us',
                       subtitle: 'Mon-Sat • 9.30am-6.30pm',
+                      color: const Color(0xFF3B82F6),
                       onTap: () => _launchPhone('+1-800-123-4567'),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: _buildContactCard(
                       context,
-                      icon: Icons.email,
+                      icon: Icons.email_rounded,
                       title: 'Email us',
-                      subtitle: 'Mon-Sat • 9.30am-6.30pm',
+                      subtitle: 'support@agriplus.com',
+                      color: const Color(0xFF9D4EDD),
                       onTap: () => _launchEmail('support@agriplus.com'),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
                     child: _buildContactCard(
                       context,
-                      icon: Icons.email,
-                      title: 'Email us',
+                      icon: Icons.alternate_email_rounded,
+                      title: 'General',
                       subtitle: 'contact@gmail.com',
+                      color: const Color(0xFFFF8A00),
                       onTap: () => _launchEmail('contact@gmail.com'),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(child: Container()),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: _buildContactCard(
+                      context,
+                      icon: Icons.support_agent_rounded,
+                      title: 'raise_ticket'.tr,
+                      subtitle: 'raise_ticket_desc'.tr,
+                      color: AppColors.primaryGreen,
+                      onTap: () => Get.toNamed('/help'),
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -117,42 +149,60 @@ class ContactView extends StatelessWidget {
     required IconData icon,
     required String title,
     required String subtitle,
+    required Color color,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: onTap,
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.green[600],
-                ),
-                child: Icon(icon, color: Colors.white, size: 28),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardTheme.color,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, color: color, size: 26),
+            ),
+            SizedBox(height: 14),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.2,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                color: isDark ? Colors.grey.shade500 : Colors.grey.shade500,
+              ),
+            ),
+          ],
         ),
       ),
     );

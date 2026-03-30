@@ -35,15 +35,15 @@ class DashboardController extends GetxController {
   String getPageTitle(int index) {
     switch (index) {
       case 0:
-        return 'Devices';
+        return 'devices'.tr;
       case 1:
-        return 'Shop';
+        return 'shop'.tr;
       case 2:
-        return 'Orders';
+        return 'orders'.tr;
       case 3:
-        return 'Profile';
+        return 'profile'.tr;
       default:
-        return 'Devices';
+        return 'devices'.tr;
     }
   }
 }

@@ -12,7 +12,7 @@ import '../../../device/presentation/pages/qr_scanner_page.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import '../../../../../core/services/socket_service.dart';
 
 class HomeController extends GetxController with WidgetsBindingObserver {
   var devices = <Map<String, dynamic>>[].obs;
@@ -31,7 +31,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
 
   late TokenService tokenService;
   final _storage = GetStorage();
-  IO.Socket? _socket;
+  List<StreamSubscription> _socketSubs = [];
   Timer? _offlineCheckTimer;
   Timer? _pendingRefreshTimer;
 
@@ -87,7 +87,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       print('🏠 [HOME] App resumed, refreshing device states...');
-      _socket?.connect(); // Ensure socket is connected
+      Get.find<SocketService>().ensureConnected(); // Ensure socket is connected
       fetchDevices(silent: true);
     }
   }
@@ -137,28 +137,23 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
     scrollController.dispose();
-    _socket?.dispose();
+    for (var sub in _socketSubs) sub.cancel();
+    _socketSubs.clear();
     _offlineCheckTimer?.cancel();
     super.onClose();
   }
 
-  void _initSocket() {
-    print('🏠 [HOME] Initializing Socket.IO connection...');
+  void _subscribeToSocket() {
+    // Cancel any previous subscriptions
+    for (var sub in _socketSubs) sub.cancel();
+    _socketSubs.clear();
+
+    print('🏠 [HOME] Subscribing to centralized SocketService...');
     try {
-      final token = tokenService.getToken();
-      _socket = IO.io(AppConfig.socketIOUrl, <String, dynamic>{
-        'transports': ['websocket'],
-        'autoConnect': true,
-        'forceNew': true,
-        'query': {'token': token}
-      });
+      final socketService = Get.find<SocketService>();
 
-      _socket!.onConnect((_) => print('🏠 [HOME] Socket Connected successfully'));
-      _socket!.onDisconnect((_) => print('🏠 [HOME] Socket Disconnected'));
-      _socket!.onConnectError((err) => print('🏠 [HOME] Socket Connection Error: $err'));
-
-      _socket!.on('LIVE_STATUS', (data) {
-        if (data != null && data['serial_number'] != null) {
+      _socketSubs.add(socketService.onStatus.listen((data) {
+        if (data['serial_number'] != null) {
           final serial = data['serial_number'];
           final payload = data['payload'];
           _updateDeviceLastSeen(serial, silent: true);
@@ -188,10 +183,10 @@ class HomeController extends GetxController with WidgetsBindingObserver {
             _updateDeviceStatus(serial, newStatus);
           }
         }
-      });
+      }));
 
-      _socket!.on('LIVE_TELEMETRY', (data) {
-        if (data != null && data['serial_number'] != null) {
+      _socketSubs.add(socketService.onTelemetry.listen((data) {
+        if (data['serial_number'] != null) {
           final serial = data['serial_number'];
           _updateDeviceLastSeen(serial, silent: true);
           
@@ -199,10 +194,10 @@ class HomeController extends GetxController with WidgetsBindingObserver {
             _updateDeviceTelemetry(serial, Map<String, dynamic>.from(data['telemetry']));
           }
         }
-      });
+      }));
 
-      _socket!.on('LIVE_HEARTBEAT', (data) {
-        if (data != null && data['serial_number'] != null) {
+      _socketSubs.add(socketService.onHeartbeat.listen((data) {
+        if (data['serial_number'] != null) {
           final serial = data['serial_number'];
           _updateDeviceLastSeen(serial, silent: true);
           
@@ -223,9 +218,9 @@ class HomeController extends GetxController with WidgetsBindingObserver {
           }
           _updateDeviceStatus(serial, newStatus);
         }
-      });
+      }));
     } catch (e) {
-      print('🏠 [HOME] Socket initialization Error: $e');
+      print('🏠 [HOME] Socket subscription Error: $e');
     }
   }
 
@@ -416,7 +411,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   @override
   void onReady() {
     super.onReady();
-    _initSocket();
+    _subscribeToSocket();
     fetchDevices();
     
     // Periodically refresh the UI to update Online/Offline status (last seen text)
@@ -582,8 +577,8 @@ class HomeController extends GetxController with WidgetsBindingObserver {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (Get.overlayContext != null) {
             Get.snackbar(
-              "Info", 
-              "Motor is already ${status ? 'running' : 'stopped'}",
+              "info".tr, 
+              status ? 'motor_already_running'.tr : 'motor_already_stopped'.tr,
               snackPosition: SnackPosition.BOTTOM,
               duration: const Duration(seconds: 2),
             );
@@ -629,14 +624,14 @@ class HomeController extends GetxController with WidgetsBindingObserver {
         final body = jsonDecode(response.body);
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (Get.overlayContext != null) {
-            Get.snackbar("Error", body['message'] ?? "Please wait a moment");
+            Get.snackbar("error".tr, body['message'] ?? 'please_wait_moment'.tr);
           }
         });
       } else if (response.statusCode == 401) {
         Get.offAllNamed('/login');
         Future.delayed(Duration.zero, () {
           if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
-            Get.snackbar("Error", "Session expired. Please login again");
+            Get.snackbar("error".tr, 'session_expired'.tr);
           }
         });
       } else if (response.statusCode == 403) {
@@ -719,12 +714,12 @@ class HomeController extends GetxController with WidgetsBindingObserver {
         Get.dialog(
           Builder(
             builder: (context) => AlertDialog(
-              title: const Text('Success'),
-              content: Text(jsonData['message'] ?? "Device assigned successfully"),
+              title: Text('success'.tr),
+              content: Text(jsonData['message'] ?? 'device_assigned_success'.tr),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
+                  child: Text('OK'),
                 ),
               ],
             ),
@@ -745,12 +740,12 @@ class HomeController extends GetxController with WidgetsBindingObserver {
         Get.dialog(
           Builder(
             builder: (context) => AlertDialog(
-              title: const Text('Error'),
-              content: const Text('Device not found'),
+              title: Text('error'.tr),
+              content: Text('device_not_found'.tr),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
+                  child: Text('OK'),
                 ),
               ],
             ),
@@ -760,17 +755,17 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       } else if (response.statusCode == 400) {
         print('❌ Bad request');
         final jsonData = jsonDecode(response.body);
-        final errorMsg = jsonData['message'] ?? "Invalid request";
+        final errorMsg = jsonData['message'] ?? 'invalid_request'.tr;
         print('🔴 ERROR DIALOG OPENED: $errorMsg');
         Get.dialog(
           Builder(
             builder: (context) => AlertDialog(
-              title: const Text('Error'),
+              title: Text('error'.tr),
               content: Text(errorMsg),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
+                  child: Text('OK'),
                 ),
               ],
             ),
@@ -780,17 +775,17 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       } else {
         print('❌ Failed with status: ${response.statusCode}');
         final jsonData = jsonDecode(response.body);
-        final errorMsg = jsonData['message'] ?? "Failed to assign device";
+        final errorMsg = jsonData['message'] ?? 'failed_to_assign_device'.tr;
         print('🔴 ERROR DIALOG OPENED: $errorMsg');
         Get.dialog(
           Builder(
             builder: (context) => AlertDialog(
-              title: const Text('Error'),
+              title: Text('error'.tr),
               content: Text(errorMsg),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
+                  child: Text('OK'),
                 ),
               ],
             ),
@@ -806,12 +801,12 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       Get.dialog(
         Builder(
           builder: (context) => AlertDialog(
-            title: const Text('Error'),
+            title: Text('error'.tr),
             content: Text('Connection failed: $e'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('OK'),
+                child: Text('OK'),
               ),
             ],
           ),
@@ -857,8 +852,8 @@ class HomeController extends GetxController with WidgetsBindingObserver {
                     size: 60,
                     color: Colors.orange[400],
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
+                  SizedBox(height: 16),
+                  Text(
                     'Camera Permission Required',
                     style: TextStyle(
                       fontSize: 18,
@@ -866,8 +861,8 @@ class HomeController extends GetxController with WidgetsBindingObserver {
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
+                  SizedBox(height: 12),
+                  Text(
                     'Please enable camera permission in app settings to scan device QR codes',
                     style: TextStyle(
                       fontSize: 14,
@@ -875,16 +870,16 @@ class HomeController extends GetxController with WidgetsBindingObserver {
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   Row(
                     children: [
                       Expanded(
                         child: OutlinedButton(
                           onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('Cancel'),
+                          child: Text('cancel'.tr),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
@@ -895,7 +890,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
                             backgroundColor: Colors.green[600],
                             foregroundColor: Colors.white,
                           ),
-                          child: const Text('Settings'),
+                          child: Text('settings'.tr),
                         ),
                       ),
                     ],

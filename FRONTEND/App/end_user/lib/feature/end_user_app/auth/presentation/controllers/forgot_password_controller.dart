@@ -123,11 +123,11 @@ class ForgotPasswordController extends GetxController {
 
   Future<bool> resetPassword() async {
     if (newPassword.value.isEmpty || newPassword.value.length != 6) {
-      UIUtils.showErrorDialog(message: "Password must be 6 numbers");
+      UIUtils.showErrorDialog(message: 'password_must_be_6_numbers_error'.tr);
       return false;
     }
     if (newPassword.value != confirmPassword.value) {
-      UIUtils.showErrorDialog(message: "Passwords do not match");
+      UIUtils.showErrorDialog(message: 'passwords_do_not_match_error'.tr);
       return false;
     }
 

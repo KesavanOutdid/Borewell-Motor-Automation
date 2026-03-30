@@ -146,14 +146,14 @@ class CheckoutController extends GetxController {
           } catch (e) {
             logger.e('❌ Razorpay data parsing error: $e');
             UIUtils.showErrorSnackbar(
-              title: 'Error',
+              title: 'error'.tr,
               message: 'Failed to initialize payment: Invalid response from server',
             );
           }
         } else {
           logger.w('⚠️ API returned success=false');
           UIUtils.showErrorSnackbar(
-            title: 'Error',
+            title: 'error'.tr,
             message: responseData['message'] ?? 'Order creation failed',
           );
         }
@@ -164,12 +164,12 @@ class CheckoutController extends GetxController {
         try {
           final Map<String, dynamic> responseData = jsonDecode(response.body);
           UIUtils.showErrorSnackbar(
-            title: 'Error',
+            title: 'error'.tr,
             message: responseData['message'] ?? 'Failed to create order (${response.statusCode})',
           );
         } catch (e) {
           UIUtils.showErrorSnackbar(
-            title: 'Error',
+            title: 'error'.tr,
             message: 'Failed to create order: HTTP ${response.statusCode}',
           );
         }
@@ -178,7 +178,7 @@ class CheckoutController extends GetxController {
       logger.e('❌ Exception: $e');
       logger.e('Stack trace: $stackTrace');
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'Failed to create order: ${e.toString()}',
       );
     } finally {
@@ -220,7 +220,7 @@ class CheckoutController extends GetxController {
     } catch (e) {
       logger.e('❌ Razorpay Error: $e');
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'Failed to open payment gateway',
       );
     }
@@ -319,14 +319,14 @@ class CheckoutController extends GetxController {
         _handleDeactivated();
       } else {
         UIUtils.showErrorSnackbar(
-          title: 'Error',
+          title: 'error'.tr,
           message: 'Payment verification failed',
         );
       }
     } catch (e) {
       logger.e('❌ Exception: $e');
       UIUtils.showErrorSnackbar(
-        title: 'Error',
+        title: 'error'.tr,
         message: 'Failed to verify payment',
       );
     } finally {
@@ -362,7 +362,7 @@ class CheckoutController extends GetxController {
                         size: 64,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                     Text(
                       'Order Placed Successfully!',
                       style: TextStyle(
@@ -372,7 +372,7 @@ class CheckoutController extends GetxController {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     Text(
                       'Your order has been confirmed and will be processed soon.',
                       style: TextStyle(
@@ -381,7 +381,7 @@ class CheckoutController extends GetxController {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 32),
+                    SizedBox(height: 32),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -404,7 +404,7 @@ class CheckoutController extends GetxController {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'View Orders',
                           style: TextStyle(
                             fontSize: 16,
@@ -413,7 +413,7 @@ class CheckoutController extends GetxController {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
@@ -436,8 +436,7 @@ class CheckoutController extends GetxController {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
-                          'Continue Shopping',
+                        child: Text('continue_shopping'.tr,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

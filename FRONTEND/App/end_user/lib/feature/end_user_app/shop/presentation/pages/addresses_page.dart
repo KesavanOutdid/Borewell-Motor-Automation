@@ -27,7 +27,7 @@ class _AddressesPageState extends State<AddressesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Addresses'),
+        title: Text('my_addresses'.tr),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: AppColors.primaryGradient,
@@ -48,7 +48,7 @@ class _AddressesPageState extends State<AddressesPage> {
         onRefresh: () => controller.fetchAddresses(),
         child: Obx(() {
           if (controller.isLoading.value && controller.addresses.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator());
           }
 
           if (controller.addresses.isEmpty) {
@@ -65,7 +65,7 @@ class _AddressesPageState extends State<AddressesPage> {
                         size: 100,
                         color: Colors.grey.shade300,
                       ),
-                      const SizedBox(height: 24),
+                      SizedBox(height: 24),
                       Text(
                         'No addresses found',
                         style: TextStyle(
@@ -74,7 +74,7 @@ class _AddressesPageState extends State<AddressesPage> {
                           color: Colors.grey.shade600,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Text(
                         'Add your first delivery address',
                         style: TextStyle(
@@ -82,14 +82,14 @@ class _AddressesPageState extends State<AddressesPage> {
                           color: Colors.grey.shade500,
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      SizedBox(height: 24),
                       ElevatedButton.icon(
                         onPressed: () async {
                           await Get.toNamed('/add-address');
                           controller.fetchAddresses();
                         },
                         icon: const Icon(Icons.add),
-                        label: const Text('Add Address'),
+                        label: Text('add_address'.tr),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 32,
@@ -145,23 +145,23 @@ class _AddressesPageState extends State<AddressesPage> {
                 PopupMenuButton(
                   icon: const Icon(Icons.more_vert),
                   itemBuilder: (context) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'edit',
                       child: Row(
                         children: [
-                          Icon(Icons.edit, size: 20),
-                          SizedBox(width: 12),
-                          Text('Edit'),
+                          const Icon(Icons.edit, size: 20),
+                          const SizedBox(width: 12),
+                          Text('edit'.tr),
                         ],
                       ),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'delete',
                       child: Row(
                         children: [
-                          Icon(Icons.delete, size: 20, color: Colors.red),
-                          SizedBox(width: 12),
-                          Text('Delete', style: TextStyle(color: Colors.red)),
+                          const Icon(Icons.delete, size: 20, color: Colors.red),
+                          const SizedBox(width: 12),
+                          Text('delete'.tr, style: const TextStyle(color: Colors.red)),
                         ],
                       ),
                     ),
@@ -177,11 +177,11 @@ class _AddressesPageState extends State<AddressesPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             _buildInfoRow(Icons.phone, address.phone),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             _buildInfoRow(Icons.email, address.email),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             _buildInfoRow(Icons.location_on, address.fullAddress),
           ],
         ),
@@ -198,7 +198,7 @@ class _AddressesPageState extends State<AddressesPage> {
           size: 18,
           color: Colors.grey.shade600,
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(
           child: Text(
             text,
@@ -216,20 +216,19 @@ class _AddressesPageState extends State<AddressesPage> {
     Get.dialog(
       Builder(
         builder: (context) => AlertDialog(
-          title: const Text('Delete Address'),
-          content: const Text('Are you sure you want to delete this address?'),
+          title: Text('delete_address_title'.tr),
+          content: Text('delete_address_confirmation'.tr),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-              child: const Text('Cancel'),
+              child: Text('cancel'.tr),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context, rootNavigator: true).pop();
                 controller.deleteAddress(address.id!);
               },
-              child: const Text(
-                'Delete',
+              child: Text('delete'.tr,
                 style: TextStyle(color: Colors.red),
               ),
             ),

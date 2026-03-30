@@ -4,6 +4,7 @@ import '../controllers/auth_controller.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../utils/theme/app_colors.dart';
 import '../../../../../utils/ui_utils.dart';
+import '../widgets/language_selector.dart';
 
 class LoginView extends GetView<AuthController> {
   const LoginView({super.key});
@@ -19,21 +20,49 @@ class LoginView extends GetView<AuthController> {
               Container(
                 width: double.infinity,
                 decoration: const BoxDecoration(
-                  color: AppColors.primaryGreen,
+                  gradient: AppColors.primaryGradient,
                 ),
-                child: Column(
+                child: Stack(
                   children: [
-                    const SizedBox(height: 16),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Navigator.of(context).pop(),
+                    Positioned(
+                      right: -60,
+                      top: -60,
+                      child: Container(
+                        width: 180,
+                        height: 180,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.08),
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    const _Logo(),
-                    const SizedBox(height: 40),
+                    Positioned(
+                      left: -40,
+                      top: 60,
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 50),
+                          const _Logo(),
+                          const SizedBox(height: 40),
+                        ],
+                      ),
+                    ),
+                    const Positioned(
+                      top: 16,
+                      right: 16,
+                      child: LanguageSelector(),
+                    ),
                   ],
                 ),
               ),
@@ -86,7 +115,7 @@ class _Logo extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        const Text(
+        Text(
           "AgriPlus",
           textAlign: TextAlign.center,
           style: TextStyle(
@@ -160,8 +189,8 @@ class _FormContentState extends State<_FormContent> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Welcome',
+                Text(
+                  'welcome'.tr,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 28,
@@ -172,7 +201,7 @@ class _FormContentState extends State<_FormContent> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Login to continue',
+                  'login_to_continue'.tr,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 15,
@@ -189,26 +218,26 @@ class _FormContentState extends State<_FormContent> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter email';
+                      return 'please_enter_email'.tr;
                     }
                     bool emailValid = RegExp(
                       r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
                     ).hasMatch(value);
                     if (!emailValid) {
-                      return 'Please enter valid email';
+                      return 'invalid_email'.tr;
                     }
                     return null;
                   },
                   onChanged: (value) => controller.email.value = value,
                   decoration: InputDecoration(
-                    hintText: 'Enter your email',
+                    hintText: 'email_hint'.tr,
                     hintStyle: TextStyle(
                       color: Colors.grey.shade400,
                       fontSize: 15,
                     ),
                     prefixIcon: Icon(
                       Icons.email_outlined,
-                      color: Colors.grey.shade500,
+                      color: AppColors.primaryGreen.withOpacity(0.6),
                       size: 22,
                     ),
                     filled: true,
@@ -248,14 +277,14 @@ class _FormContentState extends State<_FormContent> {
                       fontSize: 15,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Enter 6-digit PIN',
+                      hintText: 'pin_hint'.tr,
                       hintStyle: TextStyle(
                         color: Colors.grey.shade400,
                         fontSize: 15,
                       ),
                       prefixIcon: Icon(
                         Icons.lock_outline,
-                        color: Colors.grey.shade500,
+                        color: AppColors.primaryGreen.withOpacity(0.6),
                         size: 22,
                       ),
                       suffixIcon: IconButton(
@@ -305,9 +334,9 @@ class _FormContentState extends State<_FormContent> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () => Get.toNamed(AppRoutes.forgotPassword),
-                    child: const Text(
-                      "Forgot Password?",
-                      style: TextStyle(
+                    child: Text(
+                      'forgot_password'.tr,
+                      style: const TextStyle(
                         color: AppColors.primaryGreen,
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
@@ -330,20 +359,37 @@ class _FormContentState extends State<_FormContent> {
                                     UIUtils.showErrorDialog(message: errorMessage);
                                   }
                                 } else {
-                                  UIUtils.showErrorDialog(message: "Please enter 6-digit password");
+                                  UIUtils.showErrorDialog(message: "please_enter_6_digit_password".tr);
                                 }
                               }
                             },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryGreen,
+                        backgroundColor: Colors.transparent,
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        shadowColor: AppColors.primaryGreen.withOpacity(0.3),
+                        shadowColor: Colors.transparent,
+                        padding: EdgeInsets.zero,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(28),
                         ),
                       ),
-                      child: controller.isLoading.value
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          gradient: AppColors.primaryGradient,
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primaryGreen.withOpacity(0.4),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
+                              spreadRadius: -2,
+                            ),
+                          ],
+                        ),
+                        child: Container(
+                          alignment: Alignment.center,
+                          height: 56,
+                          child: controller.isLoading.value
                           ? const SizedBox(
                               width: 24,
                               height: 24,
@@ -352,14 +398,16 @@ class _FormContentState extends State<_FormContent> {
                                 strokeWidth: 2.5,
                               ),
                             )
-                          : const Text(
-                              'Login',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
+                              : Text(
+                                  'login'.tr,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -368,7 +416,7 @@ class _FormContentState extends State<_FormContent> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Don't have an account? ",
+                      'dont_have_account'.tr,
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey.shade600,
@@ -376,8 +424,8 @@ class _FormContentState extends State<_FormContent> {
                     ),
                     GestureDetector(
                       onTap: () => Get.toNamed(AppRoutes.signup),
-                      child: const Text(
-                        "Signup",
+                      child: Text(
+                        'signup'.tr,
                         style: TextStyle(
                           fontSize: 14,
                           color: AppColors.primaryGreen,

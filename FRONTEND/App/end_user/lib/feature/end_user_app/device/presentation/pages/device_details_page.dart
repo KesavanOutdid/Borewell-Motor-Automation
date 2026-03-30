@@ -51,22 +51,95 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Obx(() => _buildDevicePlacementCard(context, controller)),
-                const SizedBox(height: 20),
+                SizedBox(height: 12),
+                Obx(() {
+                  final lastStart = controller.liveData['lastStart']?.toString() ?? '-';
+                  final lastStop = controller.liveData['lastStop']?.toString() ?? '-';
+                  if (lastStart == '-' && lastStop == '-') return const SizedBox.shrink();
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: _TimeChip(
+                          icon: Icons.play_circle_rounded,
+                          label: 'Last Start',
+                          value: lastStart,
+                          color: AppColors.primaryGreen,
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: _TimeChip(
+                          icon: Icons.stop_circle_rounded,
+                          label: 'Last Stop',
+                          value: lastStop,
+                          color: AppColors.error,
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+                SizedBox(height: 20),
                 _buildQuickActionsRow(context, controller),
-                const SizedBox(height: 24),
-                Text(
-                  'Live Readings',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 16),
+                SizedBox(height: 24),
+                Obx(() => Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryGreen.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.sensors_rounded, size: 18, color: AppColors.primaryGreen),
+                    ),
+                    SizedBox(width: 12),
+                    Text(
+                      'Live Readings',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: controller.isConnected.value
+                            ? AppColors.primaryGreen.withOpacity(0.1)
+                            : Colors.grey.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 5,
+                            height: 5,
+                            decoration: BoxDecoration(
+                              color: controller.isConnected.value ? AppColors.primaryGreen : Colors.grey,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            controller.isConnected.value ? 'LIVE' : 'CACHED',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                              color: controller.isConnected.value ? AppColors.primaryGreen : Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                )),
+                SizedBox(height: 16),
                 Obx(() => _buildLiveDataGrid(context, controller)),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 Obx(() => _buildLocationMapCard(controller)),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 _buildStatusControlCard(controller),
               ],
             ),
@@ -92,7 +165,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             Container(
               height: 100,
               decoration: BoxDecoration(
@@ -100,7 +173,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                 borderRadius: BorderRadius.circular(24),
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -214,7 +287,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Edit Device Name',
                 style: TextStyle(
                   fontSize: 20,
@@ -222,7 +295,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                   letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 'Serial $serial',
                 style: TextStyle(
@@ -231,7 +304,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               TextField(
                 controller: textController,
                 autofocus: true,
@@ -253,7 +326,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                 ),
                 textCapitalization: TextCapitalization.words,
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               Row(
                 children: [
                   Expanded(
@@ -265,13 +338,12 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: Text(
-                        'Cancel',
+                      child: Text('cancel'.tr,
                         style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
@@ -299,7 +371,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Save Name',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
@@ -333,7 +405,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
             child: _QuickActionCard(
               icon: Icons.history_rounded,
               label: 'History',
-              gradient: AppColors.primaryGradient,
+              gradient: AppColors.blueGradient,
               onTap: () => _openHistory(controller),
             ),
           ),
@@ -341,7 +413,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
             child: _QuickActionCard(
               icon: Icons.analytics_rounded,
               label: 'Analytics',
-              gradient: AppColors.primaryGradient,
+              gradient: AppColors.purpleGradient,
               onTap: () => _openAnalytics(controller),
             ),
           ),
@@ -351,9 +423,9 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
             
             return Expanded(
               child: _QuickActionCard(
-                icon: Icons.add,
-                label: 'Access',
-                gradient: AppColors.primaryGradient,
+                icon: Icons.group_add_rounded,
+                label: 'access'.tr,
+                gradient: AppColors.sunsetGradient,
                 onTap: () => _openAccess(controller),
               ),
             );
@@ -378,105 +450,152 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
     final imei = controller.liveData['imei'] ?? 'N/A';
     
     final bool hasNickname = nickname.isNotEmpty && nickname != '-';
+    final isRunning = controller.liveData['motorStatus'] == 'Running';
+    final isOnline = controller.isConnected.value;
     
     return Container(
-      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.settings_input_component_rounded, size: 28, color: AppColors.primaryGreen),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            hasNickname ? nickname : serial,
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.textPrimary,
-                              letterSpacing: -0.5,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Obx(() {
-                          final isConnected = controller.isConnected.value;
-                          return Icon(
-                            Icons.wifi_rounded,
-                            size: 18,
-                            color: isConnected ? AppColors.primaryGreen : Colors.grey.shade400,
-                          );
-                        }),
-                      ],
-                    ),
-                    if (hasNickname)
-                      Text(
-                        'Serial $serial',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              Obx(() {
-                final isMaster = controller.liveData['role'] == 'master';
-                if (!isMaster) return const SizedBox.shrink();
-                
-                return IconButton(
-                  onPressed: () => _showEditNicknameDialog(context, controller),
-                  icon: const Icon(Icons.edit_outlined, color: AppColors.primaryGreen, size: 22),
-                  tooltip: 'Edit Device Name',
-                );
-              }),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              const Icon(Icons.location_on_rounded, size: 24, color: Colors.blue),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  location,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+          // Status banner
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: isRunning
+                  ? const LinearGradient(colors: [Color(0xFF059669), Color(0xFF10B981)])
+                  : (isOnline
+                      ? const LinearGradient(colors: [Color(0xFF3B82F6), Color(0xFF60A5FA)])
+                      : const LinearGradient(colors: [Color(0xFF6B7280), Color(0xFF9CA3AF)])),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(color: Colors.white.withOpacity(0.5), blurRadius: 6),
+                    ],
                   ),
                 ),
-              ),
-            ],
+                SizedBox(width: 10),
+                Text(
+                  isRunning ? 'MOTOR RUNNING' : (isOnline ? 'DEVICE ONLINE' : 'DEVICE OFFLINE'),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  controller.liveData['lastUpdate']?.toString() ?? '',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Card content
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryGreen.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.settings_input_component_rounded, size: 28, color: AppColors.primaryGreen),
+                    ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  hasNickname ? nickname : serial,
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.textPrimary,
+                                    letterSpacing: -0.5,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (hasNickname)
+                            Text(
+                              'Serial $serial',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    Obx(() {
+                      final isMaster = controller.liveData['role'] == 'master';
+                      if (!isMaster) return const SizedBox.shrink();
+                      
+                      return IconButton(
+                        onPressed: () => _showEditNicknameDialog(context, controller),
+                        icon: const Icon(Icons.edit_outlined, color: AppColors.primaryGreen, size: 22),
+                        tooltip: 'Edit Device Name',
+                      );
+                    }),
+                  ],
+                ),
+                SizedBox(height: 24),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on_rounded, size: 24, color: Colors.blue),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: Text(
+                        location,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -518,25 +637,34 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Row(
                       children: [
                         if (controller.isProcessing.value)
-                          const SizedBox(
+                          SizedBox(
                             width: 10,
                             height: 10,
                             child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryGreen),
                           )
                         else
                           Container(
-                            width: 10,
-                            height: 10,
+                            width: 14,
+                            height: 14,
                             decoration: BoxDecoration(
                               color: statusColor,
                               shape: BoxShape.circle,
+                              boxShadow: isRunning
+                                  ? [
+                                      BoxShadow(
+                                        color: statusColor.withOpacity(0.5),
+                                        blurRadius: 10,
+                                        spreadRadius: 2,
+                                      ),
+                                    ]
+                                  : null,
                             ),
                           ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text(
                           controller.isProcessing.value ? 'CONFIRMING...' : (isRunning ? 'MOTOR RUNNING' : 'MOTOR STOPPED'),
                           style: TextStyle(
@@ -554,7 +682,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                         child: Row(
                           children: [
                             const Icon(Icons.warning_amber_rounded, size: 12, color: Colors.orange),
-                            const SizedBox(width: 4),
+                            SizedBox(width: 4),
                             Text(
                               'Poor Signal: Commands may be delayed',
                               style: TextStyle(fontSize: 10, color: Colors.orange.shade800, fontWeight: FontWeight.w600),
@@ -566,7 +694,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             SwipeButton(
               onSwipe: () {
                 if (controller.isProcessing.value) return;
@@ -617,14 +745,14 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                 Row(
                   children: [
                     Icon(Icons.location_on_rounded, color: AppColors.primaryGreen, size: 20),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Text(
                       'Device Location',
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
                 Text(
                   controller.liveData['location']?.toString() ?? 'Location not available',
                   style: TextStyle(fontSize: 13, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
@@ -760,27 +888,27 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
         Row(
           children: [
             Expanded(child: _buildMetricCard(metrics[0])),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(child: _buildMetricCard(metrics[1])),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(child: _buildMetricCard(metrics[6])),
           ],
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Row(
           children: [
             Expanded(child: _buildMetricCard(metrics[3])),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(child: _buildMetricCard(metrics[4])),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(child: _buildMetricCard(metrics[5])),
           ],
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Row(
           children: [
             Expanded(child: _buildMetricCard(metrics[2])),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(child: _buildMetricCard(metrics[7])),
           ],
         ),
@@ -831,7 +959,7 @@ class _QuickActionCard extends StatelessWidget {
                 ),
                 child: Icon(icon, color: Colors.white, size: 24),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               Text(
                 label,
                 style: TextStyle(
@@ -844,6 +972,62 @@ class _QuickActionCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _TimeChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  const _TimeChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withOpacity(0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 14, color: color),
+              SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }

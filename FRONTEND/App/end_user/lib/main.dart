@@ -7,6 +7,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'core/routes/app_routes.dart';
 import 'core/services/token_service.dart';
+import 'core/services/socket_service.dart';
 import 'core/services/permission_service.dart';
 import 'core/services/notification_storage_service.dart';
 import 'core/services/notification_service.dart';
@@ -14,6 +15,7 @@ import 'utils/theme/theme_controller.dart';
 import 'utils/theme/app_theme.dart';
 import 'feature/end_user_app/home/presentation/controllers/home_controller.dart';
 import 'feature/end_user_app/auth/presentation/controllers/auth_controller.dart';
+import 'core/localization/app_translations.dart';
 
 Future<void> _updateLocalCache(Map<String, dynamic> data) async {
   if (data['serial_number'] == null) return;
@@ -217,11 +219,18 @@ void main() async {
 
   // 3. Setup Services & Controllers
   Get.put(TokenService()); // No need to await if init() just returns this
+  Get.put(SocketService()); // Centralized socket — single connection for all controllers
   Get.lazyPut(() => ThemeController());
 
   // 🔥 REQUIRED — Fix for Null Check Crash
   Get.lazyPut(() => AuthController(), fenix: true);
   Get.lazyPut(() => HomeController(), fenix: true);
+
+  // Auto-connect socket if user is already logged in (returning user)
+  final tokenService = Get.find<TokenService>();
+  if (tokenService.getToken() != null && tokenService.getToken()!.isNotEmpty) {
+    Get.find<SocketService>().connect();
+  }
 
   runApp(
     GetMaterialApp(
@@ -231,6 +240,9 @@ void main() async {
       themeMode: Get.find<ThemeController>().themeMode,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
+      translations: AppTranslations(),
+      locale: const Locale('en', 'US'),
+      fallbackLocale: const Locale('en', 'US'),
     ),
   );
 }

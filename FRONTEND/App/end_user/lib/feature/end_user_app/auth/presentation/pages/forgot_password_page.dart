@@ -20,34 +20,67 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 40),
                 decoration: const BoxDecoration(
-                  color: AppColors.primaryGreen,
+                  gradient: AppColors.primaryGradient,
                   borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(40),
                     bottomRight: Radius.circular(40),
                   ),
                 ),
-                child: Column(
+                child: Stack(
                   children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Get.back(),
+                    Positioned(
+                      right: -50,
+                      top: -50,
+                      child: Container(
+                        width: 160,
+                        height: 160,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.08),
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
-                    const Icon(
-                      Icons.lock_reset,
-                      size: 80,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      "Forgot Password",
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                    Column(
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                            onPressed: () => Get.back(),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.lock_reset_rounded,
+                            size: 50,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'forgot_password_title'.tr,
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'enter_email_to_receive_reset_code'.tr,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.white.withOpacity(0.8),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -70,13 +103,13 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
                           color: controller.isOtpSent.value ? Colors.grey : Colors.black,
                         ),
                         decoration: InputDecoration(
-                          labelText: "Enter Email",
+                          labelText: "enter_email_label".tr,
                           labelStyle: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w500),
                           prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primaryGreen),
                           suffixIcon: controller.isOtpSent.value ? IconButton(
                             icon: const Icon(Icons.refresh, color: AppColors.primaryGreen),
                             onPressed: () => controller.resetState(),
-                            tooltip: "Change Email",
+                            tooltip: "change_email_tooltip".tr,
                           ) : null,
                           filled: true,
                           fillColor: controller.isOtpSent.value ? Colors.grey.shade50 : Colors.white,
@@ -99,8 +132,8 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
                           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                         ),
                         validator: (value) {
-                          if (value == null || value.isEmpty) return "Please enter email";
-                          if (!controller.isValidEmail(value)) return "Please enter a valid email";
+                          if (value == null || value.isEmpty) return "please_enter_email".tr;
+                          if (!controller.isValidEmail(value)) return "invalid_email".tr;
                           return null;
                         },
                       )),
@@ -113,7 +146,7 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
                               ? null
                               : () => controller.sendOtp(),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryGreen,
+                            backgroundColor: Colors.transparent,
                             foregroundColor: Colors.white,
                             disabledBackgroundColor: Colors.grey.shade200,
                             disabledForegroundColor: Colors.grey.shade500,
@@ -121,17 +154,51 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
                               borderRadius: BorderRadius.circular(28),
                             ),
                             elevation: 0,
+                            shadowColor: Colors.transparent,
+                            padding: EdgeInsets.zero,
                           ),
-                          child: controller.isLoading.value
+                          child: Ink(
+                            decoration: BoxDecoration(
+                              gradient: (controller.isLoading.value || controller.email.value.isEmpty)
+                                  ? null
+                                  : AppColors.primaryGradient,
+                              color: (controller.isLoading.value || controller.email.value.isEmpty)
+                                  ? Colors.grey.shade200
+                                  : null,
+                              borderRadius: BorderRadius.circular(28),
+                              boxShadow: (controller.isLoading.value || controller.email.value.isEmpty)
+                                  ? null
+                                  : [
+                                      BoxShadow(
+                                        color: AppColors.primaryGreen.withOpacity(0.4),
+                                        blurRadius: 16,
+                                        offset: const Offset(0, 6),
+                                        spreadRadius: -2,
+                                      ),
+                                    ],
+                            ),
+                            child: Container(
+                              alignment: Alignment.center,
+                              height: 56,
+                              child: controller.isLoading.value
                               ? const SizedBox(
                                   width: 24,
                                   height: 24,
                                   child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                                 )
-                              : const Text(
-                                  "Send OTP",
-                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1),
+                              : Text(
+                                  'send_otp'.tr,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1,
+                                    color: (controller.isLoading.value || controller.email.value.isEmpty)
+                                        ? Colors.grey.shade500
+                                        : Colors.white,
+                                  ),
                                 ),
+                            ),
+                          ),
                         ),
                       )),
                     ],

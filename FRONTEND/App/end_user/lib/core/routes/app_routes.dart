@@ -10,6 +10,7 @@ import '../../feature/end_user_app/auth/presentation/pages/otp_verification_page
 import '../../feature/end_user_app/auth/presentation/pages/reset_password_page.dart';
 import '../../feature/end_user_app/dashboard/presentation/pages/dashboard_page.dart';
 import '../../feature/end_user_app/dashboard/presentation/pages/dashboard_binding.dart';
+import '../../feature/end_user_app/auth/presentation/pages/language_selection_page.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_page.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_binding.dart';
 import '../../feature/end_user_app/device/presentation/pages/device_details_page.dart';
@@ -33,11 +34,15 @@ import '../../feature/end_user_app/shop/presentation/pages/order_details_page.da
 import '../../feature/end_user_app/shop/presentation/pages/addresses_page.dart';
 import '../../feature/end_user_app/shop/presentation/pages/add_edit_address_page.dart';
 import '../../feature/end_user_app/shop/presentation/pages/vouchers_page.dart';
+import '../../feature/end_user_app/help/presentation/pages/help_page.dart';
+import '../../feature/end_user_app/help/presentation/pages/create_help_page.dart';
+import '../../feature/end_user_app/help/presentation/controllers/help_binding.dart';
 
 class AppRoutes {
   static const splash = '/';
   static const login = '/login';
   static const signup = '/signup';
+  static const languageSelection = '/language-selection';
   static const home = '/home';
   static const device = '/device';
   static const deviceDetails = '/device/details';
@@ -58,6 +63,8 @@ class AppRoutes {
   static const addresses = '/addresses';
   static const addAddress = '/add-address';
   static const vouchers = '/vouchers';
+  static const help = '/help';
+  static const createHelp = '/create-help';
   static const forgotPassword = '/forgot-password';
   static const otpVerification = '/otp-verification';
   static const resetPassword = '/reset-password';
@@ -96,6 +103,10 @@ class AppRoutes {
       name: home,
       page: () => const DashboardView(),
       binding: DashboardBinding(),
+    ),
+    GetPage(
+      name: languageSelection,
+      page: () => LanguageSelectionPage(),
     ),
     GetPage(
       name: device,
@@ -178,6 +189,16 @@ class AppRoutes {
     GetPage(
       name: vouchers,
       page: () => const VouchersPage(),
+    ),
+    GetPage(
+      name: help,
+      page: () => const HelpPage(),
+      binding: HelpBinding(),
+    ),
+    GetPage(
+      name: createHelp,
+      page: () => const CreateHelpPage(),
+      binding: HelpBinding(),
     ),
   ];
 }

@@ -97,9 +97,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
     
     if (cart == null || cart.items.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Checkout')),
-        body: const Center(
-          child: Text('Cart is empty'),
+        appBar: AppBar(title: Text('checkout'.tr)),
+        body: Center(
+          child: Text('cart_empty'.tr),
         ),
       );
     }
@@ -142,14 +142,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        const Expanded(
+                        SizedBox(width: 16),
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Checkout',
-                                style: TextStyle(
+                                'checkout'.tr,
+                                style: const TextStyle(
                                   fontSize: 36,
                                   fontWeight: FontWeight.w900,
                                   color: Colors.white,
@@ -159,8 +159,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                               ),
                               SizedBox(height: 8),
                               Text(
-                                'Shipping Address',
-                                style: TextStyle(
+                                'shipping_address'.tr,
+                                style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.white70,
@@ -182,72 +182,72 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     _buildSavedAddresses(),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     _buildTextField(
                       controller: fullNameController,
-                      label: 'Full Name',
+                      label: 'full_name'.tr,
                       icon: Icons.person,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter full name';
+                          return 'please_enter_full_name'.tr;
                         }
                         return null;
                       },
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     _buildTextField(
                       controller: phoneController,
-                      label: 'Phone Number',
+                      label: 'phone_number'.tr,
                       icon: Icons.phone,
                       keyboardType: TextInputType.phone,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter phone number';
+                          return 'please_enter_phone_number'.tr;
                         }
                         if (value.length != 10) {
-                          return 'Phone number must be 10 digits';
+                          return 'phone_number_must_be_10_digits'.tr;
                         }
                         return null;
                       },
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     _buildTextField(
                       controller: emailController,
-                      label: 'Email',
+                      label: 'email'.tr,
                       icon: Icons.email,
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter email';
+                          return 'please_enter_email'.tr;
                         }
                         if (!GetUtils.isEmail(value)) {
-                          return 'Please enter valid email';
+                          return 'invalid_email'.tr;
                         }
                         return null;
                       },
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     _buildTextField(
                       controller: streetController,
-                      label: 'Street Address',
+                      label: 'street_address'.tr,
                       icon: Icons.home,
                       maxLines: 2,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter street address';
+                          return 'please_enter_street_address'.tr;
                         }
                         return null;
                       },
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
                           child: _buildTextField(
                             controller: pincodeController,
-                            label: 'Pincode',
+                            label: 'pincode'.tr,
                             icon: Icons.pin_drop,
                             keyboardType: TextInputType.number,
                             onChanged: (value) {
@@ -257,27 +257,27 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             },
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Enter valid pincode';
+                                return 'enter_valid_pincode'.tr;
                               }
                               if (!RegExp(r'^\d{6}$').hasMatch(value)) {
-                                return 'Enter valid pincode';
+                                return 'enter_valid_pincode'.tr;
                               }
                               return null;
                             },
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Expanded(
                           child: _buildTextField(
                             controller: cityController,
-                            label: 'City',
+                            label: 'city'.tr,
                             icon: Icons.location_city,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Enter valid city name';
+                                return 'enter_valid_city'.tr;
                               }
                               if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
-                                return 'Enter valid city name';
+                                return 'enter_valid_city'.tr;
                               }
                               return null;
                             },
@@ -285,31 +285,31 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     _buildTextField(
                       controller: stateController,
-                      label: 'State',
+                      label: 'state'.tr,
                       icon: Icons.map,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Enter valid state name';
+                          return 'enter_valid_state'.tr;
                         }
                         if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
-                          return 'Enter valid state name';
+                          return 'enter_valid_state'.tr;
                         }
                         return null;
                       },
                     ),
-                    const SizedBox(height: 24),
-                    _buildSectionTitle('Payment Method'),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 24),
+                    _buildSectionTitle('payment_method'.tr),
+                    SizedBox(height: 12),
                     _buildPaymentMethodCard(
-                      title: 'Razorpay',
-                      subtitle: 'Credit/Debit Card, UPI, NetBanking',
+                      title: 'razorpay'.tr,
+                      subtitle: 'razorpay_subtitle'.tr,
                       icon: Icons.payment,
                       value: 'razorpay',
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                     _buildOrderSummary(cart),
                   ],
                 ),
@@ -368,7 +368,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Widget _buildSavedAddresses() {
     return Obx(() {
       if (addressController.isLoading.value) {
-        return const Center(
+        return Center(
           child: Padding(
             padding: EdgeInsets.all(16.0),
             child: CircularProgressIndicator(),
@@ -384,14 +384,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Select from saved addresses',
+            'select_from_saved_addresses'.tr,
             style: TextStyle(
               fontSize: 14,
               color: Theme.of(context).textTheme.bodyMedium?.color ?? AppColors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           SizedBox(
             height: 100,
             child: ListView.builder(
@@ -425,7 +425,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                               size: 16,
                               color: isSelected ? AppColors.primaryGreen : (Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade400 : Colors.grey.shade600),
                             ),
-                            const SizedBox(width: 4),
+                            SizedBox(width: 4),
                             Expanded(
                               child: Text(
                                 address.fullName,
@@ -440,7 +440,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           '${address.street}, ${address.city}',
                           style: TextStyle(
@@ -552,7 +552,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     : (Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade400 : Colors.grey.shade600),
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -604,8 +604,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Order Summary',
+          Text('order_summary'.tr,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -614,14 +613,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
           ),
           const Divider(height: 24),
           _buildSummaryRow('Items', '${cart.items.length}'),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           _buildSummaryRow('Subtotal', '₹${cart.totalPrice.toStringAsFixed(2)}'),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           _buildSummaryRow('GST', '₹${cart.totalGst.toStringAsFixed(2)}'),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           _buildSummaryRow('Shipping', '₹${cart.totalShippingCost.toStringAsFixed(2)}'),
           if (appliedDiscountPercentage != null) ...[
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             _buildSummaryRow(
               'Discount ($appliedDiscountPercentage%)',
               '-₹${(cart.totalPrice * appliedDiscountPercentage! / 100).toStringAsFixed(2)}',
@@ -700,7 +699,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 disabledBackgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade700 : Colors.grey.shade400,
               ),
               child: checkoutController.isProcessing.value
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(
@@ -708,7 +707,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         strokeWidth: 2,
                       ),
                     )
-                  : const Text(
+                  : Text(
                       'Place Order',
                       style: TextStyle(
                         fontSize: 16,

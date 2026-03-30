@@ -50,12 +50,12 @@ class DeviceSharingController extends GetxController {
       Get.dialog(
         Builder(
           builder: (ctx) => AlertDialog(
-            title: const Text('Error'),
+            title: Text('error'.tr),
             content: Text('Failed to fetch shared users: $e'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
-                child: const Text('OK'),
+                child: Text('OK'),
               ),
             ],
           ),
@@ -74,12 +74,12 @@ class DeviceSharingController extends GetxController {
       Get.dialog(
         Builder(
           builder: (ctx) => AlertDialog(
-            title: const Text('Validation Error'),
-            content: const Text('Phone number must be exactly 10 digits'),
+            title: Text('validation_error'.tr),
+            content: Text('Phone number must be exactly 10 digits'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
-                child: const Text('OK'),
+                child: Text('OK'),
               ),
             ],
           ),
@@ -108,15 +108,15 @@ class DeviceSharingController extends GetxController {
         Get.dialog(
           Builder(
             builder: (ctx) => AlertDialog(
-              title: const Text('Success'),
-              content: const Text('Device shared successfully'),
+              title: Text('Success'),
+              content: Text('Device shared successfully'),
               actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.of(ctx, rootNavigator: true).pop();
                     fetchSharedUsers();
                   },
-                  child: const Text('OK'),
+                  child: Text('OK'),
                 ),
               ],
             ),
@@ -133,12 +133,12 @@ class DeviceSharingController extends GetxController {
         Get.dialog(
           Builder(
             builder: (ctx) => AlertDialog(
-              title: const Text('Error'),
+              title: Text('error'.tr),
               content: Text(errorMessage),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
-                  child: const Text('OK'),
+                  child: Text('OK'),
                 ),
               ],
             ),
@@ -149,12 +149,12 @@ class DeviceSharingController extends GetxController {
       Get.dialog(
         Builder(
           builder: (ctx) => AlertDialog(
-            title: const Text('Error'),
+            title: Text('error'.tr),
             content: Text('Failed to share device: $e'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
-                child: const Text('OK'),
+                child: Text('OK'),
               ),
             ],
           ),
@@ -191,12 +191,12 @@ class DeviceSharingController extends GetxController {
       Get.dialog(
         Builder(
           builder: (ctx) => AlertDialog(
-            title: const Text('Error'),
+            title: Text('error'.tr),
             content: Text('Failed to update status: $e'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
-                child: const Text('OK'),
+                child: Text('OK'),
               ),
             ],
           ),
@@ -228,12 +228,12 @@ class DeviceSharingController extends GetxController {
         Get.dialog(
           Builder(
             builder: (ctx) => AlertDialog(
-              title: const Text('Success'),
-              content: const Text('Share deleted successfully'),
+              title: Text('Success'),
+              content: Text('Share deleted successfully'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
-                  child: const Text('OK'),
+                  child: Text('OK'),
                 ),
               ],
             ),
@@ -246,12 +246,12 @@ class DeviceSharingController extends GetxController {
       Get.dialog(
         Builder(
           builder: (ctx) => AlertDialog(
-            title: const Text('Error'),
+            title: Text('error'.tr),
             content: Text('Failed to delete share: $e'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
-                child: const Text('OK'),
+                child: Text('OK'),
               ),
             ],
           ),
@@ -283,12 +283,12 @@ class DeviceSharingController extends GetxController {
         Get.dialog(
           Builder(
             builder: (ctx) => AlertDialog(
-              title: const Text('Success'),
+              title: Text('Success'),
               content: Text('Request $action successfully'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
-                  child: const Text('OK'),
+                  child: Text('OK'),
                 ),
               ],
             ),
@@ -302,12 +302,12 @@ class DeviceSharingController extends GetxController {
         Get.dialog(
           Builder(
             builder: (ctx) => AlertDialog(
-              title: const Text('Error'),
+              title: Text('error'.tr),
               content: Text(data['message'] ?? 'Failed to respond to request'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
-                  child: const Text('OK'),
+                  child: Text('OK'),
                 ),
               ],
             ),
@@ -318,12 +318,12 @@ class DeviceSharingController extends GetxController {
       Get.dialog(
         Builder(
           builder: (ctx) => AlertDialog(
-            title: const Text('Error'),
+            title: Text('error'.tr),
             content: Text('Failed to respond to request: $e'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
-                child: const Text('OK'),
+                child: Text('OK'),
               ),
             ],
           ),

@@ -9,7 +9,7 @@ class DeviceLiveDataView extends GetView<DeviceLiveDataController> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Live Device Data"),
+        title: Text('device_live_data'.tr),
         centerTitle: true,
         actions: [
           Obx(() => Padding(
@@ -33,7 +33,7 @@ class DeviceLiveDataView extends GetView<DeviceLiveDataController> {
                           size: 16,
                           color: Colors.white,
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Text(
                           controller.isConnected.value
                               ? "Connected"
@@ -62,16 +62,16 @@ class DeviceLiveDataView extends GetView<DeviceLiveDataController> {
                   size: 80,
                   color: Colors.grey,
                 ),
-                const SizedBox(height: 20),
-                const Text(
+                SizedBox(height: 20),
+                Text(
                   "Device Disconnected",
                   style: TextStyle(fontSize: 18, color: Colors.grey),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 ElevatedButton.icon(
                   onPressed: controller.connectToDevice,
                   icon: const Icon(Icons.refresh),
-                  label: const Text("Reconnect"),
+                  label: Text('reconnect'.tr),
                 ),
               ],
             ),
@@ -87,11 +87,11 @@ class DeviceLiveDataView extends GetView<DeviceLiveDataController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildDeviceHeader(),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 _buildMotorStatusCard(),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 _buildDataGrid(),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 _buildLastUpdated(),
               ],
             ),
@@ -120,7 +120,7 @@ class DeviceLiveDataView extends GetView<DeviceLiveDataController> {
                 color: Colors.green.shade700,
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,7 +132,7 @@ class DeviceLiveDataView extends GetView<DeviceLiveDataController> {
                           fontWeight: FontWeight.bold,
                         ),
                       )),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Obx(() => Text(
                         "ID: ${controller.deviceId.value}",
                         style: TextStyle(
@@ -164,19 +164,19 @@ class DeviceLiveDataView extends GetView<DeviceLiveDataController> {
                 size: 40,
                 color: isMotorOn ? Colors.green : Colors.red,
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       "Motor Status",
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text(
                       controller.motorStatus.value,
                       style: TextStyle(
@@ -206,14 +206,14 @@ class DeviceLiveDataView extends GetView<DeviceLiveDataController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           "Live Sensor Data",
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -303,7 +303,7 @@ class DeviceLiveDataView extends GetView<DeviceLiveDataController> {
               Row(
                 children: [
                   Icon(icon, color: color, size: 24),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       title,
@@ -330,7 +330,7 @@ class DeviceLiveDataView extends GetView<DeviceLiveDataController> {
                       color: color,
                     ),
                   )),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 unit,
                 style: TextStyle(

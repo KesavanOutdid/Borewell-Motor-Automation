@@ -42,14 +42,14 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Device History'),
+        title: Text('device_history'.tr),
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: AppColors.textPrimary,
       ),
       body: Obx(() {
         if (controller.isLoading.value && controller.records.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(child: CircularProgressIndicator());
         }
 
         return RefreshIndicator(
@@ -78,7 +78,7 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.history_rounded, size: 64, color: Colors.grey.shade300),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         Text(
                           'No telemetry records found',
                           style: TextStyle(fontSize: 16, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
@@ -105,7 +105,7 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
                             ),
                           );
                         } else {
-                          return const Padding(
+                          return Padding(
                             padding: EdgeInsets.symmetric(vertical: 20),
                             child: Center(
                               child: CircularProgressIndicator(
@@ -151,7 +151,7 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
             ),
             child: Icon(Icons.history_toggle_off_rounded, color: AppColors.primaryGreen, size: 24),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -160,7 +160,7 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
                   'Records',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Obx(() => Text(
                   controller.serialNumber.value,
                   style: TextStyle(fontSize: 13, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
@@ -206,7 +206,7 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
             'Performance Summary',
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -233,7 +233,7 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
                       metric['label'] ?? '-',
                       style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontWeight: FontWeight.w600, letterSpacing: 0.2),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text(
                       metric['value'] ?? '-',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primaryGreen),
@@ -286,7 +286,7 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primaryGreen),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     _formatDateOnly(record['date'] ?? record['startAt']),
@@ -300,14 +300,14 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
               child: Row(
                 children: [
                   Icon(Icons.schedule_rounded, size: 14, color: AppColors.primaryGreen.withValues(alpha: 0.6)),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Text(
                     _formatDuration(record['duration_minutes']),
                     style: TextStyle(fontSize: 13, color: AppColors.primaryGreen, fontWeight: FontWeight.w600),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16),
                   Icon(Icons.person_outline_rounded, size: 14, color: Colors.grey.shade400),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       'By ${record['started_by'] ?? '-'}',
@@ -328,19 +328,19 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
                     Row(
                       children: [
                         Expanded(child: _infoTile('Start Time', _formatDate(record['startAt']))),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Expanded(child: _infoTile('Stop Time', _formatDate(record['stopAt']))),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(child: _infoTile('Started By', record['started_by'] ?? '-')),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Expanded(child: _infoTile('Stopped By', record['stopped_by'] ?? '-')),
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -378,7 +378,7 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: TextStyle(fontSize: 8, color: Colors.grey.shade500, fontWeight: FontWeight.w600, letterSpacing: 0.3)),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Text(
           value, 
           style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.primaryGreen),
@@ -401,7 +401,7 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: TextStyle(fontSize: 9, color: Colors.grey.shade500, fontWeight: FontWeight.w600, letterSpacing: 0.3)),
-          const SizedBox(height: 2),
+          SizedBox(height: 2),
           Text(
             value, 
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primaryGreen),
@@ -425,7 +425,7 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(
             value,
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary),

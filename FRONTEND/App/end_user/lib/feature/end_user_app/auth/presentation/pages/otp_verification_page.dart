@@ -21,34 +21,59 @@ class OtpVerificationView extends GetView<ForgotPasswordController> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 40),
                 decoration: const BoxDecoration(
-                  color: AppColors.primaryGreen,
+                  gradient: AppColors.primaryGradient,
                   borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(40),
                     bottomRight: Radius.circular(40),
                   ),
                 ),
-                child: Column(
+                child: Stack(
                   children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Get.back(),
+                    Positioned(
+                      right: -50,
+                      top: -50,
+                      child: Container(
+                        width: 160,
+                        height: 160,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.08),
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
-                    const Icon(
-                      Icons.mark_email_read_outlined,
-                      size: 80,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      "Verify OTP",
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                    Column(
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                            onPressed: () => Get.back(),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.mark_email_read_outlined,
+                            size: 50,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'verify_otp'.tr,
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -62,7 +87,7 @@ class OtpVerificationView extends GetView<ForgotPasswordController> {
                     children: [
                       const SizedBox(height: 20),
                       Text(
-                        "Verify your email",
+                        "verify_your_email".tr,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -71,7 +96,7 @@ class OtpVerificationView extends GetView<ForgotPasswordController> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        "Enter the 4-digit code sent to ${controller.email.value}",
+                        "${'enter_otp_sent_to'.tr} ${controller.email.value}",
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey.shade600,
@@ -93,8 +118,8 @@ class OtpVerificationView extends GetView<ForgotPasswordController> {
                               : () => controller.sendOtp(),
                           child: Text(
                             controller.timerSeconds.value > 0
-                                ? "Resend OTP in ${controller.timerSeconds.value}s"
-                                : "Resend OTP",
+                                ? "${'resend_otp_in'.tr} ${controller.timerSeconds.value}s"
+                                : "resend_otp".tr,
                             style: TextStyle(
                               color: controller.timerSeconds.value > 0
                                   ? Colors.grey
@@ -118,26 +143,59 @@ class OtpVerificationView extends GetView<ForgotPasswordController> {
                                   }
                                 },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryGreen,
+                            backgroundColor: Colors.transparent,
                             foregroundColor: Colors.white,
                             disabledBackgroundColor: Colors.grey.shade200,
                             disabledForegroundColor: Colors.grey.shade500,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(28),
                             ),
-                            elevation: controller.otp.value.length < 4 ? 0 : 4,
-                            shadowColor: AppColors.primaryGreen.withOpacity(0.3),
+                            elevation: 0,
+                            shadowColor: Colors.transparent,
+                            padding: EdgeInsets.zero,
                           ),
-                          child: controller.isLoading.value
+                          child: Ink(
+                            decoration: BoxDecoration(
+                              gradient: (controller.isLoading.value || controller.otp.value.length < 4)
+                                  ? null
+                                  : AppColors.primaryGradient,
+                              color: (controller.isLoading.value || controller.otp.value.length < 4)
+                                  ? Colors.grey.shade200
+                                  : null,
+                              borderRadius: BorderRadius.circular(28),
+                              boxShadow: (controller.isLoading.value || controller.otp.value.length < 4)
+                                  ? null
+                                  : [
+                                      BoxShadow(
+                                        color: AppColors.primaryGreen.withOpacity(0.4),
+                                        blurRadius: 16,
+                                        offset: const Offset(0, 6),
+                                        spreadRadius: -2,
+                                      ),
+                                    ],
+                            ),
+                            child: Container(
+                              alignment: Alignment.center,
+                              height: 56,
+                              child: controller.isLoading.value
                               ? const SizedBox(
                                   width: 24,
                                   height: 24,
                                   child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                                 )
-                              : const Text(
-                                  "Verify & Continue",
-                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1),
+                              : Text(
+                                  'verify_and_continue'.tr,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1,
+                                    color: (controller.isLoading.value || controller.otp.value.length < 4)
+                                        ? Colors.grey.shade500
+                                        : Colors.white,
+                                  ),
                                 ),
+                            ),
+                          ),
                         ),
                       )),
                     ],

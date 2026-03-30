@@ -83,13 +83,12 @@ class _OrdersPageState extends State<OrdersPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Orders',
+                            Text('orders'.tr,
                               style: TextStyle(
                                 fontSize: 26,
                                 fontWeight: FontWeight.w900,
@@ -145,7 +144,7 @@ class _OrdersPageState extends State<OrdersPage> {
                                   ? Colors.grey.shade700
                                   : Colors.grey.shade400,
                             ),
-                            const SizedBox(height: 16),
+                            SizedBox(height: 16),
                             Text(
                               'No orders yet',
                               style: TextStyle(
@@ -156,7 +155,7 @@ class _OrdersPageState extends State<OrdersPage> {
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8),
                             Text(
                               'Start shopping to see your orders here',
                               style: TextStyle(
@@ -166,13 +165,13 @@ class _OrdersPageState extends State<OrdersPage> {
                                     : Colors.grey.shade500,
                               ),
                             ),
-                            const SizedBox(height: 24),
+                            SizedBox(height: 24),
                             ElevatedButton.icon(
                               onPressed: () {
                                 Get.offAllNamed('/home', arguments: {'index': 1});
                               },
                               icon: const Icon(Icons.shopping_cart_outlined),
-                              label: const Text('Continue Shopping'),
+                              label: Text('continue_shopping'.tr),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primaryGreen,
                                 foregroundColor: Colors.white,
@@ -202,7 +201,7 @@ class _OrdersPageState extends State<OrdersPage> {
                       final order = controller.orders[index];
                       return _buildOrderCard(context, order, controller);
                     } else {
-                      return const Padding(
+                      return Padding(
                         padding: EdgeInsets.symmetric(vertical: 20),
                         child: Center(
                           child: CircularProgressIndicator(
@@ -294,7 +293,7 @@ class _OrdersPageState extends State<OrdersPage> {
                   ),
               ],
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,7 +310,7 @@ class _OrdersPageState extends State<OrdersPage> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     order.orderStatus.toUpperCase(),
                     style: TextStyle(
@@ -379,7 +378,7 @@ class _OrdersPageState extends State<OrdersPage> {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -392,7 +391,7 @@ class _OrdersPageState extends State<OrdersPage> {
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Container(
                     width: 100,
                     height: 12,

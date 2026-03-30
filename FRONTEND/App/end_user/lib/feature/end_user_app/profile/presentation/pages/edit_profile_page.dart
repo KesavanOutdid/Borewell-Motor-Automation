@@ -35,7 +35,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Container(
               width: 40,
               height: 4,
@@ -44,22 +44,22 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: 20),
-            const Text(
+            SizedBox(height: 20),
+            Text(
               'Profile Photo',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _buildSourceOption(
                   context,
                   icon: Icons.camera_alt_rounded,
-                  label: 'Camera',
+                  label: 'camera'.tr,
                   onTap: () {
                     Navigator.pop(context);
                     controller.pickAndUploadImage(ImageSource.camera);
@@ -68,7 +68,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 _buildSourceOption(
                   context,
                   icon: Icons.photo_library_rounded,
-                  label: 'Gallery',
+                  label: 'gallery'.tr,
                   onTap: () {
                     Navigator.pop(context);
                     controller.pickAndUploadImage(ImageSource.gallery);
@@ -78,7 +78,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   _buildSourceOption(
                     context,
                     icon: Icons.delete_outline_rounded,
-                    label: 'Remove',
+                    label: 'remove'.tr,
                     onTap: () {
                       Navigator.pop(context);
                       _showRemoveImageConfirmation(context);
@@ -87,7 +87,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ),
               ],
             ),
-            const SizedBox(height: 30),
+            SizedBox(height: 30),
           ],
         ),
       ),
@@ -99,20 +99,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Theme.of(context).dialogTheme.backgroundColor ?? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white),
-        title: const Text('Remove Photo'),
-        content: const Text('Are you sure you want to remove your profile photo?'),
+        title: Text('remove_photo'.tr),
+        content: Text('remove_photo_confirmation'.tr),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text('cancel'.tr),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               controller.removeProfileImage();
             },
-            child: const Text(
-              'Remove',
+            child: Text('remove'.tr,
               style: TextStyle(color: Colors.red),
             ),
           ),
@@ -145,7 +144,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
               size: 30,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             label,
             style: const TextStyle(
@@ -165,7 +164,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Edit Profile'),
+        title: Text('Edit Profile'),
         elevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: isDark ? Colors.white : AppColors.textPrimary,
@@ -223,9 +222,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ],
                 ),
               ),
-              const SizedBox(height: 40),
+              SizedBox(height: 40),
               _buildTextField(
-                label: 'Full Name',
+                label: 'full_name'.tr,
                 hint: 'Enter your name',
                 icon: Icons.person_outline,
                 controller: controller.nameEditingController,
@@ -246,7 +245,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               _buildTextField(
                 label: 'Email Address',
                 hint: 'Enter your email',
@@ -255,9 +254,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 keyboardType: TextInputType.emailAddress,
                 enabled: false,
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               _buildTextField(
-                label: 'Phone Number',
+                label: 'phone_number'.tr,
                 hint: 'Enter 10 digit number',
                 icon: Icons.phone_outlined,
                 controller: controller.phoneEditingController,
@@ -266,7 +265,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 enabled: true,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               Obx(() => _buildTextField(
                     label: 'Password',
                     hint: 'Update your 6-digit password',
@@ -295,7 +294,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       onPressed: () => controller.isPasswordVisible.toggle(),
                     ),
                   )),
-              const SizedBox(height: 40),
+              SizedBox(height: 40),
               Obx(() => SizedBox(
                     width: double.infinity,
                     height: 56,
@@ -320,7 +319,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                   );
                                 } else {
                                   Get.rawSnackbar(
-                                    title: 'Error',
+                                    title: 'error'.tr,
                                     message: error,
                                     backgroundColor: AppColors.error,
                                     snackPosition: SnackPosition.BOTTOM,
@@ -330,7 +329,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 }
                               } else {
                                 Get.rawSnackbar(
-                                  title: 'Validation Error',
+                                  title: 'validation_error'.tr,
                                   message: 'Please fix the errors in the form',
                                   backgroundColor: AppColors.error,
                                   snackPosition: SnackPosition.BOTTOM,
@@ -349,7 +348,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         disabledBackgroundColor: AppColors.primaryGreen.withOpacity(0.5),
                       ),
                       child: controller.isUpdating.value
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 24,
                               height: 24,
                               child: CircularProgressIndicator(
@@ -357,7 +356,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 strokeWidth: 3,
                               ),
                             )
-                          : const Text(
+                          : Text(
                               'Save Changes',
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             ),
@@ -396,7 +395,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             color: isDark ? Colors.grey[400] : Colors.grey[700],
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         TextFormField(
           controller: controller,
           enabled: enabled,

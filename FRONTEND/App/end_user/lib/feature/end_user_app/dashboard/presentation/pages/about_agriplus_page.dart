@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../../../utils/theme/app_colors.dart';
 
 class AboutAgriPlusPage extends StatelessWidget {
@@ -9,83 +10,178 @@ class AboutAgriPlusPage extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('About AgriPlus'),
-        backgroundColor: AppColors.primaryGreen,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withOpacity(0.1),
-                  shape: BoxShape.circle,
+      body: CustomScrollView(
+        slivers: [
+          // Gradient header
+          SliverAppBar(
+            expandedHeight: 200,
+            pinned: true,
+            backgroundColor: AppColors.primaryGreen,
+            foregroundColor: Colors.white,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF059669), Color(0xFF10B981), Color(0xFF14B8A6)],
+                  ),
                 ),
-                child: Image.asset(
-                  'assets/images/image.png',
-                  width: 80,
-                  height: 80,
-                  color: AppColors.primaryGreen,
+                child: Stack(
+                  children: [
+                    Positioned(
+                      right: -60,
+                      top: -60,
+                      child: Container(
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.08),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: -40,
+                      bottom: -20,
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 40),
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.15),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Image.asset(
+                                'assets/images/image.png',
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.water_drop_rounded,
+                                  size: 36,
+                                  color: AppColors.primaryGreen,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'AgriPlus',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            'smart_farming_subtitle'.tr,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withOpacity(0.8),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
-            const Center(
-              child: Text(
-                'AgriPlus',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.5,
-                ),
+              title: Text(
+                'about_agriplus'.tr,
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
               ),
             ),
-            const Center(
-              child: Text(
-                'Smart Automation for Smart Farming',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w500,
-                ),
+          ),
+          // Content
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionTitle('our_mission'.tr),
+                  Text(
+                    'mission_description'.tr,
+                    style: const TextStyle(fontSize: 15, height: 1.6),
+                  ),
+                  const SizedBox(height: 28),
+                  _buildSectionTitle('key_features'.tr),
+                  const SizedBox(height: 4),
+                  _buildFeatureItem(
+                    Icons.settings_remote_rounded,
+                    'remote_motor_control'.tr,
+                    'remote_motor_desc'.tr,
+                    const Color(0xFF3B82F6),
+                  ),
+                  _buildFeatureItem(
+                    Icons.timer_rounded,
+                    'automated_scheduling'.tr,
+                    'scheduling_desc'.tr,
+                    const Color(0xFF9D4EDD),
+                  ),
+                  _buildFeatureItem(
+                    Icons.bolt_rounded,
+                    'power_monitoring'.tr,
+                    'power_monitoring_desc'.tr,
+                    const Color(0xFFFF8A00),
+                  ),
+                  _buildFeatureItem(
+                    Icons.warning_amber_rounded,
+                    'instant_alerts'.tr,
+                    'instant_alerts_desc'.tr,
+                    AppColors.error,
+                  ),
+                  const SizedBox(height: 32),
+                  Divider(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: Text(
+                      'v1.0.0',
+                      style: TextStyle(
+                        color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Center(
+                    child: Text(
+                      'copyright'.tr,
+                      style: TextStyle(
+                        color: isDark ? Colors.grey.shade700 : Colors.grey.shade400,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
               ),
             ),
-            const SizedBox(height: 32),
-            _buildSectionTitle('Our Mission'),
-            const Text(
-              'AgriPlus is dedicated to empowering farmers through innovative smart automation solutions. We aim to optimize resource usage, improve crop yields, and make farming more sustainable and efficient.',
-              style: TextStyle(fontSize: 16, height: 1.5),
-            ),
-            const SizedBox(height: 24),
-            _buildSectionTitle('Key Features'),
-            _buildFeatureItem(Icons.settings_remote, 'Remote Motor Control', 'Manage your Smart motors from anywhere.'),
-            _buildFeatureItem(Icons.timer, 'Automated Scheduling', 'Set timers and schedules for efficient irrigation.'),
-            _buildFeatureItem(Icons.bolt, 'Power Monitoring', 'Real-time updates on power status and voltage.'),
-            _buildFeatureItem(Icons.warning_amber_rounded, 'Instant Alerts', 'Get notified about faults and issues immediately.'),
-            const SizedBox(height: 32),
-            const Divider(),
-            const SizedBox(height: 16),
-            const Center(
-              child: Text(
-                'Version 1.0.0',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-            const Center(
-              child: Text(
-                '© 2024 AgriPlus Smart Automation',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -97,20 +193,29 @@ class AboutAgriPlusPage extends StatelessWidget {
         title,
         style: const TextStyle(
           fontSize: 20,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w800,
           color: AppColors.primaryGreen,
+          letterSpacing: -0.3,
         ),
       ),
     );
   }
 
-  Widget _buildFeatureItem(IconData icon, String title, String description) {
+  Widget _buildFeatureItem(IconData icon, String title, String description, Color color) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.primaryGreen, size: 28),
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: color, size: 22),
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -119,15 +224,17 @@ class AboutAgriPlusPage extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.2,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   description,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
                   ),
                 ),
               ],

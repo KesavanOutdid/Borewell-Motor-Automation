@@ -8,7 +8,7 @@ import 'package:get_storage/get_storage.dart';
 import '../../../../../core/config/app_constants.dart';
 import '../../../home/presentation/controllers/home_controller.dart';
 import 'package:http/http.dart' as http;
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import '../../../../../core/services/socket_service.dart';
 import 'package:geocoding/geocoding.dart';
 
 import '../../../../../core/config/env.dart';
@@ -31,10 +31,8 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
   String? imeiNumber;
   bool _initialized = false;
 
-  IO.Socket? _socket;
-  Timer? _reconnectTimer;
+  List<StreamSubscription> _socketSubs = [];
   Timer? _heartbeatTimer;
-  String? _socketSerial;
   bool? _previousMotorRunning;
   bool? _pendingCommandStatus;
   Timer? _commandTimeoutTimer;
@@ -73,7 +71,7 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       print('🔧 [DETAILS] App resumed, refreshing state for $serialNumber');
-      _ensureSocketConnection();
+      Get.find<SocketService>().ensureConnected();
       refreshData();
     }
   }
@@ -81,7 +79,10 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
   @override
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
-    _closeSocket();
+    for (var sub in _socketSubs) sub.cancel();
+    _socketSubs.clear();
+    _heartbeatTimer?.cancel();
+    _commandTimeoutTimer?.cancel();
     super.onClose();
   }
 
@@ -149,7 +150,7 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
       'signalStrength': _formatMetric(args['signal_strength']) ?? (deviceChanged ? '-' : (liveData['signalStrength'] ?? '-')),
     });
 
-    _ensureSocketConnection();
+    _subscribeToSocket();
     
     // Load from cache if we have a serial number
     // We always load from cache to ensure background FCM updates are applied
@@ -456,114 +457,48 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
     }
   }
 
-  void _ensureSocketConnection() {
-    final serial = serialNumber;
-    if (serial == null || serial.trim().isEmpty) {
-      _closeSocket();
-      return;
-    }
-
-    if (_socketSerial != serial || _socket == null || !_socket!.connected) {
-      _socketSerial = serial;
-      _connectSocket();
-    }
-  }
-
-  void _connectSocket() {
+  void _subscribeToSocket() {
     final serial = serialNumber;
     if (serial == null || serial.trim().isEmpty) {
       return;
     }
 
-    _reconnectTimer?.cancel();
-    _disconnectSocket();
+    // Cancel previous subscriptions
+    for (var sub in _socketSubs) sub.cancel();
+    _socketSubs.clear();
 
-    print('🔌 [DETAILS SOCKET] Connecting to $serial...');
+    print('🔌 [DETAILS SOCKET] Subscribing to events for $serial...');
 
     try {
-      final token = tokenService.getToken();
-      
-      _socket = IO.io(AppConfig.socketIOUrl, <String, dynamic>{
-        'transports': ['websocket'],
-        'autoConnect': false,
-        'forceNew': true,
-        'query': {
-          'token': token,
-          'serial_number': serial,
-        }
-      });
+      final socketService = Get.find<SocketService>();
 
-      _socket!.on('connect', (_) {
-        print('🔌 [DETAILS SOCKET] Connected for $serial');
-        isConnected.value = true;
-      });
+      _socketSubs.add(socketService.statusFor(serial).listen((data) {
+        print('🔌 [DETAILS SOCKET] LIVE_STATUS: $data');
+        _handleLiveStatus(data);
+      }));
 
-      _socket!.on('disconnect', (reason) {
-        print('🔌 [DETAILS SOCKET] Disconnected for $serial. Reason: $reason');
-        isConnected.value = false;
-        _scheduleReconnect();
-      });
+      _socketSubs.add(socketService.telemetryFor(serial).listen((data) {
+        print('🔌 [DETAILS SOCKET] LIVE_TELEMETRY: $data');
+        _handleLiveTelemetry(data);
+      }));
 
-      _socket!.on('connect_error', (err) => print('🔌 [DETAILS SOCKET] Connection Error: $err'));
+      _socketSubs.add(socketService.alertFor(serial).listen((data) {
+        print('🔌 [DETAILS SOCKET] LIVE_ALERT: $data');
+        _handleLiveAlert(data);
+      }));
 
-      _socket!.on('LIVE_STATUS', (data) {
-        if (data is Map && data['serial_number'] == serial) {
-          print('🔌 [DETAILS SOCKET] LIVE_STATUS: $data');
-          _handleLiveStatus(data);
-        }
-      });
-      _socket!.on('LIVE_TELEMETRY', (data) {
-        if (data is Map && data['serial_number'] == serial) {
-          print('🔌 [DETAILS SOCKET] LIVE_TELEMETRY: $data');
-          _handleLiveTelemetry(data);
-        }
-      });
-      _socket!.on('LIVE_ALERT', (data) {
-        if (data is Map && data['serial_number'] == serial) {
-          print('🔌 [DETAILS SOCKET] LIVE_ALERT: $data');
-          _handleLiveAlert(data);
-        }
-      });
-      _socket!.on('LIVE_HEARTBEAT', (data) {
-        if (data is Map && data['serial_number'] == serial) {
-          print('🔌 [DETAILS SOCKET] LIVE_HEARTBEAT: $data');
-          _handleLiveHeartbeat(data);
-        }
-      });
-      _socket!.on('LIVE_BOOT', (data) {
-        if (data is Map && data['serial_number'] == serial) {
-          print('🔌 [DETAILS SOCKET] LIVE_BOOT: $data');
-          _handleLiveBoot(data);
-        }
-      });
+      _socketSubs.add(socketService.heartbeatFor(serial).listen((data) {
+        print('🔌 [DETAILS SOCKET] LIVE_HEARTBEAT: $data');
+        _handleLiveHeartbeat(data);
+      }));
 
-      _socket!.connect();
+      _socketSubs.add(socketService.bootFor(serial).listen((data) {
+        print('🔌 [DETAILS SOCKET] LIVE_BOOT: $data');
+        _handleLiveBoot(data);
+      }));
     } catch (e) {
-      print('🔌 [DETAILS SOCKET] Error: $e');
-      _scheduleReconnect();
+      print('🔌 [DETAILS SOCKET] Subscription Error: $e');
     }
-  }
-
-  void _disconnectSocket() {
-    _socket?.dispose();
-    _socket = null;
-  }
-
-  void _closeSocket() {
-    _reconnectTimer?.cancel();
-    _reconnectTimer = null;
-    _disconnectSocket();
-    _resetHeartbeatState();
-    _socketSerial = null;
-  }
-
-  void _scheduleReconnect() {
-    _disconnectSocket();
-    _reconnectTimer?.cancel();
-    if (serialNumber == null || serialNumber!.trim().isEmpty) {
-      return;
-    }
-    _reconnectTimer = Timer(const Duration(seconds: 5), _connectSocket);
   }
 
   void _handleLiveStatus(dynamic data) {
@@ -1116,7 +1051,7 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
     // Priority: 1. Socket connection, 2. Recent command, 3. Timestamp threshold
     bool isActuallyConnected = isConnected.value;
 
-    if (_socket?.connected == true) {
+    if (Get.find<SocketService>().isConnected.value) {
       isActuallyConnected = true;
     } else {
       final lastUpdate = data['last_heartbeat'] ?? data['updatedAt'] ?? data['timestamp'];

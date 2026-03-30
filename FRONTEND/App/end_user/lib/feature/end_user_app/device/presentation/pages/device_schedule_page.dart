@@ -33,7 +33,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
             Icon(Icons.error_outline, color: Colors.red),
             SizedBox(width: 10),
@@ -44,7 +44,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            child: Text('OK', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -135,11 +135,11 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   CupertinoButton(
-                    child: const Text('Cancel', style: TextStyle(color: Colors.red)),
+                    child: Text('cancel'.tr, style: TextStyle(color: Colors.red)),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   CupertinoButton(
-                    child: const Text('Done', style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold)),
+                    child: Text('Done', style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold)),
                     onPressed: () {
                       final pickedTime = TimeOfDay.fromDateTime(tempPickedDate);
                       
@@ -230,22 +230,22 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirm Schedule'),
+        title: Text('Confirm Schedule'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Are you sure you want to set this schedule?'),
-            const SizedBox(height: 15),
+            Text('Are you sure you want to set this schedule?'),
+            SizedBox(height: 15),
             Text('Start  ${DateFormat('dd MMM, h:mm a').format(startDateTime)}', style: const TextStyle(fontWeight: FontWeight.bold)),
             Text('Stop   ${DateFormat('dd MMM, h:mm a').format(stopDateTime)}', style: const TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel', style: TextStyle(color: Colors.grey))),
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text('cancel'.tr, style: TextStyle(color: Colors.grey))),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true), 
-            child: const Text('Confirm', style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold)),
+            child: Text('Confirm', style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -271,7 +271,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Scheduler', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('Scheduler', style: TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: AppColors.textPrimary,
@@ -290,7 +290,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 child: Row(
                   children: [
-                    const Text(
+                    Text(
                       'Active/Past Schedules',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textPrimary),
                     ),
@@ -324,11 +324,11 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildSectionTitle('START (Date & Time)', AppColors.primaryGreen, Icons.play_circle_fill),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(child: _buildPickerTile(startDate == null ? 'Select Date' : DateFormat('dd MMM, yyyy').format(startDate!), Icons.event_note, () => _selectDate(context, true))),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Expanded(
                     child: Opacity(
                       opacity: startDate == null ? 0.6 : 1.0,
@@ -338,14 +338,14 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                 ],
               ),
               
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               
               _buildSectionTitle('STOP (Date & Time)', AppColors.error, Icons.stop_circle),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(child: _buildPickerTile(stopDate == null ? 'Select Date' : DateFormat('dd MMM, yyyy').format(stopDate!), Icons.event_note, () => _selectDate(context, false))),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Expanded(
                     child: Opacity(
                       opacity: stopDate == null ? 0.6 : 1.0,
@@ -355,7 +355,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                 ],
               ),
 
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               Obx(() => Container(
                 height: 54,
                 decoration: BoxDecoration(
@@ -384,8 +384,8 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   ),
                   child: controller.isLoading.value 
-                    ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
-                    : const Text('CONFIRM SCHEDULE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1.2)),
+                    ? SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
+                    : Text('CONFIRM SCHEDULE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1.2)),
                 ),
               )),
             ],
@@ -399,7 +399,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
     return Row(
       children: [
         Icon(icon, size: 20, color: color),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         Text(
           title, 
           style: TextStyle(
@@ -431,7 +431,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
         child: Row(
           children: [
             Icon(icon, size: 16, color: isPlaceholder ? AppColors.textMuted : AppColors.primaryGreen),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(
               child: Text(
                 value, 
@@ -508,8 +508,8 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.event_busy, size: 64, color: Colors.grey.withOpacity(0.3)),
-                const SizedBox(height: 16),
-                const Text('No schedules found', style: TextStyle(color: AppColors.textMuted)),
+                SizedBox(height: 16),
+                Text('No schedules found', style: TextStyle(color: AppColors.textMuted)),
               ],
             ),
           ),
@@ -573,7 +573,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                                 ),
                             ],
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                           Row(
                             children: [
                               _buildTimeInfo(Icons.play_arrow_rounded, 'Start', start, AppColors.primaryGreen),
@@ -583,9 +583,9 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
                           ),
                           
                           if (isExpanded) ...[
-                            const SizedBox(height: 12),
+                            SizedBox(height: 12),
                             const Divider(height: 1),
-                            const SizedBox(height: 12),
+                            SizedBox(height: 12),
                             _buildDetailRow(Icons.person_add_alt_1_outlined, 'Created by', createdBy, Colors.blue),
                             if (startedBy != null)
                               _buildDetailRow(Icons.play_circle_outlined, 'Started by', startedBy, AppColors.primaryGreen),
@@ -621,7 +621,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(_getStatusIcon(status), color: color, size: 14),
-          const SizedBox(width: 6),
+          SizedBox(width: 6),
           Text(
             status.toUpperCase(),
             style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 0.5),
@@ -639,11 +639,11 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
           Row(
             children: [
               Icon(icon, size: 14, color: color),
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
               Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500)),
             ],
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             DateFormat('dd MMM').format(dateTime),
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
@@ -663,7 +663,7 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
       child: Row(
         children: [
           Icon(icon, size: 16, color: color.withOpacity(0.7)),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Text(
             label,
             style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),

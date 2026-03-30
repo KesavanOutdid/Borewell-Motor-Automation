@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -70,7 +71,7 @@ class _QRScannerViewState extends State<QRScannerView> {
     if (_permissionDenied) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Scan QR Code'),
+          title: Text('scan_qr_code'.tr),
         ),
         body: Center(
           child: Padding(
@@ -83,8 +84,8 @@ class _QRScannerViewState extends State<QRScannerView> {
                   size: 80,
                   color: Colors.red[300],
                 ),
-                const SizedBox(height: 24),
-                const Text(
+                SizedBox(height: 24),
+                Text(
                   'Camera Permission Required',
                   style: TextStyle(
                     fontSize: 20,
@@ -92,8 +93,8 @@ class _QRScannerViewState extends State<QRScannerView> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
-                const Text(
+                SizedBox(height: 16),
+                Text(
                   'Please allow camera access in settings to scan QR codes',
                   style: TextStyle(
                     fontSize: 14,
@@ -101,13 +102,13 @@ class _QRScannerViewState extends State<QRScannerView> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
                 ElevatedButton.icon(
                   onPressed: () {
                     openAppSettings();
                   },
                   icon: const Icon(Icons.settings),
-                  label: const Text('Open Settings'),
+                  label: Text('open_settings'.tr),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green[600],
                     foregroundColor: Colors.white,
@@ -126,7 +127,7 @@ class _QRScannerViewState extends State<QRScannerView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Scan QR Code'),
+        title: Text('scan_qr_code'.tr),
         actions: [
           IconButton(
             icon: Icon(
@@ -173,7 +174,7 @@ class _QRScannerViewState extends State<QRScannerView> {
                   color: Colors.black87,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
+                child: Text(
                   'Position the QR code within the frame',
                   style: TextStyle(
                     color: Colors.white,

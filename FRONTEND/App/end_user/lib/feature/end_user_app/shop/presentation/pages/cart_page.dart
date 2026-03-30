@@ -34,8 +34,8 @@ class _CartPageState extends State<CartPage> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Shopping Cart'
-            , style: TextStyle(color: Colors.white)),
+        title: Text('shopping_cart'.tr
+            , style: const TextStyle(color: Colors.white)),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: AppColors.primaryGradient,
@@ -48,9 +48,9 @@ class _CartPageState extends State<CartPage> {
               return TextButton.icon(
                 onPressed: () => _showClearCartDialog(context, controller),
                 icon: const Icon(Icons.delete_outline, color: Colors.white),
-                label: const Text(
-                  'Clear All',
-                  style: TextStyle(color: Colors.white),
+                label: Text(
+                  'clear_all'.tr,
+                  style: const TextStyle(color: Colors.white),
                 ),
               );
             }
@@ -97,7 +97,7 @@ class _CartPageState extends State<CartPage> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Your cart is empty',
+                        'your_cart_is_empty'.tr,
                         style: TextStyle(
                           fontSize: 18,
                           color: Colors.grey.shade600,
@@ -106,7 +106,7 @@ class _CartPageState extends State<CartPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Add items to get started',
+                        'add_items_to_get_started'.tr,
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey.shade500,
@@ -118,7 +118,7 @@ class _CartPageState extends State<CartPage> {
                           Get.offAllNamed('/home', arguments: {'index': 1});
                         },
                         icon: const Icon(Icons.shopping_bag_outlined),
-                        label: const Text('Continue Shopping'),
+                        label: Text('continue_shopping'.tr),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryGreen,
                           foregroundColor: Colors.white,
@@ -151,11 +151,11 @@ class _CartPageState extends State<CartPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Items',
-                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                            'items'.tr,
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                           ),
                           Text(
-                            '${cart.items.length} ${cart.items.length == 1 ? 'Item' : 'Items'}',
+                            '${cart.items.length} ${cart.items.length == 1 ? 'item'.tr : 'items'.tr}',
                             style: TextStyle(fontSize: 16, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
                           ),
                         ],
@@ -352,11 +352,11 @@ class _CartPageState extends State<CartPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           child: Text(
-            'Price Summary',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            'price_summary'.tr,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
           ),
         ),
         const SizedBox(height: 8),
@@ -394,7 +394,7 @@ class _CartPageState extends State<CartPage> {
                           UpperCaseTextFormatter(),
                         ],
                         decoration: InputDecoration(
-                          hintText: 'Enter Voucher Code',
+                          hintText: 'enter_voucher_code'.tr,
                           hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
@@ -435,7 +435,7 @@ class _CartPageState extends State<CartPage> {
                               width: 18,
                               child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                             )
-                          : const Text('Apply', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                          : Text('apply'.tr, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
                       )),
                     ),
                   ],
@@ -456,7 +456,7 @@ class _CartPageState extends State<CartPage> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Voucher "$appliedVoucherCode" applied!',
+                          '${'voucher_applied'.tr} ($appliedVoucherCode)',
                           style: const TextStyle(
                             fontSize: 13,
                             color: AppColors.success,
@@ -481,15 +481,15 @@ class _CartPageState extends State<CartPage> {
                 ),
               ],
               const SizedBox(height: 24),
-              _buildSummaryRow('Subtotal', '₹${cart.totalPrice.toStringAsFixed(2)}'),
+              _buildSummaryRow('subtotal'.tr, '₹${cart.totalPrice.toStringAsFixed(2)}'),
               const SizedBox(height: 12),
-              _buildSummaryRow('GST', '₹${cart.totalGst.toStringAsFixed(2)}'),
+              _buildSummaryRow('gst'.tr, '₹${cart.totalGst.toStringAsFixed(2)}'),
               const SizedBox(height: 12),
-              _buildSummaryRow('Shipping', '₹${cart.totalShippingCost.toStringAsFixed(2)}'),
+              _buildSummaryRow('shipping'.tr, '₹${cart.totalShippingCost.toStringAsFixed(2)}'),
               if (appliedDiscountPercentage != null) ...[
                 const SizedBox(height: 12),
                 _buildSummaryRow(
-                  'Discount ($appliedDiscountPercentage%)',
+                  '${'discount'.tr} ($appliedDiscountPercentage%)',
                   '-₹${(cart.totalPrice * appliedDiscountPercentage! / 100).toStringAsFixed(2)}',
                   isDiscount: true,
                 ),
@@ -499,7 +499,7 @@ class _CartPageState extends State<CartPage> {
                 child: Divider(height: 1),
               ),
               _buildSummaryRow(
-                'Grand Total',
+                'grand_total'.tr,
                 '₹${_calculateFinalTotal(cart.grandTotal, cart.totalPrice).toStringAsFixed(2)}',
                 isTotal: true,
               ),
@@ -533,7 +533,7 @@ class _CartPageState extends State<CartPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Total Amount',
+                  'total_amount'.tr,
                   style: TextStyle(fontSize: 13, color: Colors.grey.shade500, fontWeight: FontWeight.w600),
                 ),
                 Text(
@@ -558,9 +558,9 @@ class _CartPageState extends State<CartPage> {
                   borderRadius: BorderRadius.circular(18),
                 ),
               ),
-              child: const Text(
-                'CHECKOUT',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: 1.2),
+              child: Text(
+                'checkout'.tr.toUpperCase(),
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: 1.2),
               ),
             ),
           ],
@@ -605,21 +605,21 @@ class _CartPageState extends State<CartPage> {
     Get.dialog(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Remove Item'),
-        content: const Text('Are you sure you want to remove this item from your cart?'),
+        title: Text('remove_item'.tr),
+        content: Text('remove_item_confirmation'.tr),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-            child: const Text('Cancel'),
+            child: Text('cancel'.tr),
           ),
           TextButton(
             onPressed: () {
               Navigator.of(context, rootNavigator: true).pop();
               controller.removeFromCart(productId);
             },
-            child: const Text(
-              'Remove',
-              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            child: Text(
+              'remove'.tr,
+              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -632,21 +632,21 @@ class _CartPageState extends State<CartPage> {
     Get.dialog(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Clear Cart'),
-        content: const Text('Are you sure you want to remove all items from your cart?'),
+        title: Text('clear_cart'.tr),
+        content: Text('clear_cart_confirmation'.tr),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-            child: const Text('Cancel'),
+            child: Text('cancel'.tr),
           ),
           TextButton(
             onPressed: () {
               Navigator.of(context, rootNavigator: true).pop();
               controller.clearCart();
             },
-            child: const Text(
-              'Clear All',
-              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            child: Text(
+              'clear_all'.tr,
+              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
             ),
           ),
         ],
