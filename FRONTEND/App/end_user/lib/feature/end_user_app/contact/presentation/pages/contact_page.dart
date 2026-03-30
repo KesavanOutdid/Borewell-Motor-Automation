@@ -125,7 +125,16 @@ class ContactView extends StatelessWidget {
                     ),
                   ),
                   SizedBox(width: 12),
-                  Expanded(child: SizedBox()),
+                  Expanded(
+                    child: _buildContactCard(
+                      context,
+                      icon: Icons.support_agent_rounded,
+                      title: 'raise_ticket'.tr,
+                      subtitle: 'raise_ticket_desc'.tr,
+                      color: AppColors.primaryGreen,
+                      onTap: () => Get.toNamed('/help'),
+                    ),
+                  ),
                 ],
               ),
             ],

@@ -211,6 +211,14 @@ class SettingsView extends StatelessWidget {
             onTap: () {},
             isDark: isDark,
           ),
+          SizedBox(height: 12),
+          _SettingsTile(
+            icon: Icons.help_outline_rounded,
+            label: 'help_support'.tr,
+            color: Colors.blue,
+            onTap: () => Get.toNamed('/help'),
+            isDark: isDark,
+          ),
 
           SizedBox(height: 28),
 

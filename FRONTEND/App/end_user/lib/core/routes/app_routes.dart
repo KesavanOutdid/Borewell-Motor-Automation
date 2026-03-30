@@ -34,6 +34,9 @@ import '../../feature/end_user_app/shop/presentation/pages/order_details_page.da
 import '../../feature/end_user_app/shop/presentation/pages/addresses_page.dart';
 import '../../feature/end_user_app/shop/presentation/pages/add_edit_address_page.dart';
 import '../../feature/end_user_app/shop/presentation/pages/vouchers_page.dart';
+import '../../feature/end_user_app/help/presentation/pages/help_page.dart';
+import '../../feature/end_user_app/help/presentation/pages/create_help_page.dart';
+import '../../feature/end_user_app/help/presentation/controllers/help_binding.dart';
 
 class AppRoutes {
   static const splash = '/';
@@ -60,6 +63,8 @@ class AppRoutes {
   static const addresses = '/addresses';
   static const addAddress = '/add-address';
   static const vouchers = '/vouchers';
+  static const help = '/help';
+  static const createHelp = '/create-help';
   static const forgotPassword = '/forgot-password';
   static const otpVerification = '/otp-verification';
   static const resetPassword = '/reset-password';
@@ -184,6 +189,16 @@ class AppRoutes {
     GetPage(
       name: vouchers,
       page: () => const VouchersPage(),
+    ),
+    GetPage(
+      name: help,
+      page: () => const HelpPage(),
+      binding: HelpBinding(),
+    ),
+    GetPage(
+      name: createHelp,
+      page: () => const CreateHelpPage(),
+      binding: HelpBinding(),
     ),
   ];
 }

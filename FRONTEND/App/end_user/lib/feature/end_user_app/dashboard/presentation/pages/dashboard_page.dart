@@ -354,6 +354,17 @@ class _ModernDrawer extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       _DrawerItem(
+                        icon: Icons.help_outline_rounded,
+                        label: 'help_support'.tr,
+                        isSelected: false,
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          Get.toNamed('/help');
+                        },
+                        color: Colors.blue,
+                      ),
+                      const SizedBox(height: 4),
+                      _DrawerItem(
                         icon: Icons.logout_rounded,
                         label: 'logout'.tr,
                         isSelected: false,
