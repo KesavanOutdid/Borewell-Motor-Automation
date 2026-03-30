@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "64700182725",
+    "project_id": "agriplusdev-9b3ec",
+    "storage_bucket": "agriplusdev-9b3ec.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:64700182725:android:9bf7db5e7ee7effaa5c0ac",
+        "android_client_info": {
+          "package_name": "com.agriplusdev.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_PtgGLQPuMmOBH8x7f1bOJVcEVzTxxI8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

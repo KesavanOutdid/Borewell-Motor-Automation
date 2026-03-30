@@ -1,0 +1,90 @@
+.page-skeleton-wrapper {
+    min-height: 100vh;
+    background: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+}
+
+.page-skeleton-header {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    height: 70px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.page-skeleton-content {
+    flex: 1;
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.page-skeleton-card {
+    background: white;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-skeleton-title {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 4px;
+    height: 40px;
+    width: 30%;
+    margin-bottom: 30px;
+}
+
+.page-skeleton-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.page-skeleton-row {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 4px;
+    height: 60px;
+    width: 100%;
+}
+
+.page-skeleton-row:nth-child(odd) {
+    width: 95%;
+}
+
+.page-skeleton-row:nth-child(even) {
+    width: 98%;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .page-skeleton-wrapper {
+        background: #121212;
+    }
+    
+    .page-skeleton-header,
+    .page-skeleton-title,
+    .page-skeleton-row {
+        background: linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%);
+        background-size: 200% 100%;
+    }
+    
+    .page-skeleton-card {
+        background: #1a1a1a;
+    }
+}

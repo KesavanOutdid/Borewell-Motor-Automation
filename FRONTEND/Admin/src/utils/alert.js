@@ -1,0 +1,70 @@
+// alert.js
+import Swal from 'sweetalert2';
+
+// Function to show account deactivated alert
+export const showAccountDeactivated = (message) => {
+    return Swal.fire({
+        title: 'Account Alert',
+        text: message || 'Your account has been deactivated. Please contact admin.',
+        icon: 'error',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#dc3545',
+    });
+};
+
+// Function to show the logout confirmation alert
+export const showLogoutConfirmation = async () => {
+    return Swal.fire({
+        title: 'Are you sure, you want to sign out?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Sign Out',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+    });
+};
+
+// Function to show the successful logout alert
+export const showLogoutSuccess = () => {
+    Swal.fire({
+        title: 'Sign out successfully!',
+        icon: 'success',
+        timer: 2000, // Automatically close after 2 seconds
+        showConfirmButton: false, // Optional: Hide the confirmation button
+    });
+};
+
+// Function to show the successful alert
+export const showAlertSuccess = (title) => {
+    Swal.fire({
+        title, // Dynamically set the alert title
+        icon: 'success',
+        timer: 2000, // Automatically close after 2 seconds
+        showConfirmButton: false, // Optional: Hide the confirmation button
+    });
+};
+
+// Function to show error alert
+export const showAlertError = (title) => {
+    Swal.fire({
+        title, // Dynamically set the alert title
+        icon: 'error',
+        timer: 2000, // Automatically close after 2 seconds
+        showConfirmButton: false, // Optional: Hide the confirmation button
+    });
+};
+
+// Function to show delete confirmation alert
+export const showDeleteConfirmation = async (itemName, type = 'item') => {
+    return Swal.fire({
+        title: `Are you sure you want to delete this ${type}?`,
+        text: itemName ? `Item: ${itemName}` : "",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Delete',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        reverseButtons: true,
+    });
+};

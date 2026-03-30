@@ -1,0 +1,73 @@
+.content-skeleton-wrapper {
+    padding: 20px;
+}
+
+.skeleton-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.skeleton-header {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 4px;
+    height: 30px;
+    width: 40%;
+    margin-bottom: 30px;
+}
+
+.skeleton-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.skeleton-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.skeleton-label {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 4px;
+    height: 16px;
+    width: 25%;
+}
+
+.skeleton-value {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 4px;
+    height: 20px;
+    width: 60%;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .skeleton-header,
+    .skeleton-label,
+    .skeleton-value {
+        background: linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%);
+        background-size: 200% 100%;
+    }
+    
+    .skeleton-card {
+        background: #1a1a1a;
+    }
+}
