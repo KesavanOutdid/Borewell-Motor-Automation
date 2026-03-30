@@ -2946,7 +2946,7 @@ exports.resetPassword = async (req, res, next) => {
 
 exports.createHelp = async (req, res, next) => {
     try {
-        const { user_id, user_name, user_mobile, subject, description, createdBy } = req.body;
+        const { user_id, user_name, user_mobile, subject, description, serial_number, device_nickname, createdBy } = req.body;
 
         if (!user_id) return res.status(400).json({ success: false, message: "User ID is required" });
         if (!user_name || !user_name.trim()) return res.status(400).json({ success: false, message: "User name is required" });
@@ -2960,6 +2960,8 @@ exports.createHelp = async (req, res, next) => {
             user_mobile: user_mobile.trim(),
             subject: subject.trim(),
             description: description.trim(),
+            serial_number: serial_number ? serial_number.trim() : null,
+            device_nickname: device_nickname ? device_nickname.trim() : null,
             status: 'pending',
             createdBy: createdBy || null,
             createdAt: new Date()

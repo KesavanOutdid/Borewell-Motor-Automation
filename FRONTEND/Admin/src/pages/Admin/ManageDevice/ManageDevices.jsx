@@ -20,7 +20,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
         pagination, handlePageChange, handleLimitChange, loadingAnalytics, errorAnalytics, chartType,
         // analytics,
         setChartType,
-        filterAssignStatus, setFilterAssignStatus
+        filterStatus, setFilterStatus
     } = useManageDevices(userInfo);
 
     console.log(successMessage);
@@ -48,12 +48,12 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
         }
 
         searchTimeoutRef.current = setTimeout(() => {
-            fetchDeviceData(1, pagination.limit, query, filterAssignStatus);
+            fetchDeviceData(1, pagination.limit, query, filterStatus);
         }, 500);
     };
 
     const handleFilterChange = (status) => {
-        setFilterAssignStatus(status);
+        setFilterStatus(status);
         fetchDeviceData(1, pagination.limit, searchQuery, status);
     };
 
@@ -181,36 +181,84 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                 style={{ borderRadius: '6px', padding: '10px 15px', fontSize: '13px' }}
                                             />
                                         </div>
-                                        <div className="col-md-2 col-12">
+                                        <div className="col-md-2 col-12 d-none">
+                                            {/* Hide dropdown but keep logic available if needed */}
                                             <select
                                                 className="form-control"
-                                                value={filterAssignStatus}
+                                                value={filterStatus}
                                                 onChange={(e) => handleFilterChange(e.target.value)}
                                                 style={{ borderRadius: '6px', padding: '10px 15px', fontSize: '13px' }}
                                             >
-                                                <option value="">All Status</option>
-                                                <option value="true">Assigned</option>
-                                                <option value="false">Un-Assigned</option>
+                                                <option value="all">All Status</option>
+                                                <option value="active">Active</option>
+                                                <option value="deactive">De-Active</option>
+                                                <option value="assigned">Assigned</option>
+                                                <option value="unassigned">Un-Assigned</option>
                                             </select>
                                         </div>
-                                        <div className="col-md-6 col-12 d-flex flex-wrap gap-1">
-                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#f0f9ff', padding: '12px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div className="col-md-8 col-12 d-flex flex-wrap gap-1">
+                                            <div 
+                                                onClick={() => handleFilterChange('all')}
+                                                style={{ 
+                                                    flex: '1', minWidth: '120px', 
+                                                    backgroundColor: filterStatus === 'all' ? '#dbeafe' : '#f0f9ff', 
+                                                    padding: '12px', borderRadius: '8px', 
+                                                    border: filterStatus === 'all' ? '2px solid #3b82f6' : '1px solid #bfdbfe', 
+                                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                    cursor: 'pointer', transition: 'all 0.2s'
+                                                }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Total</p>
                                                 <p style={{ fontSize: '18px', color: '#1e40af', fontWeight: '700', margin: 0 }}>{pagination?.totalDevices || 0}</p>
                                             </div>
-                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#f0fdf4', padding: '12px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div 
+                                                onClick={() => handleFilterChange('active')}
+                                                style={{ 
+                                                    flex: '1', minWidth: '120px', 
+                                                    backgroundColor: filterStatus === 'active' ? '#dcfce7' : '#f0fdf4', 
+                                                    padding: '12px', borderRadius: '8px', 
+                                                    border: filterStatus === 'active' ? '2px solid #22c55e' : '1px solid #bbf7d0', 
+                                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                    cursor: 'pointer', transition: 'all 0.2s'
+                                                }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Active</p>
                                                 <p style={{ fontSize: '18px', color: '#15803d', fontWeight: '700', margin: 0 }}>{pagination?.totalActiveDevices || 0}</p>
                                             </div>
-                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#fff5f5', padding: '12px', borderRadius: '8px', border: '1px solid #feb2b2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div 
+                                                onClick={() => handleFilterChange('deactive')}
+                                                style={{ 
+                                                    flex: '1', minWidth: '120px', 
+                                                    backgroundColor: filterStatus === 'deactive' ? '#fecaca' : '#fff5f5', 
+                                                    padding: '12px', borderRadius: '8px', 
+                                                    border: filterStatus === 'deactive' ? '2px solid #ef4444' : '1px solid #feb2b2', 
+                                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                    cursor: 'pointer', transition: 'all 0.2s'
+                                                }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>De-Active</p>
                                                 <p style={{ fontSize: '18px', color: '#c53030', fontWeight: '700', margin: 0 }}>{pagination?.totalDeactiveDevices || 0}</p>
                                             </div>
-                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#fef2f2', padding: '12px', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div 
+                                                onClick={() => handleFilterChange('assigned')}
+                                                style={{ 
+                                                    flex: '1', minWidth: '120px', 
+                                                    backgroundColor: filterStatus === 'assigned' ? '#fecaca' : '#fef2f2', 
+                                                    padding: '12px', borderRadius: '8px', 
+                                                    border: filterStatus === 'assigned' ? '2px solid #ef4444' : '1px solid #fecaca', 
+                                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                    cursor: 'pointer', transition: 'all 0.2s'
+                                                }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Assigned</p>
                                                 <p style={{ fontSize: '18px', color: '#991b1b', fontWeight: '700', margin: 0 }}>{pagination?.totalAssignedDevices || 0}</p>
                                             </div>
-                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#fffbeb', padding: '12px', borderRadius: '8px', border: '1px solid #fef3c7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div 
+                                                onClick={() => handleFilterChange('unassigned')}
+                                                style={{ 
+                                                    flex: '1', minWidth: '120px', 
+                                                    backgroundColor: filterStatus === 'unassigned' ? '#fef3c7' : '#fffbeb', 
+                                                    padding: '12px', borderRadius: '8px', 
+                                                    border: filterStatus === 'unassigned' ? '2px solid #f59e0b' : '1px solid #fef3c7', 
+                                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                    cursor: 'pointer', transition: 'all 0.2s'
+                                                }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Un-Assigned</p>
                                                 <p style={{ fontSize: '18px', color: '#d97706', fontWeight: '700', margin: 0 }}>{pagination?.totalUnassignedDevices || 0}</p>
                                             </div>

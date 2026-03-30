@@ -112,31 +112,94 @@ const ManageOrders = ({ userInfo, handleLogout }) => {
                                 <div className="card-header pb-3">
                                     <div className="row g-2 align-items-center mb-3">
                                         <div className="col-md-12 col-12 d-flex flex-wrap gap-1">
-                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#f0f9ff', padding: '12px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div 
+                                                onClick={() => handleStatusChange('')}
+                                                style={{ 
+                                                    flex: '1', minWidth: '120px', 
+                                                    backgroundColor: filterStatus === '' ? '#dbeafe' : '#f0f9ff', 
+                                                    padding: '12px', borderRadius: '8px', 
+                                                    border: filterStatus === '' ? '2px solid #3b82f6' : '1px solid #bfdbfe', 
+                                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                    cursor: 'pointer', transition: 'all 0.2s'
+                                                }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Total</p>
                                                 <p style={{ fontSize: '18px', color: '#1e40af', fontWeight: '700', margin: 0 }}>{pagination?.totalOrders || 0}</p>
                                             </div>
-                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#f3f4f6', padding: '12px', borderRadius: '8px', border: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div 
+                                                onClick={() => handleStatusChange('created')}
+                                                style={{ 
+                                                    flex: '1', minWidth: '120px', 
+                                                    backgroundColor: filterStatus === 'created' ? '#e5e7eb' : '#f3f4f6', 
+                                                    padding: '12px', borderRadius: '8px', 
+                                                    border: filterStatus === 'created' ? '2px solid #6b7280' : '1px solid #e5e7eb', 
+                                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                    cursor: 'pointer', transition: 'all 0.2s'
+                                                }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Created</p>
                                                 <p style={{ fontSize: '18px', color: '#374151', fontWeight: '700', margin: 0 }}>{pagination?.totalCreatedOrders || 0}</p>
                                             </div>
-                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#f0fdf4', padding: '12px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div 
+                                                onClick={() => handleStatusChange('delivered')}
+                                                style={{ 
+                                                    flex: '1', minWidth: '120px', 
+                                                    backgroundColor: filterStatus === 'delivered' ? '#dcfce7' : '#f0fdf4', 
+                                                    padding: '12px', borderRadius: '8px', 
+                                                    border: filterStatus === 'delivered' ? '2px solid #22c55e' : '1px solid #bbf7d0', 
+                                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                    cursor: 'pointer', transition: 'all 0.2s'
+                                                }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Delivered</p>
                                                 <p style={{ fontSize: '18px', color: '#15803d', fontWeight: '700', margin: 0 }}>{pagination?.totalDeliveredOrders || 0}</p>
                                             </div>
-                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#fef9e7', padding: '12px', borderRadius: '8px', border: '1px solid #fde047', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div 
+                                                onClick={() => handleStatusChange('processing')}
+                                                style={{ 
+                                                    flex: '1', minWidth: '120px', 
+                                                    backgroundColor: filterStatus === 'processing' ? '#fef08a' : '#fef9e7', 
+                                                    padding: '12px', borderRadius: '8px', 
+                                                    border: filterStatus === 'processing' ? '2px solid #eab308' : '1px solid #fde047', 
+                                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                    cursor: 'pointer', transition: 'all 0.2s'
+                                                }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Processing</p>
                                                 <p style={{ fontSize: '18px', color: '#b45309', fontWeight: '700', margin: 0 }}>{pagination?.totalProcessingOrders || 0}</p>
                                             </div>
-                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#fef3c7', padding: '12px', borderRadius: '8px', border: '1px solid #fcd34d', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div 
+                                                onClick={() => handleStatusChange('confirmed')}
+                                                style={{ 
+                                                    flex: '1', minWidth: '120px', 
+                                                    backgroundColor: filterStatus === 'confirmed' ? '#fde68a' : '#fef3c7', 
+                                                    padding: '12px', borderRadius: '8px', 
+                                                    border: filterStatus === 'confirmed' ? '2px solid #f59e0b' : '1px solid #fcd34d', 
+                                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                    cursor: 'pointer', transition: 'all 0.2s'
+                                                }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Confirmed</p>
                                                 <p style={{ fontSize: '18px', color: '#d97706', fontWeight: '700', margin: 0 }}>{pagination?.totalConfirmedOrders || 0}</p>
                                             </div>
-                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#e0f2fe', padding: '12px', borderRadius: '8px', border: '1px solid #bae6fd', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div 
+                                                onClick={() => handleStatusChange('shipped')}
+                                                style={{ 
+                                                    flex: '1', minWidth: '120px', 
+                                                    backgroundColor: filterStatus === 'shipped' ? '#bae6fd' : '#e0f2fe', 
+                                                    padding: '12px', borderRadius: '8px', 
+                                                    border: filterStatus === 'shipped' ? '2px solid #0ea5e9' : '1px solid #bae6fd', 
+                                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                    cursor: 'pointer', transition: 'all 0.2s'
+                                                }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Shipped</p>
                                                 <p style={{ fontSize: '18px', color: '#0369a1', fontWeight: '700', margin: 0 }}>{pagination?.totalShippedOrders || 0}</p>
                                             </div>
-                                            <div style={{ flex: '1', minWidth: '120px', backgroundColor: '#fff7ed', padding: '12px', borderRadius: '8px', border: '1px solid #ffedd5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div 
+                                                onClick={() => handleStatusChange('out_for_delivery')}
+                                                style={{ 
+                                                    flex: '1', minWidth: '120px', 
+                                                    backgroundColor: filterStatus === 'out_for_delivery' ? '#ffedd5' : '#fff7ed', 
+                                                    padding: '12px', borderRadius: '8px', 
+                                                    border: filterStatus === 'out_for_delivery' ? '2px solid #f97316' : '1px solid #ffedd5', 
+                                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                    cursor: 'pointer', transition: 'all 0.2s'
+                                                }}>
                                                 <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Out for Delivery</p>
                                                 <p style={{ fontSize: '18px', color: '#9a3412', fontWeight: '700', margin: 0 }}>{pagination?.totalOutForDeliveryOrders || 0}</p>
                                             </div>

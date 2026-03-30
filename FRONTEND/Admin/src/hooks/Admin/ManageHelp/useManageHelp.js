@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { showAlertSuccess, showAlertError } from '../../../utils/alert';
+import { showAlertSuccess } from '../../../utils/alert';
 
 const useManageHelp = (userInfo) => {
     const API_BASE = process.env.REACT_APP_SERVER_URL;

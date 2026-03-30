@@ -49,6 +49,10 @@ const Header = ({ userInfo, handleLogout }) => {
                 return 'Edit Vouchers';
             case '/add-voucher':
                 return 'Create Vouchers';
+            case '/manage-help':
+                return 'Manage Help';
+            case '/view-help':
+                return 'Manage Help View';
             default:
                 return 'Page Not Found';
         }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../../components/Admin/Header';
 import Sidebar from '../../../components/Admin/Sidebar';
@@ -15,31 +15,38 @@ const ViewHelp = ({ userInfo, handleLogout }) => {
     const [helpDetails, setHelpDetails] = useState(helpData || null);
     const [selectedStatus, setSelectedStatus] = useState(helpData?.status || 'pending');
     const [adminRemarks, setAdminRemarks] = useState(helpData?.admin_remarks || '');
+    const [loadingDetails, setLoadingDetails] = useState(false);
+
+    const loadHelpDetails = useCallback(async (id) => {
+        if (!id) return;
+        setLoadingDetails(true);
+        const data = await fetchHelpById(id);
+        if (data) {
+            setHelpDetails(data);
+            setSelectedStatus(data.status);
+            setAdminRemarks(data.admin_remarks || '');
+        }
+        setLoadingDetails(false);
+    }, [fetchHelpById]);
 
     useEffect(() => {
         if (!helpData && location.state?.helpId) {
-            const loadHelp = async () => {
-                const data = await fetchHelpById(location.state.helpId);
-                if (data) {
-                    setHelpDetails(data);
-                    setSelectedStatus(data.status);
-                    setAdminRemarks(data.admin_remarks || '');
-                }
-            };
-            loadHelp();
+            loadHelpDetails(location.state.helpId);
         }
-    }, [helpData, location.state, fetchHelpById]);
+    }, [helpData, location.state, loadHelpDetails]);
 
     const handleUpdateStatus = async () => {
         if (!helpDetails?._id) return;
 
         const success = await updateHelpStatus(helpDetails._id, selectedStatus, adminRemarks);
         if (success) {
-            setHelpDetails(prev => ({ ...prev, status: selectedStatus, admin_remarks: adminRemarks }));
+            // Re-fetch from API to get fresh data
+            await loadHelpDetails(helpDetails._id);
         }
     };
 
     const formatDateTime = (date) => {
+        if (!date) return '-';
         return new Date(date).toLocaleString('en-IN', {
             year: 'numeric',
             month: 'short',
@@ -50,14 +57,14 @@ const ViewHelp = ({ userInfo, handleLogout }) => {
         });
     };
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'pending': return '#d97706';
-            case 'solved': return '#15803d';
-            case 'rejected': return '#991b1b';
-            case 're-solved': return '#1e40af';
-            default: return '#6c757d';
-        }
+    const getStatusBadgeStyle = (status) => {
+        const styles = {
+            pending: { backgroundColor: '#fff3cd', color: '#856404', border: '1px solid #ffc107', icon: 'fas fa-clock' },
+            solved: { backgroundColor: '#d4edda', color: '#155724', border: '1px solid #28a745', icon: 'fas fa-check-circle' },
+            rejected: { backgroundColor: '#f8d7da', color: '#721c24', border: '1px solid #dc3545', icon: 'fas fa-times-circle' },
+            're-solved': { backgroundColor: '#cce5ff', color: '#004085', border: '1px solid #007bff', icon: 'fas fa-redo' },
+        };
+        return styles[status] || { backgroundColor: '#e2e3e5', color: '#383d41', border: '1px solid #6c757d', icon: 'fas fa-question-circle' };
     };
 
     const getStatusLabel = (status) => {
@@ -78,9 +85,10 @@ const ViewHelp = ({ userInfo, handleLogout }) => {
                     <Header userInfo={userInfo} handleLogout={handleLogout} />
                     <div className="container-fluid py-4">
                         <div style={{ textAlign: 'center', padding: '60px', color: '#999' }}>
-                            <p>Help request not found</p>
-                            <button className="btn btn-primary" onClick={() => navigate('/manage-help')}>
-                                Back to Manage Help
+                            <i className="fas fa-question-circle" style={{ fontSize: '48px', marginBottom: '15px', display: 'block' }}></i>
+                            <p style={{ fontSize: '16px', marginBottom: '20px' }}>Help request not found</p>
+                            <button className="btn btn-outline-secondary" onClick={() => navigate('/manage-help')}>
+                                <i className="fas fa-arrow-left me-2"></i> Back
                             </button>
                         </div>
                     </div>
@@ -90,6 +98,8 @@ const ViewHelp = ({ userInfo, handleLogout }) => {
         );
     }
 
+    const statusBadge = getStatusBadgeStyle(helpDetails.status);
+
     return (
         <div style={{ paddingTop: '15px' }}>
             <Sidebar />
@@ -98,83 +108,160 @@ const ViewHelp = ({ userInfo, handleLogout }) => {
                 <div className="container-fluid py-4">
                     <div className="row">
                         <div className="col-12">
+                            {/* Back Button */}
                             <div className="d-flex justify-content-between align-items-center mb-3">
                                 <button
                                     className="btn btn-outline-secondary btn-sm"
                                     onClick={() => navigate('/manage-help')}
+                                    style={{ borderRadius: '6px', padding: '8px 18px' }}
                                 >
-                                    <i className="fas fa-arrow-left me-2"></i> Back to Manage Help
+                                    <i className="fas fa-arrow-left me-2"></i> Back
                                 </button>
                             </div>
 
+                            {/* Help Request Details Card */}
                             <div className="card mb-4">
                                 <div className="card-header pb-2">
                                     <div className="d-flex justify-content-between align-items-center">
                                         <h6 className="mb-0">Help Request Details</h6>
                                         <span style={{
-                                            backgroundColor: getStatusColor(helpDetails.status),
-                                            color: 'white',
-                                            padding: '5px 15px',
+                                            backgroundColor: statusBadge.backgroundColor,
+                                            color: statusBadge.color,
+                                            border: statusBadge.border,
+                                            padding: '6px 16px',
                                             borderRadius: '20px',
-                                            fontSize: '12px',
-                                            fontWeight: '600'
+                                            fontSize: '13px',
+                                            fontWeight: '600',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '6px'
                                         }}>
+                                            <i className={statusBadge.icon} style={{ fontSize: '12px' }}></i>
                                             {getStatusLabel(helpDetails.status)}
                                         </span>
                                     </div>
                                 </div>
                                 <div className="card-body">
-                                    <div className="row">
-                                        <div className="col-md-6">
-                                            <div style={{ marginBottom: '20px' }}>
-                                                <label style={{ fontSize: '12px', color: '#7a8a99', fontWeight: '600', marginBottom: '4px', display: 'block' }}>User Name</label>
-                                                <p style={{ fontSize: '15px', color: '#333', fontWeight: '500', margin: 0 }}>{helpDetails.user_name}</p>
+                                    {loadingDetails ? (
+                                        <div style={{ textAlign: 'center', padding: '40px' }}>
+                                            <div className="spinner-border text-primary" role="status">
+                                                <span className="visually-hidden">Loading...</span>
                                             </div>
                                         </div>
-                                        <div className="col-md-6">
-                                            <div style={{ marginBottom: '20px' }}>
-                                                <label style={{ fontSize: '12px', color: '#7a8a99', fontWeight: '600', marginBottom: '4px', display: 'block' }}>Mobile Number</label>
-                                                <p style={{ fontSize: '15px', color: '#333', fontWeight: '500', margin: 0 }}>{helpDetails.user_mobile}</p>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-6">
-                                            <div style={{ marginBottom: '20px' }}>
-                                                <label style={{ fontSize: '12px', color: '#7a8a99', fontWeight: '600', marginBottom: '4px', display: 'block' }}>Created At</label>
-                                                <p style={{ fontSize: '15px', color: '#333', fontWeight: '500', margin: 0 }}>{formatDateTime(helpDetails.createdAt)}</p>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-6">
-                                            <div style={{ marginBottom: '20px' }}>
-                                                <label style={{ fontSize: '12px', color: '#7a8a99', fontWeight: '600', marginBottom: '4px', display: 'block' }}>Last Updated</label>
-                                                <p style={{ fontSize: '15px', color: '#333', fontWeight: '500', margin: 0 }}>
-                                                    {helpDetails.updatedAt ? formatDateTime(helpDetails.updatedAt) : 'Not updated yet'}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="col-12">
-                                            <div style={{ marginBottom: '20px' }}>
-                                                <label style={{ fontSize: '12px', color: '#7a8a99', fontWeight: '600', marginBottom: '4px', display: 'block' }}>Subject</label>
-                                                <p style={{ fontSize: '15px', color: '#333', fontWeight: '500', margin: 0 }}>{helpDetails.subject}</p>
-                                            </div>
-                                        </div>
-                                        <div className="col-12">
-                                            <div style={{ marginBottom: '20px' }}>
-                                                <label style={{ fontSize: '12px', color: '#7a8a99', fontWeight: '600', marginBottom: '4px', display: 'block' }}>Description</label>
-                                                <div style={{
-                                                    backgroundColor: '#f8f9fa',
-                                                    padding: '15px',
-                                                    borderRadius: '8px',
-                                                    border: '1px solid #e9ecef',
-                                                    fontSize: '14px',
-                                                    color: '#333',
-                                                    lineHeight: '1.6',
-                                                    whiteSpace: 'pre-wrap'
-                                                }}>
-                                                    {helpDetails.description}
+                                    ) : (
+                                        <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px' }}>
+                                            {/* Row 1: 3 columns */}
+                                            <div className="row">
+                                                <div className="col-md-4" style={{ marginBottom: '20px' }}>
+                                                    <div style={{ fontSize: '12px', color: '#8f9297', fontWeight: '600', marginBottom: '5px' }}>User Name</div>
+                                                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#344767' }}>{helpDetails.user_name || '-'}</div>
+                                                </div>
+                                                <div className="col-md-4" style={{ marginBottom: '20px' }}>
+                                                    <div style={{ fontSize: '12px', color: '#8f9297', fontWeight: '600', marginBottom: '5px' }}>Mobile Number</div>
+                                                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#344767' }}>{helpDetails.user_mobile || '-'}</div>
+                                                </div>
+                                                <div className="col-md-4" style={{ marginBottom: '20px' }}>
+                                                    <div style={{ fontSize: '12px', color: '#8f9297', fontWeight: '600', marginBottom: '5px' }}>Status</div>
+                                                    <span style={{
+                                                        backgroundColor: statusBadge.backgroundColor,
+                                                        color: statusBadge.color,
+                                                        border: statusBadge.border,
+                                                        padding: '4px 12px',
+                                                        borderRadius: '12px',
+                                                        fontSize: '12px',
+                                                        fontWeight: '600',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '5px'
+                                                    }}>
+                                                        <i className={statusBadge.icon} style={{ fontSize: '11px' }}></i>
+                                                        {getStatusLabel(helpDetails.status)}
+                                                    </span>
                                                 </div>
                                             </div>
+
+                                            {/* Row 1.5: 3 columns (Device Info) */}
+                                            <div className="row">
+                                                <div className="col-md-4" style={{ marginBottom: '20px' }}>
+                                                    <div style={{ fontSize: '12px', color: '#8f9297', fontWeight: '600', marginBottom: '5px' }}>Serial Number</div>
+                                                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#344767' }}>{helpDetails.serial_number || '-'}</div>
+                                                </div>
+                                                <div className="col-md-4" style={{ marginBottom: '20px' }}>
+                                                    <div style={{ fontSize: '12px', color: '#8f9297', fontWeight: '600', marginBottom: '5px' }}>Device Nickname</div>
+                                                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#344767' }}>{helpDetails.device_nickname || '-'}</div>
+                                                </div>
+                                            </div>
+
+                                            {/* Row 2: 3 columns */}
+                                            <div className="row">
+                                                <div className="col-md-4" style={{ marginBottom: '20px' }}>
+                                                    <div style={{ fontSize: '12px', color: '#8f9297', fontWeight: '600', marginBottom: '5px' }}>Subject</div>
+                                                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#344767' }}>{helpDetails.subject || '-'}</div>
+                                                </div>
+                                                <div className="col-md-4" style={{ marginBottom: '20px' }}>
+                                                    <div style={{ fontSize: '12px', color: '#8f9297', fontWeight: '600', marginBottom: '5px' }}>Created At</div>
+                                                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#344767' }}>{formatDateTime(helpDetails.createdAt)}</div>
+                                                </div>
+                                                <div className="col-md-4" style={{ marginBottom: '20px' }}>
+                                                    <div style={{ fontSize: '12px', color: '#8f9297', fontWeight: '600', marginBottom: '5px' }}>Last Updated</div>
+                                                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#344767' }}>
+                                                        {helpDetails.updatedAt ? formatDateTime(helpDetails.updatedAt) : 'Not updated yet'}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Row 3: Description full width */}
+                                            <div className="row">
+                                                <div className="col-12">
+                                                    <div style={{ fontSize: '12px', color: '#8f9297', fontWeight: '600', marginBottom: '5px' }}>Description</div>
+                                                    <div style={{
+                                                        backgroundColor: '#fff',
+                                                        padding: '15px',
+                                                        borderRadius: '8px',
+                                                        border: '1px solid #e9ecef',
+                                                        fontSize: '14px',
+                                                        color: '#344767',
+                                                        lineHeight: '1.6',
+                                                        whiteSpace: 'pre-wrap',
+                                                        minHeight: '50px'
+                                                    }}>
+                                                        {helpDetails.description || '-'}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Row 4: Admin Remarks (if any) */}
+                                            {helpDetails.admin_remarks && (
+                                                <div className="row" style={{ marginTop: '15px' }}>
+                                                    <div className="col-12">
+                                                        <div style={{ fontSize: '12px', color: '#8f9297', fontWeight: '600', marginBottom: '5px' }}>Admin Remarks</div>
+                                                        <div style={{
+                                                            backgroundColor: '#fff',
+                                                            padding: '15px',
+                                                            borderRadius: '8px',
+                                                            border: '1px solid #e9ecef',
+                                                            fontSize: '14px',
+                                                            color: '#344767',
+                                                            lineHeight: '1.6',
+                                                            whiteSpace: 'pre-wrap'
+                                                        }}>
+                                                            {helpDetails.admin_remarks}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Row 5: Updated By (if any) */}
+                                            {helpDetails.updatedBy && (
+                                                <div className="row" style={{ marginTop: '15px' }}>
+                                                    <div className="col-md-4">
+                                                        <div style={{ fontSize: '12px', color: '#8f9297', fontWeight: '600', marginBottom: '5px' }}>Updated By</div>
+                                                        <div style={{ fontSize: '14px', fontWeight: '500', color: '#344767' }}>{helpDetails.updatedBy}</div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
 

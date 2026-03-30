@@ -38,6 +38,7 @@ const useManageUsers = (userInfo) => {
     const [loadingSubmit, setLoadingSubmit] = useState(false);
     const [loadingUpdate, setLoadingUpdate] = useState(false);
     const [currentUserDetails, setCurrentUserDetails] = useState(null);
+    const [filterStatus, setFilterStatus] = useState('all');
 
     // Function to fetch user role data
     const fetchUserRoleData = async () => {
@@ -59,14 +60,19 @@ const useManageUsers = (userInfo) => {
     };          
 
     // Function to fetch user data with pagination
-    const fetchUserData = async (page = 1, limit = 10, search = '') => {
+    const fetchUserData = async (page = 1, limit = 10, search = '', filter_status = 'all') => {
         try {
             setLoadingUsers(true);
             const params = new URLSearchParams({ page, limit });
             if (search && search.trim() !== '') {
                 params.append('search', search.trim());
             }
-            
+
+            if (filter_status === 'active') params.append('status', 'true');
+            if (filter_status === 'deactive') params.append('status', 'false');
+            if (filter_status === 'customer') params.append('role_name', 'Customer');
+            if (filter_status === 'admin') params.append('role_name', 'Admin');
+
             const response = await fetch(`${API_BASE}/admin/getUsers?${params.toString()}`);
             if (response.ok) {
                 const data = await response.json();
@@ -157,19 +163,20 @@ const useManageUsers = (userInfo) => {
     // Pagination functions
     const handlePageChange = (newPage, searchQuery = '') => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
-            fetchUserData(newPage, pagination.limit, searchQuery);
+            fetchUserData(newPage, pagination.limit, searchQuery, filterStatus);
         }
     };
 
     const handleLimitChange = (newLimit, searchQuery = '') => {
-        fetchUserData(1, newLimit, searchQuery); // Reset to page 1 when limit changes
+        fetchUserData(1, newLimit, searchQuery, filterStatus); // Reset to page 1 when limit changes
     };
 
     return {
         setIsModalCreate, isModalCreate, selectedClientId, setSelectedClientId, selectedClientName, setSelectedClientName, userName, setUserName, userMobile, setUserMobile, userEmail, setUserEmail, userPassword, setUserPassword, errorMessage, handleUserCreate, closeModal,
         fetchUserData, users, errorUsers, loadingUsers, isModalEdit, setIsModalEdit, setIsModalView, isModalView, errorMessageEdit, setErrorMessageEdit, fetchUserRoleData, errorUserRole, userRolesData, loadingUserRole,
         selectedUserRoleId, setSelectedUserRoleId, selectedUserRoleName, setSelectedUserRoleName, selectedUserId, setSelectedUserId, selectedUserName, setSelectedUserName, setSelectedUserEmial, selectedUserEmail, loadingSubmit, loadingUpdate, setLoadingUpdate,
-        pagination, handlePageChange, handleLimitChange, currentUserDetails, setCurrentUserDetails
+        pagination, handlePageChange, handleLimitChange, currentUserDetails, setCurrentUserDetails,
+        filterStatus, setFilterStatus
     };
 };
 

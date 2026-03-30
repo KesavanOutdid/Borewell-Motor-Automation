@@ -36,13 +36,17 @@ const useManageProducts = (userInfo) => {
     const [loadingSubmit, setLoadingSubmit] = useState(false);
     const [loadingUpdate, setLoadingUpdate] = useState(false);
     const [currentProductDetails, setCurrentProductDetails] = useState(null);
+    const [filterStatus, setFilterStatus] = useState('all');
 
     // Fetch products with pagination
-    const fetchProductData = async (page = 1, limit = 10, search = '') => {
+    const fetchProductData = async (page = 1, limit = 10, search = '', filter_status = 'all') => {
         try {
             setLoadingProducts(true);
             const params = new URLSearchParams({ page, limit });
             if (search) params.append('search', search);
+
+            if (filter_status === 'active') params.append('status', 'true');
+            if (filter_status === 'inactive') params.append('status', 'false');
             
             const response = await fetch(
                 `${API_BASE}/admin/getProducts?${params.toString()}`
@@ -262,12 +266,12 @@ const useManageProducts = (userInfo) => {
     // Pagination handlers
     const handlePageChange = (newPage, searchQuery = '') => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
-            fetchProductData(newPage, pagination.limit, searchQuery);
+            fetchProductData(newPage, pagination.limit, searchQuery, filterStatus);
         }
     };
 
     const handleLimitChange = (newLimit, searchQuery = '') => {
-        fetchProductData(1, newLimit, searchQuery);
+        fetchProductData(1, newLimit, searchQuery, filterStatus);
     };
 
     return {
@@ -315,7 +319,9 @@ const useManageProducts = (userInfo) => {
         setCurrentProductDetails,
         fetchProductById,
         fetchProductData,
-        closeModal
+        closeModal,
+        filterStatus,
+        setFilterStatus
     };
 };
 

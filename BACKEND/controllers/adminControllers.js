@@ -234,6 +234,28 @@ exports.getUsers = async (req, res, next) => {
             aggregatedSearchFilter = { $or: aggregatedSearchConditions };
         }
 
+        const status = req.query.status;
+        const role_name = req.query.role_name;
+
+        if (status === 'true') {
+            searchFilter.status = true;
+            aggregatedSearchFilter.status = true;
+        } else if (status === 'false') {
+            searchFilter.status = false;
+            aggregatedSearchFilter.status = false;
+        }
+
+        if (role_name) {
+            const role = await Role.findOne({ role_name: { $regex: new RegExp(`^${role_name}$`, 'i') } });
+            if (role) {
+                searchFilter.role_id = role.role_id;
+                aggregatedSearchFilter.role_id = role.role_id;
+            } else {
+                searchFilter.role_id = -1;
+                aggregatedSearchFilter.role_id = -1;
+            }
+        }
+
         // Summary counts aggregation to correctly reflect filtered counts
         const countPipelineForSummary = [
             {
@@ -452,15 +474,32 @@ exports.getAllVouchers = async (req, res, next) => {
             ]
         } : {};
 
-        const vouchers = await Voucher.find(searchFilter)
-            .skip(skip)
-            .limit(parseInt(limit))
-            .sort({ createdAt: -1 });
-
         const now = new Date();
         now.setUTCHours(0, 0, 0, 0); // Normalize to UTC start of day for consistent date-only comparison
         const tomorrow = new Date(now);
         tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+
+        const fetchFilter = { ...searchFilter };
+        const status = req.query.status;
+
+        if (status === 'valid') {
+            fetchFilter.status = true;
+            fetchFilter.start_date = { $lt: tomorrow };
+            fetchFilter.end_date = { $gte: now };
+        } else if (status === 'pending') {
+            fetchFilter.status = true;
+            fetchFilter.start_date = { $gte: tomorrow };
+        } else if (status === 'expired') {
+            fetchFilter.status = true;
+            fetchFilter.end_date = { $lt: now };
+        } else if (status === 'inactive') {
+            fetchFilter.status = false;
+        }
+
+        const vouchers = await Voucher.find(fetchFilter)
+            .skip(skip)
+            .limit(parseInt(limit))
+            .sort({ createdAt: -1 });
 
         const summaryResult = await Voucher.aggregate([
             { $match: searchFilter },
@@ -627,6 +666,7 @@ exports.getDevices = async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const search = req.query.search || '';
         const assign_status = req.query.assign_status;
+        const status = req.query.status;
 
         const skip = (page - 1) * limit;
 
@@ -642,6 +682,11 @@ exports.getDevices = async (req, res) => {
         } else if (assign_status === 'false') {
             searchFilter.assign_status = false;
         }
+        if (status === 'true') {
+            searchFilter.status = true;
+        } else if (status === 'false') {
+            searchFilter.status = false;
+        }
 
         const aggregatedSearchFilter = search ? {
             $or: [
@@ -655,6 +700,11 @@ exports.getDevices = async (req, res) => {
             aggregatedSearchFilter.assign_status = true;
         } else if (assign_status === 'false') {
             aggregatedSearchFilter.assign_status = false;
+        }
+        if (status === 'true') {
+            aggregatedSearchFilter.status = true;
+        } else if (status === 'false') {
+            aggregatedSearchFilter.status = false;
         }
 
         // Summary counts aggregation to correctly reflect search results across all categories
@@ -1240,16 +1290,24 @@ exports.getProducts = async (req, res, next) => {
         const search = req.query.search || '';
         const skip = (page - 1) * limit;
 
-        const searchFilter = search ? {
+        const baseSearchFilter = search ? {
             $or: [
                 { product_name: { $regex: search, $options: 'i' } },
                 { product_description: { $regex: search, $options: 'i' } }
             ]
         } : {};
 
-        const totalProducts = await Product.countDocuments(searchFilter);
-        const totalActiveProducts = await Product.countDocuments({ ...searchFilter, status: true });
-        const totalInactiveProducts = await Product.countDocuments({ ...searchFilter, status: false });
+        const totalProducts = await Product.countDocuments(baseSearchFilter);
+        const totalActiveProducts = await Product.countDocuments({ ...baseSearchFilter, status: true });
+        const totalInactiveProducts = await Product.countDocuments({ ...baseSearchFilter, status: false });
+
+        const searchFilter = { ...baseSearchFilter };
+        const status = req.query.status;
+        if (status === 'true') {
+            searchFilter.status = true;
+        } else if (status === 'false') {
+            searchFilter.status = false;
+        }
 
         const products = await Product.find(searchFilter)
             .sort({ createdAt: -1 })

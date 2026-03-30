@@ -39,7 +39,7 @@ const useManageDevices = (userInfo) => {
     const [assignErrorMessage, setAssignErrorMessage] = useState('');
     const [loadingSubmit, setLoadingSubmit] = useState(false);
     const [loadingUpdate, setLoadingUpdate] = useState(false);
-    const [filterAssignStatus, setFilterAssignStatus] = useState('');
+    const [filterStatus, setFilterStatus] = useState('all');
 
     // Function to fetch users data
     useEffect(() => {
@@ -68,12 +68,16 @@ const useManageDevices = (userInfo) => {
     }, [isModalAssign, API_BASE]);
 
     // Function to fetch device data
-    const fetchDeviceData = async (page = 1, limit = 10, search = '', assign_status = '') => {
+    const fetchDeviceData = async (page = 1, limit = 10, search = '', filter_status = 'all') => {
         try {
             setLoading(true);
             const params = new URLSearchParams({ page, limit });
             if (search) params.append('search', search);
-            if (assign_status) params.append('assign_status', assign_status);
+
+            if (filter_status === 'assigned') params.append('assign_status', 'true');
+            if (filter_status === 'unassigned') params.append('assign_status', 'false');
+            if (filter_status === 'active') params.append('status', 'true');
+            if (filter_status === 'deactive') params.append('status', 'false');
             
             const response = await fetch(`${API_BASE}/admin/getDevices?${params.toString()}`, {
                 method: "GET",
@@ -229,12 +233,12 @@ const useManageDevices = (userInfo) => {
     // Pagination functions
     const handlePageChange = (newPage, searchQuery = '') => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
-            fetchDeviceData(newPage, pagination.limit, searchQuery, filterAssignStatus);
+            fetchDeviceData(newPage, pagination.limit, searchQuery, filterStatus);
         }
     };
 
     const handleLimitChange = (newLimit, searchQuery = '') => {
-        fetchDeviceData(1, newLimit, searchQuery, filterAssignStatus); // Reset to page 1 when limit changes
+        fetchDeviceData(1, newLimit, searchQuery, filterStatus); // Reset to page 1 when limit changes
     };
 
     // fetch analytics Data
@@ -400,7 +404,7 @@ const useManageDevices = (userInfo) => {
         pagination, handlePageChange, handleLimitChange,
         analytics, loadingAnalytics, errorAnalytics,
         chartType, setChartType,
-        filterAssignStatus, setFilterAssignStatus
+        filterStatus, setFilterStatus
     };
 };
 

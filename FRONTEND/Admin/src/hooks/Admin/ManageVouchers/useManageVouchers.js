@@ -37,12 +37,17 @@ const useManageVouchers = (userInfo) => {
     const [loadingSubmit, setLoadingSubmit] = useState(false);
     const [loadingUpdate, setLoadingUpdate] = useState(false);
     const [currentVoucherDetails, setCurrentVoucherDetails] = useState(null);
+    const [filterStatus, setFilterStatus] = useState('all');
 
-    const fetchVoucherData = useCallback(async (page = 1, limit = 10, search = '') => {
+    const fetchVoucherData = useCallback(async (page = 1, limit = 10, search = '', filter_status = 'all') => {
         try {
             setLoadingVouchers(true);
             const params = new URLSearchParams({ page, limit });
             if (search) params.append('search', search);
+            
+            if (filter_status && filter_status !== 'all') {
+                params.append('status', filter_status);
+            }
             
             const response = await fetch(
                 `${API_BASE}/admin/getAllVouchers?${params.toString()}`,
@@ -289,13 +294,13 @@ const useManageVouchers = (userInfo) => {
 
     const handlePageChange = useCallback((newPage, searchQuery = '') => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
-            fetchVoucherData(newPage, pagination.limit, searchQuery);
+            fetchVoucherData(newPage, pagination.limit, searchQuery, filterStatus);
         }
-    }, [pagination.totalPages, pagination.limit, fetchVoucherData]);
+    }, [pagination.totalPages, pagination.limit, fetchVoucherData, filterStatus]);
 
     const handleLimitChange = useCallback((newLimit, searchQuery = '') => {
-        fetchVoucherData(1, newLimit, searchQuery);
-    }, [fetchVoucherData]);
+        fetchVoucherData(1, newLimit, searchQuery, filterStatus);
+    }, [fetchVoucherData, filterStatus]);
 
     return {
         isModalCreate,
@@ -337,7 +342,9 @@ const useManageVouchers = (userInfo) => {
         setCurrentVoucherDetails,
         fetchVoucherById,
         fetchVoucherData,
-        closeModal
+        closeModal,
+        filterStatus,
+        setFilterStatus
     };
 };
 

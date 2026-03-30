@@ -183,13 +183,15 @@ const ManageHelp = ({ userInfo, handleLogout }) => {
                                                         <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>User Name</th>
                                                         <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Mobile</th>
                                                         <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Subject</th>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Serial No.</th>
+                                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Nickname</th>
                                                         <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Date/Time</th>
                                                         <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Status</th>
                                                         <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Options</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <TableSkeleton rows={8} columns={7} />
+                                                    <TableSkeleton rows={8} columns={9} />
                                                 </tbody>
                                             </table>
                                         </div>
@@ -207,6 +209,8 @@ const ManageHelp = ({ userInfo, handleLogout }) => {
                                                             <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>User Name</th>
                                                             <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Mobile</th>
                                                             <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Subject</th>
+                                                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Serial No.</th>
+                                                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Nickname</th>
                                                             <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Date/Time</th>
                                                             <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Status</th>
                                                             <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#4a5a6a' }}>Options</th>
@@ -228,6 +232,8 @@ const ManageHelp = ({ userInfo, handleLogout }) => {
                                                                         {help.subject}
                                                                     </div>
                                                                 </td>
+                                                                <td style={{ padding: '12px', color: '#666', fontSize: '12px' }}>{help.serial_number || '-'}</td>
+                                                                <td style={{ padding: '12px', color: '#666', fontSize: '12px' }}>{help.device_nickname || '-'}</td>
                                                                 <td style={{ padding: '12px', color: '#666', fontSize: '11px' }}>
                                                                     {formatDateTime(help.createdAt)}
                                                                 </td>

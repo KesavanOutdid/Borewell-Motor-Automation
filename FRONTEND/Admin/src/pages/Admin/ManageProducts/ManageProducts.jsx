@@ -19,7 +19,9 @@ const ManageProducts = ({ userInfo, handleLogout }) => {
         handlePageChange,
         handleLimitChange,
         handleProductDelete,
-        fetchProductData
+        fetchProductData,
+        filterStatus,
+        setFilterStatus
     } = useManageProducts(userInfo);
 
     const fetchProductDataCalled = useRef(false);
@@ -40,8 +42,13 @@ const ManageProducts = ({ userInfo, handleLogout }) => {
         }
 
         searchTimeoutRef.current = setTimeout(() => {
-            fetchProductData(1, pagination.limit, query);
+            fetchProductData(1, pagination.limit, query, filterStatus);
         }, 500);
+    };
+
+    const handleFilterChange = (status) => {
+        setFilterStatus(status);
+        fetchProductData(1, pagination.limit, searchQuery, status);
     };
 
     const handleViewProduct = (product) => {
@@ -75,24 +82,48 @@ const ManageProducts = ({ userInfo, handleLogout }) => {
                                                 </button>
                                             </div>
                                             <div className="col-md-2 col-6">
-                                                <div style={{ backgroundColor: '#f0f9ff', padding: '10px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div 
+                                                    onClick={() => handleFilterChange('all')}
+                                                    style={{ 
+                                                        backgroundColor: filterStatus === 'all' ? '#dbeafe' : '#f0f9ff', 
+                                                        padding: '10px', borderRadius: '8px', 
+                                                        border: filterStatus === 'all' ? '2px solid #3b82f6' : '1px solid #bfdbfe', 
+                                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                        cursor: 'pointer', transition: 'all 0.2s'
+                                                }}>
                                                     <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Total</p>
                                                     <p style={{ fontSize: '18px', color: '#1e40af', fontWeight: '700', margin: 0 }}>{pagination?.totalProducts || 0}</p>
                                                 </div>
                                             </div>
                                             <div className="col-md-2 col-6">
-                                                <div style={{ backgroundColor: '#f0fdf4', padding: '12px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div 
+                                                    onClick={() => handleFilterChange('active')}
+                                                    style={{ 
+                                                        backgroundColor: filterStatus === 'active' ? '#dcfce7' : '#f0fdf4', 
+                                                        padding: '12px', borderRadius: '8px', 
+                                                        border: filterStatus === 'active' ? '2px solid #22c55e' : '1px solid #bbf7d0', 
+                                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                        cursor: 'pointer', transition: 'all 0.2s'
+                                                }}>
                                                     <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Active</p>
                                                     <p style={{ fontSize: '18px', color: '#15803d', fontWeight: '700', margin: 0 }}>{pagination?.totalActiveProducts || 0}</p>
                                                 </div>
                                             </div>
                                             <div className="col-md-2 col-6">
-                                                <div style={{ backgroundColor: '#fef2f2', padding: '12px', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div 
+                                                    onClick={() => handleFilterChange('inactive')}
+                                                    style={{ 
+                                                        backgroundColor: filterStatus === 'inactive' ? '#fecaca' : '#fef2f2', 
+                                                        padding: '12px', borderRadius: '8px', 
+                                                        border: filterStatus === 'inactive' ? '2px solid #ef4444' : '1px solid #fecaca', 
+                                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                        cursor: 'pointer', transition: 'all 0.2s'
+                                                }}>
                                                     <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Inactive</p>
                                                     <p style={{ fontSize: '18px', color: '#991b1b', fontWeight: '700', margin: 0 }}>{pagination?.totalInactiveProducts || 0}</p>
                                                 </div>
                                             </div>
-                                            <div className="col-md-2 col-6">
+                                            <div className="col-md-4 col-12">
                                                 <input
                                                     type="text"
                                                     className="form-control"

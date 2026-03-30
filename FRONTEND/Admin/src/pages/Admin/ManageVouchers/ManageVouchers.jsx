@@ -18,7 +18,9 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
         handlePageChange,
         handleLimitChange,
         handleVoucherDelete,
-        fetchVoucherData
+        fetchVoucherData,
+        filterStatus,
+        setFilterStatus
     } = useManageVouchers(userInfo);
 
     const fetchVoucherDataCalled = useRef(false);
@@ -39,8 +41,13 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
         }
 
         searchTimeoutRef.current = setTimeout(() => {
-            fetchVoucherData(1, pagination.limit, query);
+            fetchVoucherData(1, pagination.limit, query, filterStatus);
         }, 500);
+    };
+
+    const handleFilterChange = (status) => {
+        setFilterStatus(status);
+        fetchVoucherData(1, pagination.limit, searchQuery, status);
     };
 
     const handleEditVoucher = (voucher) => {
@@ -106,23 +113,68 @@ const ManageVouchers = ({ userInfo, handleLogout }) => {
                                                 </button>
                                             </div>
                                             <div className="col-md-7 col-12 d-flex flex-wrap gap-1">
-                                                <div style={{ flex: '1 0 130px', backgroundColor: '#f0f9ff', padding: '12px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div 
+                                                    onClick={() => handleFilterChange('all')}
+                                                    style={{ 
+                                                        flex: '1 0 130px', 
+                                                        backgroundColor: filterStatus === 'all' ? '#dbeafe' : '#f0f9ff', 
+                                                        padding: '12px', borderRadius: '8px', 
+                                                        border: filterStatus === 'all' ? '2px solid #3b82f6' : '1px solid #bfdbfe', 
+                                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                        cursor: 'pointer', transition: 'all 0.2s'
+                                                    }}>
                                                     <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Total</p>
                                                     <p style={{ fontSize: '18px', color: '#1e40af', fontWeight: '700', margin: 0 }}>{pagination?.totalVouchers || 0}</p>
                                                 </div>
-                                                <div style={{ flex: '1 0 130px', backgroundColor: '#f0fdf4', padding: '12px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div 
+                                                    onClick={() => handleFilterChange('valid')}
+                                                    style={{ 
+                                                        flex: '1 0 130px', 
+                                                        backgroundColor: filterStatus === 'valid' ? '#dcfce7' : '#f0fdf4', 
+                                                        padding: '12px', borderRadius: '8px', 
+                                                        border: filterStatus === 'valid' ? '2px solid #22c55e' : '1px solid #bbf7d0', 
+                                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                        cursor: 'pointer', transition: 'all 0.2s'
+                                                    }}>
                                                     <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Valid</p>
                                                     <p style={{ fontSize: '18px', color: '#15803d', fontWeight: '700', margin: 0 }}>{pagination?.totalValidVouchers || 0}</p>
                                                 </div>
-                                                <div style={{ flex: '1 0 130px', backgroundColor: '#fffbeb', padding: '12px', borderRadius: '8px', border: '1px solid #fef3c7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div 
+                                                    onClick={() => handleFilterChange('pending')}
+                                                    style={{ 
+                                                        flex: '1 0 130px', 
+                                                        backgroundColor: filterStatus === 'pending' ? '#fde68a' : '#fffbeb', 
+                                                        padding: '12px', borderRadius: '8px', 
+                                                        border: filterStatus === 'pending' ? '2px solid #f59e0b' : '1px solid #fef3c7', 
+                                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                        cursor: 'pointer', transition: 'all 0.2s'
+                                                    }}>
                                                     <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Pending</p>
                                                     <p style={{ fontSize: '18px', color: '#d97706', fontWeight: '700', margin: 0 }}>{pagination?.totalPendingVouchers || 0}</p>
                                                 </div>
-                                                <div style={{ flex: '1 0 130px', backgroundColor: '#fef2f2', padding: '12px', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div 
+                                                    onClick={() => handleFilterChange('expired')}
+                                                    style={{ 
+                                                        flex: '1 0 130px', 
+                                                        backgroundColor: filterStatus === 'expired' ? '#fecaca' : '#fef2f2', 
+                                                        padding: '12px', borderRadius: '8px', 
+                                                        border: filterStatus === 'expired' ? '2px solid #ef4444' : '1px solid #fecaca', 
+                                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                        cursor: 'pointer', transition: 'all 0.2s'
+                                                    }}>
                                                     <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Expired</p>
                                                     <p style={{ fontSize: '18px', color: '#991b1b', fontWeight: '700', margin: 0 }}>{pagination?.totalExpiredVouchers || 0}</p>
                                                 </div>
-                                                <div style={{ flex: '1 0 130px', backgroundColor: '#f9fafb', padding: '12px', borderRadius: '8px', border: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div 
+                                                    onClick={() => handleFilterChange('inactive')}
+                                                    style={{ 
+                                                        flex: '1 0 130px', 
+                                                        backgroundColor: filterStatus === 'inactive' ? '#e5e7eb' : '#f9fafb', 
+                                                        padding: '12px', borderRadius: '8px', 
+                                                        border: filterStatus === 'inactive' ? '2px solid #6b7280' : '1px solid #e5e7eb', 
+                                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                        cursor: 'pointer', transition: 'all 0.2s'
+                                                    }}>
                                                     <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Inactive</p>
                                                     <p style={{ fontSize: '18px', color: '#4b5563', fontWeight: '700', margin: 0 }}>{pagination?.totalInactiveVouchers || 0}</p>
                                                 </div>

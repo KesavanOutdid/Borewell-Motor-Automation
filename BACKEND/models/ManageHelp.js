@@ -30,6 +30,18 @@ const ManageHelpSchema = new mongoose.Schema({
         trim: true
     },
 
+    serial_number: {
+        type: String,
+        default: null,
+        trim: true
+    },
+
+    device_nickname: {
+        type: String,
+        default: null,
+        trim: true
+    },
+
     status: {
         type: String,
         enum: ['pending', 'rejected', 'solved', 're-solved'],
