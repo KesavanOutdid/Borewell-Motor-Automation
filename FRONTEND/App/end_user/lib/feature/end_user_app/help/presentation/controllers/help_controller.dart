@@ -61,43 +61,27 @@ class HelpController extends GetxController {
   Future<void> fetchUserDevices() async {
     final userId = tokenService.getUserId();
     final token = tokenService.getToken();
-    if (userId == null) {
-      print("💡 [HELP] fetchUserDevices - userId is null");
-      return;
-    }
+    if (userId == null) return;
 
-    final url = Uri.parse('$baseUrl/app/userAssignDevices');
-    print("💡 [HELP] fetchUserDevices - URL: $url");
-    
+    final url = Uri.parse('$baseUrl/app/getAssignedDevices?user_id=$userId');
     try {
-      final response = await http.post(
+      final response = await http.get(
         url,
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
         },
-        body: jsonEncode({
-          "user_id": userId,
-          "filter": "All"
-        }),
       );
 
-      print("💡 [HELP] fetchUserDevices - Status: ${response.statusCode}");
-      
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         if (responseData['success'] == true) {
-          final List<dynamic> data = responseData['data'] ?? [];
-          print("💡 [HELP] fetchUserDevices - Found ${data.length} devices");
+          final List<dynamic> data = responseData['devices'] ?? [];
           userDevices.assignAll(data.cast<Map<String, dynamic>>());
-        } else {
-          print("💡 [HELP] fetchUserDevices - Success false: ${responseData['message']}");
         }
-      } else {
-        print("💡 [HELP] fetchUserDevices - Error body: ${response.body}");
       }
     } catch (e) {
-      print("💡 [HELP] fetchUserDevices - Exception: $e");
+      print("Error fetching devices: $e");
     }
   }
 
