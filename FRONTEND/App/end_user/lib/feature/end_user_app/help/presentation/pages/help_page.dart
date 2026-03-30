@@ -16,6 +16,10 @@ class HelpPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('help_support'.tr, style: const TextStyle(fontWeight: FontWeight.w800)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Get.back(),
+        ),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: AppColors.primaryGradient,
@@ -125,6 +129,15 @@ class HelpPage extends StatelessWidget {
                   _buildStatusChip(help.status),
                 ],
               ),
+              if (help.deviceNickname != null || help.serialNumber != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  help.deviceNickname != null 
+                    ? '${help.deviceNickname} (${help.serialNumber})'
+                    : help.serialNumber ?? '',
+                  style: const TextStyle(fontSize: 12, color: AppColors.primaryGreen, fontWeight: FontWeight.w500),
+                ),
+              ],
               const SizedBox(height: 8),
               Text(
                 help.description,
@@ -213,6 +226,16 @@ class HelpPage extends StatelessWidget {
             const SizedBox(height: 16),
             Text('Description', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
             Text(help.description, style: const TextStyle(fontSize: 14)),
+            if (help.deviceNickname != null || help.serialNumber != null) ...[
+              const SizedBox(height: 16),
+              Text('Device', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+              Text(
+                help.deviceNickname != null 
+                  ? '${help.deviceNickname} (${help.serialNumber})'
+                  : help.serialNumber ?? '',
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)
+              ),
+            ],
             const SizedBox(height: 16),
             Row(
               children: [

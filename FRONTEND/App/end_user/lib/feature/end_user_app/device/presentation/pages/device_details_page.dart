@@ -202,14 +202,6 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
     final imei = controller.liveData['imei']?.toString();
 
     if (serial == null || serial.trim().isEmpty || imei == null || imei.trim().isEmpty) {
-      if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
-        Get.snackbar(
-          'History',
-          'Device information unavailable',
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 2),
-        );
-      }
       return;
     }
 
@@ -224,14 +216,6 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
     final imei = controller.liveData['imei']?.toString();
 
     if (serial == null || serial.trim().isEmpty || imei == null || imei.trim().isEmpty) {
-      if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
-        Get.snackbar(
-          'Analytics',
-          'Device information unavailable',
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 2),
-        );
-      }
       return;
     }
 
@@ -244,9 +228,6 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
   void _openAccess(DeviceDetailsController controller) {
     final serial = controller.liveData['serialNumber']?.toString();
     if (serial == null || serial.trim().isEmpty) {
-       if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
-         Get.snackbar('Error', 'Device information unavailable');
-       }
        return;
     }
     Get.toNamed('/device/sharing', arguments: {
@@ -259,9 +240,6 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
     final imei = controller.liveData['imei']?.toString();
 
     if (serial == null || serial.trim().isEmpty || imei == null || imei.trim().isEmpty) {
-      if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
-        Get.snackbar('Error', 'Device information unavailable');
-      }
       return;
     }
 
@@ -351,15 +329,6 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                         if (newName.isNotEmpty) {
                           Navigator.of(context).pop();
                           controller.updateNickname(newName);
-                        } else {
-                          if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
-                            Get.snackbar(
-                              'Error',
-                              'Please enter a name',
-                              snackPosition: SnackPosition.BOTTOM,
-                              backgroundColor: Colors.red[100],
-                            );
-                          }
                         }
                       },
                       style: ElevatedButton.styleFrom(

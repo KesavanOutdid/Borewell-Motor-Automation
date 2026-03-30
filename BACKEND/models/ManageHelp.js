@@ -42,6 +42,12 @@ const ManageHelpSchema = new mongoose.Schema({
         trim: true
     },
 
+    device_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Device',
+        default: null
+    },
+
     status: {
         type: String,
         enum: ['pending', 'rejected', 'solved', 're-solved'],

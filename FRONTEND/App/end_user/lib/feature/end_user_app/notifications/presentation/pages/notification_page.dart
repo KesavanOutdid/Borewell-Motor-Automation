@@ -42,12 +42,6 @@ class NotificationPage extends StatelessWidget {
                               onPressed: () async {
                                 Navigator.of(context, rootNavigator: true).pop();
                                 await controller.clearAll();
-                                Get.snackbar(
-                                  'Success',
-                                  'All notifications cleared',
-                                  snackPosition: SnackPosition.BOTTOM,
-                                  duration: const Duration(seconds: 2),
-                                );
                               },
                               child: Text('yes'.tr, style: TextStyle(color: Colors.red)),
                             ),
@@ -149,12 +143,6 @@ class NotificationPage extends StatelessWidget {
                 direction: DismissDirection.endToStart,
                 onDismissed: (direction) {
                   controller.deleteNotification(notificationId);
-                  Get.snackbar(
-                    'Deleted',
-                    'Notification deleted',
-                    snackPosition: SnackPosition.BOTTOM,
-                    duration: const Duration(seconds: 2),
-                  );
                 },
                 child: Card(
                   elevation: isRead ? 0 : 3,

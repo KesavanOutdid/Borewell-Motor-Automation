@@ -24,14 +24,97 @@ class HelpController extends GetxController {
   var hasNextPage = false.obs;
   final int limit = 10;
 
+  final subjects = <String>[
+    'Technical Issue',
+    'Device Connectivity',
+    'Subscription Query',
+    'Account Problem',
+    'Feature Request',
+    'Other'
+  ].obs;
+  
+  var selectedSubject = "".obs;
+  var showCustomSubject = false.obs;
+
+  var userDevices = <Map<String, dynamic>>[].obs;
+  var selectedDevice = Rxn<Map<String, dynamic>>();
+
   final subjectController = TextEditingController();
   final descriptionController = TextEditingController();
+
+  void onSubjectChanged(String? val) {
+    if (val == null) return;
+    selectedSubject.value = val;
+    if (val == 'Other') {
+      showCustomSubject.value = true;
+      subjectController.clear();
+    } else {
+      showCustomSubject.value = false;
+      subjectController.text = val;
+    }
+  }
+
+  void onDeviceChanged(Map<String, dynamic>? device) {
+    selectedDevice.value = device;
+  }
+
+  Future<void> fetchUserDevices() async {
+    final userId = tokenService.getUserId();
+    final token = tokenService.getToken();
+    if (userId == null) {
+      print("💡 [HELP] fetchUserDevices - userId is null");
+      return;
+    }
+
+    final url = Uri.parse('$baseUrl/app/userAssignDevices');
+    print("💡 [HELP] fetchUserDevices - URL: $url");
+    
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode({
+          "user_id": userId,
+          "filter": "All"
+        }),
+      );
+
+      print("💡 [HELP] fetchUserDevices - Status: ${response.statusCode}");
+      
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        if (responseData['success'] == true) {
+          final List<dynamic> data = responseData['data'] ?? [];
+          print("💡 [HELP] fetchUserDevices - Found ${data.length} devices");
+          userDevices.assignAll(data.cast<Map<String, dynamic>>());
+        } else {
+          print("💡 [HELP] fetchUserDevices - Success false: ${responseData['message']}");
+        }
+      } else {
+        print("💡 [HELP] fetchUserDevices - Error body: ${response.body}");
+      }
+    } catch (e) {
+      print("💡 [HELP] fetchUserDevices - Exception: $e");
+    }
+  }
+
+  void resetForm() {
+    selectedSubject.value = "";
+    showCustomSubject.value = false;
+    selectedDevice.value = null;
+    subjectController.clear();
+    descriptionController.clear();
+  }
 
   @override
   void onInit() {
     super.onInit();
     tokenService = Get.find<TokenService>();
     fetchHelpRequests();
+    fetchUserDevices();
   }
 
   @override
@@ -44,7 +127,6 @@ class HelpController extends GetxController {
   Future<void> fetchHelpRequests({bool isRefresh = false}) async {
     if (isRefresh) {
       currentPage.value = 1;
-      helpRequests.clear();
     }
 
     if (currentPage.value == 1) {
@@ -115,7 +197,6 @@ class HelpController extends GetxController {
     final description = descriptionController.text.trim();
 
     if (subject.isEmpty || description.isEmpty) {
-      Get.snackbar("Error", "Please fill all fields", backgroundColor: Colors.red, colorText: Colors.white);
       return false;
     }
 
@@ -144,23 +225,22 @@ class HelpController extends GetxController {
           "user_mobile": userMobile ?? "", // Might need to fetch from profile if not in tokenService
           "subject": subject,
           "description": description,
+          "serial_number": selectedDevice.value?['serial_number'] ?? selectedDevice.value?['serialNumber'],
+          "device_nickname": selectedDevice.value?['device_nickname'] ?? selectedDevice.value?['nickname'],
+          "device_id": selectedDevice.value?['_id'],
         }),
       );
 
       if (response.statusCode == 201) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         if (responseData['success'] == true) {
-          subjectController.clear();
-          descriptionController.clear();
-          await fetchHelpRequests(isRefresh: true);
-          Get.snackbar("Success", "Help request created successfully", backgroundColor: Colors.green, colorText: Colors.white);
+          resetForm();
+          fetchHelpRequests(isRefresh: true);
           return true;
         }
       }
-      Get.snackbar("Error", "Failed to create help request", backgroundColor: Colors.red, colorText: Colors.white);
       return false;
     } catch (e) {
-      Get.snackbar("Error", "An error occurred", backgroundColor: Colors.red, colorText: Colors.white);
       return false;
     } finally {
       isSubmitting.value = false;
@@ -172,7 +252,6 @@ class HelpController extends GetxController {
     final description = descriptionController.text.trim();
 
     if (subject.isEmpty || description.isEmpty) {
-      Get.snackbar("Error", "Please fill all fields", backgroundColor: Colors.red, colorText: Colors.white);
       return false;
     }
 
@@ -191,23 +270,22 @@ class HelpController extends GetxController {
           "id": id,
           "subject": subject,
           "description": description,
+          "serial_number": selectedDevice.value?['serial_number'] ?? selectedDevice.value?['serialNumber'],
+          "device_nickname": selectedDevice.value?['device_nickname'] ?? selectedDevice.value?['nickname'],
+          "device_id": selectedDevice.value?['_id'],
         }),
       );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         if (responseData['success'] == true) {
-          subjectController.clear();
-          descriptionController.clear();
-          await fetchHelpRequests(isRefresh: true);
-          Get.snackbar("Success", "Help request updated successfully", backgroundColor: Colors.green, colorText: Colors.white);
+          resetForm();
+          fetchHelpRequests(isRefresh: true);
           return true;
         }
       }
-      Get.snackbar("Error", "Failed to update help request", backgroundColor: Colors.red, colorText: Colors.white);
       return false;
     } catch (e) {
-      Get.snackbar("Error", "An error occurred", backgroundColor: Colors.red, colorText: Colors.white);
       return false;
     } finally {
       isSubmitting.value = false;
@@ -234,14 +312,11 @@ class HelpController extends GetxController {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         if (responseData['success'] == true) {
           await fetchHelpRequests(isRefresh: true);
-          Get.snackbar("Success", "Help request deleted successfully", backgroundColor: Colors.green, colorText: Colors.white);
           return true;
         }
       }
-      Get.snackbar("Error", "Failed to delete help request", backgroundColor: Colors.red, colorText: Colors.white);
       return false;
     } catch (e) {
-      Get.snackbar("Error", "An error occurred", backgroundColor: Colors.red, colorText: Colors.white);
       return false;
     }
   }

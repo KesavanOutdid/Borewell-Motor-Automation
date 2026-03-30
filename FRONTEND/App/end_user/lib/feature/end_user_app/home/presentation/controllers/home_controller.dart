@@ -574,16 +574,6 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       final device = devices[deviceIndex];
       final currentRunning = isDeviceRunning(device);
       if (currentRunning == status) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (Get.overlayContext != null) {
-            Get.snackbar(
-              "info".tr, 
-              status ? 'motor_already_running'.tr : 'motor_already_stopped'.tr,
-              snackPosition: SnackPosition.BOTTOM,
-              duration: const Duration(seconds: 2),
-            );
-          }
-        });
         return;
       }
     }
@@ -621,36 +611,17 @@ class HomeController extends GetxController with WidgetsBindingObserver {
         // Update local state immediately for better UX and sorting
         _updateDeviceStatus(serialNumber, status);
       } else if (response.statusCode == 429) {
-        final body = jsonDecode(response.body);
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (Get.overlayContext != null) {
-            Get.snackbar("error".tr, body['message'] ?? 'please_wait_moment'.tr);
-          }
-        });
+        // Rate limited
       } else if (response.statusCode == 401) {
         Get.offAllNamed('/login');
-        Future.delayed(Duration.zero, () {
-          if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
-            Get.snackbar("error".tr, 'session_expired'.tr);
-          }
-        });
       } else if (response.statusCode == 403) {
         final body = jsonDecode(response.body);
         UIUtils.handleAccountDeactivated(body['message']);
       } else {
-        final body = jsonDecode(response.body);
-        Future.delayed(Duration.zero, () {
-          if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
-            Get.snackbar("Error", body['message'] ?? "Failed to toggle device");
-          }
-        });
+        // Error
       }
     } catch (e) {
-      Future.delayed(Duration.zero, () {
-        if (Get.context != null && Navigator.maybeOf(Get.context!)?.overlay != null) {
-          Get.snackbar("Error", "Connection failed: $e");
-        }
-      });
+      // Connection failed
     } finally {
       // Small delay to prevent rapid fire
       await Future.delayed(const Duration(milliseconds: 500));
@@ -678,7 +649,6 @@ class HomeController extends GetxController with WidgetsBindingObserver {
 
     if (serialNumber.isEmpty) {
       print('❌ Serial number is empty');
-      Get.snackbar("Error", "Serial number is required");
       return;
     }
 
@@ -826,13 +796,6 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     if (cameraStatus.isDenied) {
       final result = await Permission.camera.request();
       if (result.isDenied) {
-        Get.snackbar(
-          'Permission Denied',
-          'Camera permission is required to scan device QR code',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red[100],
-          duration: const Duration(seconds: 3),
-        );
         return;
       }
     } else if (cameraStatus.isPermanentlyDenied) {
@@ -931,15 +894,14 @@ class HomeController extends GetxController with WidgetsBindingObserver {
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
-        Get.snackbar('Success', 'Access request $action successfully');
         fetchDevices();
       } else if (response.statusCode == 403) {
         UIUtils.handleAccountDeactivated(data['message']);
       } else {
-        Get.snackbar('Error', data['message'] ?? 'Failed to respond to request');
+        // Error
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to respond to request');
+      // Failed to respond
     } finally {
       isLoading.value = false;
     }

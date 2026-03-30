@@ -1149,22 +1149,11 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
   }
 
   void _showMessage(String message) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (Get.overlayContext != null) {
-        Get.snackbar('Device', message, snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 2));
-      } else {
-        print('🔧 [DETAILS] Message: $message');
-      }
-    });
+    print('🔧 [DETAILS] Message: $message');
   }
 
   void _handleUnauthorized() {
     Get.offAllNamed('/login');
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (Get.overlayContext != null) {
-        Get.snackbar('Session expired', 'Please login again', snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 2));
-      }
-    });
   }
 
   void _handleDeactivated() {

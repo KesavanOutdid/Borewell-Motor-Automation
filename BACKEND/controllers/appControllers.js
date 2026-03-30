@@ -2946,7 +2946,7 @@ exports.resetPassword = async (req, res, next) => {
 
 exports.createHelp = async (req, res, next) => {
     try {
-        const { user_id, user_name, user_mobile, subject, description, serial_number, device_nickname, createdBy } = req.body;
+        const { user_id, user_name, user_mobile, subject, description, serial_number, device_nickname, device_id, createdBy } = req.body;
 
         if (!user_id) return res.status(400).json({ success: false, message: "User ID is required" });
         if (!user_name || !user_name.trim()) return res.status(400).json({ success: false, message: "User name is required" });
@@ -2962,6 +2962,7 @@ exports.createHelp = async (req, res, next) => {
             description: description.trim(),
             serial_number: serial_number ? serial_number.trim() : null,
             device_nickname: device_nickname ? device_nickname.trim() : null,
+            device_id: device_id || null,
             status: 'pending',
             createdBy: createdBy || null,
             createdAt: new Date()
@@ -2975,6 +2976,33 @@ exports.createHelp = async (req, res, next) => {
             data: newHelp
         });
 
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.getAssignedDevices = async (req, res, next) => {
+    try {
+        const { user_id } = req.query;
+        if (!user_id) return res.status(400).json({ success: false, message: "User ID is required" });
+
+        const userIdNum = parseInt(user_id);
+
+        const shares = await DeviceShare.find({ shared_to_user_id: userIdNum, status: true, acceptance_status: 'accepted' });
+        const sharedSerials = shares.map(s => s.serial_number);
+
+        const devices = await Device.find({
+            status: true,
+            $or: [
+                { assigned_user_id: userIdNum, assign_status: true },
+                { serial_number: { $in: sharedSerials } }
+            ]
+        });
+
+        res.status(200).json({
+            success: true,
+            devices
+        });
     } catch (err) {
         next(err);
     }
@@ -3034,7 +3062,7 @@ exports.getHelpById = async (req, res, next) => {
 
 exports.updateHelp = async (req, res, next) => {
     try {
-        const { id, subject, description, updatedBy } = req.body;
+        const { id, subject, description, serial_number, device_nickname, device_id, updatedBy } = req.body;
 
         if (!id) return res.status(400).json({ success: false, message: "Help ID is required" });
 
@@ -3044,6 +3072,10 @@ exports.updateHelp = async (req, res, next) => {
         const updateData = {};
         if (subject) updateData.subject = subject.trim();
         if (description) updateData.description = description.trim();
+        if (serial_number !== undefined) updateData.serial_number = serial_number;
+        if (device_nickname !== undefined) updateData.device_nickname = device_nickname;
+        if (device_id !== undefined) updateData.device_id = device_id;
+        
         updateData.updatedBy = updatedBy || null;
         updateData.updatedAt = new Date();
 

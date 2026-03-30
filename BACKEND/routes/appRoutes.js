@@ -145,6 +145,7 @@ router.get('/profile/:user_id', authMiddleware(), appCtrl.getProfileById);
  *         description: Profile updated successfully
  */
 router.put('/updatedProfile/:user_id', authMiddleware(), appCtrl.updateProfile);
+router.get('/getAssignedDevices', authMiddleware(), appCtrl.getAssignedDevices);
 
 /**
  * @swagger

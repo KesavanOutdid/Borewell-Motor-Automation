@@ -6,6 +6,9 @@ class HelpModel {
   final String subject;
   final String description;
   final String status;
+  final String? serialNumber;
+  final String? deviceNickname;
+  final String? deviceId;
   final String? createdBy;
   final DateTime? createdAt;
   final String? updatedBy;
@@ -19,6 +22,9 @@ class HelpModel {
     required this.subject,
     required this.description,
     required this.status,
+    this.serialNumber,
+    this.deviceNickname,
+    this.deviceId,
     this.createdBy,
     this.createdAt,
     this.updatedBy,
@@ -34,6 +40,9 @@ class HelpModel {
       subject: json['subject'] ?? "",
       description: json['description'] ?? "",
       status: json['status'] ?? "pending",
+      serialNumber: json['serial_number'],
+      deviceNickname: json['device_nickname'],
+      deviceId: json['device_id'],
       createdBy: json['createdBy'],
       createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       updatedBy: json['updatedBy'],
@@ -49,6 +58,9 @@ class HelpModel {
       'subject': subject,
       'description': description,
       'status': status,
+      'serial_number': serialNumber,
+      'device_nickname': deviceNickname,
+      'device_id': deviceId,
       'createdBy': createdBy,
     };
   }

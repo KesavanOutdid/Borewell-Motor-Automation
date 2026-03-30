@@ -212,6 +212,8 @@ class _FormContentState extends State<_FormContent> {
                 const SizedBox(height: 32),
                 TextFormField(
                   controller: emailController,
+                  enableSuggestions: false,
+                  autocorrect: false,
                   style: const TextStyle(
                     color: Colors.black,
                     fontSize: 15,
@@ -272,6 +274,8 @@ class _FormContentState extends State<_FormContent> {
                     maxLength: 6,
                     keyboardType: TextInputType.number,
                     obscureText: !controller.isPasswordVisible.value,
+                    enableSuggestions: false,
+                    autocorrect: false,
                     style: const TextStyle(
                       color: Colors.black,
                       fontSize: 15,

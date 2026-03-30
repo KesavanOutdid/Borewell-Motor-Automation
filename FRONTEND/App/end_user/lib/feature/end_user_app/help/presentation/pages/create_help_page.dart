@@ -21,11 +21,29 @@ class _CreateHelpPageState extends State<CreateHelpPage> {
     super.initState();
     if (Get.arguments is HelpModel) {
       editingHelp = Get.arguments as HelpModel;
+      if (controller.subjects.contains(editingHelp!.subject)) {
+        controller.selectedSubject.value = editingHelp!.subject;
+        controller.showCustomSubject.value = false;
+      } else {
+        controller.selectedSubject.value = 'Other';
+        controller.showCustomSubject.value = true;
+      }
+      
+      // Handle existing device if editing
+      if (editingHelp!.serialNumber != null) {
+        // Try to find the device in userDevices
+        final existingDevice = controller.userDevices.firstWhereOrNull(
+          (d) => (d['serial_number'] ?? d['serialNumber']) == editingHelp!.serialNumber
+        );
+        if (existingDevice != null) {
+          controller.selectedDevice.value = existingDevice;
+        }
+      }
+
       controller.subjectController.text = editingHelp!.subject;
       controller.descriptionController.text = editingHelp!.description;
     } else {
-      controller.subjectController.clear();
-      controller.descriptionController.clear();
+      controller.resetForm();
     }
   }
 
@@ -60,11 +78,55 @@ class _CreateHelpPageState extends State<CreateHelpPage> {
               style: TextStyle(color: Colors.grey.shade600),
             ),
             const SizedBox(height: 32),
+            _buildLabel('Select Device (Optional)'),
+            const SizedBox(height: 8),
+            Obx(() => DropdownButtonFormField<Map<String, dynamic>>(
+              value: controller.selectedDevice.value,
+              items: controller.userDevices.map((device) {
+                final name = device['device_nickname'] ?? device['nickname'] ?? '-';
+                final serial = device['serial_number'] ?? device['serialNumber'] ?? '-';
+                return DropdownMenuItem<Map<String, dynamic>>(
+                  value: device,
+                  child: Text(name != '-' ? '$name ($serial)' : serial),
+                );
+              }).toList(),
+              onChanged: controller.onDeviceChanged,
+              decoration: _inputDecoration('Choose a device', isDark),
+              dropdownColor: isDark ? Colors.grey.shade900 : Colors.white,
+              icon: const Icon(Icons.keyboard_arrow_down_rounded),
+            )),
+            const SizedBox(height: 24),
             _buildLabel('subject'.tr),
             const SizedBox(height: 8),
-            TextFormField(
-              controller: controller.subjectController,
-              decoration: _inputDecoration('subject_hint'.tr, isDark),
+            Obx(() => DropdownButtonFormField<String>(
+              value: controller.selectedSubject.value.isEmpty ? null : controller.selectedSubject.value,
+              items: controller.subjects.map((String sub) {
+                return DropdownMenuItem<String>(
+                  value: sub,
+                  child: Text(sub),
+                );
+              }).toList(),
+              onChanged: controller.onSubjectChanged,
+              decoration: _inputDecoration('Select Subject', isDark),
+              dropdownColor: isDark ? Colors.grey.shade900 : Colors.white,
+              icon: const Icon(Icons.keyboard_arrow_down_rounded),
+            )),
+            Obx(() => controller.showCustomSubject.value 
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+                    _buildLabel('${'subject'.tr} (Custom)'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: controller.subjectController,
+                      enableSuggestions: false,
+                      autocorrect: false,
+                      decoration: _inputDecoration('Type your subject here...', isDark),
+                    ),
+                  ],
+                )
+              : const SizedBox.shrink()
             ),
             const SizedBox(height: 24),
             _buildLabel('description'.tr),
@@ -72,6 +134,8 @@ class _CreateHelpPageState extends State<CreateHelpPage> {
             TextFormField(
               controller: controller.descriptionController,
               maxLines: 5,
+              enableSuggestions: false,
+              autocorrect: false,
               decoration: _inputDecoration('description_hint'.tr, isDark),
             ),
             const SizedBox(height: 40),
@@ -86,7 +150,7 @@ class _CreateHelpPageState extends State<CreateHelpPage> {
                   success = await controller.updateHelpRequest(editingHelp!.id!);
                 }
                 if (success) {
-                  Get.back();
+                  Navigator.pop(context);
                 }
               },
             )),
