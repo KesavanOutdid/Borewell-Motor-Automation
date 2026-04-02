@@ -100,6 +100,12 @@ const ViewHelp = ({ userInfo, handleLogout }) => {
 
     const statusBadge = getStatusBadgeStyle(helpDetails.status);
 
+    const isModified = selectedStatus !== helpDetails.status || 
+                       (adminRemarks || '').trim() !== (helpDetails.admin_remarks || '').trim();
+    
+    const hasRequiredFields = selectedStatus && (adminRemarks || '').trim().length > 0;
+    const canUpdate = isModified && hasRequiredFields;
+
     return (
         <div style={{ paddingTop: '15px' }}>
             <Sidebar />
@@ -317,7 +323,7 @@ const ViewHelp = ({ userInfo, handleLogout }) => {
                                         <button
                                             className="btn btn-primary"
                                             onClick={handleUpdateStatus}
-                                            disabled={loadingUpdate}
+                                            disabled={loadingUpdate || !canUpdate}
                                             style={{ padding: '10px 30px' }}
                                         >
                                             {loadingUpdate ? (
