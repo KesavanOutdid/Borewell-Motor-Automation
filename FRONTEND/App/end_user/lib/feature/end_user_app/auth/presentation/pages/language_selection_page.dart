@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../../core/routes/app_routes.dart';
+import '../../../../../core/services/language_service.dart';
 import '../../../../../utils/theme/app_colors.dart';
 
 class LanguageSelectionPage extends StatelessWidget {
   LanguageSelectionPage({super.key});
 
-  final RxString selectedLang = 'en_US'.obs;
+  final RxString selectedLang = Get.find<LanguageService>().getLanguageCode().obs;
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +34,7 @@ class LanguageSelectionPage extends StatelessWidget {
                   // Compute inside Obx so that translations and list update properly
                   final List<Map<String, String>> languages = [
                     {'code': 'en_US', 'name': 'english'.tr},
+                    {'code': 'hi_IN', 'name': 'hindi'.tr},
                     {'code': 'te_IN', 'name': 'telugu'.tr},
                     {'code': 'ta_IN', 'name': 'tamil'.tr},
                     {'code': 'kn_IN', 'name': 'kannada'.tr},
@@ -47,10 +49,9 @@ class LanguageSelectionPage extends StatelessWidget {
                       final isSelected = currentLang == lang['code'];
                       
                       return InkWell(
-                        onTap: () {
+                        onTap: () async {
                           selectedLang.value = lang['code']!;
-                          final parts = lang['code']!.split('_');
-                          Get.updateLocale(Locale(parts[0], parts[1]));
+                          await Get.find<LanguageService>().updateLocale(lang['code']!);
                         },
                         borderRadius: BorderRadius.circular(16),
                         child: Container(

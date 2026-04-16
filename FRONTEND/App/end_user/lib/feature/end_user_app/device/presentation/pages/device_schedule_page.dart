@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../controllers/device_schedule_controller.dart';
 import '../../../../../utils/theme/app_colors.dart';
+import '../../../../../core/services/tour_service.dart';
 
 class DeviceSchedulePage extends StatefulWidget {
   const DeviceSchedulePage({super.key});
@@ -27,6 +28,15 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
   void initState() {
     super.initState();
     controller.initialize(Get.arguments);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            Get.find<TourService>().showScheduleTour(context);
+          }
+        });
+      }
+    });
   }
 
   void _showErrorDialog(String message) {
@@ -284,17 +294,25 @@ class _DeviceSchedulePageState extends State<DeviceSchedulePage> {
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            SliverToBoxAdapter(child: _buildScheduleForm()),
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                child: Row(
-                  children: [
-                    Text(
-                      'Active/Past Schedules',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textPrimary),
-                    ),
-                  ],
+              child: KeyedSubtree(
+                key: Get.find<TourService>().scheduleFormKey,
+                child: _buildScheduleForm(),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: KeyedSubtree(
+                key: Get.find<TourService>().scheduleListKey,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Active/Past Schedules',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textPrimary),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

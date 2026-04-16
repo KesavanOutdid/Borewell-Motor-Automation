@@ -14,10 +14,16 @@ class AboutAgriPlusPage extends StatelessWidget {
         slivers: [
           // Gradient header
           SliverAppBar(
-            expandedHeight: 200,
+            expandedHeight: 220,
             pinned: true,
             backgroundColor: AppColors.primaryGreen,
             foregroundColor: Colors.white,
+            elevation: 0,
+            centerTitle: true,
+            title: Text(
+              'about_agriplus'.tr,
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+            ),
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: const BoxDecoration(
@@ -57,28 +63,28 @@ class AboutAgriPlusPage extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const SizedBox(height: 40),
+                          const SizedBox(height: 60),
                           Container(
-                            width: 80,
-                            height: 80,
+                            width: 70,
+                            height: 70,
                             decoration: BoxDecoration(
                               color: Colors.white,
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.15),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 6),
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 4),
                                 ),
                               ],
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.all(16),
+                              padding: const EdgeInsets.all(14),
                               child: Image.asset(
                                 'assets/images/image.png',
                                 errorBuilder: (_, __, ___) => const Icon(
                                   Icons.water_drop_rounded,
-                                  size: 36,
+                                  size: 32,
                                   color: AppColors.primaryGreen,
                                 ),
                               ),
@@ -88,19 +94,24 @@ class AboutAgriPlusPage extends StatelessWidget {
                           const Text(
                             'AgriPlus',
                             style: TextStyle(
-                              fontSize: 28,
+                              fontSize: 24,
                               fontWeight: FontWeight.w900,
                               color: Colors.white,
                               letterSpacing: 0.5,
                             ),
                           ),
-                          Text(
-                            'smart_farming_subtitle'.tr,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white.withOpacity(0.8),
-                              letterSpacing: 0.5,
+                          const SizedBox(height: 4),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Text(
+                              'smart_farming_subtitle'.tr,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white.withOpacity(0.9),
+                                letterSpacing: 0.5,
+                              ),
                             ),
                           ),
                         ],
@@ -108,10 +119,6 @@ class AboutAgriPlusPage extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-              title: Text(
-                'about_agriplus'.tr,
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
               ),
             ),
           ),

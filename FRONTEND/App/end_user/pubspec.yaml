@@ -58,6 +58,7 @@ dependencies:
   image_picker: ^1.0.7
   firebase_core: ^4.5.0
   firebase_messaging: ^16.1.2
+  tutorial_coach_mark: ^1.2.12
 
   dio: any
   curl_logger_dio_interceptor: any

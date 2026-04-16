@@ -177,6 +177,8 @@ class HelpPage extends StatelessWidget {
         color = Colors.blue;
         break;
       case 'completed':
+      case 'solved':
+      case 're-solved':
         color = Colors.green;
         break;
       case 'rejected':
@@ -259,6 +261,42 @@ class HelpPage extends StatelessWidget {
                 ),
               ],
             ),
+            if (help.adminRemarks != null && help.adminRemarks!.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.primaryGreen.withOpacity(0.1)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.admin_panel_settings_outlined, size: 16, color: AppColors.primaryGreen),
+                        SizedBox(width: 8),
+                        Text(
+                          'Admin Remarks',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryGreen,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      help.adminRemarks!,
+                      style: const TextStyle(fontSize: 14, height: 1.4),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
             if (help.status == 'pending')
               Row(

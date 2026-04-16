@@ -33,32 +33,78 @@ class _CartPageState extends State<CartPage> {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      appBar: AppBar(
-        title: Text('shopping_cart'.tr
-            , style: const TextStyle(color: Colors.white)),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: AppColors.primaryGradient,
+      body: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+            decoration: const BoxDecoration(
+              gradient: AppColors.primaryGradient,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(40),
+                bottomRight: Radius.circular(40),
+              ),
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Get.back(),
+                    child: Container(
+                      height: 48,
+                      width: 48,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      'shopping_cart'.tr,
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ),
+                  Obx(() {
+                    final itemCount = controller.cartItemCount;
+                    if (itemCount > 0) {
+                      return GestureDetector(
+                        onTap: () => _showClearCartDialog(context, controller),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: const Icon(
+                            Icons.delete_outline_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  }),
+                ],
+              ),
+            ),
           ),
-        ),
-        actions: [
-          Obx(() {
-            final itemCount = controller.cartItemCount;
-            if (itemCount > 0) {
-              return TextButton.icon(
-                onPressed: () => _showClearCartDialog(context, controller),
-                icon: const Icon(Icons.delete_outline, color: Colors.white),
-                label: Text(
-                  'clear_all'.tr,
-                  style: const TextStyle(color: Colors.white),
-                ),
-              );
-            }
-            return const SizedBox.shrink();
-          }),
-        ],
-      ),
-      body: RefreshIndicator(
+          Expanded(
+            child: RefreshIndicator(
         color: AppColors.primaryGreen,
         onRefresh: () => controller.fetchCart(),
         child: Obx(() {
@@ -173,9 +219,12 @@ class _CartPageState extends State<CartPage> {
             ],
           );
         }),
+        ),
       ),
-    );
-  }
+    ],
+  ),
+);
+}
 
   Widget _buildCartItem(BuildContext context, dynamic item, CartController controller) {
     final imageUrl = controller.getImageUrl(item.productImage);

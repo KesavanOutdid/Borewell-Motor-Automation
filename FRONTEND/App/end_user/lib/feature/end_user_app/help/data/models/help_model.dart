@@ -9,6 +9,7 @@ class HelpModel {
   final String? serialNumber;
   final String? deviceNickname;
   final String? deviceId;
+  final String? adminRemarks;
   final String? createdBy;
   final DateTime? createdAt;
   final String? updatedBy;
@@ -25,6 +26,7 @@ class HelpModel {
     this.serialNumber,
     this.deviceNickname,
     this.deviceId,
+    this.adminRemarks,
     this.createdBy,
     this.createdAt,
     this.updatedBy,
@@ -43,10 +45,11 @@ class HelpModel {
       serialNumber: json['serial_number'],
       deviceNickname: json['device_nickname'],
       deviceId: json['device_id'],
+      adminRemarks: json['admin_remarks'],
       createdBy: json['createdBy'],
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']).toLocal() : null,
       updatedBy: json['updatedBy'],
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
+      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']).toLocal() : null,
     );
   }
 
@@ -61,6 +64,7 @@ class HelpModel {
       'serial_number': serialNumber,
       'device_nickname': deviceNickname,
       'device_id': deviceId,
+      'admin_remarks': adminRemarks,
       'createdBy': createdBy,
     };
   }

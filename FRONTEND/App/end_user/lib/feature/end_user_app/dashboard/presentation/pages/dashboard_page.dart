@@ -343,6 +343,17 @@ class _ModernDrawer extends StatelessWidget {
                       const SizedBox(height: 12),
 
                       _DrawerItem(
+                        icon: Icons.language_rounded,
+                        label: 'choose_language'.tr,
+                        isSelected: false,
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          Get.toNamed('/language-selection');
+                        },
+                        color: AppColors.primaryGreen,
+                      ),
+                      const SizedBox(height: 4),
+                      _DrawerItem(
                         icon: Icons.info_outline_rounded,
                         label: 'about_agriplus'.tr,
                         isSelected: false,

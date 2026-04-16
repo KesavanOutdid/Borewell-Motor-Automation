@@ -45,14 +45,7 @@ class _OrdersPageState extends State<OrdersPage> {
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
             decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/orders.png'),
-                fit: BoxFit.cover,
-                colorFilter: ColorFilter.mode(
-                  Colors.black26,
-                  BlendMode.darken,
-                ),
-              ),
+              gradient: AppColors.primaryGradient,
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(40),
                 bottomRight: Radius.circular(40),

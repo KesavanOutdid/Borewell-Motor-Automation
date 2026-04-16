@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../../core/config/env.dart';
+import '../../../../../core/services/tour_service.dart';
 import '../controllers/profile_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../home/presentation/controllers/home_controller.dart';
@@ -487,6 +488,27 @@ class ProfileView extends GetView<ProfileController> {
                           title: 'notification'.tr,
                           color: const Color(0xFFFF8A00),
                           onTap: () => Get.toNamed('/notifications'),
+                        ),
+                        _MenuItemData(
+                          icon: Icons.language_rounded,
+                          title: 'choose_language'.tr,
+                          color: AppColors.primaryGreen,
+                          onTap: () => Get.toNamed('/language-selection'),
+                        ),
+                        _MenuItemData(
+                          icon: Icons.auto_awesome_rounded,
+                          title: 'reset_tour'.tr,
+                          color: Colors.blueGrey,
+                          onTap: () {
+                            Get.find<TourService>().resetTour();
+                            Get.snackbar(
+                              'Success',
+                              'Tour will restart next time you visit Home',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.black87,
+                              colorText: Colors.white,
+                            );
+                          },
                         ),
                         _MenuItemData(
                           icon: Icons.headset_mic_rounded,

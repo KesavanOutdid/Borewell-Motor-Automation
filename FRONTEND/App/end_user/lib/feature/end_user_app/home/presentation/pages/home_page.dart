@@ -4,6 +4,7 @@ import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
 import '../controllers/home_controller.dart';
 import '../../../../../core/services/notification_storage_service.dart';
+import '../../../../../core/services/tour_service.dart';
 import '../../../../../utils/theme/app_colors.dart';
 import '../../../../../utils/widgets/ui_components.dart';
 
@@ -13,6 +14,15 @@ class HomeView extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     final notificationStorage = NotificationStorageService();
+    final tourService = Get.find<TourService>();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (context.mounted) {
+          tourService.showHomeTour(context);
+        }
+      });
+    });
     
     return Stack(
       children: [
@@ -45,6 +55,7 @@ class HomeView extends GetView<HomeController> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         GestureDetector(
+                          key: tourService.menuKey,
                           onTap: () => Scaffold.of(context).openDrawer(),
                           child: Container(
                             height: 48,
@@ -86,6 +97,7 @@ class HomeView extends GetView<HomeController> {
                           builder: (context, snapshot) {
                             final unreadCount = snapshot.data ?? notificationStorage.getUnreadCount();
                             return GestureDetector(
+                              key: tourService.notificationsKey,
                               onTap: () => Get.toNamed('/notifications'),
                               child: Container(
                                 height: 48,
@@ -146,6 +158,7 @@ class HomeView extends GetView<HomeController> {
               ),
             ),
             Container(
+              key: tourService.filterKey,
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Obx(() => SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -301,6 +314,7 @@ class HomeView extends GetView<HomeController> {
           left: 16,
           bottom: 24,
           child: GestureDetector(
+            key: tourService.addDeviceKey,
             onTap: () => controller.showAddDeviceDialog(),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../../core/services/notification_storage_service.dart';
+import '../../../../../utils/ui_utils.dart';
 
 class NotificationController extends GetxController {
   final NotificationStorageService _storageService = NotificationStorageService();
@@ -45,8 +46,15 @@ class NotificationController extends GetxController {
   }
 
   Future<void> markAllAsRead() async {
-    await _storageService.markAllAsRead();
-    loadNotifications();
+    final unreadCount = getUnreadCount();
+    if (unreadCount > 0) {
+      await _storageService.markAllAsRead();
+      loadNotifications();
+      UIUtils.showSuccessSnackbar(
+        title: 'Success',
+        message: 'All notifications marked as read',
+      );
+    }
   }
 
   Future<void> deleteNotification(String notificationId) async {

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../controllers/device_sharing_controller.dart';
 import '../../../../../utils/theme/app_colors.dart';
+import '../../../../../core/services/tour_service.dart';
 
 class DeviceSharingView extends GetView<DeviceSharingController> {
   const DeviceSharingView({super.key});
@@ -10,6 +11,15 @@ class DeviceSharingView extends GetView<DeviceSharingController> {
   @override
   Widget build(BuildContext context) {
     final phoneController = TextEditingController();
+    final tourService = Get.find<TourService>();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (context.mounted) {
+          tourService.showSharingTour(context);
+        }
+      });
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -27,74 +37,86 @@ class DeviceSharingView extends GetView<DeviceSharingController> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16.0),
             children: [
-              Text(
-                'Add Device Access',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'You can grant access for this device with up to 3 additional persons. They will be able to start, stop and view readings.',
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-              ),
-              SizedBox(height: 20),
-              if (controller.sharedUsers.length < 3)
-                Row(
+              KeyedSubtree(
+                key: tourService.shareAddSectionKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: TextField(
-                        controller: phoneController,
-                        keyboardType: TextInputType.phone,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(10),
-                        ],
-                        decoration: InputDecoration(
-                          hintText: 'phone_hint'.tr,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    Text(
+                      'Add Device Access',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'You can grant access for this device with up to 3 additional persons. They will be able to start, stop and view readings.',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
+                    SizedBox(height: 20),
+                    if (controller.sharedUsers.length < 3)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: phoneController,
+                              keyboardType: TextInputType.phone,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(10),
+                              ],
+                              decoration: InputDecoration(
+                                hintText: 'phone_hint'.tr,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                prefixIcon: const Icon(Icons.phone),
+                              ),
+                            ),
                           ),
-                          prefixIcon: const Icon(Icons.phone),
-                        ),
+                          SizedBox(width: 12),
+                          ElevatedButton(
+                            onPressed: () {
+                              if (phoneController.text.length == 10) {
+                                controller.assignToUser(phoneController.text);
+                                phoneController.clear();
+                              } else {
+                                Get.snackbar(
+                                  'Invalid Number',
+                                  'Please enter a 10-digit phone number',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: Colors.red.withValues(alpha: 0.8),
+                                  colorText: Colors.white,
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryGreen,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text('add'.tr),
+                          ),
+                        ],
                       ),
-                    ),
-                    SizedBox(width: 12),
-                    ElevatedButton(
-                      onPressed: () {
-                        if (phoneController.text.length == 10) {
-                          controller.assignToUser(phoneController.text);
-                          phoneController.clear();
-                        } else {
-                          Get.snackbar(
-                            'Invalid Number',
-                            'Please enter a 10-digit phone number',
-                            snackPosition: SnackPosition.BOTTOM,
-                            backgroundColor: Colors.red.withOpacity(0.8),
-                            colorText: Colors.white,
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryGreen,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text('add'.tr),
-                    ),
                   ],
                 ),
+              ),
               SizedBox(height: 32),
-              Text(
-                'Access Granted (${controller.sharedUsers.length}/3)',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+              KeyedSubtree(
+                key: tourService.sharedUsersListKey,
+                child: Text(
+                  'Access Granted (${controller.sharedUsers.length}/3)',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               SizedBox(height: 16),

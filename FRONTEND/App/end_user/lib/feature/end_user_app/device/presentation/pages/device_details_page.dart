@@ -9,12 +9,19 @@ import '../controllers/device_details_controller.dart';
 import '../../../../../utils/theme/app_colors.dart';
 import '../../../../../utils/widgets/gradient_widgets.dart';
 import '../../../../../utils/widgets/ui_components.dart';
+import '../../../../../core/services/tour_service.dart';
 
 class DeviceDetailsView extends GetView<DeviceDetailsController> {
   const DeviceDetailsView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final tourService = Get.find<TourService>();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _waitForDataAndShowTour(context, tourService, controller);
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: Obx(() {
@@ -50,7 +57,10 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Obx(() => _buildDevicePlacementCard(context, controller)),
+                KeyedSubtree(
+                  key: tourService.deviceStatusCardKey,
+                  child: Obx(() => _buildDevicePlacementCard(context, controller)),
+                ),
                 SizedBox(height: 12),
                 Obx(() {
                   final lastStart = controller.liveData['lastStart']?.toString() ?? '-';
@@ -61,7 +71,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                       Expanded(
                         child: _TimeChip(
                           icon: Icons.play_circle_rounded,
-                          label: 'Last Start',
+                          label: 'last_start'.tr,
                           value: lastStart,
                           color: AppColors.primaryGreen,
                         ),
@@ -70,7 +80,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                       Expanded(
                         child: _TimeChip(
                           icon: Icons.stop_circle_rounded,
-                          label: 'Last Stop',
+                          label: 'last_stop'.tr,
                           value: lastStop,
                           color: AppColors.error,
                         ),
@@ -79,7 +89,10 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                   );
                 }),
                 SizedBox(height: 20),
-                _buildQuickActionsRow(context, controller),
+                KeyedSubtree(
+                  key: tourService.quickActionsKey,
+                  child: _buildQuickActionsRow(context, controller),
+                ),
                 SizedBox(height: 24),
                 Obx(() => Row(
                   children: [
@@ -93,7 +106,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                     ),
                     SizedBox(width: 12),
                     Text(
-                      'Live Readings',
+                      'live_readings'.tr,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -122,7 +135,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                           ),
                           SizedBox(width: 4),
                           Text(
-                            controller.isConnected.value ? 'LIVE' : 'CACHED',
+                            controller.isConnected.value ? 'live_caps'.tr : 'cached_caps'.tr,
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.w800,
@@ -136,17 +149,52 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                   ],
                 )),
                 SizedBox(height: 16),
-                Obx(() => _buildLiveDataGrid(context, controller)),
+                KeyedSubtree(
+                  key: tourService.liveDataKey,
+                  child: Obx(() => _buildLiveDataGrid(context, controller)),
+                ),
                 SizedBox(height: 20),
                 Obx(() => _buildLocationMapCard(controller)),
                 SizedBox(height: 20),
-                _buildStatusControlCard(controller),
+                KeyedSubtree(
+                  key: tourService.motorControlKey,
+                  child: _buildStatusControlCard(controller),
+                ),
               ],
             ),
           );
         }),
       ),
     );
+  }
+
+  /// Waits for device data to load before triggering the tour.
+  /// Retries up to [maxAttempts] times to avoid showing the tour
+  /// while the skeleton is displayed (tour target widgets not mounted).
+  void _waitForDataAndShowTour(
+    BuildContext context,
+    TourService tourService,
+    DeviceDetailsController ctrl, {
+    int attempt = 0,
+    int maxAttempts = 10,
+  }) {
+    if (!context.mounted) return;
+
+    // If data hasn't loaded yet, retry after a short delay
+    if ((ctrl.isLoading.value || ctrl.liveData.isEmpty) && attempt < maxAttempts) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _waitForDataAndShowTour(context, tourService, ctrl,
+            attempt: attempt + 1, maxAttempts: maxAttempts);
+      });
+      return;
+    }
+
+    // Data is loaded — wait one more frame + small delay for widgets to mount
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (context.mounted) {
+        tourService.showDeviceDetailsTour(context);
+      }
+    });
   }
 
   Widget _buildSkeleton() {
@@ -266,7 +314,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Edit Device Name',
+                'edit_device_name'.tr,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -275,7 +323,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
               ),
               SizedBox(height: 8),
               Text(
-                'Serial $serial',
+                '${'serial'.tr} $serial',
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey[600],
@@ -287,7 +335,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                 controller: textController,
                 autofocus: true,
                 decoration: InputDecoration(
-                  labelText: 'Nickname',
+                  labelText: 'nickname'.tr,
                   hintText: 'e.g. Farm Motor 1',
                   prefixIcon: const Icon(Icons.label_outline_rounded),
                   border: OutlineInputBorder(
@@ -341,7 +389,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                         ),
                       ),
                       child: Text(
-                        'Save Name',
+                        'save_name'.tr,
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -373,7 +421,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
           Expanded(
             child: _QuickActionCard(
               icon: Icons.history_rounded,
-              label: 'History',
+              label: 'history'.tr,
               gradient: AppColors.blueGradient,
               onTap: () => _openHistory(controller),
             ),
@@ -381,7 +429,7 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
           Expanded(
             child: _QuickActionCard(
               icon: Icons.analytics_rounded,
-              label: 'Analytics',
+              label: 'analytics'.tr,
               gradient: AppColors.purpleGradient,
               onTap: () => _openAnalytics(controller),
             ),

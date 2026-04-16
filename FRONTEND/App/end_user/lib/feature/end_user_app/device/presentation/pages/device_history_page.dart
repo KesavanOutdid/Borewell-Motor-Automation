@@ -41,13 +41,57 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        title: Text('device_history'.tr),
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.textPrimary,
-      ),
-      body: Obx(() {
+      body: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+            decoration: const BoxDecoration(
+              gradient: AppColors.primaryGradient,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(40),
+                bottomRight: Radius.circular(40),
+              ),
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Get.back(),
+                    child: Container(
+                      height: 48,
+                      width: 48,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      'device_history'.tr,
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: Obx(() {
         if (controller.isLoading.value && controller.records.isEmpty) {
           return Center(child: CircularProgressIndicator());
         }
@@ -80,7 +124,7 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
                         Icon(Icons.history_rounded, size: 64, color: Colors.grey.shade300),
                         SizedBox(height: 16),
                         Text(
-                          'No telemetry records found',
+                          'no_telemetry_found'.tr,
                           style: TextStyle(fontSize: 16, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
                         ),
                       ],
@@ -124,6 +168,9 @@ class _DeviceHistoryViewState extends State<DeviceHistoryView> {
           ),
         );
       }),
+          ),
+        ],
+      ),
     );
   }
 
