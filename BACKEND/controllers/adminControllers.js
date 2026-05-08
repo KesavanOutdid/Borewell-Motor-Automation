@@ -51,7 +51,7 @@ exports.editRole = async (req, res, next) => {
             return res.status(404).json({ success: false, message: "Role not found" });
 
         // Update only status + updatedBy + updatedAt
-        role.status = status;
+        role.status = status; 
         role.updatedBy = updatedBy;
         role.updatedAt = new Date();
 

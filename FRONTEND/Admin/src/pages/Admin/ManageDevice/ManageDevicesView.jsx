@@ -187,7 +187,7 @@ const ManageDevicesView = ({ userInfo, handleLogout }) => {
                                                 </div>
                                                 <div className="col-md-4" style={{ marginBottom: '15px' }}>
                                                     <div style={{ fontSize: '12px', color: '#8f9297', marginBottom: '5px' }}>Status</div>
-                                                    <span className={`badge badge-sm ${deviceDetails.status ? 'bg-gradient-success' : 'bg-gradient-secondary'}`} style={{ padding: '6px 12px' }}>
+                                                     <span className={`badge badge-sm ${deviceDetails.status ? 'bg-gradient-success' : 'bg-gradient-secondary'}`} style={{ padding: '6px 12px' }}>
                                                         {deviceDetails.status ? 'Active' : 'Inactive'}
                                                     </span>
                                                 </div>
