@@ -11,6 +11,7 @@ const Telemetry = require("../models/Telemetry");
 const DeviceShare = require("../models/DeviceShare");
 const DeviceSchedule = require("../models/DeviceSchedule");
 const ManageHelp = require("../models/ManageHelp");
+const Sim = require("../models/Sim");
 const { sendPushNotification } = require('../utils/notificationHelper');
 const { sendEmail } = require('../utils/emailHelper');
 const { cacheDeletePattern } = require('../middlewares/cacheMiddleware');
@@ -431,6 +432,27 @@ exports.configIMEInumber = async (req, res, next) => {
         await cacheDeletePattern('*devices*');
         await cacheDeletePattern('*analytics*');
 
+        // If configuration is successful and we haven't configured it before
+        let simDetails = null;
+        if (!device.config_status && device.sim_id) {
+            const sim = await Sim.findById(device.sim_id);
+            if (sim && !sim.sim_activation_date) {
+                const currentTime = new Date();
+                const expiryTime = new Date(currentTime.getTime() + (90 * 24 * 60 * 60 * 1000));
+                
+                sim.sim_activation_date = currentTime;
+                sim.sim_expiry_date = expiryTime;
+                sim.sim_recharge_status = 'Active';
+                await sim.save();
+                
+                simDetails = sim;
+            } else if (sim) {
+                simDetails = sim;
+            }
+        } else if (device.sim_id) {
+            simDetails = await Sim.findById(device.sim_id);
+        }
+
         res.status(200).json({
             success: true,
             message: "IMEI & location configured successfully",
@@ -442,7 +464,8 @@ exports.configIMEInumber = async (req, res, next) => {
                 device_nickname: updatedDevice.device_nickname,
                 config_status: updatedDevice.config_status,
                 updatedAt: updatedDevice.updatedAt,
-                updatedBy: updatedDevice.updatedBy
+                updatedBy: updatedDevice.updatedBy,
+                sim_details: simDetails
             }
         });
 

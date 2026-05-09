@@ -36,6 +36,8 @@ const useManageDevices = (userInfo) => {
     const fetchuserDataCalled = useRef(false); // Ref to track if fetch users has been called
     const [selecteduser, setSelecteduser] = useState('');
     const [selectedDevices, setSelectedDevices] = useState('');
+    const [sims, setSims] = useState([]);
+    const [selectedSim, setSelectedSim] = useState('');
     const [assignErrorMessage, setAssignErrorMessage] = useState('');
     const [loadingSubmit, setLoadingSubmit] = useState(false);
     const [loadingUpdate, setLoadingUpdate] = useState(false);
@@ -64,6 +66,22 @@ const useManageDevices = (userInfo) => {
         }
 
         loadUsers();
+
+        async function loadSims() {
+            if (isModalAssign) {
+                try {
+                    const response = await fetch(`${API_BASE}/admin/getSims?limit=1000&assign_status=false`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        setSims(data.sims);
+                    }
+                } catch (err) {
+                    console.error("Error fetching SIMs:", err);
+                }
+            }
+        }
+        
+        loadSims();
 
     }, [isModalAssign, API_BASE]);
 
@@ -108,7 +126,7 @@ const useManageDevices = (userInfo) => {
         setIsModalView(false);
         setSerialNumber(''); setImeiNumber(''); setDeviceType('');
         setErrorMessage(''); setErrorDevice(''); setErrorMessageEdit('');
-        setSelecteduser(''); setSelectedDevices('');
+        setSelecteduser(''); setSelectedDevices(''); setSelectedSim('');
         setLoadingSubmit(false);
         setLoadingUpdate(false);
     };
@@ -180,6 +198,10 @@ const useManageDevices = (userInfo) => {
         setSelectedDevices(value);   // store as array with 1 item
     };
 
+    const handleSimSelection = (value) => {
+        setSelectedSim(value);
+    };
+
     // Handle Assign Action
     const handleAssign = async (e) => {
         e.preventDefault();
@@ -207,6 +229,10 @@ const useManageDevices = (userInfo) => {
                 serial_number: device?.serial_number,
                 assignedBy: userInfo?.user?.user_email,
             };
+
+            if (selectedSim) {
+                payload.sim_id = selectedSim;
+            }
 
             const response = await fetch(`${API_BASE}/admin/deviceAssignTouser`, {
                 method: "POST",
@@ -399,8 +425,8 @@ const useManageDevices = (userInfo) => {
 
     return {
         setIsModalCreate, isModalCreate, setIsModalAssign, isModalAssign, serialNumber, setSerialNumber, imeiNumber, setImeiNumber, deviceType, setDeviceType, errorMessage, handleDeviceCreate, closeModal,
-        isModalEdit, setIsModalEdit, setIsModalView, isModalView, fetchDeviceData, devices, loading, errorDevice, errorMessageEdit, setErrorMessageEdit, users, errorusers, loadingusers,
-        selecteduser, setSelecteduser, handleuserSelection, selectedDevices, setSelectedDevices, handleDeviceSelection, handleAssign, assignErrorMessage, loadingSubmit, loadingUpdate, setLoadingUpdate,
+        setIsModalEdit, setIsModalView, isModalView, fetchDeviceData, devices, loading, errorDevice, errorMessageEdit, setErrorMessageEdit, users, errorusers, loadingusers,
+        selecteduser, setSelecteduser, handleuserSelection, selectedDevices, setSelectedDevices, handleDeviceSelection, sims, selectedSim, handleSimSelection, handleAssign, assignErrorMessage, loadingSubmit, loadingUpdate, setLoadingUpdate,
         pagination, handlePageChange, handleLimitChange,
         analytics, loadingAnalytics, errorAnalytics,
         chartType, setChartType,

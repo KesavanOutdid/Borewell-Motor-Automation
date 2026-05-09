@@ -7,6 +7,7 @@ const Product = require("../models/Product");
 const Voucher = require('../models/Voucher');
 const DeviceShare = require('../models/DeviceShare');
 const ManageHelp = require('../models/ManageHelp');
+const Sim = require('../models/Sim');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const { sendEmail } = require('../utils/emailHelper');
@@ -767,6 +768,17 @@ exports.getDevices = async (req, res) => {
             {
                 $unwind: { path: "$user_details", preserveNullAndEmptyArrays: true }
             },
+            {
+                $lookup: {
+                    from: "sims",
+                    localField: "sim_id",
+                    foreignField: "_id",
+                    as: "sim_details"
+                }
+            },
+            {
+                $unwind: { path: "$sim_details", preserveNullAndEmptyArrays: true }
+            },
             { $match: aggregatedSearchFilter },
             {
                 $project: {
@@ -879,7 +891,7 @@ exports.updateDevice = async (req, res) => {
 
 exports.deviceAssignToUser = async (req, res) => {
     try {
-        const { user_id, serial_number, assignedBy } = req.body;
+        const { user_id, serial_number, assignedBy, sim_id } = req.body;
 
         if (!user_id || !serial_number || !assignedBy) {
             return res.status(400).json({ message: "Missing required fields" });
@@ -932,6 +944,18 @@ exports.deviceAssignToUser = async (req, res) => {
 
         device.updatedBy = assignedBy;
         device.updatedAt = now;
+        
+        if (sim_id) {
+            device.sim_id = sim_id;
+            
+            // Link SIM back to Device
+            await Sim.findByIdAndUpdate(sim_id, {
+                assign_status: true,
+                assigned_device_serial: serial_number,
+                updatedBy: assignedBy,
+                updatedAt: now
+            });
+        }
 
         await device.save();
 
@@ -2139,6 +2163,178 @@ exports.updateHelpStatus = async (req, res, next) => {
             data: updatedHelp
         });
 
+    } catch (err) {
+        next(err);
+    }
+};
+
+/* -------------------------------------------------------------------------- */
+/* SIM Management                                                             */
+/* -------------------------------------------------------------------------- */
+
+exports.createSim = async (req, res, next) => {
+    try {
+        const { sim_number, phone_number, imei_number, provider, createdBy } = req.body;
+
+        if (!sim_number || sim_number.trim() === '') {
+            return res.status(400).json({ success: false, message: "SIM Number (ICCID) is required" });
+        }
+        if (!phone_number || phone_number.trim() === '') {
+            return res.status(400).json({ success: false, message: "Phone Number is required" });
+        }
+
+        const exists = await Sim.findOne({ $or: [{ sim_number }, { phone_number }] });
+        if (exists) {
+            return res.status(409).json({ success: false, message: "SIM Number or Phone Number already exists" });
+        }
+
+        const sim = new Sim({
+            sim_number,
+            phone_number,
+            imei_number: imei_number || null,
+            provider,
+            createdBy: createdBy || 'admin'
+        });
+
+        await sim.save();
+
+        res.status(201).json({
+            success: true,
+            message: "SIM created successfully",
+            sim
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.getSims = async (req, res, next) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
+        const assign_status = req.query.assign_status; // 'true' or 'false'
+        const status = req.query.status; // 'true' or 'false'
+
+        const skip = (page - 1) * limit;
+
+        const searchFilter = search ? {
+            $or: [
+                { sim_number: { $regex: search, $options: 'i' } },
+                { phone_number: { $regex: search, $options: 'i' } },
+                { imei_number: { $regex: search, $options: 'i' } },
+                { provider: { $regex: search, $options: 'i' } },
+                { assigned_device_serial: { $regex: search, $options: 'i' } }
+            ]
+        } : {};
+
+        if (assign_status === 'true') searchFilter.assign_status = true;
+        else if (assign_status === 'false') searchFilter.assign_status = false;
+
+        if (status === 'true') searchFilter.status = true;
+        else if (status === 'false') searchFilter.status = false;
+
+        // Statistics Aggregation
+        const now = new Date();
+        const next7Days = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
+        
+        const summaryResult = await Sim.aggregate([
+            { $match: searchFilter },
+            {
+                $group: {
+                    _id: null,
+                    total: { $sum: 1 },
+                    active: { $sum: { $cond: [{ $eq: ["$status", true] }, 1, 0] } },
+                    inactive: { $sum: { $cond: [{ $eq: ["$status", false] }, 1, 0] } },
+                    assigned: { $sum: { $cond: [{ $eq: ["$assign_status", true] }, 1, 0] } },
+                    unassigned: { $sum: { $cond: [{ $eq: ["$assign_status", false] }, 1, 0] } },
+                    expired: { 
+                        $sum: { 
+                            $cond: [
+                                { $and: [{ $ne: ["$sim_expiry_date", null] }, { $lt: ["$sim_expiry_date", now] }] },
+                                1, 0
+                            ] 
+                        } 
+                    },
+                    expiringSoon: {
+                        $sum: {
+                            $cond: [
+                                { $and: [
+                                    { $ne: ["$sim_expiry_date", null] }, 
+                                    { $gte: ["$sim_expiry_date", now] },
+                                    { $lte: ["$sim_expiry_date", next7Days] }
+                                ]},
+                                1, 0
+                            ]
+                        }
+                    }
+                }
+            }
+        ]);
+
+        const summary = summaryResult[0] || { total: 0, active: 0, inactive: 0, assigned: 0, unassigned: 0, expired: 0, expiringSoon: 0 };
+
+        const totalSims = summary.total;
+        const sims = await Sim.find(searchFilter)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        res.status(200).json({
+            success: true,
+            sims,
+            summary,
+            pagination: {
+                currentPage: page,
+                totalPages: Math.ceil(totalSims / limit),
+                totalSims,
+                limit,
+                hasNextPage: page * limit < totalSims,
+                hasPrevPage: page > 1
+            }
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.updateSim = async (req, res, next) => {
+    try {
+        const { id, sim_number, phone_number, imei_number, provider, status, updatedBy } = req.body;
+
+        if (!id) return res.status(400).json({ success: false, message: "SIM ID is required" });
+
+        const sim = await Sim.findById(id);
+        if (!sim) return res.status(404).json({ success: false, message: "SIM not found" });
+
+        // Check duplicate if sim_number is changed
+        if (sim_number && sim_number !== sim.sim_number) {
+            const exists = await Sim.findOne({ sim_number });
+            if (exists) return res.status(409).json({ success: false, message: "SIM Number already exists" });
+            sim.sim_number = sim_number;
+        }
+
+        // Check duplicate if phone_number is changed
+        if (phone_number && phone_number !== sim.phone_number) {
+            const exists = await Sim.findOne({ phone_number });
+            if (exists) return res.status(409).json({ success: false, message: "Phone Number already exists" });
+            sim.phone_number = phone_number;
+        }
+
+        if (imei_number !== undefined) sim.imei_number = imei_number || null;
+        if (provider !== undefined) sim.provider = provider;
+        if (status !== undefined) sim.status = status === 'true' || status === true;
+        
+        sim.updatedBy = updatedBy || 'admin';
+        sim.updatedAt = new Date();
+
+        await sim.save();
+
+        res.status(200).json({
+            success: true,
+            message: "SIM updated successfully",
+            sim
+        });
     } catch (err) {
         next(err);
     }

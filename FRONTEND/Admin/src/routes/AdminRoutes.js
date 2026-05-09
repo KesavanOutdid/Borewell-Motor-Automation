@@ -26,6 +26,7 @@ const AddVoucher = lazy(() => import('../pages/Admin/ManageVouchers/AddVoucher')
 const EditVoucher = lazy(() => import('../pages/Admin/ManageVouchers/EditVoucher'));
 const ManageHelp = lazy(() => import('../pages/Admin/ManageHelp/ManageHelp'));
 const ViewHelp = lazy(() => import('../pages/Admin/ManageHelp/ViewHelp'));
+const ManageSims = lazy(() => import('../pages/Admin/ManageSim/ManageSims'));
 
 const AdminRoutes = () => {
     const storedUser = JSON.parse(sessionStorage.getItem('adminUser'));
@@ -243,6 +244,14 @@ const AdminRoutes = () => {
                     path="view-help"
                     element={loggedIn ? (
                         <ViewHelp userInfo={userInfo} handleLogout={handleLogout} />
+                    ) : (
+                        <Navigate to="/" />
+                    )}
+                />
+                <Route
+                    path="manage-sims"
+                    element={loggedIn ? (
+                        <ManageSims userInfo={userInfo} handleLogout={handleLogout} />
                     ) : (
                         <Navigate to="/" />
                     )}

@@ -16,7 +16,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
 
     const { setIsModalCreate, isModalCreate, setIsModalAssign, isModalAssign, serialNumber, setSerialNumber, errorMessage, successMessage, handleDeviceCreate, closeModal,
         isModalEdit, setIsModalEdit, fetchDeviceData, devices, loading, errorDevice, serialNumberUpdate, deviceStatusUpdate, errorMessageEdit, setErrorMessageEdit,
-        users, selecteduser, handleuserSelection, selectedDevices, handleDeviceSelection, handleAssign, assignErrorMessage, loadingSubmit, loadingUpdate, setLoadingUpdate,
+        users, selecteduser, handleuserSelection, selectedDevices, handleDeviceSelection, sims, selectedSim, handleSimSelection, handleAssign, assignErrorMessage, loadingSubmit, loadingUpdate, setLoadingUpdate,
         pagination, handlePageChange, handleLimitChange, loadingAnalytics, errorAnalytics, chartType,
         // analytics,
         setChartType,
@@ -464,13 +464,44 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                             </div>
                                                         </div>
                                                     </div>
+                                                    
+                                                    {/* Select SIM (Optional) */}
+                                                    <div className="col-md-12 mt-3">
+                                                        <div className="form-group row">
+                                                            <div className="col-sm-12" style={{ fontWeight: "bold" }}>
+                                                                <label>Select SIM (Optional)</label>
+                                                                <select
+                                                                    name="sims"
+                                                                    className="form-control"
+                                                                    style={{ padding: "8px", margin: "5px 0" }}
+                                                                    onChange={(e) => handleSimSelection(e.target.value)}
+                                                                    value={selectedSim}
+                                                                >
+                                                                    {sims.length === 0 ? (
+                                                                        <option value="" disabled>SIM not found</option>
+                                                                    ) : (
+                                                                        <>
+                                                                            <option value="">
+                                                                                -- Skip SIM Assignment --
+                                                                            </option>
+                                                                            {sims.map((s) => (
+                                                                                <option key={s._id} value={s._id}>
+                                                                                    {s.phone_number || s.sim_number} {s.provider ? `(${s.provider})` : ''} - ICCID: {s.sim_number}
+                                                                                </option>
+                                                                            ))}
+                                                                        </>
+                                                                    )}
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
 
-                                                {/* Display Selected Customer & Device */}
+                                                {/* Display Selected Customer, Device & SIM */}
                                                 <div className="row col-12 col-xl-12 viewDataCss" style={{ marginTop: "10px" }}>
                                                     {/* Selected Customer */}
                                                     {selecteduser && (
-                                                        <div className="col-md-6">
+                                                        <div className="col-md-4">
                                                             <label style={{ fontWeight: "bold" }}>Selected Customer</label>
                                                             <p>
                                                                 {users.find((u) => u._id === selecteduser)?.user_name ||
@@ -480,10 +511,23 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                     )}
 
                                                     {/* Selected Device */}
-                                                    {selectedDevices.length > 0 && (
-                                                        <div className="col-md-6">
+                                                    {selectedDevices && selectedDevices.length > 0 && (
+                                                        <div className="col-md-4">
                                                             <label style={{ fontWeight: "bold" }}>Selected Device</label>
                                                             <p>{selectedDevices}</p>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Selected SIM */}
+                                                    {selectedSim && sims.find((s) => s._id === selectedSim) && (
+                                                        <div className="col-md-4">
+                                                            <label style={{ fontWeight: "bold" }}>Selected SIM</label>
+                                                            <p>
+                                                                {(() => {
+                                                                    const sim = sims.find((s) => s._id === selectedSim);
+                                                                    return `${sim.phone_number || sim.sim_number} ${sim.provider ? `(${sim.provider})` : ''}`;
+                                                                })()}
+                                                            </p>
                                                         </div>
                                                     )}
                                                 </div>

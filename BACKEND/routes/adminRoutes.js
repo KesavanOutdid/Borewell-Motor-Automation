@@ -861,4 +861,26 @@ router.post(
     adminCtrl.updateHelpStatus
 );
 
+// ---------------------
+// SIM Management (Admin)
+// ---------------------
+
+router.post(
+    '/createSim',
+    [
+        body('sim_number').notEmpty().withMessage("SIM Number is required"),
+    ],
+    adminCtrl.createSim
+);
+
+router.get('/getSims', adminCtrl.getSims);
+
+router.post(
+    '/updateSim',
+    [
+        body('id').notEmpty().withMessage("SIM ID is required"),
+    ],
+    adminCtrl.updateSim
+);
+
 module.exports = router;

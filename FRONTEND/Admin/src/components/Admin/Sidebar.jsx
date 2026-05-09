@@ -52,6 +52,14 @@ const Sidebar = () => {
                         </Link>
                     </li>
                     <li className="nav-item">
+                        <Link className={location.pathname === '/manage-sims' ? 'nav-link  active' : 'nav-link'} to="/manage-sims" onClick={() => handleNavClick('/manage-sims')}>
+                            <div className="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                                <i className="fas fa-sim-card" style={{ fontSize: '12px', color: '#344767', lineHeight: '12px' }}></i>
+                            </div>
+                            <span className="nav-link-text ms-1">Manage Sims</span>
+                        </Link>
+                    </li>
+                    <li className="nav-item">
                         <Link className={location.pathname === '/manage-user-roles' ? 'nav-link  active' : 'nav-link'} to="/manage-user-roles" onClick={() => handleNavClick('/manage-user-roles')}>
                             <div className="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                                 <i className="fas fa-user-shield" style={{ fontSize: '12px', color: '#344767', lineHeight: '12px' }}></i>

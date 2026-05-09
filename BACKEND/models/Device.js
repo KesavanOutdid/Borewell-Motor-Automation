@@ -8,6 +8,7 @@ const deviceSchema = new mongoose.Schema({
 
     // Assignment fields
     assigned_user_id: { type: Number, default: null },
+    sim_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Sim', default: null },
     assign_status: { type: Boolean, default: false },
     start_status: { type: Boolean, default: false },
     assignedBy: { type: String, default: null },
