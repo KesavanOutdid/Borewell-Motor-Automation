@@ -13,6 +13,8 @@ const Header = ({ userInfo, handleLogout }) => {
                 return 'Manage Devices';
             case '/manage-devices-view':
                 return 'Device Details';
+            case '/manage-sims':
+                return 'Manage Sims';
             case '/manage-clients':
                 return 'Manage Clients';
             case '/manage-user-roles':

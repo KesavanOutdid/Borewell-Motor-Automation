@@ -2213,12 +2213,11 @@ exports.getSims = async (req, res, next) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const search = req.query.search || '';
-        const assign_status = req.query.assign_status; // 'true' or 'false'
-        const status = req.query.status; // 'true' or 'false'
+        const filterStatus = req.query.filter || 'Total';
 
         const skip = (page - 1) * limit;
 
-        const searchFilter = search ? {
+        const baseFilter = search ? {
             $or: [
                 { sim_number: { $regex: search, $options: 'i' } },
                 { phone_number: { $regex: search, $options: 'i' } },
@@ -2228,18 +2227,21 @@ exports.getSims = async (req, res, next) => {
             ]
         } : {};
 
-        if (assign_status === 'true') searchFilter.assign_status = true;
-        else if (assign_status === 'false') searchFilter.assign_status = false;
+        const searchFilter = { ...baseFilter };
+        const now = new Date();
 
-        if (status === 'true') searchFilter.status = true;
-        else if (status === 'false') searchFilter.status = false;
+        if (filterStatus === 'Active') searchFilter.status = true;
+        else if (filterStatus === 'Inactive') searchFilter.status = false;
+        else if (filterStatus === 'Assigned') searchFilter.assign_status = true;
+        else if (filterStatus === 'Expired') {
+            searchFilter.sim_expiry_date = { $ne: null, $lt: now };
+        }
 
         // Statistics Aggregation
-        const now = new Date();
         const next7Days = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
         
         const summaryResult = await Sim.aggregate([
-            { $match: searchFilter },
+            { $match: baseFilter },
             {
                 $group: {
                     _id: null,
@@ -2274,7 +2276,7 @@ exports.getSims = async (req, res, next) => {
 
         const summary = summaryResult[0] || { total: 0, active: 0, inactive: 0, assigned: 0, unassigned: 0, expired: 0, expiringSoon: 0 };
 
-        const totalSims = summary.total;
+        const totalSims = await Sim.countDocuments(searchFilter);
         const sims = await Sim.find(searchFilter)
             .sort({ createdAt: -1 })
             .skip(skip)

@@ -40,13 +40,14 @@ const ManageSims = ({ userInfo, handleLogout }) => {
     });
 
     const [searchQuery, setSearchQuery] = useState('');
+    const [filterStatus, setFilterStatus] = useState('Total');
     const searchTimeoutRef = useRef(null);
 
-    const fetchSims = async (page = 1, limit = 10, search = '') => {
+    const fetchSims = async (page = 1, limit = 10, search = '', filter = 'Total') => {
         setLoading(true);
         setError(null);
         try {
-            const url = `${API_BASE}/admin/getSims?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`;
+            const url = `${API_BASE}/admin/getSims?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}&filter=${encodeURIComponent(filter)}`;
             const response = await fetch(url);
             const data = await response.json();
 
@@ -68,25 +69,25 @@ const ManageSims = ({ userInfo, handleLogout }) => {
     };
 
     useEffect(() => {
-        fetchSims();
-    }, []);
+        fetchSims(1, pagination.limit, searchQuery, filterStatus);
+    }, [filterStatus]);
 
     const handleSearch = (query) => {
         setSearchQuery(query);
         if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
         searchTimeoutRef.current = setTimeout(() => {
-            fetchSims(1, pagination.limit, query);
+            fetchSims(1, pagination.limit, query, filterStatus);
         }, 500);
     };
 
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
-            fetchSims(newPage, pagination.limit, searchQuery);
+            fetchSims(newPage, pagination.limit, searchQuery, filterStatus);
         }
     };
 
     const handleLimitChange = (e) => {
-        fetchSims(1, parseInt(e.target.value), searchQuery);
+        fetchSims(1, parseInt(e.target.value), searchQuery, filterStatus);
     };
 
     const closeModal = () => {
@@ -146,7 +147,7 @@ const ManageSims = ({ userInfo, handleLogout }) => {
             if (response.ok && data.success) {
                 showAlertSuccess('SIM created successfully!');
                 closeModal();
-                fetchSims(1, pagination.limit, searchQuery);
+                fetchSims(1, pagination.limit, searchQuery, filterStatus);
             } else {
                 setErrorMessage(data.message || "Failed to create SIM");
             }
@@ -203,7 +204,7 @@ const ManageSims = ({ userInfo, handleLogout }) => {
             if (response.ok && data.success) {
                 showAlertSuccess('SIM updated successfully!');
                 closeModal();
-                fetchSims(pagination.currentPage, pagination.limit, searchQuery);
+                fetchSims(pagination.currentPage, pagination.limit, searchQuery, filterStatus);
             } else {
                 setErrorMessage(data.message || "Failed to update SIM");
             }
@@ -235,24 +236,34 @@ const ManageSims = ({ userInfo, handleLogout }) => {
                                             </button>
                                         </div>
                                         <div className="col-md-7 col-12 d-flex flex-wrap gap-1">
-                                            <div style={{ flex: '1 0 100px', backgroundColor: '#dbeafe', padding: '12px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Total</p>
+                                            <div 
+                                                onClick={() => setFilterStatus('Total')}
+                                                style={{ flex: '1 0 100px', backgroundColor: filterStatus === 'Total' ? '#bfdbfe' : '#dbeafe', padding: '12px', borderRadius: '8px', border: `1px solid ${filterStatus === 'Total' ? '#3b82f6' : '#bfdbfe'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', transition: 'all 0.3s' }}>
+                                                <p style={{ fontSize: '11px', color: filterStatus === 'Total' ? '#1d4ed8' : '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Total</p>
                                                 <p style={{ fontSize: '18px', color: '#1e40af', fontWeight: '700', margin: 0 }}>{summary.total}</p>
                                             </div>
-                                            <div style={{ flex: '1 0 100px', backgroundColor: '#dcfce7', padding: '12px', borderRadius: '8px', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Active</p>
+                                            <div 
+                                                onClick={() => setFilterStatus('Active')}
+                                                style={{ flex: '1 0 100px', backgroundColor: filterStatus === 'Active' ? '#bbf7d0' : '#dcfce7', padding: '12px', borderRadius: '8px', border: `1px solid ${filterStatus === 'Active' ? '#22c55e' : '#bbf7d0'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', transition: 'all 0.3s' }}>
+                                                <p style={{ fontSize: '11px', color: filterStatus === 'Active' ? '#15803d' : '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Active</p>
                                                 <p style={{ fontSize: '18px', color: '#15803d', fontWeight: '700', margin: 0 }}>{summary.active}</p>
                                             </div>
-                                            <div style={{ flex: '1 0 100px', backgroundColor: '#fffbeb', padding: '12px', borderRadius: '8px', border: '1px solid #fef3c7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Assigned</p>
+                                            <div 
+                                                onClick={() => setFilterStatus('Assigned')}
+                                                style={{ flex: '1 0 100px', backgroundColor: filterStatus === 'Assigned' ? '#fde68a' : '#fffbeb', padding: '12px', borderRadius: '8px', border: `1px solid ${filterStatus === 'Assigned' ? '#f59e0b' : '#fef3c7'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', transition: 'all 0.3s' }}>
+                                                <p style={{ fontSize: '11px', color: filterStatus === 'Assigned' ? '#b45309' : '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Assigned</p>
                                                 <p style={{ fontSize: '18px', color: '#d97706', fontWeight: '700', margin: 0 }}>{summary.assigned}</p>
                                             </div>
-                                            <div style={{ flex: '1 0 100px', backgroundColor: '#fef2f2', padding: '12px', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Expired</p>
+                                            <div 
+                                                onClick={() => setFilterStatus('Expired')}
+                                                style={{ flex: '1 0 100px', backgroundColor: filterStatus === 'Expired' ? '#fecaca' : '#fef2f2', padding: '12px', borderRadius: '8px', border: `1px solid ${filterStatus === 'Expired' ? '#ef4444' : '#fecaca'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', transition: 'all 0.3s' }}>
+                                                <p style={{ fontSize: '11px', color: filterStatus === 'Expired' ? '#b91c1c' : '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Expired</p>
                                                 <p style={{ fontSize: '18px', color: '#991b1b', fontWeight: '700', margin: 0 }}>{summary.expired}</p>
                                             </div>
-                                            <div style={{ flex: '1 0 100px', backgroundColor: '#f9fafb', padding: '12px', borderRadius: '8px', border: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Inactive</p>
+                                            <div 
+                                                onClick={() => setFilterStatus('Inactive')}
+                                                style={{ flex: '1 0 100px', backgroundColor: filterStatus === 'Inactive' ? '#e5e7eb' : '#f9fafb', padding: '12px', borderRadius: '8px', border: `1px solid ${filterStatus === 'Inactive' ? '#6b7280' : '#e5e7eb'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', transition: 'all 0.3s' }}>
+                                                <p style={{ fontSize: '11px', color: filterStatus === 'Inactive' ? '#374151' : '#7a8a99', fontWeight: '600', margin: 0, flex: 1 }}>Inactive</p>
                                                 <p style={{ fontSize: '18px', color: '#4b5563', fontWeight: '700', margin: 0 }}>{summary.inactive}</p>
                                             </div>
                                         </div>
