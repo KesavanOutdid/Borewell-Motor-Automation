@@ -4,6 +4,7 @@ import Header from '../../../components/Admin/Header';
 import Sidebar from '../../../components/Admin/Sidebar';
 import Footer from '../../../components/Admin/Footer';
 import ContentSkeleton from '../../../components/Common/ContentSkeleton';
+import { formatDateToIST } from '../../../utils/formatDateToIST';
 
 const ViewProduct = ({ userInfo, handleLogout }) => {
     const API_BASE = process.env.REACT_APP_SERVER_URL;
@@ -140,7 +141,7 @@ const ViewProduct = ({ userInfo, handleLogout }) => {
                                             <div style={{ marginBottom: '20px' }}>
                                                 <label style={{ fontWeight: '600', color: '#666', fontSize: '14px', marginBottom: '5px', display: 'block' }}>Created At</label>
                                                 <p style={{ fontSize: '16px', margin: 0 }}>
-                                                    {new Date(product.createdAt).toLocaleString()}
+                                                    {product.createdAt ? formatDateToIST(product.createdAt) : 'N/A'}
                                                 </p>
                                             </div>
                                         </div>
@@ -156,7 +157,7 @@ const ViewProduct = ({ userInfo, handleLogout }) => {
                                             <div style={{ marginBottom: '20px' }}>
                                                 <label style={{ fontWeight: '600', color: '#666', fontSize: '14px', marginBottom: '5px', display: 'block' }}>Updated At</label>
                                                 <p style={{ fontSize: '16px', margin: 0 }}>
-                                                    {product.updatedAt ? new Date(product.updatedAt).toLocaleString() : 'N/A'}
+                                                    {product.updatedAt ? formatDateToIST(product.updatedAt) : 'N/A'}
                                                 </p>
                                             </div>
                                         </div>

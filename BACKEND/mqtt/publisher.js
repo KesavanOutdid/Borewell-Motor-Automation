@@ -39,10 +39,10 @@ client.on('connect', () => {
 
     sendBoot();
 
-    intervals.push(setInterval(sendHeartbeat, 100000)); 
-    intervals.push(setInterval(sendStatusAck, 100000)); 
-    intervals.push(setInterval(sendTelemetry, 100000));
-    intervals.push(setInterval(sendAlert, 100000)); 
+    intervals.push(setInterval(sendHeartbeat, 500000)); 
+    intervals.push(setInterval(sendStatusAck, 500000)); 
+    intervals.push(setInterval(sendTelemetry, 500000));
+    intervals.push(setInterval(sendAlert, 500000)); 
 
 });
 
@@ -218,4 +218,4 @@ async function sendAlert() {
 module.exports = {
     client,
     sendBootNotificationsOnStartup: sendBoot
-};
+}; 

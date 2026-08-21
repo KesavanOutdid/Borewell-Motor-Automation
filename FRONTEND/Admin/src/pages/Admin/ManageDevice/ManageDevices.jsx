@@ -15,7 +15,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
     console.log(userInfo, 'profile data');
 
     const { setIsModalCreate, isModalCreate, setIsModalAssign, isModalAssign, serialNumber, setSerialNumber, errorMessage, successMessage, handleDeviceCreate, closeModal,
-        isModalEdit, setIsModalEdit, fetchDeviceData, devices, loading, errorDevice, serialNumberUpdate, deviceStatusUpdate, errorMessageEdit, setErrorMessageEdit,
+        isModalEdit, setIsModalEdit, fetchDeviceData, devices, loading, errorDevice, errorMessageEdit, setErrorMessageEdit,
         users, selecteduser, handleuserSelection, selectedDevices, handleDeviceSelection, sims, selectedSim, handleSimSelection, handleAssign, assignErrorMessage, loadingSubmit, loadingUpdate, setLoadingUpdate,
         pagination, handlePageChange, handleLimitChange, loadingAnalytics, errorAnalytics, chartType,
         // analytics,
@@ -57,18 +57,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
         fetchDeviceData(1, pagination.limit, searchQuery, status);
     };
 
-    // Populate currentDeviceDetails when editing
-    useEffect(() => {
-        if (isModalEdit && serialNumberUpdate && deviceStatusUpdate !== undefined) {
-            const details = {
-                serial_number: serialNumberUpdate,
-                status: deviceStatusUpdate ? "true" : "false",
-            };
-            setDeviceEditDetails(details);
-            setOriginalDeviceDetails(details);
-            setIsFormDirty(false);
-        }
-    }, [isModalEdit, serialNumberUpdate, deviceStatusUpdate]);
+
 
     // Handle input changes
     const handleInputChange = (key, value) => {
@@ -308,7 +297,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                 <form className="form" onSubmit={handleEditSubmit}>
                                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", }}>
                                                         <h5 style={{ margin: 0 }}>Edit Device</h5>
-                                                        <button onClick={closeModal} style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer", }}> &times; </button>
+                                                        <button type="button" onClick={closeModal} style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer", }}> &times; </button>
                                                     </div>
                                                     <div style={{ marginTop: "15px" }}>
                                                         <div style={{ marginBottom: "10px" }}>
@@ -334,7 +323,7 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                         </div>
                                                     </div>
                                                     <div style={{ marginTop: "20px", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-                                                        <button className="btn btn-secondary mb-0" style={{ padding: '10px' }} onClick={closeModal}>Close</button>
+                                                        <button type="button" className="btn btn-secondary mb-0" style={{ padding: '10px' }} onClick={closeModal}>Close</button>
                                                         <button type="submit" className="btn btn-primary mb-0" style={{ padding: '10px' }} disabled={!isFormDirty || loadingUpdate}>{loadingUpdate ? "Updating..." : "Update"}</button>
                                                     </div>
                                                 </form>
@@ -642,8 +631,14 @@ const ManageDevices = ({ userInfo, handleLogout }) => {
                                                                 <div className="d-flex justify-content-center align-items-center gap-2">
                                                                     <button className="btn btn-primary mb-0" style={{ padding: '10px' }}
                                                                         onClick={() => {
+                                                                            const details = {
+                                                                                ...device,
+                                                                                status: device.status ? "true" : "false",
+                                                                            };
                                                                             setIsModalEdit(true); // Show the modal
-                                                                            setDeviceEditDetails(device); // Set the selected device's details
+                                                                            setDeviceEditDetails(details); // Set the selected device's details
+                                                                            setOriginalDeviceDetails(details);
+                                                                            setIsFormDirty(false);
                                                                         }}>
                                                                         <i className="fas fa-pen" aria-hidden="true" style={{ color: 'white' }}></i> Edit
                                                                     </button>

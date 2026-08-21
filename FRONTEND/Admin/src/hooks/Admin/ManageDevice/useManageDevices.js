@@ -425,7 +425,7 @@ const useManageDevices = (userInfo) => {
 
     return {
         setIsModalCreate, isModalCreate, setIsModalAssign, isModalAssign, serialNumber, setSerialNumber, imeiNumber, setImeiNumber, deviceType, setDeviceType, errorMessage, handleDeviceCreate, closeModal,
-        setIsModalEdit, setIsModalView, isModalView, fetchDeviceData, devices, loading, errorDevice, errorMessageEdit, setErrorMessageEdit, users, errorusers, loadingusers,
+        setIsModalEdit, isModalEdit, setIsModalView, isModalView, fetchDeviceData, devices, loading, errorDevice, errorMessageEdit, setErrorMessageEdit, users, errorusers, loadingusers,
         selecteduser, setSelecteduser, handleuserSelection, selectedDevices, setSelectedDevices, handleDeviceSelection, sims, selectedSim, handleSimSelection, handleAssign, assignErrorMessage, loadingSubmit, loadingUpdate, setLoadingUpdate,
         pagination, handlePageChange, handleLimitChange,
         analytics, loadingAnalytics, errorAnalytics,

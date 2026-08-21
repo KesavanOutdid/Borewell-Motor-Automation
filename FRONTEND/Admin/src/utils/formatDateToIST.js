@@ -1,7 +1,7 @@
 // utils/formatDateToIST.js
 export const formatDateToIST = (dateString) => {
     if (!dateString || isNaN(Date.parse(dateString))) {
-        return 'N/A';
+        return '-';
     }
 
     const date = new Date(dateString);
@@ -14,15 +14,16 @@ export const formatDateToIST = (dateString) => {
         day: '2-digit',
         hour: '2-digit',
         minute: '2-digit',
+        second: '2-digit',
     };
 
-    const istString = date.toLocaleString('en-IN', options);
+    let formatted = date.toLocaleString('en-IN', options);
 
-    // Example output: "17/11/2025, 05:45 am"
-    let formatted = istString.replace(',', '');
+    // Replace narrow non-breaking space with standard space if present
+    formatted = formatted.replace(/\u202f/g, ' ');
 
     // Convert "am"/"pm" to uppercase AM/PM
-    formatted = formatted.replace(' am', ' AM').replace(' pm', ' PM');
+    formatted = formatted.replace(/\b(am|pm)\b/gi, (match) => match.toUpperCase());
 
     return formatted;
 };

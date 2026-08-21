@@ -3,6 +3,7 @@ import Header from '../../../components/Admin/Header';
 import Sidebar from '../../../components/Admin/Sidebar';
 import TableSkeleton from '../../../components/Common/TableSkeleton';
 import { showAlertSuccess } from '../../../utils/alert';
+import { formatDateToIST } from '../../../utils/formatDateToIST';
 
 const ManageSims = ({ userInfo, handleLogout }) => {
     const API_BASE = process.env.REACT_APP_SERVER_URL;
@@ -440,7 +441,7 @@ const ManageSims = ({ userInfo, handleLogout }) => {
                                                 </div>
                                                 <div className="col-md-6 mb-3">
                                                     <label className="text-xs text-secondary font-weight-bolder mb-0">Expiry Date</label>
-                                                    <p className="text-sm font-weight-bold mb-0">{currentSimDetails.sim_expiry_date ? new Date(currentSimDetails.sim_expiry_date).toLocaleString() : '-'}</p>
+                                                    <p className="text-sm font-weight-bold mb-0">{currentSimDetails.sim_expiry_date ? formatDateToIST(currentSimDetails.sim_expiry_date) : '-'}</p>
                                                 </div>
                                             </div>
 
@@ -454,7 +455,7 @@ const ManageSims = ({ userInfo, handleLogout }) => {
                                                 </div>
                                                 <div className="col-md-6 mb-3">
                                                     <label className="text-xs text-secondary font-weight-bolder mb-0">Created At</label>
-                                                    <p className="text-sm font-weight-bold mb-0">{currentSimDetails.createdAt ? new Date(currentSimDetails.createdAt).toLocaleString() : '-'}</p>
+                                                    <p className="text-sm font-weight-bold mb-0">{currentSimDetails.createdAt ? formatDateToIST(currentSimDetails.createdAt) : '-'}</p>
                                                 </div>
                                                 <div className="col-md-6 mb-3">
                                                     <label className="text-xs text-secondary font-weight-bolder mb-0">Updated By</label>
@@ -462,7 +463,7 @@ const ManageSims = ({ userInfo, handleLogout }) => {
                                                 </div>
                                                 <div className="col-md-6 mb-3">
                                                     <label className="text-xs text-secondary font-weight-bolder mb-0">Updated At</label>
-                                                    <p className="text-sm font-weight-bold mb-0">{currentSimDetails.updatedAt ? new Date(currentSimDetails.updatedAt).toLocaleString() : '-'}</p>
+                                                    <p className="text-sm font-weight-bold mb-0">{currentSimDetails.updatedAt ? formatDateToIST(currentSimDetails.updatedAt) : '-'}</p>
                                                 </div>
                                             </div>
 
