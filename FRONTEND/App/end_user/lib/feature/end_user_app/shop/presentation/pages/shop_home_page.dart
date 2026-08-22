@@ -864,7 +864,7 @@ class _ShopHomeViewState extends State<ShopHomeView> {
                         Get.snackbar(
                           'copied'.tr,
                           '${'voucher_copied'.tr}: ${voucher.voucherCode}',
-                          snackPosition: SnackPosition.BOTTOM,
+                          snackPosition: SnackPosition.TOP,
                           backgroundColor: Colors.green,
                           colorText: Colors.white,
                           duration: const Duration(seconds: 2),

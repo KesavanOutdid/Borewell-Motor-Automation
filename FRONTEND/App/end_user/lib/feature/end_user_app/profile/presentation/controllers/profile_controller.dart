@@ -99,7 +99,7 @@ class ProfileController extends GetxController {
         message,
         backgroundColor: (isError ? Colors.red : Colors.green).withOpacity(0.8),
         colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
       );
     } else {
       logger.w('⚠️ Cannot show snackbar: No overlay found');

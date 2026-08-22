@@ -95,7 +95,7 @@ class UIUtils {
     Get.snackbar(
       title,
       message,
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: Colors.green.withOpacity(0.8),
       colorText: Colors.white,
       icon: const Icon(Icons.check_circle_outline, color: Colors.white),
@@ -109,7 +109,7 @@ class UIUtils {
     Get.snackbar(
       title,
       message,
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: Colors.red.withOpacity(0.8),
       colorText: Colors.white,
       icon: const Icon(Icons.error_outline, color: Colors.white),

@@ -216,12 +216,12 @@ class DeviceHistoryController extends GetxController {
   }
 
   void _showMessage(String message) {
-    Get.snackbar('History', message, snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 2));
+    Get.snackbar('History', message, snackPosition: SnackPosition.TOP, duration: const Duration(seconds: 2));
   }
 
   void _handleUnauthorized() {
     Get.offAllNamed('/login');
-    Get.snackbar('Session expired', 'Please login again', snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 2));
+    Get.snackbar('Session expired', 'Please login again', snackPosition: SnackPosition.TOP, duration: const Duration(seconds: 2));
   }
 
   void _handleDeactivated() {

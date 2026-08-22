@@ -814,7 +814,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           Get.snackbar(
             'Success',
             'Location details auto-filled',
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.green,
             colorText: Colors.white,
             duration: const Duration(seconds: 2),
@@ -823,7 +823,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           Get.snackbar(
             'Invalid Pincode',
             'Please enter a valid pincode',
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.red,
             colorText: Colors.white,
           );

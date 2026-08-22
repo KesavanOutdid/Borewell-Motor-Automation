@@ -25,15 +25,15 @@ class NotificationController extends GetxController {
   }
 
   void _startAutoRefresh() {
-    _refreshTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
-      loadNotifications();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      loadNotifications(silent: true);
     });
   }
 
-  Future<void> loadNotifications() async {
-    isLoading.value = true;
+  Future<void> loadNotifications({bool silent = false}) async {
+    if (!silent) isLoading.value = true;
     notifications.value = _storageService.getAllNotifications();
-    isLoading.value = false;
+    if (!silent) isLoading.value = false;
   }
 
   int getUnreadCount() {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shimmer/shimmer.dart';
@@ -61,33 +62,6 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                   key: tourService.deviceStatusCardKey,
                   child: Obx(() => _buildDevicePlacementCard(context, controller)),
                 ),
-                SizedBox(height: 12),
-                Obx(() {
-                  final lastStart = controller.liveData['lastStart']?.toString() ?? '-';
-                  final lastStop = controller.liveData['lastStop']?.toString() ?? '-';
-                  if (lastStart == '-' && lastStop == '-') return const SizedBox.shrink();
-                  return Row(
-                    children: [
-                      Expanded(
-                        child: _TimeChip(
-                          icon: Icons.play_circle_rounded,
-                          label: 'last_start'.tr,
-                          value: lastStart,
-                          color: AppColors.primaryGreen,
-                        ),
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: _TimeChip(
-                          icon: Icons.stop_circle_rounded,
-                          label: 'last_stop'.tr,
-                          value: lastStop,
-                          color: AppColors.error,
-                        ),
-                      ),
-                    ],
-                  );
-                }),
                 SizedBox(height: 20),
                 KeyedSubtree(
                   key: tourService.quickActionsKey,
@@ -153,6 +127,8 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
                   key: tourService.liveDataKey,
                   child: Obx(() => _buildLiveDataGrid(context, controller)),
                 ),
+                SizedBox(height: 20),
+                Obx(() => _buildSimDetailsCard(context, controller)),
                 SizedBox(height: 20),
                 Obx(() => _buildLocationMapCard(controller)),
                 SizedBox(height: 20),
@@ -939,6 +915,189 @@ class DeviceDetailsView extends GetView<DeviceDetailsController> {
       value: '${metric['value']}',
       icon: metric['icon'] as IconData,
       gradient: metric['gradient'] as Gradient,
+    );
+  }
+
+  Widget _buildSimDetailsCard(BuildContext context, DeviceDetailsController controller) {
+    final simPhone = controller.liveData['simPhone']?.toString() ?? '-';
+    final simNumber = controller.liveData['simNumber']?.toString() ?? '-';
+    final provider = controller.liveData['simProvider']?.toString() ?? '-';
+    final rechargeStatus = controller.liveData['simRechargeStatus']?.toString() ?? '-';
+    final expiryDate = controller.liveData['simExpiryDate']?.toString() ?? '-';
+
+    final bool hasSim = (simPhone != '-' && simPhone.isNotEmpty) || (simNumber != '-' && simNumber.isNotEmpty);
+
+    Color statusColor = AppColors.primaryGreen;
+    if (rechargeStatus.toLowerCase().contains('expir')) {
+      statusColor = AppColors.primaryOrange;
+    } else if (rechargeStatus.toLowerCase().contains('expired')) {
+      statusColor = AppColors.error;
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.sim_card_rounded, size: 22, color: AppColors.primaryGreen),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'sim_details'.tr,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    if (provider != '-' && provider.isNotEmpty)
+                      Text(
+                        'Carrier: $provider',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (rechargeStatus != '-' && rechargeStatus.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: statusColor.withOpacity(0.3)),
+                  ),
+                  child: Text(
+                    rechargeStatus,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: statusColor,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          if (hasSim) ...[
+            const SizedBox(height: 16),
+            const Divider(height: 1),
+            const SizedBox(height: 14),
+            if (simPhone != '-' && simPhone.isNotEmpty)
+              Row(
+                children: [
+                  const Icon(Icons.phone_android_rounded, size: 18, color: AppColors.primaryGreen),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'sim_phone'.tr,
+                          style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                        ),
+                        Text(
+                          simPhone,
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.copy_rounded, size: 18, color: Colors.grey),
+                    tooltip: 'Copy Phone Number',
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: simPhone));
+                      Get.snackbar('copied'.tr, 'Phone number copied to clipboard',
+                        snackPosition: SnackPosition.TOP,
+                        duration: const Duration(seconds: 2),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            if (simNumber != '-' && simNumber.isNotEmpty) ...[
+              if (simPhone != '-' && simPhone.isNotEmpty) const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Icon(Icons.subtitles_rounded, size: 18, color: Colors.blue),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'sim_number'.tr,
+                          style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                        ),
+                        Text(
+                          simNumber,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.copy_rounded, size: 18, color: Colors.grey),
+                    tooltip: 'Copy ICCID',
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: simNumber));
+                      Get.snackbar('copied'.tr, 'SIM ICCID copied to clipboard',
+                        snackPosition: SnackPosition.TOP,
+                        duration: const Duration(seconds: 2),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+            if (expiryDate != '-' && expiryDate.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.event_outlined, size: 16, color: Colors.orange),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${'sim_expiry'.tr}: $expiryDate',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+            ],
+          ] else ...[
+            const SizedBox(height: 12),
+            Text(
+              'No SIM card details linked to this device.',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontStyle: FontStyle.italic),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

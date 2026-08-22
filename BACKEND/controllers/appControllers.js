@@ -717,60 +717,7 @@ exports.startStopDevice = async (req, res) => {
             console.error("[History Error] Failed to log to agri_history:", historyError);
         }
 
-        // Notify all users associated with this device via FCM
-        try {
-            // Check for duplicate notifications within a 30-second window
-            if (isRedisConnected() && redisClient.isOpen) {
-                const notifKey = `notif_sent:${serial_number.trim()}:${start_status ? 'START' : 'STOP'}`;
-                const alreadySent = await redisClient.set(notifKey, "SENT", { NX: true, EX: 30 });
-                if (!alreadySent) {
-                    console.log(`[Notification] Duplicate ${start_status ? 'START' : 'STOP'} notification blocked for ${serial_number}`);
-                    return res.status(200).json({
-                        success: true,
-                        message: "Device command sent. Notification already handled."
-                    });
-                }
-            }
-
-            // 1. Get Master User
-            const masterUser = await User.findOne({ user_id: device.assigned_user_id });
-
-            // 2. Get Shared Users
-            const shares = await DeviceShare.find({
-                serial_number,
-                status: true,
-                acceptance_status: 'accepted'
-            });
-            const sharedUserIds = shares.map(s => s.shared_to_user_id);
-            const sharedUsers = await User.find({ user_id: { $in: sharedUserIds } });
-
-            // 3. Collect all unique tokens
-            const allUsers = [masterUser, ...sharedUsers].filter(u => u != null);
-            const uniqueTokens = new Set();
-            allUsers.forEach(u => {
-                if (u.fcm_tokens && Array.isArray(u.fcm_tokens)) {
-                    u.fcm_tokens.forEach(t => uniqueTokens.add(t));
-                } else if (u.fcm_token) {
-                    uniqueTokens.add(u.fcm_token);
-                }
-            });
-
-            const tokensArray = Array.from(uniqueTokens);
-            if (tokensArray.length > 0) {
-                const title = start_status ? "🟢 Motor Started" : "🔴 Motor Stopped";
-                const body = `Device ${serial_number} was ${start_status ? 'started' : 'stopped'} by ${user.user_name}`;
-
-                sendPushNotification(tokensArray, { title, body }, {
-                    type: "STATUS",
-                    serial_number,
-                    action: start_status ? "START" : "STOP",
-                    timestamp: String(Date.now())
-                });
-            }
-        } catch (notifyError) {
-            console.error("[Notification Error] Failed to send start/stop FCM:", notifyError);
-            // Don't fail the request if notification fails
-        }
+        // FCM Notification is centrally handled by MQTT listener (notifyUser) when motor confirms state change
 
         // 4. Send MQTT Command to the Motor
         const topic = `agri/${serial_number}/command`;

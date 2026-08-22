@@ -313,7 +313,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                     title: 'Success',
                                     message: 'Profile updated successfully',
                                     backgroundColor: AppColors.success,
-                                    snackPosition: SnackPosition.BOTTOM,
+                                    snackPosition: SnackPosition.TOP,
                                     margin: const EdgeInsets.all(16),
                                     borderRadius: 12,
                                   );
@@ -322,7 +322,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                     title: 'error'.tr,
                                     message: error,
                                     backgroundColor: AppColors.error,
-                                    snackPosition: SnackPosition.BOTTOM,
+                                    snackPosition: SnackPosition.TOP,
                                     margin: const EdgeInsets.all(16),
                                     borderRadius: 12,
                                   );
@@ -332,7 +332,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                   title: 'validation_error'.tr,
                                   message: 'Please fix the errors in the form',
                                   backgroundColor: AppColors.error,
-                                  snackPosition: SnackPosition.BOTTOM,
+                                  snackPosition: SnackPosition.TOP,
                                   margin: const EdgeInsets.all(16),
                                   borderRadius: 12,
                                 );

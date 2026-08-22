@@ -82,6 +82,26 @@ class ConfigureDeviceView extends StatelessWidget {
                         ),
                         SizedBox(height: 20),
                         _buildTextField(
+                          controller: controller.phoneController,
+                          label: 'sim_phone'.tr.isNotEmpty && 'sim_phone'.tr != 'sim_phone' ? 'sim_phone'.tr : 'SIM Phone Number',
+                          hint: 'e.g., 9876543210',
+                          icon: Icons.sim_card_rounded,
+                          keyboardType: TextInputType.phone,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'SIM phone number is required';
+                            }
+                            return null;
+                          },
+                          suffix: IconButton(
+                            icon: const Icon(Icons.qr_code_scanner_rounded, color: AppColors.primaryGreen),
+                            onPressed: () => controller.scanQRCode(),
+                            tooltip: 'Scan QR Code',
+                          ),
+                          isDark: isDark,
+                        ),
+                        SizedBox(height: 20),
+                        _buildTextField(
                           controller: controller.locationController,
                           label: 'device_location_optional'.tr,
                           hint: 'e.g., Farm Sector A',
@@ -256,7 +276,7 @@ class ConfigureDeviceView extends StatelessWidget {
                     title: 'validation_error'.tr,
                     message: 'check_imei_error'.tr,
                     backgroundColor: Colors.red.withOpacity(0.8),
-                    snackPosition: SnackPosition.BOTTOM,
+                    snackPosition: SnackPosition.TOP,
                     margin: const EdgeInsets.all(16),
                     borderRadius: 12,
                   );

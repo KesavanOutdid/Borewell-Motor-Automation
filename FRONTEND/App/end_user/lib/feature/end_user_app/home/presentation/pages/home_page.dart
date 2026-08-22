@@ -91,7 +91,7 @@ class HomeView extends GetView<HomeController> {
                           ),
                         ),
                         StreamBuilder<int>(
-                          stream: Stream.periodic(const Duration(seconds: 1), (_) {
+                          stream: Stream.periodic(const Duration(seconds: 3), (_) {
                             return notificationStorage.getUnreadCount();
                           }),
                           builder: (context, snapshot) {
@@ -417,6 +417,11 @@ class HomeView extends GetView<HomeController> {
     final imei = device['imei_number'] ?? device['imeiNumber'] ?? 'N/A';
     final isOnline = controller.isOnline(device);
     
+    final simInfo = device['sim_details'] is Map
+        ? Map<String, dynamic>.from(device['sim_details'])
+        : (device['sim_id'] is Map ? Map<String, dynamic>.from(device['sim_id']) : null);
+    final simPhone = simInfo?['phone_number']?.toString() ?? simInfo?['sim_phone']?.toString() ?? device['phone_number']?.toString() ?? device['sim_phone']?.toString();
+
     final deviceStatus = !isConfigured 
         ? 'not_configured'.tr 
         : (isRunning ? 'running'.tr : (isOnline ? 'idle'.tr : 'offline'.tr));
@@ -550,6 +555,17 @@ class HomeView extends GetView<HomeController> {
                               ),
                             ),
                             TextSpan(text: deviceId),
+                            if (simPhone != null && simPhone.isNotEmpty) ...[
+                              const TextSpan(text: ' • '),
+                              const TextSpan(
+                                text: 'SIM: ',
+                                style: TextStyle(
+                                  color: AppColors.primaryGreen,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              TextSpan(text: simPhone),
+                            ],
                           ],
                         ),
                       ),

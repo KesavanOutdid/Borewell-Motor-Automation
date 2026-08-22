@@ -55,13 +55,10 @@ class NotificationStorageService {
     try {
       final data = _storage.read(_notificationsKey);
       if (data == null) {
-        print("📦 [Storage] No notifications found in storage");
         return [];
       }
       final list = List<dynamic>.from(data);
-      final result = list.map((item) => Map<String, dynamic>.from(item)).toList();
-      print("📦 [Storage] Loaded ${result.length} notifications");
-      return result;
+      return list.map((item) => Map<String, dynamic>.from(item)).toList();
     } catch (e) {
       print("📦 [Storage] Error reading notifications: $e");
       return [];

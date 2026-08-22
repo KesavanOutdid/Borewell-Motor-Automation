@@ -124,6 +124,20 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
       locationText = await _getAddressFromCoordinates(latitude, longitude);
     }
 
+    Map<String, dynamic>? simInfo;
+    if (args['sim_details'] is Map) {
+      simInfo = Map<String, dynamic>.from(args['sim_details']);
+    } else if (args['sim_id'] is Map) {
+      simInfo = Map<String, dynamic>.from(args['sim_id']);
+    }
+
+    final simNumber = simInfo?['sim_number']?.toString() ?? args['sim_number']?.toString();
+    final simPhone = simInfo?['phone_number']?.toString() ?? simInfo?['sim_phone']?.toString() ?? args['phone_number']?.toString();
+    final simProvider = simInfo?['provider']?.toString() ?? args['provider']?.toString();
+    final simRechargeStatus = simInfo?['sim_recharge_status']?.toString() ?? args['sim_recharge_status']?.toString();
+    final simExpiryDate = _formatDate(simInfo?['sim_expiry_date'] ?? args['sim_expiry_date']);
+    final simActivationDate = _formatDate(simInfo?['sim_activation_date'] ?? args['sim_activation_date']);
+
     final isRunningInitial = _getMotorRunning(args);
 
     liveData.assignAll({
@@ -148,6 +162,12 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
       'flowRate': _formatMetric(args['flow_lpm'], suffix: ' LPM') ?? (deviceChanged ? '-' : (liveData['flowRate'] ?? '-')),
       'motorSpeed': _formatMetric(args['motor_rpm'], suffix: ' RPM') ?? (deviceChanged ? '-' : (liveData['motorSpeed'] ?? '-')),
       'signalStrength': _formatMetric(args['signal_strength']) ?? (deviceChanged ? '-' : (liveData['signalStrength'] ?? '-')),
+      'simNumber': simNumber ?? (deviceChanged ? '-' : (liveData['simNumber'] ?? '-')),
+      'simPhone': simPhone ?? (deviceChanged ? '-' : (liveData['simPhone'] ?? '-')),
+      'simProvider': simProvider ?? (deviceChanged ? '-' : (liveData['simProvider'] ?? '-')),
+      'simRechargeStatus': simRechargeStatus ?? (deviceChanged ? '-' : (liveData['simRechargeStatus'] ?? '-')),
+      'simExpiryDate': simExpiryDate ?? (deviceChanged ? '-' : (liveData['simExpiryDate'] ?? '-')),
+      'simActivationDate': simActivationDate ?? (deviceChanged ? '-' : (liveData['simActivationDate'] ?? '-')),
     });
 
     _subscribeToSocket();
@@ -996,6 +1016,20 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
       }
     }
 
+    Map<String, dynamic>? simInfo;
+    if (data['sim_details'] is Map) {
+      simInfo = Map<String, dynamic>.from(data['sim_details']);
+    } else if (data['sim_id'] is Map) {
+      simInfo = Map<String, dynamic>.from(data['sim_id']);
+    }
+
+    final simNumber = simInfo?['sim_number']?.toString() ?? data['sim_number']?.toString() ?? liveData['simNumber'] ?? '-';
+    final simPhone = simInfo?['phone_number']?.toString() ?? simInfo?['sim_phone']?.toString() ?? data['phone_number']?.toString() ?? liveData['simPhone'] ?? '-';
+    final simProvider = simInfo?['provider']?.toString() ?? data['provider']?.toString() ?? liveData['simProvider'] ?? '-';
+    final simRechargeStatus = simInfo?['sim_recharge_status']?.toString() ?? data['sim_recharge_status']?.toString() ?? liveData['simRechargeStatus'] ?? '-';
+    final simExpiryDate = _formatDate(simInfo?['sim_expiry_date'] ?? data['sim_expiry_date']) ?? liveData['simExpiryDate'] ?? '-';
+    final simActivationDate = _formatDate(simInfo?['sim_activation_date'] ?? data['sim_activation_date']) ?? liveData['simActivationDate'] ?? '-';
+
     final alertValue = _formatMetric(data['alert'] ?? telemetry['alert']);
     final persistAlert = (alertValue == null || alertValue == '-' || alertValue.isEmpty) 
         ? (liveData['alert'] ?? '-') 
@@ -1023,6 +1057,12 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
       'flowRate': _formatMetric(combinedData['flow_lpm'] ?? combinedData['flowRate'], suffix: ' LPM') ?? liveData['flowRate'] ?? '-',
       'motorSpeed': _formatMetric(combinedData['motor_rpm'] ?? combinedData['motorSpeed'], suffix: ' RPM') ?? liveData['motorSpeed'] ?? '-',
       'signalStrength': _formatMetric(combinedData['signal_strength'] ?? combinedData['signalStrength']) ?? liveData['signalStrength'] ?? '-',
+      'simNumber': simNumber,
+      'simPhone': simPhone,
+      'simProvider': simProvider,
+      'simRechargeStatus': simRechargeStatus,
+      'simExpiryDate': simExpiryDate,
+      'simActivationDate': simActivationDate,
     };
 
     bool dataChanged = false;

@@ -504,7 +504,7 @@ class ProfileView extends GetView<ProfileController> {
                             Get.snackbar(
                               'Success',
                               'Tour will restart next time you visit Home',
-                              snackPosition: SnackPosition.BOTTOM,
+                              snackPosition: SnackPosition.TOP,
                               backgroundColor: Colors.black87,
                               colorText: Colors.white,
                             );

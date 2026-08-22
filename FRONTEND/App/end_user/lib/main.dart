@@ -147,11 +147,13 @@ void main() async {
       RemoteNotification? notification = message.notification;
       AndroidNotification? android = message.notification?.android;
 
-      if (notification != null && android != null) {
+      // If notification payload is null (data-only FCM message), present local notification.
+      // If message.notification is present, Android system FCM handles notification display natively to avoid duplicate popups.
+      if (notification == null && message.data.containsKey('title')) {
         notificationService.showNotification(
-          id: notification.hashCode,
-          title: notification.title,
-          body: notification.body,
+          id: (message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString()).hashCode,
+          title: message.data['title'],
+          body: message.data['body'],
           payload: jsonEncode(message.data),
         );
       }

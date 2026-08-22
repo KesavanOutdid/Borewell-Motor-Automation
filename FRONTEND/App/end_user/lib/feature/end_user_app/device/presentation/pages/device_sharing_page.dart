@@ -87,7 +87,7 @@ class DeviceSharingView extends GetView<DeviceSharingController> {
                                 Get.snackbar(
                                   'Invalid Number',
                                   'Please enter a 10-digit phone number',
-                                  snackPosition: SnackPosition.BOTTOM,
+                                  snackPosition: SnackPosition.TOP,
                                   backgroundColor: Colors.red.withValues(alpha: 0.8),
                                   colorText: Colors.white,
                                 );

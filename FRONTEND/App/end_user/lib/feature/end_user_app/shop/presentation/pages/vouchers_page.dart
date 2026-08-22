@@ -114,7 +114,7 @@ class VouchersPage extends StatelessWidget {
     Get.snackbar(
       'Copied!',
       'Voucher code copied to clipboard',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: AppColors.success,
       colorText: Colors.white,
       duration: const Duration(seconds: 2),

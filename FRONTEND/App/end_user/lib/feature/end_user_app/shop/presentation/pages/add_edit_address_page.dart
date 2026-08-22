@@ -311,7 +311,7 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
           Get.snackbar(
             'Success',
             'Location auto-filled',
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.green,
             colorText: Colors.white,
             duration: const Duration(seconds: 2),

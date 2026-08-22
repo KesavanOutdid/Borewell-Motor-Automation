@@ -15,6 +15,7 @@ import '../pages/qr_scanner_page.dart';
 class ConfigureDeviceController extends GetxController with WidgetsBindingObserver {
   final formKey = GlobalKey<FormState>();
   final imeiController = TextEditingController();
+  final phoneController = TextEditingController();
   final nicknameController = TextEditingController();
   final locationController = TextEditingController();
   final motorHpController = TextEditingController();
@@ -48,7 +49,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
         Get.snackbar(
           'Device Required',
           'Select a device from your list to configure',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           duration: const Duration(seconds: 3),
         );
       });
@@ -59,6 +60,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
     imeiController.dispose();
+    phoneController.dispose();
     nicknameController.dispose();
     locationController.dispose();
     motorHpController.dispose();
@@ -102,7 +104,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
             Get.snackbar(
               'Permission Denied',
               'Location permission is required to get your address',
-              snackPosition: SnackPosition.BOTTOM,
+              snackPosition: SnackPosition.TOP,
               backgroundColor: Colors.red[100],
               duration: const Duration(seconds: 4),
             );
@@ -252,7 +254,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
           Get.snackbar(
             'Location Found',
             'Lat: ${position.latitude.toStringAsFixed(6)}\nLong: ${position.longitude.toStringAsFixed(6)}',
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.green[100],
             duration: const Duration(seconds: 3),
           );
@@ -267,7 +269,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
           Get.snackbar(
             'Location Found',
             'Address not available, showing coordinates',
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.orange[100],
             duration: const Duration(seconds: 2),
           );
@@ -293,7 +295,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
         Get.snackbar(
           'Location Error',
           errorMessage,
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red[100],
           duration: const Duration(seconds: 5),
         );
@@ -335,7 +337,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
           Get.snackbar(
             'Location Selected',
             'Lat: ${location!.latitude.toStringAsFixed(3)}\nLong: ${location.longitude.toStringAsFixed(3)}',
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.green[100],
             duration: const Duration(seconds: 2),
           );
@@ -357,7 +359,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
         Get.snackbar(
           'Permission Denied',
           'Camera permission is required to scan QR codes',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red[100],
           duration: const Duration(seconds: 3),
         );
@@ -447,25 +449,15 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
     
     if (result != null && result.isNotEmpty) {
       print('✅ QR Code scanned: $result');
-      
-      if (RegExp(r'^[0-9]{15}$').hasMatch(result)) {
-        imeiController.text = result;
-        Get.snackbar(
-          'QR Code Scanned',
-          'IMEI: $result',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green[100],
-          duration: const Duration(seconds: 2),
-        );
-      } else {
-        Get.snackbar(
-          'Invalid QR Code',
-          'The scanned code is not a valid 15-digit IMEI number',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.orange[100],
-          duration: const Duration(seconds: 3),
-        );
-      }
+      phoneController.text = result;
+      imeiController.text = result;
+      Get.snackbar(
+        'QR Code Scanned',
+        'SIM / Phone: $result',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.green[100],
+        duration: const Duration(seconds: 2),
+      );
     } else {
       print('❌ QR scanner cancelled');
     }
@@ -476,7 +468,17 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
       Get.snackbar(
         'Validation Error',
         'Unable to determine device. Please open configuration from the device card.',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red[100],
+      );
+      return false;
+    }
+
+    if (phoneController.text.trim().isEmpty) {
+      Get.snackbar(
+        'Validation Error',
+        'Please enter or scan SIM / Phone number',
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red[100],
       );
       return false;
@@ -486,7 +488,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
       Get.snackbar(
         'Validation Error',
         'Please enter a device nickname',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red[100],
       );
       return false;
@@ -507,6 +509,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
 
       final body = {
         "serial_number": serialNumber,
+        "phone_number": phoneController.text.trim(),
         "device_nickname": nicknameController.text.trim(),
         "user_email": userEmail,
         "timestamp": DateTime.now().toIso8601String(),
@@ -590,7 +593,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
         Get.snackbar(
           'Error',
           'Session expired. Please login again',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red[100],
         );
         Get.offAllNamed('/login');
@@ -600,7 +603,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
         Get.snackbar(
           'Error',
           'Device not found or not assigned to you',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red[100],
         );
       } else {
@@ -673,7 +676,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
           Get.snackbar(
             'Error',
             errorMessage,
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.red[100],
           );
         }
@@ -683,7 +686,7 @@ class ConfigureDeviceController extends GetxController with WidgetsBindingObserv
       Get.snackbar(
         'Error',
         'Connection failed: $e',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red[100],
       );
     }

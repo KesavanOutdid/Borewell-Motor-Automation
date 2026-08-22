@@ -191,7 +191,7 @@ class DeviceAnalyticsController extends GetxController {
     Get.snackbar(
       'Analytics',
       message,
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       duration: const Duration(seconds: 2),
     );
   }
@@ -201,7 +201,7 @@ class DeviceAnalyticsController extends GetxController {
     Get.snackbar(
       'Session Expired',
       'Please login again',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       duration: const Duration(seconds: 3),
     );
   }
