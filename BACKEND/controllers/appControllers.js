@@ -897,6 +897,20 @@ exports.userAssignDevices = async (req, res) => {
                 }
             },
             {
+                $lookup: {
+                    from: "sims",
+                    localField: "sim_id",
+                    foreignField: "_id",
+                    as: "sim_details"
+                }
+            },
+            {
+                $unwind: {
+                    path: "$sim_details",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
                 $addFields: {
                     role: {
                         $cond: { if: { $eq: ["$assigned_user_id", userIdNum] }, then: 'master', else: 'shared' }
@@ -924,8 +938,14 @@ exports.userAssignDevices = async (req, res) => {
                 ]
             }).sort({ start_time: 1 }).lean();
 
+            let simDetails = device.sim_details || null;
+            if (!simDetails) {
+                simDetails = await Sim.findOne({ assigned_device_serial: device.serial_number }).lean();
+            }
+
             return {
                 ...device,
+                sim_details: simDetails || null,
                 next_schedule: nextSchedule,
                 acceptance_status: device.role === 'master' ? 'accepted' : (share ? share.acceptance_status : 'pending'),
                 share_info: device.role === 'shared' && share ? {
@@ -1023,12 +1043,22 @@ exports.userDeviceDetails = async (req, res) => {
             .limit(1)
             .toArray();
 
+        // Fetch SIM details
+        let simDetails = null;
+        if (device.sim_id) {
+            simDetails = await Sim.findById(device.sim_id).lean();
+        }
+        if (!simDetails) {
+            simDetails = await Sim.findOne({ assigned_device_serial: serial_number }).lean();
+        }
+
         const response = {
             success: true,
             data: {
                 ...device.toObject(),
                 role,
                 acceptance_status,
+                sim_details: simDetails || null,
                 telemetry: latestTelemetry.length > 0 ? latestTelemetry[0] : null
             }
         };
