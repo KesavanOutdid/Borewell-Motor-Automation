@@ -4,6 +4,7 @@ import Sidebar from '../../../components/Admin/Sidebar';
 import TableSkeleton from '../../../components/Common/TableSkeleton';
 import { showAlertSuccess } from '../../../utils/alert';
 import { formatDateToIST } from '../../../utils/formatDateToIST';
+import { sanitizeMobile, sanitizeSimNumber, sanitizeImeiNumber } from '../../../utils/validation';
 
 const ManageSims = ({ userInfo, handleLogout }) => {
     const API_BASE = process.env.REACT_APP_SERVER_URL;
@@ -106,24 +107,34 @@ const ManageSims = ({ userInfo, handleLogout }) => {
 
     const handleCreateSubmit = async (e) => {
         e.preventDefault();
+        setErrorMessage('');
         
-        if (!simNumber.trim() || !phoneNumber.trim()) {
-            setErrorMessage("SIM Number (ICCID) and Phone Number are required.");
+        const cleanSim = sanitizeSimNumber(simNumber);
+        const cleanPhone = sanitizeMobile(phoneNumber);
+        const cleanImei = sanitizeImeiNumber(imeiNumber);
+
+        if (!cleanSim) {
+            setErrorMessage("SIM Number (ICCID) is required.");
             return;
         }
 
-        if (!/^\d{19,20}$/.test(simNumber)) {
+        if (!/^\d{19,20}$/.test(cleanSim)) {
             setErrorMessage("SIM Number (ICCID) must be 19 to 20 digits.");
             return;
         }
 
-        if (!/^\d{10}$/.test(phoneNumber)) {
+        if (!cleanPhone) {
+            setErrorMessage("Phone Number is required.");
+            return;
+        }
+
+        if (!/^\d{10}$/.test(cleanPhone)) {
             setErrorMessage("Phone Number must be exactly 10 digits.");
             return;
         }
 
-        if (imeiNumber && imeiNumber.trim() !== '' && !/^\d{15}$/.test(imeiNumber)) {
-            setErrorMessage("IMEI Number must be exactly 15 digits if provided.");
+        if (cleanImei && !/^\d{15}$/.test(cleanImei)) {
+            setErrorMessage("IMEI Number must be exactly 15 digits.");
             return;
         }
 
@@ -135,9 +146,9 @@ const ManageSims = ({ userInfo, handleLogout }) => {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    sim_number: simNumber,
-                    phone_number: phoneNumber,
-                    imei_number: imeiNumber,
+                    sim_number: cleanSim,
+                    phone_number: cleanPhone,
+                    imei_number: cleanImei,
                     provider: finalProvider,
                     createdBy: userInfo?.user?.user_email
                 }),
@@ -161,24 +172,34 @@ const ManageSims = ({ userInfo, handleLogout }) => {
 
     const handleEditSubmit = async (e) => {
         e.preventDefault();
+        setErrorMessage('');
         
-        if (!currentSimDetails.sim_number.trim() || !currentSimDetails.phone_number?.trim()) {
-            setErrorMessage("SIM Number (ICCID) and Phone Number are required.");
+        const cleanSim = sanitizeSimNumber(currentSimDetails.sim_number || '');
+        const cleanPhone = sanitizeMobile(currentSimDetails.phone_number || '');
+        const cleanImei = sanitizeImeiNumber(currentSimDetails.imei_number || '');
+
+        if (!cleanSim) {
+            setErrorMessage("SIM Number (ICCID) is required.");
             return;
         }
 
-        if (!/^\d{19,20}$/.test(currentSimDetails.sim_number)) {
+        if (!/^\d{19,20}$/.test(cleanSim)) {
             setErrorMessage("SIM Number (ICCID) must be 19 to 20 digits.");
             return;
         }
 
-        if (!/^\d{10}$/.test(currentSimDetails.phone_number)) {
+        if (!cleanPhone) {
+            setErrorMessage("Phone Number is required.");
+            return;
+        }
+
+        if (!/^\d{10}$/.test(cleanPhone)) {
             setErrorMessage("Phone Number must be exactly 10 digits.");
             return;
         }
 
-        if (currentSimDetails.imei_number && currentSimDetails.imei_number.trim() !== '' && !/^\d{15}$/.test(currentSimDetails.imei_number)) {
-            setErrorMessage("IMEI Number must be exactly 15 digits if provided.");
+        if (cleanImei && !/^\d{15}$/.test(cleanImei)) {
+            setErrorMessage("IMEI Number must be exactly 15 digits.");
             return;
         }
 
@@ -191,9 +212,9 @@ const ManageSims = ({ userInfo, handleLogout }) => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     id: currentSimDetails._id,
-                    sim_number: currentSimDetails.sim_number,
-                    phone_number: currentSimDetails.phone_number,
-                    imei_number: currentSimDetails.imei_number,
+                    sim_number: cleanSim,
+                    phone_number: cleanPhone,
+                    imei_number: cleanImei,
                     provider: finalProvider,
                     status: currentSimDetails.status,
                     updatedBy: userInfo?.user?.user_email
@@ -294,17 +315,20 @@ const ManageSims = ({ userInfo, handleLogout }) => {
                                                     <div style={{ marginBottom: "10px" }}>
                                                         <label>SIM Number (ICCID) *</label>
                                                         <input type="text" className="form-control" style={{ width: "100%", padding: "8px", margin: "5px 0" }} placeholder="Enter 19-20 digit ICCID"
-                                                            value={simNumber} onChange={(e) => setSimNumber(e.target.value)} required />
+                                                            maxLength={20}
+                                                            value={simNumber} onChange={(e) => setSimNumber(sanitizeSimNumber(e.target.value))} required />
                                                     </div>
                                                     <div style={{ marginBottom: "10px" }}>
                                                         <label>Phone Number *</label>
                                                         <input type="text" className="form-control" style={{ width: "100%", padding: "8px", margin: "5px 0" }} placeholder="Enter 10 digit Phone Number"
-                                                            value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required />
+                                                            maxLength={10}
+                                                            value={phoneNumber} onChange={(e) => setPhoneNumber(sanitizeMobile(e.target.value))} required />
                                                     </div>
                                                     <div style={{ marginBottom: "10px" }}>
                                                         <label>IMEI Number</label>
-                                                        <input type="text" className="form-control" style={{ width: "100%", padding: "8px", margin: "5px 0" }} placeholder="Enter IMEI (Optional)"
-                                                            value={imeiNumber} onChange={(e) => setImeiNumber(e.target.value)} />
+                                                        <input type="text" className="form-control" style={{ width: "100%", padding: "8px", margin: "5px 0" }} placeholder="Enter 15 digit IMEI (Optional)"
+                                                            maxLength={15}
+                                                            value={imeiNumber} onChange={(e) => setImeiNumber(sanitizeImeiNumber(e.target.value))} />
                                                     </div>
                                                     <div style={{ marginBottom: "10px" }}>
                                                         <label>Provider</label>
@@ -349,17 +373,20 @@ const ManageSims = ({ userInfo, handleLogout }) => {
                                                     <div style={{ marginBottom: "10px" }}>
                                                         <label>SIM Number (ICCID) *</label>
                                                         <input type="text" className="form-control" style={{ width: "100%", padding: "8px", margin: "5px 0" }}
-                                                            value={currentSimDetails.sim_number} onChange={(e) => setCurrentSimDetails({...currentSimDetails, sim_number: e.target.value})} required />
+                                                            maxLength={20}
+                                                            value={currentSimDetails.sim_number || ''} onChange={(e) => setCurrentSimDetails({...currentSimDetails, sim_number: sanitizeSimNumber(e.target.value)})} required />
                                                     </div>
                                                     <div style={{ marginBottom: "10px" }}>
                                                         <label>Phone Number *</label>
                                                         <input type="text" className="form-control" style={{ width: "100%", padding: "8px", margin: "5px 0" }}
-                                                            value={currentSimDetails.phone_number || ''} onChange={(e) => setCurrentSimDetails({...currentSimDetails, phone_number: e.target.value})} required />
+                                                            maxLength={10}
+                                                            value={currentSimDetails.phone_number || ''} onChange={(e) => setCurrentSimDetails({...currentSimDetails, phone_number: sanitizeMobile(e.target.value)})} required />
                                                     </div>
                                                     <div style={{ marginBottom: "10px" }}>
                                                         <label>IMEI Number</label>
                                                         <input type="text" className="form-control" style={{ width: "100%", padding: "8px", margin: "5px 0" }}
-                                                            value={currentSimDetails.imei_number || ''} onChange={(e) => setCurrentSimDetails({...currentSimDetails, imei_number: e.target.value})} />
+                                                            maxLength={15}
+                                                            value={currentSimDetails.imei_number || ''} onChange={(e) => setCurrentSimDetails({...currentSimDetails, imei_number: sanitizeImeiNumber(e.target.value)})} />
                                                     </div>
                                                     <div style={{ marginBottom: "10px" }}>
                                                         <label>Provider</label>

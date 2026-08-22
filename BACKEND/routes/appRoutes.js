@@ -267,6 +267,7 @@ router.post(
     [
         body('serial_number').notEmpty().withMessage("Serial number is required"),
         body('user_email').isEmail().withMessage("Valid user email is required"),
+        body('phone_number').notEmpty().withMessage("Phone number is required"),
         body('timestamp').notEmpty().withMessage("Timestamp is required")
     ],
     appCtrl.configIMEInumber

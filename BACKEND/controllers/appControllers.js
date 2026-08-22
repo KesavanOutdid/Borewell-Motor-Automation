@@ -390,7 +390,16 @@ exports.configIMEInumber = async (req, res, next) => {
         if (!errors.isEmpty())
             return res.status(400).json({ success: false, message: errors.array()[0].msg, errors: errors.array() });
 
-        const { serial_number, user_email, timestamp, latitude, longitude, motor_hp, device_nickname } = req.body;
+        const { serial_number, user_email, phone_number, timestamp, latitude, longitude, motor_hp, device_nickname } = req.body;
+
+        if (!phone_number || phone_number.toString().trim() === '') {
+            return res.status(400).json({
+                success: false,
+                message: "Phone number is required"
+            });
+        }
+
+        const cleanPhone = phone_number.toString().trim();
 
         // Find user by email
         const user = await User.findOne({ user_email });
@@ -409,8 +418,52 @@ exports.configIMEInumber = async (req, res, next) => {
                 message: "Device not found or not assigned to this user"
             });
 
-        // Prepare update object
+        // 1. Verify SIM exists in Database for this phone_number
+        const targetSim = await Sim.findOne({ phone_number: cleanPhone });
+        if (!targetSim) {
+            return res.status(404).json({
+                success: false,
+                message: "SIM card with this phone number is not found in database"
+            });
+        }
+
+        // 2. Check if SIM is already assigned to another device
+        if (targetSim.assign_status && targetSim.assigned_device_serial && targetSim.assigned_device_serial !== serial_number) {
+            return res.status(400).json({
+                success: false,
+                message: `SIM / Phone number is already assigned to another device (${targetSim.assigned_device_serial})`
+            });
+        }
+
+        // 3. If device had a DIFFERENT SIM previously assigned to it, unassign the old SIM
+        if (device.sim_id && device.sim_id.toString() !== targetSim._id.toString()) {
+            await Sim.findByIdAndUpdate(device.sim_id, {
+                assign_status: false,
+                assigned_device_serial: null,
+                updatedBy: user_email,
+                updatedAt: new Date()
+            });
+        }
+
+        // 4. Mark the target SIM as assigned to this device
+        targetSim.assign_status = true;
+        targetSim.assigned_device_serial = serial_number;
+        targetSim.updatedBy = user_email;
+        targetSim.updatedAt = new Date();
+
+        // Activate SIM if not previously activated
+        if (!targetSim.sim_activation_date) {
+            const currentTime = new Date();
+            const expiryTime = new Date(currentTime.getTime() + (90 * 24 * 60 * 60 * 1000));
+            targetSim.sim_activation_date = currentTime;
+            targetSim.sim_expiry_date = expiryTime;
+            targetSim.sim_recharge_status = 'Active';
+        }
+        await targetSim.save();
+
+        // 5. Prepare update object for Device
         const updateData = {
+            sim_id: targetSim._id,
             config_status: true,
             updatedAt: timestamp ? new Date(timestamp) : new Date(),
             updatedBy: user_email
@@ -422,7 +475,7 @@ exports.configIMEInumber = async (req, res, next) => {
         if (motor_hp !== undefined) updateData.motor_hp = motor_hp;
         if (device_nickname !== undefined) updateData.device_nickname = device_nickname;
 
-        // Update device including location
+        // Update device
         const updatedDevice = await Device.findOneAndUpdate(
             { serial_number, assigned_user_id: user.user_id },
             updateData,
@@ -431,27 +484,6 @@ exports.configIMEInumber = async (req, res, next) => {
 
         await cacheDeletePattern('*devices*');
         await cacheDeletePattern('*analytics*');
-
-        // If configuration is successful and we haven't configured it before
-        let simDetails = null;
-        if (!device.config_status && device.sim_id) {
-            const sim = await Sim.findById(device.sim_id);
-            if (sim && !sim.sim_activation_date) {
-                const currentTime = new Date();
-                const expiryTime = new Date(currentTime.getTime() + (90 * 24 * 60 * 60 * 1000));
-                
-                sim.sim_activation_date = currentTime;
-                sim.sim_expiry_date = expiryTime;
-                sim.sim_recharge_status = 'Active';
-                await sim.save();
-                
-                simDetails = sim;
-            } else if (sim) {
-                simDetails = sim;
-            }
-        } else if (device.sim_id) {
-            simDetails = await Sim.findById(device.sim_id);
-        }
 
         res.status(200).json({
             success: true,
@@ -465,7 +497,7 @@ exports.configIMEInumber = async (req, res, next) => {
                 config_status: updatedDevice.config_status,
                 updatedAt: updatedDevice.updatedAt,
                 updatedBy: updatedDevice.updatedBy,
-                sim_details: simDetails
+                sim_details: targetSim
             }
         });
 

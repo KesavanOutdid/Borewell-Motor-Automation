@@ -96,5 +96,10 @@ export const sanitizeSerialNumber = (value) => {
 
 // IMEI number validation
 export const sanitizeImeiNumber = (value) => {
-    return value.replace(/[^0-9]/g, '').slice(0, 17);
+    return value.replace(/[^0-9]/g, '').slice(0, 15);
+};
+
+// SIM number (ICCID) validation
+export const sanitizeSimNumber = (value) => {
+    return value.replace(/[^0-9]/g, '').slice(0, 20);
 };
