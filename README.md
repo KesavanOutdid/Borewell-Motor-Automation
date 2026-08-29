@@ -13,11 +13,41 @@
 - [Features](#features)
 - [Database Models](#database-models)
 - [Installation & Setup](#installation--setup)
+- [Docker Deployment Guide](#docker-deployment-guide)
+- [Detailed Documentation Index](#detailed-documentation-index)
 - [Running the Application](#running-the-application)
 - [API Documentation](#api-documentation)
 - [Environment Variables](#environment-variables)
 
 ---
+
+## 🐳 Docker Deployment Guide
+
+For containerized running locally or cloud server deployment using Docker & Docker Compose, see the complete guide:
+- 📖 [Docker Deployment Guide](docs/DOCKER_DEPLOYMENT_GUIDE.md)
+
+---
+
+## 📚 Detailed Documentation Index
+
+All architectural specs, implementation guides, and reports are organized in the [`docs/`](docs/) directory:
+
+| Document | Purpose |
+| :--- | :--- |
+| 🐳 [Docker Deployment Guide](docs/DOCKER_DEPLOYMENT_GUIDE.md) | Container setup, docker-compose, and cloud VPS deployment guide |
+| 🏗 [Project Technical Overview](docs/PROJECT_TECHNICAL_OVERVIEW.md) | High-level system architecture and component interactions |
+| 🔌 [Hardware Interface Specification](docs/HARDWARE_INTERFACE_SPECIFICATION.md) | ESP32/ESP8266 IoT hardware communication protocol |
+| 📋 [Product Requirement Document](docs/PRODUCT_REQUIREMENT_DOCUMENT.md) | System requirements, user personas, and feature specs |
+| 📁 [Folder Structure Rules](docs/FOLDER_STRUCTURE_RULES.md) | Codebase clean architecture and directory conventions |
+| 🎟 [Voucher System Summary](docs/VOUCHER_SYSTEM_SUMMARY.md) | E-commerce discount vouchers and validation logic |
+| 📍 [Address & Pincode Implementation](docs/ADDRESS_PINCODE_IMPLEMENTATION.md) | Address management & pincode lookup APIs |
+| 🎨 [Flutter Form Controller Pattern](docs/FLUTTER_FORM_CONTROLLER_PATTERN.md) | GetX form handling and validation patterns |
+| 🚀 [Tour Implementation](docs/TOUR_IMPLEMENTATION.md) | Interactive app walkthrough/onboarding implementation |
+| ⚡ [Performance Report](docs/PERFORMANCE_REPORT.md) | System performance metrics and optimization strategies |
+| 🔮 [Future Specification](docs/FUTURE_SPECIFICATION.md) | Roadmap for upcoming features and system upgrades |
+
+---
+
 
 ## 🎯 Overview
 
@@ -237,8 +267,23 @@ Borewell-Motor-Automation/
 │   ├── server.js                          # Express server entry point
 │   └── package.json                       # Node dependencies
 │
-├── README.md                              # This file
-└── VOUCHER_SYSTEM_SUMMARY.md              # Voucher feature docs
+├── docs/                                  # Project Documentation & System Specifications
+│   ├── DOCKER_DEPLOYMENT_GUIDE.md         # Docker & Cloud Deployment Guide
+│   ├── PROJECT_TECHNICAL_OVERVIEW.md      # System Architecture & Technical Specs
+│   ├── HARDWARE_INTERFACE_SPECIFICATION.md# IoT Hardware Protocol Specs
+│   ├── PRODUCT_REQUIREMENT_DOCUMENT.md    # Product Requirements Document (PRD)
+│   ├── FOLDER_STRUCTURE_RULES.md          # Clean Architecture & Directory Rules
+│   ├── VOUCHER_SYSTEM_SUMMARY.md          # E-commerce Voucher System Specs
+│   ├── ADDRESS_PINCODE_IMPLEMENTATION.md  # Address & Pincode Lookup Specs
+│   ├── FLUTTER_FORM_CONTROLLER_PATTERN.md # Form & Controller Patterns
+│   ├── TOUR_IMPLEMENTATION.md             # Onboarding Tour Feature Specs
+│   ├── PERFORMANCE_REPORT.md              # Performance Metrics & Benchmarks
+│   └── FUTURE_SPECIFICATION.md            # System Roadmap & Future Features
+│
+├── docker-compose.yml                     # Production Docker Compose orchestration
+├── docker-compose.dev.yml                 # Local Development Docker Compose override
+├── .env.docker.example                    # Docker environment configuration template
+└── README.md                              # Main Project Readme
 ```
 
 ---
@@ -637,155 +682,8 @@ flutter run
 **Terminal 4 - MQTT Broker (if local):**
 ```bash
 mosquitto -c mosquitto.conf
-```
-
 ---
 
-nDisplayChanged oldDisplayState=3 newDisplayState=4
-I/VRI[MainActivity]@f3ac994(12091): onDisplayChanged oldDisplayState=4 newDisplayState=3
-I/VRI[MainActivity]@f3ac994(12091): onDisplayChanged oldDisplayState=3 newDisplayState=1
-I/PhenotypeProcessReaper(12091): Memory state is: 125
-I/VRI[MainActivity]@f3ac994(12091): onDisplayChanged oldDisplayState=1 newDisplayState=2
-D/SV[169759259 MainActivity](12091): updateSurface: surface is not valid
-I/SV[169759259 MainActivity](12091): releaseSurfaces: viewRoot = VRI[MainActivity]@f3ac994
-D/VRI[MainActivity]@f3ac994(12091): applyTransactionOnDraw applyImmediately
-I/VRI[MainActivity]@f3ac994(12091): handleAppVisibility mAppVisible = false visible = true
-I/VRI[MainActivity]@f3ac994(12091): stopped(false) old = true
-D/VRI[MainActivity]@f3ac994(12091): WindowStopped on com.example.end_user/com.example.end_user.MainActivity set to false
-D/SV[169759259 MainActivity](12091): updateSurface: surface is not valid
-I/SV[169759259 MainActivity](12091): releaseSurfaces: viewRoot = VRI[MainActivity]@f3ac994
-D/VRI[MainActivity]@f3ac994(12091): applyTransactionOnDraw applyImmediately
-I/SV[169759259 MainActivity](12091): onWindowVisibilityChanged(0) false io.flutter.embedding.android.FlutterSurfaceView{a1e521b V.E...... ......ID 0,0-1080,2340} of VRI[MainActivity]@f3ac994
-D/SV[169759259 MainActivity](12091): updateSurface: surface is not valid
-I/SV[169759259 MainActivity](12091): releaseSurfaces: viewRoot = VRI[MainActivity]@f3ac994
-D/VRI[MainActivity]@f3ac994(12091): applyTransactionOnDraw applyImmediately
-I/InsetsController(12091): onStateChanged: host=com.example.end_user/com.example.end_user.MainActivity, from=android.view.ViewRootImpl.onInsetsStateChanged:3026, state=InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2340), mDisplayCutout=DisplayCutout{insets=Rect(0, 99 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(505, 0 - 575, 99), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=1080 displayHeight=2340 physicalDisplayWidth=1080 physicalDisplayHeight=2340 density={3.0} cutoutSpec={M 0,0 M 0,29 a 35,35 0 1,0 0,70 a 35,35 0 1,0 0,-70 Z} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={1.0}}} sideOverrides={}}, mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=108, center=Point(108, 108)}, RoundedCorner{position=TopRight, radius=108, center=Point(972, 108)}, RoundedCorner{position=BottomRight, radius=108, center=Point(972, 2232)}, RoundedCorner{position=BottomLeft, radius=108, center=Point(108, 2232)}]}  mRoundedCornerFrame=Rect(0, 0 - 1080, 2340), mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(948, 0 - 1080, 99) rotation=0}, mDisplayShape=DisplayShape{ spec=-311912193 displayWidth=1080 displayHeight=2340 physicalPixelDisplaySizeRatio=1.0 rotation=0 offsetX=0 offsetY=0 scale=1.0}, mSources= { InsetsSource: {a6430000 mType=statusBars mFrame=[0,0][1080,99] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {a6430005 mType=mandatorySystemGestures mFrame=[0,0][1080,135] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {a6430006 mType=tappableElement mFrame=[0,0][1080,99] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {b2a30001 mType=navigationBars mFrame=[0,2295][1080,2340] mVisible=false mFlags=SUPPRESS_SCRIM mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {b2a30004 mType=systemGestures mFrame=[0,0][90,2340] mVisible=true mFlags= mSideHint=LEFT mBoundingRects=null}, InsetsSource: {b2a30005 mType=mandatorySystemGestures mFrame=[0,2244][1080,2340] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {b2a30006 mType=tappableElement mFrame=[0,0][0,0] mVisible=true mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {b2a30024 mType=systemGestures mFrame=[990,0][1080,2340] mVisible=true mFlags= mSideHint=RIGHT mBoundingRects=null}, InsetsSource: {3 mType=ime mFrame=[0,0][0,0] mVisible=false mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {27 mType=displayCutout mFrame=[0,0][1080,99] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null} }
-W/libc    (12091): Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-I/BufferQueueProducer(12091): [](id:2f3b00000019,api:0,p:0,c:12091) setDequeueTimeout:2077252342
-I/BLASTBufferQueue_Java(12091): new BLASTBufferQueue, mName= VRI[MainActivity]@f3ac994 mNativeObject= 0xb400006dd4778da0 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3585 android.view.ViewRootImpl.relayoutWindow:11685 android.view.ViewRootImpl.performTraversals:4804 android.view.ViewRootImpl.doTraversal:3924 android.view.ViewRootImpl$TraversalRunnable.run:12903 android.view.Choreographer$CallbackRecord.run:1901 android.view.Choreographer$CallbackRecord.run:1910 android.view.Choreographer.doCallbacks:1367 android.view.Choreographer.doFrame:1292 android.view.Choreographer$FrameDisplayEventReceiver.run:1870 
-I/BLASTBufferQueue_Java(12091): update, w= 1080 h= 2340 mName = VRI[MainActivity]@f3ac994 mNativeObject= 0xb400006dd4778da0 sc.mNativeObject= 0xb400006d94725550 format= -3 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3590 android.view.ViewRootImpl.relayoutWindow:11685 android.view.ViewRootImpl.performTraversals:4804 android.view.ViewRootImpl.doTraversal:3924 android.view.ViewRootImpl$TraversalRunnable.run:12903 android.view.Choreographer$CallbackRecord.run:1901 
-W/libc    (12091): Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-I/VRI[MainActivity]@f3ac994(12091): Relayout returned: old=(0,0,1080,2340) new=(0,0,1080,2340) relayoutAsync=false req=(1080,2340)0 dur=16 res=0x3 s={true 0xb400006f24708360} ch=true seqId=0
-D/VRI[MainActivity]@f3ac994(12091): mThreadedRenderer.initialize() mSurface={isValid=true 0xb400006f24708360} hwInitialized=true
-I/SV[169759259 MainActivity](12091): windowStopped(false) true io.flutter.embedding.android.FlutterSurfaceView{a1e521b V.E...... ......ID 0,0-1080,2340} of VRI[MainActivity]@f3ac994
-I/SurfaceView(12091): 169759259 Changes: creating=true format=false size=false visible=true alpha=false hint=false left=false top=false z=false attached=true lifecycleStrategy=false
-W/libc    (12091): Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-I/BufferQueueProducer(12091): [](id:2f3b0000001a,api:0,p:0,c:12091) setDequeueTimeout:2077252342
-I/BLASTBufferQueue_Java(12091): new BLASTBufferQueue, mName= a1e521b SurfaceView[com.example.end_user/com.example.end_user.MainActivity]@0 mNativeObject= 0xb400006dd46ed4f0 caller= android.view.SurfaceView.createBlastSurfaceControls:1781 android.view.SurfaceView.updateSurface:1450 android.view.SurfaceView.setWindowStopped:539 android.view.SurfaceView.surfaceCreated:2327 android.view.ViewRootImpl.notifySurfaceCreated:3502 android.view.ViewRootImpl.performTraversals:5286 android.view.ViewRootImpl.doTraversal:3924 android.view.ViewRootImpl$TraversalRunnable.run:12903 android.view.Choreographer$CallbackRecord.run:1901 android.view.Choreographer$CallbackRecord.run:1910 
-I/BLASTBufferQueue_Java(12091): update, w= 1080 h= 2340 mName = a1e521b SurfaceView[com.example.end_user/com.example.end_user.MainActivity]@0 mNativeObject= 0xb400006dd46ed4f0 sc.mNativeObject= 0xb400006d946a55d0 format= 4 caller= android.view.SurfaceView.createBlastSurfaceControls:1782 android.view.SurfaceView.updateSurface:1450 android.view.SurfaceView.setWindowStopped:539 android.view.SurfaceView.surfaceCreated:2327 android.view.ViewRootImpl.notifySurfaceCreated:3502 android.view.ViewRootImpl.performTraversals:5286 
-I/SurfaceView(12091): 169759259 Cur surface: Surface(name=null mNativeObject=0)/@0x1d24edf
-D/SurfaceComposerClient(12091): setCornerRadius ## a1e521b SurfaceView[com.example.end_user/com.example.end_user.MainActivity]@0#5051 cornerRadius=0.000000
-I/SV[169759259 MainActivity](12091): pST: sr = Rect(0, 0 - 1080, 2340) sw = 1080 sh = 2340
-D/SurfaceView(12091): 169759259 performSurfaceTransaction RenderWorker position = [0, 0, 1080, 2340] surfaceSize = 1080x2340
-W/libc    (12091): Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-I/SV[169759259 MainActivity](12091): updateSurface: mVisible = true mSurface.isValid() = true
-I/SV[169759259 MainActivity](12091): updateSurface: mSurfaceCreated = false surfaceChanged = true visibleChanged = true
-I/SurfaceView(12091): 169759259 visibleChanged -- surfaceCreated
-I/SV[169759259 MainActivity](12091): surfaceCreated 1 #1 io.flutter.embedding.android.FlutterSurfaceView{a1e521b V.E...... ......ID 0,0-1080,2340}
-E/qdgralloc(12091): GetGpuPixelFormat: No map for format: 0x38
-E/AdrenoUtils(12091): <validate_memory_layout_input_parmas:1970>: Unknown Format 0
-E/AdrenoUtils(12091): <adreno_init_memory_layout:4720>: Memory Layout input parameter validation failed!
-E/qdgralloc(12091): GetGpuResourceSizeAndDimensions Graphics metadata init failed
-E/Gralloc4(12091): isSupported(1, 1, 56, 1, ...) failed with 1
-E/GraphicBufferAllocator(12091): Failed to allocate (4 x 4) layerCount 1 format 56 usage b00: 1
-E/AHardwareBuffer(12091): GraphicBuffer(w=4, h=4, lc=1) failed (Unknown error -1), handle=0x0
-E/qdgralloc(12091): GetGpuPixelFormat: No map for format: 0x3b
-E/AdrenoUtils(12091): <validate_memory_layout_input_parmas:1970>: Unknown Format 0
-E/AdrenoUtils(12091): <adreno_init_memory_layout:4720>: Memory Layout input parameter validation failed!
-E/qdgralloc(12091): GetGpuResourceSizeAndDimensions Graphics metadata init failed
-E/Gralloc4(12091): isSupported(1, 1, 59, 1, ...) failed with 1
-E/GraphicBufferAllocator(12091): Failed to allocate (4 x 4) layerCount 1 format 59 usage b00: 1
-E/AHardwareBuffer(12091): GraphicBuffer(w=4, h=4, lc=1) failed (Unknown error -1), handle=0x0
-E/qdgralloc(12091): GetGpuPixelFormat: No map for format: 0x38
-E/AdrenoUtils(12091): <validate_memory_layout_input_parmas:1970>: Unknown Format 0
-E/AdrenoUtils(12091): <adreno_init_memory_layout:4720>: Memory Layout input parameter validation failed!
-E/qdgralloc(12091): GetGpuResourceSizeAndDimensions Graphics metadata init failed
-E/Gralloc4(12091): isSupported(1, 1, 56, 1, ...) failed with 1
-E/GraphicBufferAllocator(12091): Failed to allocate (4 x 4) layerCount 1 format 56 usage b00: 1
-E/AHardwareBuffer(12091): GraphicBuffer(w=4, h=4, lc=1) failed (Unknown error -1), handle=0x0
-E/qdgralloc(12091): GetGpuPixelFormat: No map for format: 0x3b
-E/AdrenoUtils(12091): <validate_memory_layout_input_parmas:1970>: Unknown Format 0
-E/AdrenoUtils(12091): <adreno_init_memory_layout:4720>: Memory Layout input parameter validation failed!
-E/qdgralloc(12091): GetGpuResourceSizeAndDimensions Graphics metadata init failed
-E/Gralloc4(12091): isSupported(1, 1, 59, 1, ...) failed with 1
-E/GraphicBufferAllocator(12091): Failed to allocate (4 x 4) layerCount 1 format 59 usage b00: 1
-E/AHardwareBuffer(12091): GraphicBuffer(w=4, h=4, lc=1) failed (Unknown error -1), handle=0x0
-I/SurfaceView(12091): 169759259 surfaceChanged -- format=4 w=1080 h=2340
-I/SV[169759259 MainActivity](12091): surfaceChanged (1080,2340) 1 #1 io.flutter.embedding.android.FlutterSurfaceView{a1e521b V.E...... ......ID 0,0-1080,2340}
-I/SurfaceView(12091): 169759259 surfaceRedrawNeeded
-V/SurfaceView(12091): Layout: x=0 y=0 w=1080 h=2340, frame=Rect(0, 0 - 1080, 2340)
-D/VRI[MainActivity]@f3ac994(12091): reportNextDraw android.view.ViewRootImpl.performTraversals:5443 android.view.ViewRootImpl.doTraversal:3924 android.view.ViewRootImpl$TraversalRunnable.run:12903 android.view.Choreographer$CallbackRecord.run:1901 android.view.Choreographer$CallbackRecord.run:1910 
-D/VRI[MainActivity]@f3ac994(12091): Setup new sync=wmsSync-VRI[MainActivity]@f3ac994#15
-I/VRI[MainActivity]@f3ac994(12091): Creating new active sync group VRI[MainActivity]@f3ac994#16
-D/VRI[MainActivity]@f3ac994(12091): Start draw after previous draw not visible
-D/VRI[MainActivity]@f3ac994(12091): registerCallbacksForSync syncBuffer=false
-D/SurfaceView(12091): 169759259 updateSurfacePosition RenderWorker, frameNr = 1, position = [0, 0, 1080, 2340] surfaceSize = 1080x2340
-I/SV[169759259 MainActivity](12091): uSP: rtp = Rect(0, 0 - 1080, 2340) rtsw = 1080 rtsh = 2340
-I/SV[169759259 MainActivity](12091): onSSPAndSRT: pl = 0 pt = 0 sx = 1.0 sy = 1.0
-I/SV[169759259 MainActivity](12091): aOrMT: VRI[MainActivity]@f3ac994 t = android.view.SurfaceControl$Transaction@682b283 fN = 1 android.view.SurfaceView.-$$Nest$mapplyOrMergeTransaction:0 android.view.SurfaceView$SurfaceViewPositionUpdateListener.positionChanged:1932 android.graphics.RenderNode$CompositePositionUpdateListener.positionChanged:401 
-I/VRI[MainActivity]@f3ac994(12091): mWNT: t=0xb400006ee4806b10 mBlastBufferQueue=0xb400006dd4778da0 fn= 1 HdrRenderState mRenderHdrSdrRatio=1.0 caller= android.view.SurfaceView.applyOrMergeTransaction:1863 android.view.SurfaceView.-$$Nest$mapplyOrMergeTransaction:0 android.view.SurfaceView$SurfaceViewPositionUpdateListener.positionChanged:1932 
-D/VRI[MainActivity]@f3ac994(12091): Received frameDrawingCallback syncResult=0 frameNum=1.
-I/VRI[MainActivity]@f3ac994(12091): mWNT: t=0xb400006ee4710990 mBlastBufferQueue=0xb400006dd4778da0 fn= 1 HdrRenderState mRenderHdrSdrRatio=1.0 caller= android.view.ViewRootImpl$12.onFrameDraw:15441 android.view.ThreadedRenderer$1.onFrameDraw:718 <bottom of call stack> 
-I/VRI[MainActivity]@f3ac994(12091): Setting up sync and frameCommitCallback
-I/BLASTBufferQueue(12091): [VRI[MainActivity]@f3ac994#7](f:0,a:0,s:0) onFrameAvailable the first frame is available
-I/SurfaceComposerClient(12091): apply transaction with the first frame. layerId: 5047, bufferData(ID: 51930449576113, frameNumber: 1)
-I/VRI[MainActivity]@f3ac994(12091): Received frameCommittedCallback lastAttemptedDrawFrameNum=1 didProduceBuffer=true
-I/InsetsController(12091): onStateChanged: host=com.example.end_user/com.example.end_user.MainActivity, from=android.view.ViewRootImpl.onInsetsStateChanged:3026, state=InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2340), mDisplayCutout=DisplayCutout{insets=Rect(0, 99 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(505, 0 - 575, 99), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=1080 displayHeight=2340 physicalDisplayWidth=1080 physicalDisplayHeight=2340 density={3.0} cutoutSpec={M 0,0 M 0,29 a 35,35 0 1,0 0,70 a 35,35 0 1,0 0,-70 Z} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={1.0}}} sideOverrides={}}, mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=108, center=Point(108, 108)}, RoundedCorner{position=TopRight, radius=108, center=Point(972, 108)}, RoundedCorner{position=BottomRight, radius=108, center=Point(972, 2232)}, RoundedCorner{position=BottomLeft, radius=108, center=Point(108, 2232)}]}  mRoundedCornerFrame=Rect(0, 0 - 1080, 2340), mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(948, 0 - 1080, 99) rotation=0}, mDisplayShape=DisplayShape{ spec=-311912193 displayWidth=1080 displayHeight=2340 physicalPixelDisplaySizeRatio=1.0 rotation=0 offsetX=0 offsetY=0 scale=1.0}, mSources= { InsetsSource: {a6430000 mType=statusBars mFrame=[0,0][1080,99] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {a6430005 mType=mandatorySystemGestures mFrame=[0,0][1080,135] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {a6430006 mType=tappableElement mFrame=[0,0][1080,99] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {b2a30001 mType=navigationBars mFrame=[0,2295][1080,2340] mVisible=true mFlags=SUPPRESS_SCRIM mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {b2a30004 mType=systemGestures mFrame=[0,0][90,2340] mVisible=true mFlags= mSideHint=LEFT mBoundingRects=null}, InsetsSource: {b2a30005 mType=mandatorySystemGestures mFrame=[0,2244][1080,2340] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {b2a30006 mType=tappableElement mFrame=[0,0][0,0] mVisible=true mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {b2a30024 mType=systemGestures mFrame=[990,0][1080,2340] mVisible=true mFlags= mSideHint=RIGHT mBoundingRects=null}, InsetsSource: {3 mType=ime mFrame=[0,0][0,0] mVisible=false mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {27 mType=displayCutout mFrame=[0,0][1080,99] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null} }
-I/VRI[MainActivity]@f3ac994(12091): handleResized, frames=ClientWindowFrames{frame=[0,0][1080,2340] display=[0,0][1080,2340] parentFrame=[0,0][0,0]} displayId=0 dragResizing=false compatScale=1.0 frameChanged=false attachedFrameChanged=false configChanged=false displayChanged=false compatScaleChanged=false dragResizingChanged=false
-I/VRI[MainActivity]@f3ac994(12091): handleResized mSyncSeqId = 0
-D/VRI[MainActivity]@f3ac994(12091): reportNextDraw android.view.ViewRootImpl.handleResized:2983 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:14082 android.app.servertransaction.WindowStateResizeItem.execute:93 android.app.servertransaction.WindowStateTransactionItem.execute:62 
-I/VRI[MainActivity]@f3ac994(12091): handleResized, frames=ClientWindowFrames{frame=[0,0][1080,2340] display=[0,0][1080,2340] parentFrame=[0,0][0,0]} displayId=0 dragResizing=false compatScale=1.0 frameChanged=false attachedFrameChanged=false configChanged=false displayChanged=false compatScaleChanged=false dragResizingChanged=false
-I/VRI[MainActivity]@f3ac994(12091): handleResized mSyncSeqId = 0
-D/VRI[MainActivity]@f3ac994(12091): reportNextDraw android.view.ViewRootImpl.handleResized:2983 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:14082 android.app.servertransaction.WindowStateResizeItem.execute:93 android.app.servertransaction.WindowStateTransactionItem.execute:62 
-D/VRI[MainActivity]@f3ac994(12091): Setup new sync=wmsSync-VRI[MainActivity]@f3ac994#17
-I/VRI[MainActivity]@f3ac994(12091): Creating new active sync group VRI[MainActivity]@f3ac994#18
-D/VRI[MainActivity]@f3ac994(12091): registerCallbacksForSync syncBuffer=false
-D/VRI[MainActivity]@f3ac994(12091): Received frameDrawingCallback syncResult=0 frameNum=2.
-I/VRI[MainActivity]@f3ac994(12091): Setting up sync and frameCommitCallback
-I/VRI[MainActivity]@f3ac994(12091): Received frameCommittedCallback lastAttemptedDrawFrameNum=2 didProduceBuffer=false
-I/BLASTBufferQueue_Java(12091): gatherPendingTransactions, mName= VRI[MainActivity]@f3ac994 mNativeObject= 0xb400006dd4778da0 frameNumber= 2 caller= android.view.ViewRootImpl$12.lambda$onFrameDraw$3:15525 android.view.ViewRootImpl$12.$r8$lambda$CTo3ExVBk8akdVTGlqHPAoYLRVI:0 android.view.ViewRootImpl$12$$ExternalSyntheticLambda1.onFrameCommit:0 android.view.ThreadedRenderer$1.lambda$onFrameDraw$0:730 android.view.ThreadedRenderer$1$$ExternalSyntheticLambda0.onFrameCommit:0 <bottom of call stack> 
-D/VRI[MainActivity]@f3ac994(12091): reportDrawFinished seqId=0
-I/BLASTBufferQueue(12091): [a1e521b SurfaceView[com.example.end_user/com.example.end_user.MainActivity]@0#8](f:0,a:0,s:0) onFrameAvailable the first frame is available
-I/SurfaceComposerClient(12091): apply transaction with the first frame. layerId: 5052, bufferData(ID: 51930449576108, frameNumber: 1)
-D/VRI[MainActivity]@f3ac994(12091): reportDrawFinished seqId=0
-I/SurfaceView(12091): 169759259 finishedDrawing
-I/InsetsSourceConsumer(12091): applyRequestedVisibilityToControl: visible=true, type=navigationBars, host=com.example.end_user/com.example.end_user.MainActivity
-I/InsetsSourceConsumer(12091): applyRequestedVisibilityToControl: visible=true, type=statusBars, host=com.example.end_user/com.example.end_user.MainActivity
-D/VRI[MainActivity]@f3ac994(12091): mThreadedRenderer.initializeIfNeeded()#2 mSurface={isValid=true 0xb400006f24708360}
-D/InputMethodManagerUtils(12091): startInputInner - Id : 0
-I/InputMethodManager(12091): startInputInner - IInputMethodManagerGlobalInvoker.startInputOrWindowGainedFocus
-I/InputMethodManager(12091): handleMessage: setImeVisibility visible=false
-D/InsetsController(12091): hide(ime(), fromIme=false)
-I/ImeTracker(12091): com.example.end_user:91bc6762: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
-D/InputTransport(12091): Input channel constructed: 'ClientS', fd=223
-
-lib/feature/end_user_app/home/presentation/controllers/home_controller.dart:294:17: Error: Can't find ')' to match '('.
-      Get.dialog(
-                ^
-lib/feature/end_user_app/device/presentation/controllers/add_device_controller.dart:73:21: Error: Can't find ')' to match '('.
-          Get.dialog(
-                    ^
-lib/feature/end_user_app/device/presentation/controllers/add_device_controller.dart:172:21: Error: Can't find ')' to match '('.
-          Get.dialog(
-                    ^
-lib/feature/end_user_app/device/presentation/controllers/add_device_controller.dart:427:17: Error: Can't find ')' to match '('.
-      Get.dialog(
-                ^
-Performing hot reload...                                                
-Try again after fixing the above error(s).
-
-lib/feature/end_user_app/home/presentation/controllers/home_controller.dart:294:17: Error: Can't find ')' to match '('.
-      Get.dialog(
-                ^
-lib/feature/end_user_app/device/presentation/controllers/add_device_controller.dart:73:21: Error: Can't find ')' to match '('.
-          Get.dialog(
-                    ^
-lib/feature/end_user_app/device/presentation/controllers/add_device_controller.dart:172:21: Error: Can't find ')' to match '('.
-          Get.dialog(
-                    ^
-lib/feature/end_user_app/device/presentation/controllers/add_device_controller.dart:427:17: Error: Can't find ')' to match '('.
-      Get.dialog(
-                ^
 ## 📚 API Documentation
 
 ### **Swagger UI**
