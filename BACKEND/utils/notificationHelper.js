@@ -53,21 +53,24 @@ exports.sendPushNotification = async (tokens, notification, data = {}) => {
     const targetTokens = Array.isArray(tokens) ? tokens : [tokens];
 
     const message = {
-        notification,
         data: {
             ...data,
             click_action: "FLUTTER_NOTIFICATION_CLICK",
         },
         android: {
             priority: "high",
-            notification: {
-                channelId: "high_importance_channel",
-                priority: "high",
-                clickAction: "FLUTTER_NOTIFICATION_CLICK"
-            }
         },
         tokens: targetTokens
     };
+
+    if (notification && (notification.title || notification.body)) {
+        message.notification = notification;
+        message.android.notification = {
+            channelId: "high_importance_channel",
+            priority: "high",
+            clickAction: "FLUTTER_NOTIFICATION_CLICK"
+        };
+    }
 
     try {
         const response = await admin.messaging().sendEachForMulticast(message);
@@ -121,28 +124,56 @@ exports.sendPushNotification = async (tokens, notification, data = {}) => {
  * @param {string} type - ALERT, STATUS, etc.
  * @param {object} payload - MQTT payload
  */
+// In-memory fallback deduplication when Redis is unavailable
+const memoryDedupeMap = new Map();
+function checkMemoryDedupe(key, ttlMs = 10000) {
+    const now = Date.now();
+    const existing = memoryDedupeMap.get(key);
+    if (existing && now < existing) {
+        return true;
+    }
+    memoryDedupeMap.set(key, now + ttlMs);
+    if (memoryDedupeMap.size > 500) {
+        for (const [k, exp] of memoryDedupeMap.entries()) {
+            if (now > exp) memoryDedupeMap.delete(k);
+        }
+    }
+    return false;
+}
+
 exports.notifyUser = async (db, userId, type, payload) => {
-    console.log(`[Notification] Processing notifyUser for device: ${payload.serial_number}, type: ${type}`);
     try {
-        const serial_number = payload.serial_number;
+        const serial_number = payload ? (payload.serial_number || payload.SERIAL_NUMBER) : null;
         if (!serial_number) return;
+
+        console.log(`[Notification] Processing notifyUser for device: ${serial_number}, type: ${type}`);
 
         // Internal de-duplication to prevent multiple MQTT messages (PHASE, STATUS, HEARTBEAT) 
         // from triggering the same notification within a short window.
+        let actionSuffix = "";
+        if (type === "STATUS") {
+            actionSuffix = payload.motor_running === true ? ":START" : ":STOP";
+        } else if (type === "ALERT") {
+            actionSuffix = ":" + (payload.alert_type || payload.ALERT_TYPE || "UNKNOWN");
+        }
+        
+        const internalKey = `internal_notif_block:${String(serial_number).trim()}:${type}${actionSuffix}`;
+        let isDuplicate = false;
+
         if (isRedisConnected() && redisClient.isOpen) {
-            let actionSuffix = "";
-            if (type === "STATUS") {
-                actionSuffix = payload.motor_running === true ? ":START" : ":STOP";
-            } else if (type === "ALERT") {
-                actionSuffix = ":" + (payload.alert_type || payload.ALERT_TYPE || "UNKNOWN");
-            }
-            
-            const internalKey = `internal_notif_block:${serial_number.trim()}:${type}${actionSuffix}`;
             const alreadyBlocked = await redisClient.set(internalKey, "BLOCKED", { NX: true, EX: 10 });
             if (!alreadyBlocked) {
-                console.log(`[Notification] Internal duplicate block for ${serial_number} (${type}${actionSuffix})`);
-                return;
+                isDuplicate = true;
             }
+        } else {
+            if (checkMemoryDedupe(internalKey, 10000)) {
+                isDuplicate = true;
+            }
+        }
+
+        if (isDuplicate) {
+            console.log(`[Notification] Internal duplicate block for ${serial_number} (${type}${actionSuffix})`);
+            return;
         }
 
         // 1. Find the device to get the master user

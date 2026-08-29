@@ -145,7 +145,6 @@ void main() async {
       print("🔔 [FCM Foreground] Data payload: ${message.data}");
       
       RemoteNotification? notification = message.notification;
-      AndroidNotification? android = message.notification?.android;
 
       // If notification payload is null (data-only FCM message), present local notification.
       // If message.notification is present, Android system FCM handles notification display natively to avoid duplicate popups.

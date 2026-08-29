@@ -284,18 +284,10 @@ class DeviceDetailsController extends GetxController with WidgetsBindingObserver
   }
 
   Future<void> startMotor() async {
-    if (liveData['motorStatus'] == 'Running') {
-      _showMessage('Motor is already running');
-      return;
-    }
     await _sendStartStopCommand(true);
   }
 
   Future<void> stopMotor() async {
-    if (liveData['motorStatus'] == 'Stopped') {
-      _showMessage('Motor is already stopped');
-      return;
-    }
     await _sendStartStopCommand(false);
   }
 

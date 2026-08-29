@@ -96,7 +96,12 @@ client.on("message", async (topic, message) => {
         const serialNumber = item.SERIAL_NUMBER || item.serial_number;
         const imeiNumber = item.IMEI_NUMBER || item.imei_number || null;
         const timestamp = item.TIMESTAMP || item.timestamp;
-        const motorRunning = item.MOTOR_RUNNING !== undefined ? item.MOTOR_RUNNING : item.motor_running;
+        const rawMotorRunning = item.MOTOR_RUNNING !== undefined ? item.MOTOR_RUNNING : item.motor_running;
+        let motorRunning = undefined;
+        if (rawMotorRunning !== undefined && rawMotorRunning !== null) {
+            const str = String(rawMotorRunning).toLowerCase();
+            motorRunning = (rawMotorRunning === true || str === 'true' || str === '1' || rawMotorRunning === 1);
+        }
 
         if (!serialNumber) continue;
 
@@ -127,14 +132,24 @@ client.on("message", async (topic, message) => {
             };
 
             if ((type === "PHASE" || type === "STATUS" || type === "HEARTBEAT") && motorRunning !== undefined) {
-                // If motorRunning is false, check if we should suppress this update (e.g. just after a scheduler start)
                 let shouldSuppress = false;
+                
+                // 1. Redis Scheduler Suppression Check
                 if (motorRunning === false && isRedisConnected() && redisClient.isOpen) {
                     const suppressionKey = `scheduler_start_suppress:${serialNumber.trim()}`;
                     const suppressed = await redisClient.get(suppressionKey);
                     if (suppressed === "ACTIVE") {
                         shouldSuppress = true;
                         console.log(`[MQTT] 🛡️ Suppressing false STOP status for ${serialNumber} (within suppression window)`);
+                    }
+                }
+
+                // 2. Recent User/API Command Protection (5 second window)
+                if (!shouldSuppress && device && device.updatedAt) {
+                    const timeSinceUpdate = Date.now() - new Date(device.updatedAt).getTime();
+                    if (timeSinceUpdate < 5000 && device.start_status !== motorRunning) {
+                        shouldSuppress = true;
+                        console.log(`[MQTT] 🛡️ Suppressing contradictory ${type} (${motorRunning ? 'START' : 'STOP'}) for ${serialNumber} (device updated ${timeSinceUpdate}ms ago)`);
                     }
                 }
 
@@ -371,11 +386,17 @@ client.on("message", async (topic, message) => {
         }
 
         if (global.io) {
-            // Fetch updated device info for timestamps
+            // Fetch updated device info for authoritative state & timestamps
             const updatedDevice = await db.collection("devices").findOne({ serial_number: serialNumber });
             if (updatedDevice) {
                 entry.startAt = updatedDevice.startAt;
                 entry.stopAt = updatedDevice.stopAt;
+                if (updatedDevice.start_status !== undefined) {
+                    entry.start_status = updatedDevice.start_status;
+                    entry.motor_running = updatedDevice.start_status;
+                    entry.MOTOR_RUNNING = updatedDevice.start_status;
+                    motorRunning = updatedDevice.start_status;
+                }
             }
 
             if (type === "BOOT") {
@@ -401,7 +422,7 @@ client.on("message", async (topic, message) => {
                 });
             } else if (type === "TELEMETRY") {
                 // Send silent FCM for background cache sync
-                notifyUser(db, userId, "TELEMETRY", item).catch(err => console.error("Telemetry FCM failed:", err));
+                notifyUser(db, userId, "TELEMETRY", entry).catch(err => console.error("Telemetry FCM failed:", err));
 
                 global.io.emit("LIVE_TELEMETRY", {
                     serial_number: serialNumber,

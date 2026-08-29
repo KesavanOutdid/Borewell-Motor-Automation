@@ -658,13 +658,11 @@ class HomeView extends GetView<HomeController> {
                       Obx(() {
                         final isProcessing = controller.processingDevices.contains(deviceId);
                         return GestureDetector(
-                          onTap: (isOnline && !isProcessing) ? () => controller.toggleDevice(deviceId, imei, !isRunning) : null,
+                          onTap: (!isProcessing) ? () => controller.toggleDevice(deviceId, imei, !isRunning) : null,
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: isOnline 
-                                  ? (isProcessing ? Colors.grey.shade400 : (isRunning ? Colors.red : AppColors.primaryGreen))
-                                  : Colors.grey.shade300,
+                              color: isProcessing ? Colors.grey.shade400 : (isRunning ? Colors.red : AppColors.primaryGreen),
                               shape: BoxShape.circle,
                             ),
                             child: isProcessing

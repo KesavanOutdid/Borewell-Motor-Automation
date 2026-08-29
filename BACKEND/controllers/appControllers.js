@@ -743,6 +743,7 @@ exports.startStopDevice = async (req, res) => {
                 serial_number: serial_number,
                 payload: {
                     motor_running: start_status,
+                    start_status: start_status,
                     updatedAt: new Date().toISOString()
                 }
             });

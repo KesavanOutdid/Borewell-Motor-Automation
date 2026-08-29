@@ -52,20 +52,25 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     final motorRunning = payload['motor_running'] ?? 
                          payload['MOTOR_RUNNING'] ?? 
                          payload['start_status'] ??
-                         payload['START_STATUS'];
+                         payload['START_STATUS'] ??
+                         payload['motor_status'] ??
+                         payload['motorStatus'] ??
+                         payload['status'];
 
-    // 1. If we have an explicit status, use it immediately
-    if (motorRunning == true) return true;
-    if (motorRunning == false) return false;
+    // 1. If we have an explicit status field, normalize and use it
+    if (motorRunning != null) {
+      final str = motorRunning.toString().toLowerCase();
+      return motorRunning == true || str == 'true' || str == 'running' || str == 'on' || str == '1';
+    }
 
-    // 2. If status is missing, use RPM as a fallback (Heuristic)
+    // 2. If explicit status is missing, use RPM as a fallback (Heuristic)
     final rpmValue = payload['motor_rpm'] ?? payload['MOTOR_RPM'];
     if (rpmValue != null) {
       final rpm = _parseDouble(rpmValue) ?? 0;
       return rpm > 10;
     }
 
-    // 3. If neither status nor RPM is in this payload, return null (Keep current UI state)
+    // 3. If neither status nor RPM is in this payload, return null
     return null;
   }
 
@@ -180,7 +185,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
               }
             }
 
-            _updateDeviceStatus(serial, newStatus);
+            _updateDeviceStatus(serial, newStatus, timestamp: payload['timestamp']);
           }
         }
       }));
@@ -216,7 +221,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
               }
             }
           }
-          _updateDeviceStatus(serial, newStatus);
+          _updateDeviceStatus(serial, newStatus, timestamp: payload['timestamp']);
         }
       }));
     } catch (e) {
@@ -236,13 +241,33 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  void _updateDeviceStatus(String serial, bool isRunning) {
+  DateTime? _parseTimestamp(dynamic ts) {
+    if (ts == null) return null;
+    try {
+      return ts is DateTime ? ts : DateTime.parse(ts.toString());
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _updateDeviceStatus(String serial, bool isRunning, {dynamic timestamp}) {
     int index = devices.indexWhere((d) => (d['serial_number'] ?? d['serialNumber']) == serial);
     if (index != -1) {
       var device = Map<String, dynamic>.from(devices[index]);
+      
+      // Timestamp guard: Ignore out-of-order socket packets
+      if (timestamp != null && device['updatedAt'] != null) {
+        final newTime = _parseTimestamp(timestamp);
+        final currentTime = _parseTimestamp(device['updatedAt']);
+        if (newTime != null && currentTime != null && newTime.isBefore(currentTime.subtract(const Duration(seconds: 1)))) {
+          print('🏠 [HOME] Ignoring out-of-order socket packet for $serial ($newTime is before $currentTime)');
+          return;
+        }
+      }
+
       final wasRunning = device['start_status'] == true;
       device['start_status'] = isRunning;
-      device['updatedAt'] = DateTime.now().toUtc().toIso8601String();
+      device['updatedAt'] = (timestamp != null ? _parseTimestamp(timestamp)?.toUtc().toIso8601String() : null) ?? DateTime.now().toUtc().toIso8601String();
       device['last_heartbeat'] = DateTime.now().toUtc().toIso8601String();
       devices[index] = device;
       devices.refresh();
@@ -567,20 +592,13 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     if (processingDevices.contains(serialNumber)) return;
     
     print('🏠 [HOME] Toggle device request: $serialNumber, Action: ${status ? 'START' : 'STOP'}');
-    
-    // Check current status before sending command
-    final deviceIndex = devices.indexWhere((d) => (d['serial_number'] ?? d['serialNumber']) == serialNumber);
-    if (deviceIndex != -1) {
-      final device = devices[deviceIndex];
-      final currentRunning = isDeviceRunning(device);
-      if (currentRunning == status) {
-        return;
-      }
-    }
 
     processingDevices.add(serialNumber);
     // Mark as pending locally BEFORE the call to handle socket lag
     markCommandPending(serialNumber, status);
+    
+    // Optimistic instant UI update for smooth, lag-free user experience
+    _updateDeviceStatus(serialNumber, status);
 
     try {
       final url = Uri.parse(AppConfig.baseUrl + AppConfig.startStopDeviceEndpoint);
@@ -1053,7 +1071,6 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   }
 
   bool isOnline(Map<String, dynamic> device) {
-    // If we just successfully sent a command, trust that we are connected to the system
     final serial = device['serial_number'] ?? device['serialNumber'];
     if (serial != null && _pendingCommands.containsKey(serial)) {
       final pending = _pendingCommands[serial]!;
@@ -1062,9 +1079,8 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       }
     }
 
-    // Check real-time connectivity based on last heartbeat (3 minute threshold for clock drift)
-    final heartbeat = device['last_heartbeat'];
-    if (heartbeat == null) return false;
+    final heartbeat = device['last_heartbeat'] ?? device['updatedAt'] ?? device['timestamp'];
+    if (heartbeat == null) return true; // Default to online if configured
     
     DateTime lastUpdate;
     if (heartbeat is DateTime) {
@@ -1073,18 +1089,17 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       try {
         lastUpdate = DateTime.parse(heartbeat.toString());
       } catch (e) {
-        return false;
+        return true;
       }
     }
     
     final now = DateTime.now();
-    // Support UTC comparison + allow for clock drift (up to 3 minutes)
     final lastUpdateUtc = lastUpdate.toUtc();
     final nowUtc = now.toUtc();
     final difference = nowUtc.difference(lastUpdateUtc).inSeconds;
     
-    // Allow for future timestamps (server clock ahead) and up to 3 minutes in the past
-    return difference < 180;
+    // Consider device online if updated within 10 minutes or timestamp is in future
+    return difference < 600;
   }
 
   String getLastSeenText(Map<String, dynamic> device) {

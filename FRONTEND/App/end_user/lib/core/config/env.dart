@@ -1,5 +1,5 @@
 class AppConfig {
-  static const String baseUrl = "http://192.168.0.7:3030";
+  static const String baseUrl = "http://192.168.0.8:3030";
   static const String loginEndpoint = "/app/login";
   static const String signupEndpoint = "/app/signup";
   static const String deviceEndpoint = "/api/devices";
@@ -25,7 +25,7 @@ class AppConfig {
   static const String sendOtpEndpoint = "/app/forgotPasswordRequest";
   static const String verifyOtpEndpoint = "/app/verifyOtp";
   static const String verifyOtpAndResetPasswordEndpoint = "/app/resetPassword";
-  static const String socketIOUrl = "http://192.168.0.7:3030";
+  static const String socketIOUrl = "http://192.168.0.8:3030";
 }
 
 
