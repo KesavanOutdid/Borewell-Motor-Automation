@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./BACKEND
+      dockerfile: Dockerfile
+    command: npm run dev
+    volumes:
+      - ./BACKEND:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - NODE_ENV=development
+
+  frontend-admin:
+    build:
+      context: ./FRONTEND/Admin
+      dockerfile: Dockerfile
+    # Override command for dev server if node is used in dev
+    environment:
+      - NODE_ENV=development

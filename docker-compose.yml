@@ -1,0 +1,119 @@
+version: '3.8'
+
+services:
+  # -------------------------------------------------------------
+  # 1. BACKEND API SERVICE
+  # -------------------------------------------------------------
+  backend:
+    build:
+      context: ./BACKEND
+      dockerfile: Dockerfile
+    container_name: borewell_backend
+    restart: always
+    ports:
+      - "${PORT:-3030}:3030"
+    environment:
+      - PORT=3030
+      - NODE_ENV=${NODE_ENV:-production}
+      - MONGODB_URL=${MONGODB_URL:-mongodb://mongodb:27017}
+      - DB_NAME=${DB_NAME:-Borewell_Motor_Automation}
+      - JWT_SECRET=${JWT_SECRET:-kzdfhzmxbca8127kjshfd}
+      - MQTT_BROKER=${MQTT_BROKER:-mqtt://172.232.109.123}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - MQTT_USERNAME=${MQTT_USERNAME:-1}
+      - MQTT_PASSWORD=${MQTT_PASSWORD:-1}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+    volumes:
+      - backend_uploads:/usr/src/app/upload
+      - backend_logs:/usr/src/app/Log
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - borewell_network
+
+  # -------------------------------------------------------------
+  # 2. FRONTEND ADMIN DASHBOARD (React)
+  # -------------------------------------------------------------
+  frontend-admin:
+    build:
+      context: ./FRONTEND/Admin
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_SERVER_URL: ${REACT_APP_SERVER_URL:-http://localhost:3030}
+        REACT_APP_WE_URL: ${REACT_APP_WE_URL:-http://localhost:3030}
+    container_name: borewell_frontend_admin
+    restart: always
+    ports:
+      - "${ADMIN_PORT:-6061}:80"
+    depends_on:
+      - backend
+    networks:
+      - borewell_network
+
+  # -------------------------------------------------------------
+  # 3. FRONTEND END-USER APP (Flutter Web)
+  # -------------------------------------------------------------
+  frontend-enduser:
+    build:
+      context: ./FRONTEND/App/end_user
+      dockerfile: Dockerfile
+    container_name: borewell_frontend_enduser
+    restart: always
+    ports:
+      - "${APP_PORT:-8080}:80"
+    depends_on:
+      - backend
+    networks:
+      - borewell_network
+
+  # -------------------------------------------------------------
+  # 4. MONGODB DATABASE (Local / Offline mode)
+  # -------------------------------------------------------------
+  mongodb:
+    image: mongo:7.0
+    container_name: borewell_mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - borewell_network
+
+  # -------------------------------------------------------------
+  # 5. REDIS CACHE
+  # -------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: borewell_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - borewell_network
+
+  # -------------------------------------------------------------
+  # 6. LOCAL MQTT BROKER (Optional local MQTT broker)
+  # -------------------------------------------------------------
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: borewell_mosquitto
+    restart: always
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    networks:
+      - borewell_network
+
+networks:
+  borewell_network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  redis_data:
+  backend_uploads:
+  backend_logs:
